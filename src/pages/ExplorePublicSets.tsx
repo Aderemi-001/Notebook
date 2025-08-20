@@ -15,37 +15,21 @@ interface PublicStudySet {
   title: string;
   description: string | null;
   cards_count: number;
-  user_id: string; // To show who created it (optional, but good for context)
-  profiles: { display_name: string | null } | null; // To fetch creator's display name
+  user_id: string;
+  is_public: boolean;
+  display_name: string | null;
 }
 
 const fetchPublicStudySets = async (): Promise<PublicStudySet[]> => {
   const { data, error } = await supabase
-    .from('study_sets')
-    .select(`
-      id,
-      title,
-      description,
-      user_id,
-      is_public,
-      cards(id),
-      profiles(display_name)
-    `)
-    .eq('is_public', true); // Only fetch public sets
+    .rpc('get_public_study_sets_with_card_count'); // Use the new RPC function
 
   if (error) {
     console.error("Error fetching public study sets:", error);
     throw new Error("Failed to fetch public study sets.");
   }
 
-  return data.map(set => ({
-    id: set.id,
-    title: set.title,
-    description: set.description,
-    cards_count: set.cards.length,
-    user_id: set.user_id,
-    profiles: set.profiles,
-  })) || [];
+  return data || [];
 };
 
 const ExplorePublicSets: React.FC = () => {
@@ -59,7 +43,7 @@ const ExplorePublicSets: React.FC = () => {
   const filteredStudySets = publicStudySets?.filter(set =>
     set.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (set.description && set.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (set.profiles?.display_name && set.profiles.display_name.toLowerCase().includes(searchTerm.toLowerCase()))
+    (set.display_name && set.display_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (isError) {
@@ -135,10 +119,10 @@ const ExplorePublicSets: React.FC = () => {
                     <BookOpen className="mr-2 h-4 w-4" />
                     <span>{set.cards_count} cards</span>
                   </div>
-                  {set.profiles?.display_name && (
+                  {set.display_name && (
                     <div className="flex items-center text-sm text-muted-foreground mt-2">
                       <span className="mr-2">Created by:</span>
-                      <span className="font-medium">{set.profiles.display_name}</span>
+                      <span className="font-medium">{set.display_name}</span>
                     </div>
                   )}
                 </CardContent>
