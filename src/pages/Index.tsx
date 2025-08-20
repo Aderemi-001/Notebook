@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History } from "lucide-react";
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText } from "lucide-react"; // Added FileText icon
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -172,13 +172,18 @@ const Index = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/search-cards" className="flex items-center"> {/* New link */}
+              <Link to="/search-cards" className="flex items-center">
                 <Search className="mr-2 h-4 w-4" /> Search My Cards
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/generate-exam" className="flex items-center">
                 <Brain className="mr-2 h-4 w-4" /> Generate Exam
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/generate-essay-questions" className="flex items-center"> {/* New link */}
+                <FileText className="mr-2 h-4 w-4" /> Generate Essay Questions
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
