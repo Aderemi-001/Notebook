@@ -28,7 +28,7 @@ import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast
 import { cn } from "@/lib/utils";
 import StudyProgressSummary from '@/components/StudyProgressSummary';
 import { isPast } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -334,7 +334,7 @@ const StudySetDetail = () => {
       setIsOwner(user?.id === studySet.user_id);
     };
     checkOwner();
-  }, [studySet.user_id]);
+  }, [studySet.user_id]); // Re-run when studySet.user_id changes
 
   return (
     <div className="container mx-auto py-10">
