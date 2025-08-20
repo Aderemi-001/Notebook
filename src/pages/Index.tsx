@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut, NotebookText, BarChart2 } from "lucide-react"; // Changed LayoutDashboard to BarChart2
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut, NotebookText, BarChart2, CalendarCheck } from "lucide-react"; // Added CalendarCheck icon
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -239,7 +239,15 @@ const Index = () => {
             {/* Statistics */}
             <DropdownMenuItem asChild>
               <Link to="/dashboard" className="flex items-center">
-                <BarChart2 className="mr-2 h-4 w-4" /> Statistics {/* Changed icon and text */}
+                <BarChart2 className="mr-2 h-4 w-4" /> Statistics
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+
+            {/* Daily Review */}
+            <DropdownMenuItem asChild>
+              <Link to="/daily-review" className="flex items-center">
+                <CalendarCheck className="mr-2 h-4 w-4" /> Daily Review
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

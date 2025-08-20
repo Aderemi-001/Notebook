@@ -19,7 +19,8 @@ import Settings from "@/pages/Settings";
 import NotesIndex from "@/pages/NotesIndex";
 import CreateNote from "@/pages/CreateNote";
 import EditNote from "@/pages/EditNote";
-import Statistics from "@/pages/Statistics"; // Changed Dashboard to Statistics
+import Statistics from "@/pages/Statistics";
+import DailyReview from "@/pages/DailyReview"; // Import the new DailyReview component
 import AuthLayout from "@/layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
@@ -204,12 +205,21 @@ const AppContent: React.FC = () => {
                 </AuthLayout>
               }
             />
-            {/* New Statistics Route */}
+            {/* Statistics Route */}
             <Route
-              path="/dashboard" // Keep the path as /dashboard for now, but it will render Statistics
+              path="/dashboard"
               element={
                 <AuthLayout>
-                  <Statistics /> {/* Changed Dashboard to Statistics */}
+                  <Statistics />
+                </AuthLayout>
+              }
+            />
+            {/* Daily Review Route */}
+            <Route
+              path="/daily-review"
+              element={
+                <AuthLayout>
+                  <DailyReview />
                 </AuthLayout>
               }
             />
