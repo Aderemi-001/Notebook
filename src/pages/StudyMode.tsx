@@ -187,7 +187,17 @@ const StudyMode = () => {
         );
 
       if (upsertError) throw upsertError;
-      showSuccess(`Card marked as ${newProgress.status}!`);
+      
+      let successMessage = "";
+      if (quality === 0) {
+        successMessage = "Card marked for immediate re-study.";
+      } else if (quality === 1) {
+        successMessage = "Card marked for review soon.";
+      } else { // quality === 2
+        successMessage = "Card mastered! Well done.";
+      }
+      showSuccess(successMessage);
+
       queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
     } catch (err: any) {
       showError(`Failed to update card progress: ${err.message}`);
