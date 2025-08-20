@@ -182,10 +182,28 @@ serve(async (req) => {
       throw new Error("AI response missing 'questions' array.");
     }
 
-    // Insert generated questions into the database
+    // 1. Create an exam record
+    const { data: exam, error: examInsertError } = await supabase
+      .from('exams')
+      .insert({
+        user_id: user.id,
+        study_set_id: studySetId,
+        title: `Exam for ${setTitle} (${new Date().toLocaleDateString()})`,
+        description: `Generated with ${numQuestions} questions of types: ${questionTypes.join(', ')}`,
+      })
+      .select('id')
+      .single();
+
+    if (examInsertError) {
+      console.error("Error inserting exam record:", examInsertError);
+      throw new Error(`Failed to create exam record: ${examInsertError.message}`);
+    }
+
+    // 2. Insert generated questions into the database, linking to the new exam
     const questionsToInsert = parsedData.questions.map((q: any) => ({
       user_id: user.id,
       set_id: studySetId,
+      exam_id: exam.id, // Link to the newly created exam
       question_text: q.question_text,
       answer_text: q.answer_text,
       question_type: q.question_type,
@@ -204,6 +222,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       message: "Questions generated and saved successfully!",
+      exam_id: exam.id, // Return the exam ID
       questions: insertedQuestions,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
