@@ -10,7 +10,7 @@ import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
 import { Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import * as pdfjsLib from 'pdfjs-dist';
@@ -27,7 +27,9 @@ const formSchema = z.object({
 });
 
 const CreateSet = () => {
-  const [file, setFile] = React.useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof formSchema>>({
@@ -44,13 +46,20 @@ const CreateSet = () => {
     name: "cards",
   });
 
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+      setIsLoadingUser(false);
+    };
+    getUser();
+  }, []);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const toastId = showLoading("Saving your study set...");
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
+      if (!currentUser) {
         throw new Error("You must be logged in to create a set.");
       }
 
@@ -59,7 +68,7 @@ const CreateSet = () => {
         .insert({
           title: values.title,
           description: values.description,
-          user_id: user.id,
+          user_id: currentUser.id,
         })
         .select()
         .single();
@@ -98,6 +107,11 @@ const CreateSet = () => {
   const handleFileImport = async () => {
     if (!file) {
       showError("Please select a file first.");
+      return;
+    }
+
+    if (!currentUser) {
+      showError("You must be logged in to import a file.");
       return;
     }
 
@@ -146,9 +160,9 @@ const CreateSet = () => {
           throw new Error("Could not extract any text from the file.");
       }
 
-      const { data: { session, user } } = await supabase.auth.getSession();
-      if (!session || !user) {
-        throw new Error("You must be logged in to import a file.");
+      const { data: { session } } = await supabase.auth.getSession(); // Re-fetch session to get access_token
+      if (!session) {
+        throw new Error("Session not found. Please try logging in again.");
       }
 
       const response = await fetch(
@@ -192,7 +206,7 @@ const CreateSet = () => {
           const { data: existingConcept, error: fetchConceptError } = await supabase
             .from('concepts')
             .select('id')
-            .eq('user_id', user.id)
+            .eq('user_id', currentUser.id)
             .eq('name', concept.name)
             .single();
 
@@ -202,12 +216,12 @@ const CreateSet = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) {
+          if (existsSync) {
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
               .from('concepts')
-              .insert({ user_id: user.id, name: concept.name, description: concept.description })
+              .insert({ user_id: currentUser.id, name: concept.name, description: concept.description })
               .select('id')
               .single();
             if (insertConceptError) {
@@ -219,21 +233,6 @@ const CreateSet = () => {
           conceptNameToIdMap.set(concept.name, conceptId);
         }
 
-        // Link cards to concepts (simplified: link all new cards to all new concepts for now)
-        // A more sophisticated approach would involve AI linking specific cards to specific concepts
-        const cardsInForm = form.getValues('cards');
-        const cardConceptLinksToInsert = [];
-        for (const card of cardsInForm) {
-          // This is a placeholder. In a real app, AI would identify which concepts are in which card.
-          // For now, we'll link all new cards to all new concepts.
-          // This part needs to be refined if we want precise card-concept links.
-          // For the "Cognitive Constellation" visualization, the primary links are concept-to-concept.
-          // Card-concept links are for showing which cards contribute to a concept.
-          // For simplicity, we'll skip direct card-concept linking from AI output for now,
-          // as the AI output doesn't specify which card contains which concept.
-          // This can be added later if needed for a more granular view.
-        }
-
         // Insert relationships
         if (newRelationships && newRelationships.length > 0) {
           const relationshipsToInsert = [];
@@ -242,7 +241,7 @@ const CreateSet = () => {
             const targetId = conceptNameToIdMap.get(rel.target_name);
             if (sourceId && targetId) {
               relationshipsToInsert.push({
-                user_id: user.id,
+                user_id: currentUser.id,
                 source_concept_id: sourceId,
                 target_concept_id: targetId,
                 type: rel.type,
@@ -326,8 +325,13 @@ const CreateSet = () => {
                 onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
                 className="w-full sm:w-auto flex-grow"
               />
-              <Button type="button" onClick={handleFileImport} disabled={!file} className="w-full sm:w-auto">
-                Import with AI
+              <Button 
+                type="button" 
+                onClick={handleFileImport} 
+                disabled={!file || isLoadingUser || !currentUser} 
+                className="w-full sm:w-auto"
+              >
+                {isLoadingUser ? "Loading user..." : "Import with AI"}
               </Button>
             </CardContent>
           </NotebookCard>

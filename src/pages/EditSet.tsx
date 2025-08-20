@@ -10,7 +10,7 @@ import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
 import { Trash2, ArrowLeft } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,7 +63,9 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
 
 const EditSet = () => {
   const { setId } = useParams<{ setId: string }>();
-  const [file, setFile] = React.useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -88,6 +90,15 @@ const EditSet = () => {
   });
 
   useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+      setIsLoadingUser(false);
+    };
+    getUser();
+  }, []);
+
+  useEffect(() => {
     if (studySet) {
       form.reset({
         title: studySet.title,
@@ -110,9 +121,7 @@ const EditSet = () => {
     const toastId = showLoading("Updating your study set...");
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
+      if (!currentUser) {
         throw new Error("You must be logged in to edit a set.");
       }
 
@@ -193,6 +202,11 @@ const EditSet = () => {
       return;
     }
 
+    if (!currentUser) {
+      showError("You must be logged in to import a file.");
+      return;
+    }
+
     const toastId = showLoading("AI is generating your flashcards, concepts, and relationships...");
     let fileContent = "";
 
@@ -238,9 +252,9 @@ const EditSet = () => {
           throw new Error("Could not extract any text from the file.");
       }
 
-      const { data: { session, user } } = await supabase.auth.getSession();
-      if (!session || !user) {
-        throw new Error("You must be logged in to import a file.");
+      const { data: { session } } = await supabase.auth.getSession(); // Re-fetch session to get access_token
+      if (!session) {
+        throw new Error("Session not found. Please try logging in again.");
       }
 
       const response = await fetch(
@@ -286,7 +300,7 @@ const EditSet = () => {
           const { data: existingConcept, error: fetchConceptError } = await supabase
             .from('concepts')
             .select('id')
-            .eq('user_id', user.id)
+            .eq('user_id', currentUser.id)
             .eq('name', concept.name)
             .single();
 
@@ -296,12 +310,12 @@ const EditSet = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) {
+          if (existsSync) {
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
               .from('concepts')
-              .insert({ user_id: user.id, name: concept.name, description: concept.description })
+              .insert({ user_id: currentUser.id, name: concept.name, description: concept.description })
               .select('id')
               .single();
             if (insertConceptError) {
@@ -321,7 +335,7 @@ const EditSet = () => {
             const targetId = conceptNameToIdMap.get(rel.target_name);
             if (sourceId && targetId) {
               relationshipsToInsert.push({
-                user_id: user.id,
+                user_id: currentUser.id,
                 source_concept_id: sourceId,
                 target_concept_id: targetId,
                 type: rel.type,
@@ -359,7 +373,7 @@ const EditSet = () => {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingUser) {
     return (
       <div className="container mx-auto py-10">
         <Skeleton className="h-8 w-1/2 mb-8" />
@@ -456,8 +470,13 @@ const EditSet = () => {
                 onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
                 className="w-full sm:w-auto flex-grow"
               />
-              <Button type="button" onClick={handleFileImport} disabled={!file} className="w-full sm:w-auto">
-                Import with AI
+              <Button 
+                type="button" 
+                onClick={handleFileImport} 
+                disabled={!file || isLoadingUser || !currentUser} 
+                className="w-full sm:w-auto"
+              >
+                {isLoadingUser ? "Loading user..." : "Import with AI"}
               </Button>
             </CardContent>
           </NotebookCard>
