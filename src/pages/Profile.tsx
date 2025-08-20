@@ -13,6 +13,7 @@ import { NotebookCard } from '@/components/NotebookCard'; // Import NotebookCard
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { ArrowLeft, LogOut } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ThemeToggle } from '@/components/ThemeToggle'; // Import ThemeToggle
 
 const profileSchema = z.object({
   display_name: z.string().min(1, 'Display name is required').max(50, 'Display name cannot exceed 50 characters'),
@@ -185,7 +186,10 @@ const Profile = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit">Save Changes</Button>
+              <div className="flex items-center justify-between">
+                <Button type="submit">Save Changes</Button>
+                <ThemeToggle />
+              </div>
             </form>
           </Form>
         </CardContent>
