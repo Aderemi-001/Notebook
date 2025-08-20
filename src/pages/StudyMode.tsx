@@ -308,7 +308,7 @@ const StudyMode = () => {
               </>
             }
             backContent={<></>}
-            className="h-64"
+            className="min-h-[256px]"
           />
         </div>
       ) : (
@@ -317,13 +317,13 @@ const StudyMode = () => {
             key={currentCard?.id || 'study-card'}
             isFlipped={showDefinition}
             onClick={handleFlipCard}
-            className="w-full max-w-md h-64"
+            className="w-full max-w-md min-h-[256px]" {/* Changed from h-64 to min-h-[256px] */}
             frontContent={
               <>
                 <CardHeader>
                   <CardTitle className="text-2xl">Term</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-grow flex items-center justify-center">
+                <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto"> {/* Added p-4 and overflow-y-auto */}
                   <p className="text-xl font-medium">
                     {currentCard?.term}
                   </p>
@@ -335,7 +335,7 @@ const StudyMode = () => {
                 <CardHeader>
                   <CardTitle className="text-2xl">Definition</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-grow flex items-center justify-center">
+                <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto"> {/* Added p-4 and overflow-y-auto */}
                   <p className="text-xl font-medium">
                     {currentCard?.definition}
                   </p>
