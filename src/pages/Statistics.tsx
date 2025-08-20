@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
@@ -142,6 +142,7 @@ const calculateStreak = (studyDates: Date[]): { currentStreak: number; longestSt
 
 
 const Statistics: React.FC = () => { // Renamed component to Statistics
+  const navigate = useNavigate(); // Initialize useNavigate
   const { data: stats, isLoading: isLoadingStats, isError: isErrorStats, error: errorStats } = useQuery<StudyStatistics, Error>({
     queryKey: ['studyStatistics'],
     queryFn: fetchStudyStatistics,
@@ -161,6 +162,13 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
 
   const modifiersClassNames = {
     studiedDays: "bg-primary text-primary-foreground rounded-full",
+  };
+
+  const handleDayClick = (day: Date) => {
+    const hasStudiedOnDay = studyDates.some(d => isSameDay(d, day));
+    if (!hasStudiedOnDay) {
+      navigate('/daily-review');
+    }
   };
 
   if (isErrorStats) {
@@ -298,7 +306,7 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
         <NotebookCard>
           <CardHeader className="pl-10">
             <CardTitle>Study Calendar</CardTitle>
-            <CardDescription>Days you've studied at least one flashcard.</CardDescription>
+            <CardDescription>Days you've studied at least one flashcard. Click on an unstudied day to start reviewing!</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center pl-10">
             {isLoadingStudyDays ? (
@@ -310,7 +318,7 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
                 modifiers={modifiers}
                 modifiersClassNames={modifiersClassNames}
                 className="rounded-md border"
-                disabled // Disable selection as it's for display only
+                onDayClick={handleDayClick} // Add onDayClick handler
               />
             )}
           </CardContent>
