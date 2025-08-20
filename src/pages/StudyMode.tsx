@@ -124,7 +124,7 @@ const StudyMode = () => {
         <p className="text-muted-foreground">This study set has no cards yet.</p>
         <Button asChild className="mt-4">
           <Link to={`/sets/${setId}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details
+            <span><ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details</span>
           </Link>
         </Button>
       </div>
@@ -137,7 +137,7 @@ const StudyMode = () => {
         <h1 className="text-3xl font-bold">Study Mode</h1>
         <Button asChild variant="outline">
           <Link to={`/sets/${setId}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set
+            <span><ArrowLeft className="mr-2 h-4 w-4" /> Back to Set</span>
           </Link>
         </Button>
       </div>
