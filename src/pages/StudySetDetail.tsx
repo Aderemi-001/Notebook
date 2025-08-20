@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"; // Keep these imports for sub-components
 import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
-import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff } => 'lucide-react'; // Added Flag, FlagOff
+import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff } from 'lucide-react'; // Added Flag, FlagOff
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
