@@ -46,6 +46,7 @@ interface CardItem {
   is_flagged?: boolean; // Added is_flagged
   next_review_at?: string; // Added for due card calculation
   repetition_level?: number; // Added repetition_level
+  has_progress?: boolean; // Added to indicate if the user has any progress for this card
 }
 
 const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
@@ -90,8 +91,9 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
   let dueCount = 0;
   const processedCards: CardItem[] = data.cards.map(card => {
     const progress = card.user_progress?.[0];
-    const cardStatus = (progress && progress.user_id === user.id) ? progress.status : 'learning';
-    const nextReviewAt = (progress && progress.user_id === user.id) ? progress.next_review_at : now.toISOString(); // Default to now for new cards
+    const hasProgress = !!progress && progress.user_id === user.id; // Check if this specific user has progress
+    const cardStatus = hasProgress ? progress.status : 'learning';
+    const nextReviewAt = hasProgress ? progress.next_review_at : now.toISOString(); // Default to now for new cards
 
     if (cardStatus === 'mastered') {
       masteredCount++;
@@ -99,10 +101,10 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
 
     // Check if card is due for review
     const cardNextReviewDate = new Date(nextReviewAt);
-    const isNewCardForCurrentUser = !progress || progress.user_id !== user.id;
+    const isNewCardForCurrentUser = !hasProgress; // If no progress, it's new for this user
     const isDueForReview = cardNextReviewDate <= now;
 
-    if (isNewCardForCurrentUser || (progress && progress.user_id === user.id && isDueForReview && cardStatus === 'learning')) {
+    if (isNewCardForCurrentUser || (hasProgress && isDueForReview && cardStatus === 'learning')) {
       dueCount++;
     }
 
@@ -114,6 +116,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
       is_flagged: card.is_flagged,
       next_review_at: nextReviewAt,
       repetition_level: progress?.repetition_level ?? 0,
+      has_progress: hasProgress, // Pass this flag to the component
     };
   });
 
@@ -367,13 +370,12 @@ const StudySetDetail = () => {
                 "hover:shadow-md transition-shadow",
                 // Priority: Flagged (user explicit mark)
                 card.is_flagged && "border-yellow-500 border-2",
-                // Next priority: Due now (marked 'Again' or 'Hard' and review date is past/today)
-                card.status === 'learning' && card.next_review_at && isPast(new Date(card.next_review_at)) && "border-red-500 border-2",
                 // Next priority: Mastered
                 card.status === 'mastered' && "border-green-500 border-2",
-                // Next priority: Marked 'Hard' (repetition_level 0, but next_review_at is in the future, e.g., 1 day from now)
-                // This condition should only apply if not already caught by 'due now' or 'mastered'
-                card.status === 'learning' && card.repetition_level === 0 && card.next_review_at && !isPast(new Date(card.next_review_at)) && "border-orange-500 border-2"
+                // Next priority: Marked 'Again' (repetition_level 0, and due now, AND has previous progress)
+                card.status === 'learning' && card.has_progress && card.repetition_level === 0 && isPast(new Date(card.next_review_at)) && "border-red-500 border-2",
+                // Next priority: Marked 'Hard' (repetition_level 0, but next_review_at is in the future, AND has previous progress)
+                card.status === 'learning' && card.has_progress && card.repetition_level === 0 && card.next_review_at && !isPast(new Date(card.next_review_at)) && "border-orange-500 border-2"
               )}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
