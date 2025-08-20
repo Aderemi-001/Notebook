@@ -9,11 +9,25 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const Settings: React.FC = () => {
-  // State for new settings (these would typically be managed via user preferences in Supabase)
+  // State for existing settings
   const [defaultFlashcardSide, setDefaultFlashcardSide] = useState<'term' | 'definition'>('term');
   const [confirmDeletion, setConfirmDeletion] = useState<boolean>(true);
+
+  // State for new settings
+  const [defaultNumExamQuestions, setDefaultNumExamQuestions] = useState<number>(10);
+  const [defaultExamQuestionTypes, setDefaultExamQuestionTypes] = useState<string[]>(['multiple_choice', 'short_answer']);
+  const [dailyCardsGoal, setDailyCardsGoal] = useState<number>(20);
+  const [enableReviewReminders, setEnableReviewReminders] = useState<boolean>(true);
+
+  const handleQuestionTypeChange = (type: string, checked: boolean) => {
+    setDefaultExamQuestionTypes(prev =>
+      checked ? [...prev, type] : prev.filter(t => t !== type)
+    );
+  };
 
   return (
     <div className="container mx-auto py-10">
@@ -65,6 +79,97 @@ const Settings: React.FC = () => {
                 <Label htmlFor="definition-first">Definition First</Label>
               </div>
             </RadioGroup>
+          </div>
+        </CardContent>
+      </NotebookCard>
+
+      <NotebookCard className="mb-6">
+        <CardHeader>
+          <CardTitle>Exam Generation Preferences</CardTitle>
+          <CardDescription>Set default options for generating new exams.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="default-num-questions">Default Number of Questions</Label>
+            <Input
+              id="default-num-questions"
+              type="number"
+              min="1"
+              value={defaultNumExamQuestions}
+              onChange={(e) => setDefaultNumExamQuestions(parseInt(e.target.value) || 0)}
+              placeholder="e.g., 10"
+            />
+          </div>
+          <div>
+            <Label>Default Question Types</Label>
+            <div className="flex flex-wrap gap-4 mt-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="default-mcq"
+                  checked={defaultExamQuestionTypes.includes('multiple_choice')}
+                  onCheckedChange={(checked: boolean) => handleQuestionTypeChange('multiple_choice', checked)}
+                />
+                <Label htmlFor="default-mcq">Multiple Choice</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="default-sa"
+                  checked={defaultExamQuestionTypes.includes('short_answer')}
+                  onCheckedChange={(checked: boolean) => handleQuestionTypeChange('short_answer', checked)}
+                />
+                <Label htmlFor="default-sa">Short Answer</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="default-tf"
+                  checked={defaultExamQuestionTypes.includes('true_false')}
+                  onCheckedChange={(checked: boolean) => handleQuestionTypeChange('true_false', checked)}
+                />
+                <Label htmlFor="default-tf">True/False</Label>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </NotebookCard>
+
+      <NotebookCard className="mb-6">
+        <CardHeader>
+          <CardTitle>Study Goals</CardTitle>
+          <CardDescription>Set your daily learning targets.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <Label htmlFor="daily-cards-goal">Daily Cards to Review</Label>
+            <Input
+              id="daily-cards-goal"
+              type="number"
+              min="1"
+              value={dailyCardsGoal}
+              onChange={(e) => setDailyCardsGoal(parseInt(e.target.value) || 0)}
+              placeholder="e.g., 20"
+            />
+          </div>
+        </CardContent>
+      </NotebookCard>
+
+      <NotebookCard className="mb-6">
+        <CardHeader>
+          <CardTitle>Notifications</CardTitle>
+          <CardDescription>Manage your notification preferences.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <Label className="text-base">Enable Review Reminders</Label>
+              <CardDescription>
+                Receive notifications when cards are due for review.
+              </CardDescription>
+            </div>
+            <Switch
+              checked={enableReviewReminders}
+              onCheckedChange={setEnableReviewReminders}
+              id="enable-reminders"
+            />
           </div>
         </CardContent>
       </NotebookCard>
