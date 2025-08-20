@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { PlusCircle, BookOpen, User, Clock } from "lucide-react";
+import { PlusCircle, BookOpen, User, Clock, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +14,7 @@ interface StudySet {
   description: string | null;
   cards_count: number;
   next_review_at?: string | null; // Added for SRS
+  due_cards_count?: number; // New field for cards due for review
 }
 
 const fetchStudySets = async (): Promise<StudySet[]> => {
@@ -22,6 +23,8 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
   if (!user) {
     return [];
   }
+
+  const now = new Date();
 
   // First, get the basic study set info from the RPC
   const { data: rawStudySets, error: rpcError } = await supabase
@@ -34,47 +37,74 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
 
   const studySets = rawStudySets || [];
 
-  // Now, for each study set, fetch its card IDs and then the earliest review date
-  const setsWithReviewDates = await Promise.all(studySets.map(async (set) => {
-    // Fetch card IDs for the current set
+  // Now, for each study set, fetch its card IDs and then the earliest review date and due count
+  const setsWithReviewData = await Promise.all(studySets.map(async (set) => {
+    // Fetch all cards for the current set
     const { data: cardsData, error: cardsError } = await supabase
       .from('cards')
-      .select('id')
-      .eq('set_id', set.id);
+      .select('id');
 
     if (cardsError) {
       console.error(`Error fetching cards for set ${set.id}:`, cardsError);
-      // If there's an error fetching cards, return the set without a review date
-      return { ...set, next_review_at: null };
+      return { ...set, next_review_at: null, due_cards_count: 0 };
     }
 
     const cardIds = cardsData ? cardsData.map(card => card.id) : [];
 
     let earliestReviewAt: string | null = null;
-    if (cardIds.length > 0) {
-      const { data: earliestProgress, error: progressError } = await supabase
-        .from('user_progress')
-        .select('next_review_at')
-        .eq('user_id', user.id)
-        .in('card_id', cardIds)
-        .order('next_review_at', { ascending: true })
-        .limit(1)
-        .single();
+    let dueCardsCount = 0;
 
-      if (progressError && progressError.code !== 'PGRST116') { // PGRST116 means no rows found
-        console.error(`Error fetching earliest review date for set ${set.id}:`, progressError);
-      } else if (earliestProgress) {
-        earliestReviewAt = earliestProgress.next_review_at;
+    if (cardIds.length > 0) {
+      // Fetch user progress for all cards in this set for the current user
+      const { data: progressData, error: progressError } = await supabase
+        .from('user_progress')
+        .select('card_id, next_review_at, status')
+        .eq('user_id', user.id)
+        .in('card_id', cardIds);
+
+      if (progressError && progressError.code !== 'PGRST116') {
+        console.error(`Error fetching progress for set ${set.id}:`, progressError);
+      }
+
+      const progressMap = new Map(progressData?.map(p => [p.card_id, p]));
+
+      let tempEarliestReviewAt: Date | null = null;
+
+      for (const cardId of cardIds) {
+        const progress = progressMap.get(cardId);
+        
+        if (!progress) {
+          // New card, considered due
+          dueCardsCount++;
+          if (!tempEarliestReviewAt || now < tempEarliestReviewAt) {
+            tempEarliestReviewAt = now;
+          }
+        } else {
+          const cardNextReviewDate = new Date(progress.next_review_at);
+          if (cardNextReviewDate <= now && progress.status === 'learning') {
+            // Card is due for review and not yet mastered
+            dueCardsCount++;
+          }
+          
+          // Update earliest review date for the set
+          if (!tempEarliestReviewAt || cardNextReviewDate < tempEarliestReviewAt) {
+            tempEarliestReviewAt = cardNextReviewDate;
+          }
+        }
+      }
+      if (tempEarliestReviewAt) {
+        earliestReviewAt = tempEarliestReviewAt.toISOString();
       }
     }
 
     return {
       ...set,
       next_review_at: earliestReviewAt,
+      due_cards_count: dueCardsCount,
     };
   }));
 
-  return setsWithReviewDates;
+  return setsWithReviewData;
 };
 
 const Index = () => {
@@ -156,6 +186,12 @@ const Index = () => {
                     <BookOpen className="mr-2 h-4 w-4" />
                     <span>{set.cards_count} cards</span>
                   </div>
+                  {set.due_cards_count !== undefined && set.due_cards_count > 0 && (
+                    <div className="flex items-center text-sm text-red-500 mt-2">
+                      <AlertCircle className="mr-2 h-4 w-4" />
+                      <span>{set.due_cards_count} cards due for review</span>
+                    </div>
+                  )}
                   {set.next_review_at && (
                     <div className="flex items-center text-sm text-muted-foreground mt-2">
                       <Clock className="mr-2 h-4 w-4" />
