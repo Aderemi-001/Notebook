@@ -52,32 +52,32 @@
   }
 
   .dark {
-    --background: 220 15% 12%; /* Deep, soft dark blue/grey */
-    --foreground: 210 20% 92%; /* Very light, almost white grey */
+    --background: 220 15% 10%; /* Deep, soft dark blue/grey */
+    --foreground: 210 20% 90%; /* Light, readable grey */
 
-    --card: 220 15% 18%; /* Slightly lighter than background for depth */
-    --card-foreground: 210 20% 92%;
+    --card: 220 15% 15%; /* Slightly lighter than background for depth */
+    --card-foreground: 210 20% 90%;
 
-    --popover: 220 15% 18%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 220 15% 15%;
+    --popover-foreground: 210 20% 90%;
 
     --primary: 217.2 91.2% 59.8%; /* Vibrant blue */
     --primary-foreground: 210 40% 98%; /* White */
 
-    --secondary: 217.2 20% 25%; /* Medium-dark grey */
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 217.2 20% 20%; /* Darker, more distinct grey */
+    --secondary-foreground: 210 20% 80%;
 
-    --muted: 217.2 20% 25%;
-    --muted-foreground: 215 10% 70%; /* Softer, lighter grey for muted text */
+    --muted: 217.2 20% 20%;
+    --muted-foreground: 215 10% 60%; /* Softer, lighter grey for muted text */
 
-    --accent: 217.2 20% 25%;
-    --accent-foreground: 210 20% 90%;
+    --accent: 217.2 20% 20%;
+    --accent-foreground: 210 20% 80%;
 
     --destructive: 0 84.2% 60.2%; /* Red */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 15% 30%; /* Subtle, visible border */
-    --input: 217.2 15% 30%;
+    --border: 217.2 15% 25%; /* Subtle, visible border */
+    --input: 217.2 15% 25%;
     --ring: 217.2 91.2% 59.8%; /* Primary blue */
 
     --sidebar-background: 240 5.9% 10%;
@@ -114,8 +114,8 @@
       to bottom,
       transparent,
       transparent 24px,
-      hsl(220 10% 25%) 25px, /* Darker lines for dark mode */
-      hsl(220 10% 25%) 26px
+      hsl(220 10% 18%) 25px, /* Darker lines for dark mode */
+      hsl(220 10% 18%) 26px
     );
   }
 }
@@ -137,12 +137,12 @@
 
 .dark .login-page-scribble-bg {
   background-image: 
-    url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M-1 1 l2 -2 M0 10 l10 -10 M9 11 l2 -2' stroke='%23404040' stroke-width='0.8' opacity='0.7'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M-1 1 l2 -2 M0 10 l10 -10 M9 11 l2 -2' stroke='%23303030' stroke-width='0.8' opacity='0.7'/%3E%3C/svg%3E"),
     repeating-linear-gradient(
       to bottom,
       transparent,
       transparent 24px,
-      hsl(220 10% 25%) 25px,
-      hsl(220 10% 25%) 26px
+      hsl(220 10% 18%) 25px,
+      hsl(220 10% 18%) 26px
     );
 }
