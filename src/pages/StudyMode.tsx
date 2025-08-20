@@ -6,6 +6,7 @@ import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { showSuccess, showError } from '@/utils/toast';
 
 interface CardItem {
   id: string;
@@ -33,7 +34,7 @@ const StudyMode = () => {
   const [showDefinition, setShowDefinition] = useState(false);
   const [studyFinished, setStudyFinished] = useState(false);
 
-  const { data: cards, isLoading, isError, error } = useQuery<CardItem[], Error>({
+  const { data: cards, isLoading, isError, error, refetch } = useQuery<CardItem[], Error>({
     queryKey: ['studyCards', setId],
     queryFn: () => fetchCardsForStudySet(setId!),
     enabled: !!setId,
@@ -45,7 +46,34 @@ const StudyMode = () => {
     setShowDefinition(!showDefinition);
   };
 
-  const handleNextCard = () => {
+  const updateCardProgress = async (cardId: string, status: 'learning' | 'mastered') => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        showError("You must be logged in to track progress.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('user_progress')
+        .upsert(
+          { user_id: user.id, card_id: cardId, status: status },
+          { onConflict: 'user_id,card_id' }
+        );
+
+      if (error) throw error;
+      showSuccess(`Card marked as ${status}!`);
+    } catch (err: any) {
+      showError(`Failed to update card progress: ${err.message}`);
+      console.error("Error updating card progress:", err);
+    }
+  };
+
+  const handleNextCard = (status: 'learning' | 'mastered') => {
+    if (currentCard) {
+      updateCardProgress(currentCard.id, status);
+    }
+
     if (currentCardIndex < (cards?.length || 0) - 1) {
       setCurrentCardIndex(prevIndex => prevIndex + 1);
       setShowDefinition(false); // Reset to show term for next card
@@ -58,6 +86,7 @@ const StudyMode = () => {
     setCurrentCardIndex(0);
     setShowDefinition(false);
     setStudyFinished(false);
+    refetch(); // Re-fetch cards to ensure latest state if needed, or just reset UI
   };
 
   if (!setId) {
@@ -164,9 +193,21 @@ const StudyMode = () => {
             <Button onClick={handleFlipCard} variant="outline">
               Flip Card
             </Button>
-            <Button onClick={handleNextCard}>
-              {currentCardIndex === cards.length - 1 ? "Finish Study" : "Next Card"}
-            </Button>
+            {showDefinition && (
+              <>
+                <Button onClick={() => handleNextCard('mastered')} className="bg-green-500 hover:bg-green-600">
+                  Mastered
+                </Button>
+                <Button onClick={() => handleNextCard('learning')} variant="destructive">
+                  Difficult
+                </Button>
+              </>
+            )}
+            {!showDefinition && (
+              <Button onClick={() => handleNextCard('learning')}>
+                Next Card
+              </Button>
+            )}
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
             Card {currentCardIndex + 1} of {cards.length}

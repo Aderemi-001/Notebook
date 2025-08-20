@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, PlayCircle, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,6 +24,7 @@ interface StudySet {
   title: string;
   description: string | null;
   cards: CardItem[];
+  mastered_cards_count?: number; // Add this for progress tracking
 }
 
 interface CardItem {
@@ -55,7 +56,26 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
   if (!data) {
     throw new Error("Study set not found.");
   }
-  return data as StudySet;
+
+  // Fetch mastered card count for the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  let masteredCount = 0;
+  if (user) {
+    const { count, error: countError } = await supabase
+      .from('user_progress')
+      .select('id', { count: 'exact' })
+      .eq('user_id', user.id)
+      .eq('status', 'mastered')
+      .in('card_id', data.cards.map(card => card.id)); // Only count for cards in this set
+
+    if (countError) {
+      console.error("Error fetching mastered card count:", countError);
+    } else {
+      masteredCount = count || 0;
+    }
+  }
+
+  return { ...data, mastered_cards_count: masteredCount } as StudySet;
 };
 
 const StudySetDetail = () => {
@@ -191,6 +211,13 @@ const StudySetDetail = () => {
       )}
 
       <h2 className="text-2xl font-semibold mb-4">Cards ({studySet.cards.length})</h2>
+      {studySet.cards.length > 0 && studySet.mastered_cards_count !== undefined && (
+        <div className="flex items-center text-lg text-muted-foreground mb-4">
+          <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
+          <span>{studySet.mastered_cards_count} of {studySet.cards.length} cards mastered</span>
+        </div>
+      )}
+
       {studySet.cards.length === 0 ? (
         <div className="text-center py-10 border-2 border-dashed rounded-lg">
           <p className="text-muted-foreground">No cards in this set yet.</p>
