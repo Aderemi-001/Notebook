@@ -72,6 +72,21 @@ const fetchPastExams = async (): Promise<ExamSummary[]> => {
   return processedExams;
 };
 
+// Helper function to format the exam description
+const formatExamDescription = (description: string | null): string => {
+  if (!description) return '';
+  const parts = description.split('types: ');
+  if (parts.length > 1) {
+    const prefix = parts[0] + 'types: ';
+    const typesString = parts[1];
+    const formattedTypes = typesString.split(', ').map(type => {
+      return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }).join(', ');
+    return prefix + formattedTypes;
+  }
+  return description;
+};
+
 const PastExams: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -82,7 +97,7 @@ const PastExams: React.FC = () => {
 
   const filteredExams = pastExams?.filter(exam =>
     exam.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (exam.description && exam.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (exam.description && formatExamDescription(exam.description).toLowerCase().includes(searchTerm.toLowerCase())) || // Search formatted description
     (exam.study_sets?.title && exam.study_sets.title.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -157,7 +172,7 @@ const PastExams: React.FC = () => {
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold">{exam.title}</CardTitle>
                   {exam.description && (
-                    <CardDescription>{exam.description}</CardDescription>
+                    <CardDescription>{formatExamDescription(exam.description)}</CardDescription>
                   )}
                 </CardHeader>
                 <CardContent className="space-y-2">
