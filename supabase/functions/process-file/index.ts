@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { PDFDocument } from "https://esm.sh/v135/pdf_reader@0.1.1/deno/mod.js"; // Updated PDFDocument import to use esm.sh
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts"; // Updated Deno std version
+import { parsePdf } from "https://deno.land/x/pdf_parser@v0.1.0/mod.ts"; // New PDF parsing library
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,11 +39,9 @@ serve(async (req) => {
 
     if (file.type === "application/pdf") {
       try {
-        const pdfDoc = await PDFDocument.load(fileBuffer);
-        for (const page of pdfDoc.getPages()) {
-          const textContent = await page.getTextContent();
-          content += textContent.items.map(item => item.str).join(' ') + '\n';
-        }
+        const pdfData = new Uint8Array(fileBuffer);
+        const parsed = await parsePdf(pdfData);
+        content = parsed.text; // Extract text from the parsed PDF
       } catch (pdfError) {
         console.error("Error parsing PDF:", pdfError);
         return new Response(JSON.stringify({ error: "Failed to parse PDF file. It might be corrupted or unsupported." }), {
