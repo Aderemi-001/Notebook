@@ -92,5 +92,26 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function ({ addUtilities }) {
+      addUtilities({
+        '.perspective': {
+          perspective: '1000px',
+        },
+        '.backface-hidden': {
+          'backface-visibility': 'hidden',
+        },
+        '.transform-gpu': {
+          'transform-style': 'preserve-3d',
+        },
+        '.rotate-y-180': {
+          transform: 'rotateY(180deg)',
+        },
+        '.rotate-y-0': {
+          transform: 'rotateY(0deg)',
+        },
+      }, ['responsive']);
+    }
+  ],
 } satisfies Config;

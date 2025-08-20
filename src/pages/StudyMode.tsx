@@ -125,21 +125,40 @@ const StudyMode = () => {
         </Card>
       ) : (
         <>
-          <Card
-            className="w-full max-w-md h-64 flex flex-col justify-center items-center text-center cursor-pointer transition-transform duration-300 ease-in-out transform hover:scale-105"
+          <div
+            className="relative w-full max-w-md h-64 cursor-pointer perspective"
             onClick={handleFlipCard}
           >
-            <CardHeader>
-              <CardTitle className="text-2xl">
-                {showDefinition ? "Definition" : "Term"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-grow flex items-center justify-center p-6">
-              <p className="text-xl font-medium">
-                {showDefinition ? currentCard?.definition : currentCard?.term}
-              </p>
-            </CardContent>
-          </Card>
+            <Card
+              className={`absolute w-full h-full transition-transform duration-700 ease-in-out transform-gpu ${
+                showDefinition ? 'rotate-y-180' : 'rotate-y-0'
+              }`}
+            >
+              {/* Front of the card (Term) */}
+              <div className="absolute w-full h-full flex flex-col justify-center items-center text-center backface-hidden p-6">
+                <CardHeader>
+                  <CardTitle className="text-2xl">Term</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow flex items-center justify-center">
+                  <p className="text-xl font-medium">
+                    {currentCard?.term}
+                  </p>
+                </CardContent>
+              </div>
+
+              {/* Back of the card (Definition) */}
+              <div className="absolute w-full h-full flex flex-col justify-center items-center text-center backface-hidden rotate-y-180 p-6">
+                <CardHeader>
+                  <CardTitle className="text-2xl">Definition</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow flex items-center justify-center">
+                  <p className="text-xl font-medium">
+                    {currentCard?.definition}
+                  </p>
+                </CardContent>
+              </div>
+            </Card>
+          </div>
 
           <div className="mt-8 flex gap-4">
             <Button onClick={handleFlipCard} variant="outline">
