@@ -23,34 +23,54 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
     return [];
   }
 
-  const { data, error } = await supabase
+  // First, get the basic study set info from the RPC
+  const { data: rawStudySets, error: rpcError } = await supabase
     .rpc('get_study_sets_with_card_count');
 
-  if (error) {
-    console.error("Error fetching study sets:", error);
+  if (rpcError) {
+    console.error("Error fetching study sets from RPC:", rpcError);
     throw new Error("Failed to fetch study sets.");
   }
 
-  const studySets = data || [];
+  const studySets = rawStudySets || [];
 
-  // Fetch the earliest next_review_at for each set
+  // Now, for each study set, fetch its card IDs and then the earliest review date
   const setsWithReviewDates = await Promise.all(studySets.map(async (set) => {
-    const { data: earliestCard, error: cardError } = await supabase
-      .from('user_progress')
-      .select('next_review_at')
-      .eq('user_id', user.id)
-      .in('card_id', set.cards.map((card: any) => card.id)) // Assuming cards are nested in the RPC response
-      .order('next_review_at', { ascending: true })
-      .limit(1)
-      .single();
+    // Fetch card IDs for the current set
+    const { data: cardsData, error: cardsError } = await supabase
+      .from('cards')
+      .select('id')
+      .eq('set_id', set.id);
 
-    if (cardError && cardError.code !== 'PGRST116') { // PGRST116 means no rows found
-      console.error(`Error fetching earliest review date for set ${set.id}:`, cardError);
+    if (cardsError) {
+      console.error(`Error fetching cards for set ${set.id}:`, cardsError);
+      // If there's an error fetching cards, return the set without a review date
+      return { ...set, next_review_at: null };
+    }
+
+    const cardIds = cardsData ? cardsData.map(card => card.id) : [];
+
+    let earliestReviewAt: string | null = null;
+    if (cardIds.length > 0) {
+      const { data: earliestProgress, error: progressError } = await supabase
+        .from('user_progress')
+        .select('next_review_at')
+        .eq('user_id', user.id)
+        .in('card_id', cardIds)
+        .order('next_review_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (progressError && progressError.code !== 'PGRST116') { // PGRST116 means no rows found
+        console.error(`Error fetching earliest review date for set ${set.id}:`, progressError);
+      } else if (earliestProgress) {
+        earliestReviewAt = earliestProgress.next_review_at;
+      }
     }
 
     return {
       ...set,
-      next_review_at: earliestCard?.next_review_at || null,
+      next_review_at: earliestReviewAt,
     };
   }));
 
