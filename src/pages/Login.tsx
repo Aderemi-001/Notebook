@@ -93,12 +93,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 login-page-scribble-bg">
       <div className="max-w-md w-full space-y-8">
         <NotebookCard className="p-8">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-extrabold text-gray-900">
-              {isLogin ? 'Sign in to your account' : 'Create a new account'}
+              {isLogin ? 'Sign in to My Notebook' : 'Create your My Notebook account'}
             </CardTitle>
             <CardDescription className="mt-2 text-sm text-gray-600">
               {isLogin ? 'Enter your credentials below' : 'Join us to start learning!'}
