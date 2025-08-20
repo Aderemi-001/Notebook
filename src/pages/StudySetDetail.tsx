@@ -65,7 +65,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
 
   if (error) {
     console.error("Error fetching study set details:", error);
-    throw new Error("Failed to fetch study set details.");
+    throw error; // Throw the actual Supabase error
   }
   if (!data) {
     throw new Error("Study set not found.");
