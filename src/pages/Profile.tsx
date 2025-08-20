@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft, LogOut } from 'lucide-react'; // Import LogOut icon
 import { Skeleton } from '@/components/ui/skeleton';
 
 const profileSchema = z.object({
@@ -99,6 +99,24 @@ const Profile = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    const toastId = showLoading('Signing out...');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+      dismissToast(toastId);
+      showSuccess('Signed out successfully!');
+      queryClient.clear(); // Clear all queries from the cache
+      navigate('/login');
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message || 'Failed to sign out.');
+      console.error('Sign out error:', err);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-10">
@@ -129,13 +147,20 @@ const Profile = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">User Profile</h1>
-        <Button asChild variant="outline">
-          <Link to="/" className="flex items-center">
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/" className="flex items-center">
+              <React.Fragment>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+              </React.Fragment>
+            </Link>
+          </Button>
+          <Button onClick={handleSignOut} variant="destructive" className="flex items-center">
             <React.Fragment>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+              <LogOut className="mr-2 h-4 w-4" /> Sign Out
             </React.Fragment>
-          </Link>
-        </Button>
+          </Button>
+        </div>
       </div>
 
       <Card>
