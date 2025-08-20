@@ -88,20 +88,22 @@ const Index = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {studySets.map((set) => (
-            <Card key={set.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle>{set.title}</CardTitle>
-                {set.description && (
-                  <CardDescription>{set.description}</CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  <span>{set.cards_count} cards</span>
-                </div>
-              </CardContent>
-            </Card>
+            <Link to={`/sets/${set.id}`} key={set.id}> {/* Make the card clickable */}
+              <Card className="hover:shadow-md transition-shadow h-full"> {/* Ensure card takes full height */}
+                <CardHeader>
+                  <CardTitle>{set.title}</CardTitle>
+                  {set.description && (
+                    <CardDescription>{set.description}</CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    <span>{set.cards_count} cards</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

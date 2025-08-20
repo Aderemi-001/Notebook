@@ -3,6 +3,7 @@ import Index from "./pages/Index";
 import CreateSet from "./pages/CreateSet";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import StudySetDetail from "./pages/StudySetDetail"; // Import the new component
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -27,6 +28,14 @@ function App() {
             element={
               <AuthLayout>
                 <CreateSet />
+              </AuthLayout>
+            }
+          />
+          <Route
+            path="/sets/:setId" // New route for study set details
+            element={
+              <AuthLayout>
+                <StudySetDetail />
               </AuthLayout>
             }
           />
