@@ -99,49 +99,35 @@ const CreateSet = () => {
 
     const toastId = showLoading("AI is processing your file...");
 
-    const reader = new FileReader();
-    reader.readAsText(file);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    reader.onload = async (e) => {
-      const text = e.target?.result as string;
-      if (!text) {
-        dismissToast(toastId);
-        showError("File is empty or could not be read.");
+      const { data, error } = await supabase.functions.invoke('process-file', {
+        body: formData,
+      });
+
+      dismissToast(toastId);
+
+      if (error || data.error) {
+        throw new Error(data?.error || error.message);
+      }
+      
+      const newCards = data.cards;
+
+      if (!newCards || newCards.length === 0) {
+        showError("The AI couldn't find any terms and definitions in the file.");
         return;
       }
 
-      try {
-        const { data, error } = await supabase.functions.invoke('process-file', {
-          body: { content: text },
-        });
+      form.setValue('cards', newCards, { shouldValidate: true });
+      showSuccess(`${newCards.length} cards imported successfully!`);
 
-        dismissToast(toastId);
-
-        if (error) {
-          throw new Error(error.message);
-        }
-        
-        const newCards = data.cards;
-
-        if (!newCards || newCards.length === 0) {
-          showError("The AI couldn't find any terms and definitions in the file.");
-          return;
-        }
-
-        form.setValue('cards', newCards, { shouldValidate: true });
-        showSuccess(`${newCards.length} cards imported successfully!`);
-
-      } catch (error: any) {
-        dismissToast(toastId);
-        showError(error.message || "An unexpected error occurred.");
-        console.error(error);
-      }
-    };
-
-    reader.onerror = () => {
+    } catch (error: any) {
       dismissToast(toastId);
-      showError("Failed to read the file.");
-    };
+      showError(error.message || "An unexpected error occurred.");
+      console.error(error);
+    }
   };
 
   return (
@@ -194,7 +180,7 @@ const CreateSet = () => {
             <CardContent className="flex flex-col sm:flex-row items-center gap-4">
               <Input 
                 type="file" 
-                accept=".txt,.csv,.md" 
+                accept=".txt,.csv,.md,.pdf" 
                 onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
                 className="w-full sm:w-auto flex-grow"
               />
