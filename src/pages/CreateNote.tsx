@@ -269,7 +269,7 @@ const CreateNote: React.FC = () => {
         <Button onClick={handleSaveNote} disabled={isSaving || !title.trim() || isLoadingUser}>
           {isSaving ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Save Note
             </>
           ) : (
             <>

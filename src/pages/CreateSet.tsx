@@ -306,7 +306,7 @@ const CreateSet = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
           <NotebookCard> {/* Changed to NotebookCard */}
-            <CardContent className="pt-6">
+            <CardContent className="pt-6 pl-10">
               <FormField
                 control={form.control}
                 name="title"
@@ -361,10 +361,10 @@ const CreateSet = () => {
           </NotebookCard>
 
           <NotebookCard> {/* Changed to NotebookCard */}
-            <CardHeader>
+            <CardHeader className="pl-10">
               <CardTitle>Import from file with AI</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row items-center gap-4">
+            <CardContent className="flex flex-col sm:flex-row items-center gap-4 pl-10"> {/* Added pl-10 */}
               <Input 
                 type="file" 
                 accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf" 
@@ -383,10 +383,10 @@ const CreateSet = () => {
           </NotebookCard>
 
           <NotebookCard> {/* Changed to NotebookCard */}
-            <CardHeader>
+            <CardHeader className="pl-10">
               <CardTitle>Flashcards</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pl-10"> {/* Added pl-10 */}
               {fields.map((field, index) => (
                 <div key={field.id} className="flex items-start gap-4 p-4 border rounded-md">
                   <div className="font-bold text-gray-500 mt-2">{index + 1}</div>
