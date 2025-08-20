@@ -3,8 +3,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { PlusCircle, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface StudySet {
   id: string;
@@ -13,31 +13,45 @@ interface StudySet {
   cards_count: number;
 }
 
+const fetchStudySets = async (): Promise<StudySet[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    // If no user, return empty array or throw an error depending on desired behavior
+    // For now, returning empty array as AuthLayout should handle redirection
+    return [];
+  }
+
+  // We use an RPC call to a custom function to count cards efficiently
+  const { data, error } = await supabase
+    .rpc('get_study_sets_with_card_count');
+
+  if (error) {
+    console.error("Error fetching study sets:", error);
+    throw new Error("Failed to fetch study sets.");
+  }
+  return data || [];
+};
+
 const Index = () => {
-  const [studySets, setStudySets] = useState<StudySet[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: studySets, isLoading, isError, error } = useQuery<StudySet[], Error>({
+    queryKey: ['studySets'],
+    queryFn: fetchStudySets,
+  });
 
-  useEffect(() => {
-    const fetchStudySets = async () => {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+  // Invalidate query when component mounts to ensure fresh data after navigation
+  // This is a simple way to ensure data is fresh when returning to the page
+  // More sophisticated invalidation can be done from CreateSet page after successful creation
+  queryClient.invalidateQueries({ queryKey: ['studySets'] });
 
-      if (user) {
-        // We use an RPC call to a custom function to count cards efficiently
-        const { data, error } = await supabase
-          .rpc('get_study_sets_with_card_count');
-
-        if (error) {
-          console.error("Error fetching study sets:", error);
-        } else {
-          setStudySets(data || []);
-        }
-      }
-      setLoading(false);
-    };
-
-    fetchStudySets();
-  }, []);
+  if (isError) {
+    return (
+      <div className="container mx-auto py-10 text-center text-red-500">
+        Error loading study sets: {error?.message || "Unknown error"}
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-10">
@@ -50,7 +64,7 @@ const Index = () => {
         </Button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
             <Card key={i}>
@@ -64,7 +78,7 @@ const Index = () => {
             </Card>
           ))}
         </div>
-      ) : studySets.length === 0 ? (
+      ) : (studySets?.length === 0 || !studySets) ? (
         <div className="text-center py-20 border-2 border-dashed rounded-lg">
           <h2 className="text-xl font-semibold">No study sets yet!</h2>
           <p className="text-muted-foreground mt-2">

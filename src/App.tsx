@@ -5,32 +5,37 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <AuthLayout>
-              <Index />
-            </AuthLayout>
-          }
-        />
-        <Route
-          path="/create"
-          element={
-            <AuthLayout>
-              <CreateSet />
-            </AuthLayout>
-          }
-        />
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Toaster richColors />
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <AuthLayout>
+                <Index />
+              </AuthLayout>
+            }
+          />
+          <Route
+            path="/create"
+            element={
+              <AuthLayout>
+                <CreateSet />
+              </AuthLayout>
+            }
+          />
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster richColors />
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

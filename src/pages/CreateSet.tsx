@@ -11,6 +11,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query"; // Import useQueryClient
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -24,6 +25,7 @@ const formSchema = z.object({
 const CreateSet = () => {
   const [file, setFile] = React.useState<File | null>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient(); // Initialize useQueryClient
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -77,6 +79,7 @@ const CreateSet = () => {
 
       dismissToast(toastId);
       showSuccess("Set created successfully!");
+      queryClient.invalidateQueries({ queryKey: ['studySets'] }); // Invalidate the query to re-fetch data on Index page
       navigate('/');
 
     } catch (error: any) {
@@ -255,7 +258,7 @@ const CreateSet = () => {
               ))}
                {form.formState.errors.cards && !form.formState.errors.cards.root && (
                 <p className="text-sm font-medium text-destructive">
-                  {form.form-state.errors.cards.message}
+                  {form.formState.errors.cards.message}
                 </p>
               )}
               <Button
