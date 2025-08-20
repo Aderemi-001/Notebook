@@ -20,6 +20,7 @@ import Settings from "./pages/Settings";
 import NotesIndex from "./pages/NotesIndex";
 import CreateNote from "./pages/CreateNote";
 import EditNote from "./pages/EditNote";
+import Dashboard from "./pages/Dashboard"; // Import the new Dashboard component
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -234,6 +235,15 @@ function App() {
                   element={
                     <AuthLayout>
                       <EditNote />
+                    </AuthLayout>
+                  }
+                />
+                {/* New Dashboard Route */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <AuthLayout>
+                      <Dashboard />
                     </AuthLayout>
                   }
                 />
