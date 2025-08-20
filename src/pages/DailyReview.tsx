@@ -165,6 +165,7 @@ const DailyReview: React.FC = () => {
       showSuccess(successMessage);
 
       queryClient.invalidateQueries({ queryKey: ['dueCardsCount'] }); // Update global due cards count
+      queryClient.invalidateQueries({ queryKey: ['studyDays'] }); // Invalidate studyDays query
     } catch (err: any) {
       showError(`Failed to update card progress: ${err.message}`);
       console.error("Error updating card progress:", err);
