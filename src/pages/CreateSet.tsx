@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { showError, showSuccess } from "@/utils/toast";
+import React from "react";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -20,6 +21,7 @@ const formSchema = z.object({
 });
 
 const CreateSet = () => {
+  const [file, setFile] = React.useState<File | null>(null);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -45,6 +47,64 @@ const CreateSet = () => {
     console.error(errors);
     showError("Please fix the errors before submitting.");
   }
+
+  const handleFileImport = () => {
+    if (!file) {
+      showError("Please select a file first.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      if (!text) {
+        showError("File is empty or could not be read.");
+        return;
+      }
+
+      try {
+        const lines = text.split('\n').filter(line => line.trim() !== '');
+        const newCards = lines.map(line => {
+          let term: string;
+          let definition: string;
+          
+          if (line.includes('\t')) {
+            const parts = line.split('\t');
+            term = parts[0].trim();
+            definition = parts.slice(1).join('\t').trim();
+          } else {
+            const parts = line.split(',');
+            term = parts[0].trim();
+            definition = parts.slice(1).join(',').trim();
+          }
+
+          if (!term || !definition) {
+            throw new Error("Invalid line format. Each line must contain a term and a definition.");
+          }
+          
+          return { term, definition };
+        });
+
+        if (newCards.length === 0) {
+          showError("No valid cards found in the file.");
+          return;
+        }
+
+        form.setValue('cards', newCards);
+        showSuccess(`${newCards.length} cards imported successfully!`);
+
+      } catch (error: any) {
+        showError(error.message || "Failed to parse the file.");
+        console.error(error);
+      }
+    };
+
+    reader.onerror = () => {
+      showError("Failed to read the file.");
+    };
+
+    reader.readAsText(file);
+  };
 
   return (
     <div className="container mx-auto py-10">
@@ -86,6 +146,23 @@ const CreateSet = () => {
                   )}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Import from file</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row items-center gap-4">
+              <Input 
+                type="file" 
+                accept=".txt,.csv" 
+                onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+                className="w-full sm:w-auto flex-grow"
+              />
+              <Button type="button" onClick={handleFileImport} disabled={!file} className="w-full sm:w-auto">
+                Import Cards
+              </Button>
             </CardContent>
           </Card>
 
