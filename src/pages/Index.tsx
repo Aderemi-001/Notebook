@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import React from "react"; // Import React for React.Fragment
 
 interface StudySet {
   id: string;
@@ -60,12 +61,16 @@ const Index = () => {
         <div className="flex gap-2"> {/* Group buttons */}
           <Button asChild>
             <Link to="/create" className="flex items-center">
-              <PlusCircle className="mr-2 h-4 w-4" /> Create Set
+              <React.Fragment>
+                <PlusCircle className="mr-2 h-4 w-4" /> Create Set
+              </React.Fragment>
             </Link>
           </Button>
           <Button asChild variant="outline"> {/* New Profile button */}
             <Link to="/profile" className="flex items-center">
-              <User className="mr-2 h-4 w-4" /> Profile
+              <React.Fragment>
+                <User className="mr-2 h-4 w-4" /> Profile
+              </React.Fragment>
             </Link>
           </Button>
         </div>

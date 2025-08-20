@@ -120,11 +120,13 @@ const StudyMode = () => {
 
   if (!cards || cards.length === 0) {
     return (
-      <div className="container mx-auto py-10 text-center">
+      <div className="text-center py-10 border-2 border-dashed rounded-lg">
         <p className="text-muted-foreground">This study set has no cards yet.</p>
         <Button asChild className="mt-4">
           <Link to={`/sets/${setId}`} className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details
+            <React.Fragment>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details
+            </React.Fragment>
           </Link>
         </Button>
       </div>
@@ -137,7 +139,9 @@ const StudyMode = () => {
         <h1 className="text-3xl font-bold">Study Mode</h1>
         <Button asChild variant="outline">
           <Link to={`/sets/${setId}`} className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set
+            <React.Fragment>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set
+            </React.Fragment>
           </Link>
         </Button>
       </div>

@@ -241,7 +241,9 @@ const EditSet = () => {
         <h1 className="text-3xl font-bold">Edit Study Set</h1>
         <Button asChild variant="outline">
           <Link to={`/sets/${setId}`} className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set
+            <React.Fragment>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set
+            </React.Fragment>
           </Link>
         </Button>
       </div>

@@ -166,19 +166,25 @@ const StudySetDetail = () => {
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link to="/" className="flex items-center">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sets
+              <React.Fragment>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sets
+              </React.Fragment>
             </Link>
           </Button>
           {studySet.cards.length > 0 && (
             <Button asChild>
               <Link to={`/sets/${setId}/study`} className="flex items-center">
-                <PlayCircle className="mr-2 h-4 w-4" /> Start Study
+                <React.Fragment>
+                  <PlayCircle className="mr-2 h-4 w-4" /> Start Study
+                </React.Fragment>
               </Link>
             </Button>
           )}
           <Button asChild variant="secondary">
             <Link to={`/sets/${setId}/edit`} className="flex items-center">
-              <Pencil className="mr-2 h-4 w-4" /> Edit Set
+              <React.Fragment>
+                <Pencil className="mr-2 h-4 w-4" /> Edit Set
+              </React.Fragment>
             </Link>
           </Button>
           <AlertDialog>

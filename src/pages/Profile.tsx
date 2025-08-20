@@ -131,7 +131,9 @@ const Profile = () => {
         <h1 className="text-3xl font-bold">User Profile</h1>
         <Button asChild variant="outline">
           <Link to="/" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+            <React.Fragment>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+            </React.Fragment>
           </Link>
         </Button>
       </div>
@@ -159,8 +161,7 @@ const Profile = () => {
               />
               <Button type="submit">Save Changes</Button>
             </form>
-          </Form>
-        </CardContent>
+          </CardContent>
       </Card>
     </div>
   );
