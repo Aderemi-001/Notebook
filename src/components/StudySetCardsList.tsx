@@ -1,4 +1,3 @@
-import React from 'react';
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
