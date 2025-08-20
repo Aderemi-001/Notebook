@@ -97,7 +97,7 @@ const CreateSet = () => {
       return;
     }
 
-    const toastId = showLoading("AI is processing your file...");
+    const toastId = showLoading("Running diagnostic: Reading file on server...");
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -116,8 +116,6 @@ const CreateSet = () => {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1b3NkbWVjbGR6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
-            // NOTE: Do NOT set 'Content-Type' here. The browser will automatically
-            // set it to 'multipart/form-data' with the correct boundary.
           },
           body: formData,
         }
@@ -131,6 +129,14 @@ const CreateSet = () => {
         throw new Error(data?.error || "Failed to process file.");
       }
       
+      // Handle diagnostic response
+      if (data.diagnostic_success) {
+        showSuccess("Diagnostic passed! File was read successfully on the server.");
+        console.log("Content Snippet:", data.content_snippet);
+        return;
+      }
+
+      // Original logic for handling cards
       const newCards = data.cards;
 
       if (!newCards || newCards.length === 0) {

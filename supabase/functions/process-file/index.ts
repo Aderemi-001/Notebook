@@ -8,9 +8,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Retrieve the OpenAI API key from environment variables
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-
 // Helper function to extract text from a PDF file buffer
 async function extractTextFromPdf(fileBuffer: ArrayBuffer): Promise<string> {
     // The type assertion is needed because the esm.sh module typing is generic
@@ -32,19 +29,8 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Check for the OpenAI API key at the beginning
-  if (!OPENAI_API_KEY) {
-    console.error("Missing OPENAI_API_KEY environment variable.");
-    return new Response(
-      JSON.stringify({ error: "Server configuration error: Missing OpenAI API key." }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
-  }
-
   try {
+    console.log("Function invoked. Starting diagnostic test: file reading.");
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
@@ -77,40 +63,15 @@ serve(async (req) => {
         });
     }
 
-    const prompt = `You are an expert assistant that extracts key terms and definitions from a given text and formats them as a JSON array of objects. Each object must have a "term" and a "definition" key. Do not include any extra text or explanations, only the JSON array. The response should be a JSON object with a single key "cards" that contains the array. Here is the text:\n\n---\n\n${content}`;
-
-    // Call the OpenAI API
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("OpenAI API error:", errorData);
-      throw new Error("Failed to get a response from the AI service.");
-    }
-
-    const data = await response.json();
-    // The response from OpenAI is a stringified JSON, so we need to parse it.
-    const jsonResponse = JSON.parse(data.choices[0].message.content);
-    
-    const cards = jsonResponse.cards || [];
-
-    return new Response(JSON.stringify({ cards }), {
+    // DIAGNOSTIC STEP: Return extracted text instead of calling AI
+    const snippet = content.substring(0, 400);
+    return new Response(JSON.stringify({ diagnostic_success: true, content_snippet: snippet }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
+
   } catch (error) {
-    console.error("Error in process-file function:", error);
+    console.error("Error during file processing diagnostic:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
