@@ -20,7 +20,6 @@ serve(async (req) => {
     });
   }
 
-  // Updated to use gemini-1.5-flash-latest
   const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
   try {
@@ -93,14 +92,28 @@ serve(async (req) => {
     }
 
     const geminiData = await geminiResponse.json();
-    
-    const resultText = geminiData.candidates[0].content.parts[0].text;
+    let resultText = geminiData.candidates[0].content.parts[0].text;
 
     if (!resultText) {
       throw new Error("AI failed to generate a response.");
     }
 
-    return new Response(resultText, {
+    // Attempt to extract JSON from markdown if present
+    const jsonMatch = resultText.match(/```json\n([\s\S]*?)\n```/);
+    if (jsonMatch && jsonMatch[1]) {
+      resultText = jsonMatch[1];
+    }
+
+    // Validate and parse the JSON
+    let parsedData;
+    try {
+      parsedData = JSON.parse(resultText);
+    } catch (parseError) {
+      console.error("Failed to parse AI response as JSON:", resultText, parseError);
+      throw new Error("AI returned invalid JSON. Please try again or refine your input.");
+    }
+
+    return new Response(JSON.stringify(parsedData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
