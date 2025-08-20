@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import RichTextEditor from '@/components/RichTextEditor';
+import { Label } from '@/components/ui/label'; // Import Label
 
 const CreateNote: React.FC = () => {
   const navigate = useNavigate();
