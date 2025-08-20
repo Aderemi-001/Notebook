@@ -1,4 +1,3 @@
-import React from 'react';
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -25,7 +24,7 @@ interface StudySetCardsListProps {
 
 const StudySetCardsList: React.FC<StudySetCardsListProps> = ({ cards, onToggleFlag }) => {
   return (
-    <React.Fragment>
+    <>
       <h2 className="text-2xl font-semibold mb-4">Cards ({cards.length})</h2>
       
       {cards.length === 0 ? (
@@ -78,7 +77,7 @@ const StudySetCardsList: React.FC<StudySetCardsListProps> = ({ cards, onToggleFl
           ))}
         </div>
       )}
-    </React.Fragment>
+    </>
   );
 };
 
