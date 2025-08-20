@@ -4,6 +4,7 @@ import { getDocument } from "https://esm.sh/pdfjs-dist@3.11.174";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -24,7 +25,7 @@ async function extractTextFromPdf(fileBuffer: ArrayBuffer): Promise<string> {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   if (!OPENAI_API_KEY) {
