@@ -29,6 +29,8 @@ interface ConstellationData {
 const fetchCognitiveConstellation = async (): Promise<ConstellationData> => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
+    // This case should ideally be handled by AuthLayout, but for robustness,
+    // we throw an error here if the query somehow gets enabled without a session.
     throw new Error("User not authenticated.");
   }
 
@@ -56,15 +58,53 @@ const fetchCognitiveConstellation = async (): Promise<ConstellationData> => {
 
 const CognitiveConstellation = () => {
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const { data, isLoading, isError, error } = useQuery<ConstellationData, Error>({
     queryKey: ['cognitiveConstellation'],
     queryFn: fetchCognitiveConstellation,
+    enabled: isAuthenticated === true, // Only enable query if authenticated
   });
 
   const handleSelectConcept = (concept: Concept | null) => {
     setSelectedConcept(concept);
   };
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="container mx-auto py-10 flex items-center justify-center">
+        <Skeleton className="h-8 w-1/2 mb-8" />
+        <Skeleton className="h-96 w-full rounded-lg mb-8" />
+      </div>
+    ); // Still checking authentication
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto py-10 text-center text-muted-foreground">
+        Please log in to view your Cognitive Constellation.
+        <div className="mt-4">
+          <Button asChild>
+            <Link to="/login">Go to Login</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
