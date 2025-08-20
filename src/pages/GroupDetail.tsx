@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import AddExistingSetToGroupDialog from '@/components/AddExistingSetToGroupDialog'; // Import the new component
 
 interface StudySetGroup {
   id: string;
@@ -152,7 +153,7 @@ const GroupDetail: React.FC = () => {
     enabled: !!groupId,
   });
 
-  const { data: studySets, isLoading: isLoadingSets, isError: isErrorSets, error: errorSets } = useQuery<StudySet[], Error>({
+  const { data: studySets, isLoading: isLoadingSets, isError: isErrorSets, error: errorSets, refetch: refetchStudySetsInGroup } = useQuery<StudySet[], Error>({
     queryKey: ['studySetsInGroup', groupId],
     queryFn: () => fetchStudySetsInGroup(groupId!),
     enabled: !!groupId,
@@ -241,9 +242,18 @@ const GroupDetail: React.FC = () => {
                 <Pencil className="mr-2 h-4 w-4" /> Edit Group
               </Link>
             </DropdownMenuItem>
+            <AddExistingSetToGroupDialog
+              groupId={groupId}
+              trigger={
+                <DropdownMenuItem className="flex items-center cursor-pointer" onSelect={(e) => e.preventDefault()}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add Existing Set
+                </DropdownMenuItem>
+              }
+              onSetAdded={() => refetchStudySetsInGroup()} // Refetch sets in group after adding
+            />
             <DropdownMenuItem asChild>
               <Link to="/create" state={{ groupId: groupId }} className="flex items-center">
-                <PlusCircle className="mr-2 h-4 w-4" /> Add a Set
+                <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -270,14 +280,25 @@ const GroupDetail: React.FC = () => {
         <div className="text-center py-10 border-2 border-dashed rounded-lg">
           <h2 className="text-xl font-semibold">No study sets found in this group!</h2>
           <p className="text-muted-foreground mt-2">
-            {searchTerm ? "Try a different search term." : "Create a new study set and assign it to this group."}
+            {searchTerm ? "Try a different search term." : "Create a new study set and assign it to this group, or add an existing one."}
           </p>
           {!searchTerm && (
-            <Button asChild className="mt-4">
-              <Link to="/create" state={{ groupId: groupId }}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add a Set
-              </Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-4">
+              <Button asChild>
+                <Link to="/create" state={{ groupId: groupId }}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
+                </Link>
+              </Button>
+              <AddExistingSetToGroupDialog
+                groupId={groupId}
+                trigger={
+                  <Button variant="outline">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Existing Set
+                  </Button>
+                }
+                onSetAdded={() => refetchStudySetsInGroup()}
+              />
+            </div>
           )}
         </div>
       ) : (
