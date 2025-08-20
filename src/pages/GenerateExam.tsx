@@ -41,14 +41,27 @@ const fetchUserStudySets = async (): Promise<StudySet[]> => {
     throw new Error("User not authenticated.");
   }
 
+  // Fetch study sets that belong to the user AND have source_text
   const { data, error } = await supabase
-    .rpc('get_study_sets_with_card_count'); // Using the existing RPC for user's sets
+    .from('study_sets')
+    .select('id, title, description, cards(id)') // Select cards to get count
+    .eq('user_id', user.id)
+    .not('source_text', 'is', null); // Filter for sets with source text
 
   if (error) {
     console.error("Error fetching user study sets:", error);
     throw new Error("Failed to fetch your study sets.");
   }
-  return data || [];
+
+  // Manually calculate cards_count as the RPC is not used here
+  const processedSets = data?.map(set => ({
+    id: set.id,
+    title: set.title,
+    description: set.description,
+    cards_count: set.cards.length, // Count cards directly
+  })) || [];
+
+  return processedSets;
 };
 
 const GenerateExam: React.FC = () => {
