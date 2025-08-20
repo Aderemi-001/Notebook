@@ -527,14 +527,14 @@ const StudySetDetail = () => {
                         {card.is_flagged ? "Unflag card" : "Flag card"}
                       </TooltipContent>
                     </Tooltip>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription>{card.definition}</CardDescription>
-                  </CardContent>
-                </NotebookCard>
-              );
-            })}
-          </div>
+                  </TooltipProvider>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>{card.definition}</CardDescription>
+                </CardContent>
+              </NotebookCard>
+            );
+          })}
         </div>
       )}
 
