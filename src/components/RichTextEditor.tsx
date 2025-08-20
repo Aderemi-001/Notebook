@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
-import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlight as HighlightIcon, Undo, Redo } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RichTextEditorProps {
@@ -129,7 +129,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
             disabled={!editor.can().chain().focus().toggleHighlight().run()}
             aria-label="Toggle highlight"
           >
-            <HighlightIcon className="h-4 w-4" />
+            <Highlighter className="h-4 w-4" />
           </Toggle>
           <Toggle
             size="sm"
