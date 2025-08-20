@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"; // Keep these imports for sub-components
 import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
-import { PlusCircle, BookOpen, User, Clock, AlertCircle } from "lucide-react";
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network } from "lucide-react"; // Added Network icon
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -138,6 +138,13 @@ const Index = () => {
             <Link to="/create" className="flex items-center">
               <React.Fragment>
                 <PlusCircle className="mr-2 h-4 w-4" /> Create Set
+              </React.Fragment>
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/constellation" className="flex items-center">
+              <React.Fragment>
+                <Network className="mr-2 h-4 w-4" /> Constellation
               </React.Fragment>
             </Link>
           </Button>

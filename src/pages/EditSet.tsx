@@ -193,7 +193,7 @@ const EditSet = () => {
       return;
     }
 
-    const toastId = showLoading("AI is generating your flashcards...");
+    const toastId = showLoading("AI is generating your flashcards, concepts, and relationships...");
     let fileContent = "";
 
     try {
@@ -238,8 +238,8 @@ const EditSet = () => {
           throw new Error("Could not extract any text from the file.");
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { session, user } } = await supabase.auth.getSession();
+      if (!session || !user) {
         throw new Error("You must be logged in to import a file.");
       }
 
@@ -265,6 +265,8 @@ const EditSet = () => {
       }
       
       const newCards = data.cards;
+      const newConcepts = data.concepts;
+      const newRelationships = data.relationships;
 
       if (!newCards || newCards.length === 0) {
         showError("The AI couldn't find any terms and definitions in the file.");
@@ -275,6 +277,72 @@ const EditSet = () => {
         append({ term: card.term, definition: card.definition });
       });
       showSuccess(`${newCards.length} cards imported successfully!`);
+
+      // Process concepts and relationships
+      if (newConcepts && newConcepts.length > 0) {
+        const conceptNameToIdMap = new Map<string, string>();
+
+        for (const concept of newConcepts) {
+          const { data: existingConcept, error: fetchConceptError } = await supabase
+            .from('concepts')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('name', concept.name)
+            .single();
+
+          if (fetchConceptError && fetchConceptError.code !== 'PGRST116') { // PGRST116 means no rows found
+            console.error("Error fetching existing concept:", fetchConceptError);
+            continue;
+          }
+
+          let conceptId: string;
+          if (existingConcept) {
+            conceptId = existingConcept.id;
+          } else {
+            const { data: insertedConcept, error: insertConceptError } = await supabase
+              .from('concepts')
+              .insert({ user_id: user.id, name: concept.name, description: concept.description })
+              .select('id')
+              .single();
+            if (insertConceptError) {
+              console.error("Error inserting concept:", insertConceptError);
+              continue;
+            }
+            conceptId = insertedConcept.id;
+          }
+          conceptNameToIdMap.set(concept.name, conceptId);
+        }
+
+        // Insert relationships
+        if (newRelationships && newRelationships.length > 0) {
+          const relationshipsToInsert = [];
+          for (const rel of newRelationships) {
+            const sourceId = conceptNameToIdMap.get(rel.source_name);
+            const targetId = conceptNameToIdMap.get(rel.target_name);
+            if (sourceId && targetId) {
+              relationshipsToInsert.push({
+                user_id: user.id,
+                source_concept_id: sourceId,
+                target_concept_id: targetId,
+                type: rel.type,
+                strength: rel.strength || 0.5,
+              });
+            }
+          }
+
+          if (relationshipsToInsert.length > 0) {
+            const { error: insertRelError } = await supabase
+              .from('concept_relationships')
+              .upsert(relationshipsToInsert, { onConflict: 'user_id,source_concept_id,target_concept_id,type' });
+            if (insertRelError) {
+              console.error("Error inserting relationships:", insertRelError);
+            } else {
+              showSuccess(`${relationshipsToInsert.length} relationships processed.`);
+            }
+          }
+        }
+        queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] });
+      }
 
     } catch (error: any) {
       dismissToast(toastId);

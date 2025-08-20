@@ -33,17 +33,32 @@ serve(async (req) => {
     }
 
     const prompt = `
-      You are an expert at creating flashcard study sets.
-      Based on the following text, generate a list of key terms and their definitions.
+      You are an expert at creating flashcard study sets and identifying key concepts and their relationships within a given text.
+      Based on the following text, generate a list of key terms and their definitions,
+      a list of core concepts, and a list of relationships between these concepts.
+
       The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
-      The JSON object should have a single key "cards", which is an array of objects.
-      Each object in the array should have two properties: "term" and "definition".
+      The JSON object should have three top-level keys: "cards", "concepts", and "relationships".
+
+      "cards" should be an array of objects, each with "term" and "definition" properties.
+      "concepts" should be an array of objects, each with a "name" (string) and an optional "description" (string, a brief summary of the concept).
+      "relationships" should be an array of objects, each with "source_name" (string, name of the source concept), "target_name" (string, name of the target concept), "type" (string, e.g., "related_to", "is_prerequisite_for", "is_part_of", "causes", "explains"), and "strength" (number, 0.0 to 1.0, indicating confidence or relevance).
+
+      Ensure that all "source_name" and "target_name" in "relationships" refer to "name" values present in the "concepts" array.
+      Keep the concepts and relationships concise and directly derived from the text.
 
       Example format:
       {
         "cards": [
           { "term": "Example Term 1", "definition": "This is the definition for term 1." },
           { "term": "Example Term 2", "definition": "This is the definition for term 2." }
+        ],
+        "concepts": [
+          { "name": "Concept A", "description": "A foundational idea." },
+          { "name": "Concept B", "description": "A related idea." }
+        ],
+        "relationships": [
+          { "source_name": "Concept A", "target_name": "Concept B", "type": "related_to", "strength": 0.9 }
         ]
       }
 
@@ -91,6 +106,17 @@ serve(async (req) => {
     } catch (parseError) {
       console.error("Failed to parse AI response as JSON:", resultText, parseError);
       throw new Error("AI returned invalid JSON. Please try again or refine your input.");
+    }
+
+    // Basic validation for expected structure
+    if (!parsedData.cards || !Array.isArray(parsedData.cards)) {
+      throw new Error("AI response missing 'cards' array.");
+    }
+    if (!parsedData.concepts || !Array.isArray(parsedData.concepts)) {
+      throw new Error("AI response missing 'concepts' array.");
+    }
+    if (!parsedData.relationships || !Array.isArray(parsedData.relationships)) {
+      throw new Error("AI response missing 'relationships' array.");
     }
 
     return new Response(JSON.stringify(parsedData), {

@@ -1,0 +1,215 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
+import { showError } from '@/utils/toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { NotebookCard } from '@/components/NotebookCard';
+
+interface Concept {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+interface Relationship {
+  id: string;
+  source_concept_id: string;
+  target_concept_id: string;
+  type: string;
+  strength: number;
+}
+
+interface CardConceptLink {
+  card_id: string;
+  concept_id: string;
+}
+
+interface ConstellationData {
+  concepts: Concept[];
+  relationships: Relationship[];
+  cardConceptLinks: CardConceptLink[];
+}
+
+const fetchConstellationData = async (): Promise<ConstellationData> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
+
+  const { data: concepts, error: conceptsError } = await supabase
+    .from('concepts')
+    .select('*')
+    .eq('user_id', user.id);
+
+  if (conceptsError) throw conceptsError;
+
+  const { data: relationships, error: relationshipsError } = await supabase
+    .from('concept_relationships')
+    .select('*')
+    .eq('user_id', user.id);
+
+  if (relationshipsError) throw relationshipsError;
+
+  const { data: cardConceptLinks, error: cardConceptLinksError } = await supabase
+    .from('card_concepts')
+    .select('card_id, concept_id')
+    .eq('user_id', user.id);
+
+  if (cardConceptLinksError) throw cardConceptLinksError;
+
+  return {
+    concepts: concepts || [],
+    relationships: relationships || [],
+    cardConceptLinks: cardConceptLinks || [],
+  };
+};
+
+const CognitiveConstellation: React.FC = () => {
+  const { data, isLoading, isError, error } = useQuery<ConstellationData, Error>({
+    queryKey: ['cognitiveConstellation'],
+    queryFn: fetchConstellationData,
+  });
+
+  const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-10">
+        <Skeleton className="h-8 w-1/2 mb-8" />
+        <Skeleton className="h-64 w-full rounded-lg" />
+        <div className="grid grid-cols-2 gap-4 mt-8">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    showError(error?.message || "Failed to load cognitive constellation.");
+    return (
+      <div className="container mx-auto py-10 text-center text-red-500">
+        Error loading cognitive constellation: {error?.message || "Unknown error"}
+      </div>
+    );
+  }
+
+  if (!data || data.concepts.length === 0) {
+    return (
+      <div className="container mx-auto py-10 text-center">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Cognitive Constellation</h1>
+          <Button asChild variant="outline">
+            <Link to="/" className="flex items-center">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+            </Link>
+          </Button>
+        </div>
+        <div className="text-center py-20 border-2 border-dashed rounded-lg">
+          <h2 className="text-xl font-semibold">No concepts found yet!</h2>
+          <p className="text-muted-foreground mt-2">
+            Import text files with AI on the "Create Set" or "Edit Set" pages to generate your cognitive constellation.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const { concepts, relationships } = data;
+
+  // Simple layout for demonstration - a real constellation would use a force-directed graph
+  // For now, we'll just list concepts and show relationships on click.
+  const conceptMap = new Map(concepts.map(c => [c.id, c]));
+
+  return (
+    <div className="container mx-auto py-10">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Cognitive Constellation</h1>
+        <Button asChild variant="outline">
+          <Link to="/" className="flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+          </Link>
+        </Button>
+      </div>
+
+      <p className="text-muted-foreground mb-6">
+        Explore the interconnected web of concepts extracted from your study material. Click on a concept to see its details and relationships.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="col-span-1 md:col-span-2 lg:col-span-2">
+          <NotebookCard className="h-full">
+            <CardHeader>
+              <CardTitle>Your Concepts</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto">
+              {concepts.map(concept => (
+                <Button
+                  key={concept.id}
+                  variant={selectedConcept?.id === concept.id ? "default" : "outline"}
+                  onClick={() => setSelectedConcept(concept)}
+                  className="justify-start text-left h-auto py-2 px-3"
+                >
+                  {concept.name}
+                </Button>
+              ))}
+            </CardContent>
+          </NotebookCard>
+        </div>
+
+        <div className="col-span-1">
+          <NotebookCard className="h-full">
+            <CardHeader>
+              <CardTitle>Concept Details</CardTitle>
+            </CardHeader>
+            <CardContent className="max-h-[600px] overflow-y-auto">
+              {selectedConcept ? (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">{selectedConcept.name}</h3>
+                  {selectedConcept.description && (
+                    <p className="text-muted-foreground text-sm">{selectedConcept.description}</p>
+                  )}
+                  <h4 className="text-lg font-medium mt-4">Relationships:</h4>
+                  {relationships.filter(r => r.source_concept_id === selectedConcept.id || r.target_concept_id === selectedConcept.id).length > 0 ? (
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      {relationships
+                        .filter(r => r.source_concept_id === selectedConcept.id)
+                        .map(r => (
+                          <li key={r.id}>
+                            <span className="font-semibold">{selectedConcept.name}</span>{' '}
+                            <span className="text-muted-foreground">({r.type})</span>{' '}
+                            <span className="font-semibold">{conceptMap.get(r.target_concept_id)?.name}</span>
+                            <span className="text-xs text-muted-foreground ml-2">({(r.strength * 100).toFixed(0)}% strength)</span>
+                          </li>
+                        ))}
+                      {relationships
+                        .filter(r => r.target_concept_id === selectedConcept.id && r.source_concept_id !== selectedConcept.id)
+                        .map(r => (
+                          <li key={r.id}>
+                            <span className="font-semibold">{conceptMap.get(r.source_concept_id)?.name}</span>{' '}
+                            <span className="text-muted-foreground">({r.type} to)</span>{' '}
+                            <span className="font-semibold">{selectedConcept.name}</span>
+                            <span className="text-xs text-muted-foreground ml-2">({(r.strength * 100).toFixed(0)}% strength)</span>
+                          </li>
+                        ))}
+                    </ul>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">No relationships found for this concept.</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">Select a concept to view its details.</p>
+              )}
+            </CardContent>
+          </NotebookCard>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CognitiveConstellation;
