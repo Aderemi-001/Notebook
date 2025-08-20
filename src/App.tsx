@@ -20,11 +20,14 @@ import Settings from "./pages/Settings";
 import NotesIndex from "./pages/NotesIndex";
 import CreateNote from "./pages/CreateNote";
 import EditNote from "./pages/EditNote";
-import Dashboard from "./pages/Dashboard"; // Import the new Dashboard component
+import Dashboard from "./pages/Dashboard";
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as React from "react";
+import { useDueCardsCount } from "./hooks/use-due-cards-count"; // Import the new hook
+import { useUserPreferences } from "./hooks/use-user-preferences"; // Import user preferences hook
+import { toast } from "sonner"; // Import sonner toast
 
 const queryClient = new QueryClient();
 
@@ -84,6 +87,37 @@ class ErrorBoundary extends React.Component<
 }
 
 function App() {
+  const { data: dueCardsCount, isLoading: isLoadingDueCards } = useDueCardsCount();
+  const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
+  const [reminderShown, setReminderShown] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isLoadingDueCards && !isLoadingPreferences && preferences && dueCardsCount !== undefined) {
+      if (preferences.enable_review_reminders && dueCardsCount > 0 && !reminderShown) {
+        toast.info(
+          `You have ${dueCardsCount} cards due for review!`,
+          {
+            description: "Click here to start studying.",
+            action: {
+              label: "Study Now",
+              onClick: () => {
+                window.location.href = "/"; // Navigate to the main page where due cards are visible
+              },
+            },
+            duration: 10000, // Show for 10 seconds
+            onDismiss: () => setReminderShown(true), // Mark as shown when dismissed
+            onAutoClose: () => setReminderShown(true), // Mark as shown when auto-closed
+          }
+        );
+        // Set reminderShown to true immediately to prevent multiple toasts on first load
+        setReminderShown(true);
+      } else if (dueCardsCount === 0) {
+        // Reset reminderShown if no cards are due, so it can show again later if cards become due
+        setReminderShown(false);
+      }
+    }
+  }, [dueCardsCount, isLoadingDueCards, preferences, isLoadingPreferences, reminderShown]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary> {/* Wrap the entire application with the ErrorBoundary */}
