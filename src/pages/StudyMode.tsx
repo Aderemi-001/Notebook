@@ -79,7 +79,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
       id,
       term,
       definition,
-      user_progress!left(
+      user_progress!user_progress_card_id_fkey!left(
         repetition_level,
         ease_factor,
         next_review_at,
@@ -91,7 +91,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
 
   if (error) {
     console.error("Error fetching cards for study set:", error);
-    throw new Error("Failed to fetch cards.");
+    throw new Error("Failed to fetch cards."); // This is the source of the generic error message
   }
 
   if (!data) {
