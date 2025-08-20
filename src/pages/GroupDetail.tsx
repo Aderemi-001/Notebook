@@ -243,7 +243,7 @@ const GroupDetail: React.FC = () => {
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/create" state={{ groupId: groupId }} className="flex items-center">
-                <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
+                <PlusCircle className="mr-2 h-4 w-4" /> Add a Set
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -275,7 +275,7 @@ const GroupDetail: React.FC = () => {
           {!searchTerm && (
             <Button asChild className="mt-4">
               <Link to="/create" state={{ groupId: groupId }}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
+                <PlusCircle className="mr-2 h-4 w-4" /> Add a Set
               </Link>
             </Button>
           )}
