@@ -15,10 +15,11 @@ import ExplorePublicSets from "./pages/ExplorePublicSets";
 import SearchCards from "./pages/SearchCards";
 import GenerateEssayQuestions from "./pages/GenerateEssayQuestions";
 import PastEssayQuestions from "./pages/PastEssayQuestions";
+import Settings from "./pages/Settings"; // Import the new Settings page
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import * as React from "react"; // Changed import statement here
+import * as React from "react";
 
 const queryClient = new QueryClient();
 
@@ -141,6 +142,7 @@ function App() {
                   </AuthLayout>
                 }
               />
+              <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} /> {/* New Settings Route */}
               <Route path="/login" element={<Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

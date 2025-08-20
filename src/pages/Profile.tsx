@@ -13,7 +13,6 @@ import { NotebookCard } from '@/components/NotebookCard';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { ArrowLeft, LogOut, Menu } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -197,9 +196,8 @@ const Profile = () => {
                   </FormItem>
                 )}
               />
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-end"> {/* Adjusted alignment */}
                 <Button type="submit">Save Changes</Button>
-                <ThemeToggle />
               </div>
             </form>
           </Form>

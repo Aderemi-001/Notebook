@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText } from "lucide-react";
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon } from "lucide-react"; // Added SettingsIcon
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -192,7 +192,7 @@ const Index = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/past-essay-questions" className="flex items-center"> {/* New link added here */}
+              <Link to="/past-essay-questions" className="flex items-center">
                 <FileText className="mr-2 h-4 w-4" /> Past Essay Questions
               </Link>
             </DropdownMenuItem>
@@ -205,6 +205,11 @@ const Index = () => {
             <DropdownMenuItem asChild>
               <Link to="/profile" className="flex items-center">
                 <User className="mr-2 h-4 w-4" /> Profile
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/settings" className="flex items-center"> {/* New Settings link */}
+                <SettingsIcon className="mr-2 h-4 w-4" /> Settings
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
