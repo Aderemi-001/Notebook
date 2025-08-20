@@ -1,28 +1,29 @@
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"; // Added FormDescription
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Keep these imports for sub-components
-import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
-import { Trash2, ArrowLeft } from "lucide-react";
+import { Form } from "@/components/ui/form";
+import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { NotebookCard } from "@/components/NotebookCard";
+import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import * as pdfjsLib from 'pdfjs-dist';
-import { Switch } from "@/components/ui/switch"; // Import Switch
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+// Import new modular components and hooks
+import { useStudySetData } from "@/hooks/use-study-set-data";
+import { useFileImport } from "@/hooks/use-file-import";
+import StudySetFormFields from "@/components/StudySetFormFields";
+import FlashcardEditor from "@/components/FlashcardEditor";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  is_public: z.boolean().default(false), // Added is_public field
+  is_public: z.boolean().default(false),
   cards: z.array(z.object({
     id: z.string().optional(),
     term: z.string().min(1, "Term is required"),
@@ -30,99 +31,47 @@ const formSchema = z.object({
   })).min(1, "You must have at least one card."),
 });
 
-interface StudySetData {
-  id: string;
-  title: string;
-  description: string | null;
-  is_public: boolean; // Added is_public to interface
-  cards: { id: string; term: string; definition: string }[];
-  source_text: string | null; // Add source_text to the fetched data
-}
-
-const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
-  const { data, error } = await supabase
-    .from('study_sets')
-    .select(`
-      id,
-      title,
-      description,
-      source_text,
-      is_public,
-      cards (
-        id,
-        term,
-        definition
-      )
-    `)
-    .eq('id', setId)
-    .single();
-
-  if (error) {
-    console.error("Error fetching study set for edit:", error);
-    throw new Error("Failed to fetch study set for editing.");
-  }
-  if (!data) {
-    throw new Error("Study set not found.");
-  }
-  return data as StudySetData;
-};
+type EditSetFormValues = z.infer<typeof formSchema>;
 
 const EditSet = () => {
   const { setId } = useParams<{ setId: string }>();
-  const [file, setFile] = useState<File | null>(null);
-  const [sourceTextContent, setSourceTextContent] = useState<string | null>(null); // New state for source text
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const { data: studySet, isLoading, isError, error } = useStudySetData(setId);
+  const { file, setFile, sourceTextContent, setSourceTextContent, handleFileImport, currentUser, isLoadingUser } = useFileImport();
+
+  const form = useForm<EditSetFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
-      is_public: false, // Default to private
+      is_public: false,
       cards: [{ term: "", definition: "" }],
     },
   });
 
-  const { fields, append, remove, replace } = useFieldArray({
-    control: form.control,
-    name: "cards",
-  });
+  // Destructure append from useFieldArray directly from form.control
+  const { append, replace } = form.control._fields.cards._f;
 
-  const { data: studySet, isLoading, isError, error } = useQuery<StudySetData, Error>({
-    queryKey: ['editStudySet', setId],
-    queryFn: () => fetchStudySetForEdit(setId!),
-    enabled: !!setId,
-  });
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user);
-      setIsLoadingUser(false);
-    };
-    getUser();
-  }, []);
 
   useEffect(() => {
     if (studySet) {
       form.reset({
         title: studySet.title,
         description: studySet.description || "",
-        is_public: studySet.is_public, // Set public status from fetched data
+        is_public: studySet.is_public,
         cards: studySet.cards.map(card => ({
           id: card.id,
           term: card.term,
           definition: card.definition,
         })),
       });
-      setSourceTextContent(studySet.source_text); // Initialize sourceTextContent from fetched data
+      setSourceTextContent(studySet.source_text);
     }
-  }, [studySet, form]);
+  }, [studySet, form, setSourceTextContent]);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: EditSetFormValues) {
     if (!setId) {
       showError("Study set ID is missing.");
       return;
@@ -140,8 +89,8 @@ const EditSet = () => {
         .update({
           title: values.title,
           description: values.description,
-          source_text: sourceTextContent, // Update the source text here
-          is_public: values.is_public, // Update the public status
+          source_text: sourceTextContent,
+          is_public: values.is_public,
         })
         .eq('id', setId);
 
@@ -208,174 +157,12 @@ const EditSet = () => {
     showError("Please fix the errors before submitting.");
   }
 
-  const handleFileImport = async () => {
-    if (!file) {
-      showError("Please select a file first.");
-      return;
-    }
-
-    if (!currentUser) {
-      showError("You must be logged in to import a file.");
-      return;
-    }
-
-    const toastId = showLoading("AI is generating your flashcards, concepts, and relationships...");
-    let extractedFileContent = ""; // Use a local variable for extraction
-
-    try {
-      if (file.type === "application/pdf") {
-        const reader = new FileReader();
-        reader.readAsArrayBuffer(file);
-        await new Promise<void>((resolve, reject) => {
-          reader.onload = async (e) => {
-            try {
-              const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
-              const loadingTask = pdfjsLib.getDocument({ data: pdfData });
-              const pdf = await loadingTask.promise;
-              for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                extractedFileContent += textContent.items.map((item: any) => item.str).join(' ') + '\n';
-              }
-              resolve();
-            } catch (pdfError) {
-              console.error("Error parsing PDF:", pdfError);
-              reject(new Error("Failed to parse PDF file. It might be corrupted or unsupported."));
-            }
-          };
-          reader.onerror = (err) => reject(err);
-        });
-      } else if (file.type.startsWith("text/") || 
-                 file.name.endsWith('.md') || 
-                 file.name.endsWith('.csv') ||
-                 file.name.endsWith('.json') ||
-                 file.name.endsWith('.xml') ||
-                 file.name.endsWith('.html') ||
-                 file.name.endsWith('.js') ||
-                 file.name.endsWith('.ts') ||
-                 file.name.endsWith('.css')
-      ) {
-          extractedFileContent = await file.text();
-      } else {
-          throw new Error(`Unsupported file type: ${file.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.`);
-      }
-
-      if (!extractedFileContent.trim()) {
-          throw new Error("Could not extract any text from the file.");
-      }
-
-      setSourceTextContent(extractedFileContent); // Store the extracted content in state
-
-      const { data: { session } } = await supabase.auth.getSession(); // Re-fetch session to get access_token
-      if (!session) {
-        throw new Error("Session not found. Please try logging in again.");
-      }
-
-      const response = await fetch(
-        `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/process-file`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
-          },
-          body: JSON.stringify({ content: extractedFileContent }),
-        }
-      );
-      
-      const data = await response.json();
-      
-      dismissToast(toastId);
-
-      if (!response.ok || data.error) {
-        throw new Error(data?.error || "Failed to process file.");
-      }
-      
-      const newCards = data.cards;
-      const newConcepts = data.concepts;
-      const newRelationships = data.relationships;
-
-      if (!newCards || newCards.length === 0) {
-        showError("The AI couldn't find any terms and definitions in the file.");
-        return;
-      }
-
-      newCards.forEach((card: { term: string; definition: string }) => {
+  const handleImportAndAppendCards = async () => {
+    const result = await handleFileImport();
+    if (result && result.cards.length > 0) {
+      result.cards.forEach(card => {
         append({ term: card.term, definition: card.definition });
       });
-      showSuccess(`${newCards.length} cards imported successfully!`);
-
-      // Process concepts and relationships
-      if (newConcepts && newConcepts.length > 0) {
-        const conceptNameToIdMap = new Map<string, string>();
-
-        for (const concept of newConcepts) {
-          const { data: existingConcept, error: fetchConceptError } = await supabase
-            .from('concepts')
-            .select('id')
-            .eq('user_id', currentUser.id)
-            .eq('name', concept.name)
-            .single();
-
-          if (fetchConceptError && fetchConceptError.code !== 'PGRST116') { // PGRST116 means no rows found
-            console.error("Error fetching existing concept:", fetchConceptError);
-            continue;
-          }
-
-          let conceptId: string;
-          if (existsSync) { // Corrected: Check if existingConcept is truthy
-            conceptId = existingConcept.id;
-          } else {
-            const { data: insertedConcept, error: insertConceptError } = await supabase
-              .from('concepts')
-              .insert({ user_id: currentUser.id, name: concept.name, description: concept.description })
-              .select('id')
-              .single();
-            if (insertConceptError) {
-              console.error("Error inserting concept:", insertConceptError);
-              continue;
-            }
-            conceptId = insertedConcept.id;
-          }
-          conceptNameToIdMap.set(concept.name, conceptId);
-        }
-
-        // Insert relationships
-        if (newRelationships && newRelationships.length > 0) {
-          const relationshipsToInsert = [];
-          for (const rel of newRelationships) {
-            const sourceId = conceptNameToIdMap.get(rel.source_name);
-            const targetId = conceptNameToIdMap.get(rel.target_name);
-            if (sourceId && targetId) {
-              relationshipsToInsert.push({
-                user_id: currentUser.id,
-                source_concept_id: sourceId,
-                target_concept_id: targetId,
-                type: rel.type,
-                strength: rel.strength || 0.5,
-              });
-            }
-          }
-
-          if (relationshipsToInsert.length > 0) {
-            const { error: insertRelError } = await supabase
-              .from('concept_relationships')
-              .upsert(relationshipsToInsert, { onConflict: 'user_id,source_concept_id,target_concept_id,type' });
-            if (insertRelError) {
-              console.error("Error inserting relationships:", insertRelError);
-            } else {
-              showSuccess(`${relationshipsToInsert.length} relationships processed.`);
-            }
-          }
-        }
-        queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] });
-      }
-
-    } catch (error: any) {
-      dismissToast(toastId);
-      showError(error.message || "An unexpected error occurred.");
-      console.error(error);
     }
   };
 
@@ -395,7 +182,7 @@ const EditSet = () => {
         <Skeleton className="h-4 w-full mb-6" />
         <div className="grid gap-4">
           {[...Array(3)].map((_, i) => (
-            <NotebookCard key={i}> {/* Changed to NotebookCard */}
+            <NotebookCard key={i}>
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -440,62 +227,9 @@ const EditSet = () => {
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
-          <NotebookCard> {/* Changed to NotebookCard */}
-            <CardContent className="pt-6">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Biology Chapter 1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="mt-4">
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="A brief description of your study set." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="mt-4 flex items-center space-x-2">
-                <FormField
-                  control={form.control}
-                  name="is_public"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Make Public</FormLabel>
-                        <FormDescription>
-                          Allow other users to view and study this set.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </NotebookCard>
+          <StudySetFormFields form={form} />
 
-          <NotebookCard> {/* Changed to NotebookCard */}
+          <NotebookCard>
             <CardHeader>
               <CardTitle>Import from file with AI</CardTitle>
             </CardHeader>
@@ -508,7 +242,7 @@ const EditSet = () => {
               />
               <Button 
                 type="button" 
-                onClick={handleFileImport} 
+                onClick={handleImportAndAppendCards} 
                 disabled={!file || isLoadingUser || !currentUser} 
                 className="w-full sm:w-auto"
               >
@@ -517,68 +251,7 @@ const EditSet = () => {
             </CardContent>
           </NotebookCard>
 
-          <NotebookCard> {/* Changed to NotebookCard */}
-            <CardHeader>
-              <CardTitle>Flashcards</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex items-start gap-4 p-4 border rounded-md">
-                  <div className="font-bold text-gray-500 mt-2">{index + 1}</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
-                    <FormField
-                      control={form.control}
-                      name={`cards.${index}.term`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Term</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Term" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`cards.${index}.definition`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Definition</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Definition" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => remove(index)}
-                    disabled={fields.length <= 1}
-                    className="mt-7"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-               {form.formState.errors.cards && !form.formState.errors.cards.root && (
-                <p className="text-sm font-medium text-destructive">
-                  {form.formState.errors.cards.message}
-                </p>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => append({ term: "", definition: "" })}
-              >
-                Add Card
-              </Button>
-            </CardContent>
-          </NotebookCard>
+          <FlashcardEditor form={form} />
 
           <div className="flex justify-end">
             <Button type="submit">Save Changes</Button>
