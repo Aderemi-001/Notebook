@@ -166,25 +166,25 @@ const StudySetDetail = () => {
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link to="/">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sets
+              <span><ArrowLeft className="mr-2 h-4 w-4" /> Back to Sets</span>
             </Link>
           </Button>
           {studySet.cards.length > 0 && (
             <Button asChild>
               <Link to={`/sets/${setId}/study`}>
-                <PlayCircle className="mr-2 h-4 w-4" /> Start Study
+                <span><PlayCircle className="mr-2 h-4 w-4" /> Start Study</span>
               </Link>
             </Button>
           )}
           <Button asChild variant="secondary">
             <Link to={`/sets/${setId}/edit`}>
-              <Pencil className="mr-2 h-4 w-4" /> Edit Set
+              <span><Pencil className="mr-2 h-4 w-4" /> Edit Set</span>
             </Link>
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive">
-                <Trash2 className="mr-2 h-4 w-4" /> Delete Set
+                <span><Trash2 className="mr-2 h-4 w-4" /> Delete Set</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

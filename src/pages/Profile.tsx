@@ -131,7 +131,7 @@ const Profile = () => {
         <h1 className="text-3xl font-bold">User Profile</h1>
         <Button asChild variant="outline">
           <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+            <span><ArrowLeft className="mr-2 h-4 w-4" /> Back to Home</span>
           </Link>
         </Button>
       </div>
