@@ -15,7 +15,7 @@ interface StudySetFormFieldsProps {
 const StudySetFormFields: React.FC<StudySetFormFieldsProps> = ({ form }) => {
   return (
     <NotebookCard>
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 pl-10"> {/* Added pl-10 */}
         <FormField
           control={form.control}
           name="title"

@@ -20,10 +20,10 @@ const FlashcardEditor: React.FC<FlashcardEditorProps> = ({ form }) => {
 
   return (
     <NotebookCard>
-      <CardHeader>
+      <CardHeader className="pl-10"> {/* Added pl-10 */}
         <CardTitle>Flashcards</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pl-10"> {/* Added pl-10 */}
         {fields.map((field, index) => (
           <div key={field.id} className="flex items-start gap-4 p-4 border rounded-md">
             <div className="font-bold text-gray-500 mt-2">{index + 1}</div>

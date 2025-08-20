@@ -13,14 +13,12 @@ const NotebookCard = React.forwardRef<HTMLDivElement, NotebookCardProps>(
       className={cn(
         "relative shadow-lg hover:shadow-xl transition-shadow duration-300",
         "border border-gray-200 rounded-md",
-        "pl-10", // Add left padding to push content past the red line and holes
-        // Removed overflow-hidden to allow children (like RichTextEditorToolbar) to manage their own overflow
+        "before:content-[''] before:absolute before:left-4 before:top-0 before:bottom-0 before:w-px before:bg-red-400", // Red margin line
+        // Removed "pl-10" from here
         className
       )}
       {...props}
     >
-      {/* Red margin line */}
-      <div className="absolute left-4 top-0 bottom-0 w-px bg-red-400"></div>
       {/* Hole punch effect */}
       <div className="absolute left-0 top-0 bottom-0 w-4 flex flex-col justify-around py-2">
         {Array.from({ length: 5 }).map((_, i) => (

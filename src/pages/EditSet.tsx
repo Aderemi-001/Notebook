@@ -232,10 +232,10 @@ const EditSet = () => {
           <StudySetFormFields form={form} />
 
           <NotebookCard>
-            <CardHeader>
+            <CardHeader className="pl-10"> {/* Added pl-10 */}
               <CardTitle>Import from file with AI</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row items-center gap-4">
+            <CardContent className="flex flex-col sm:flex-row items-center gap-4 pl-10"> {/* Added pl-10 */}
               <Input 
                 type="file" 
                 accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf" 
