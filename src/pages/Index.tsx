@@ -60,12 +60,12 @@ const Index = () => {
         <div className="flex gap-2"> {/* Group buttons */}
           <Button asChild>
             <Link to="/create">
-              <PlusCircle className="mr-2 h-4 w-4" /> Create Set
+              <span><PlusCircle className="mr-2 h-4 w-4" /> Create Set</span>
             </Link>
           </Button>
           <Button asChild variant="outline"> {/* New Profile button */}
             <Link to="/profile">
-              <User className="mr-2 h-4 w-4" /> Profile
+              <span><User className="mr-2 h-4 w-4" /> Profile</span>
             </Link>
           </Button>
         </div>
