@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react'; // Added RefreshCw icon
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { showError } from '@/utils/toast';
+import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast'; // Import toast utilities
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
 
@@ -69,12 +69,50 @@ const fetchConstellationData = async (): Promise<ConstellationData> => {
 };
 
 const CognitiveConstellation: React.FC = () => {
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, error } = useQuery<ConstellationData, Error>({
     queryKey: ['cognitiveConstellation'],
     queryFn: fetchConstellationData,
   });
 
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
+
+  const handleRefreshConstellation = async () => {
+    const toastId = showLoading("Re-evaluating your cognitive constellation...");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Session not found. Please log in again.");
+      }
+
+      const response = await fetch(
+        `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/re-evaluate-constellation`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1b3NkbWVjbGR6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+          },
+          body: JSON.stringify({}), // No specific studySetId needed, function processes all for user
+        }
+      );
+
+      const result = await response.json();
+      dismissToast(toastId);
+
+      if (!response.ok || result.error) {
+        throw new Error(result?.error || "Failed to re-evaluate constellation.");
+      }
+
+      showSuccess("Cognitive constellation refreshed successfully!");
+      queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] }); // Invalidate to refetch data
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message || "An unexpected error occurred during refresh.");
+      console.error("Refresh constellation error:", err);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -103,11 +141,16 @@ const CognitiveConstellation: React.FC = () => {
       <div className="container mx-auto py-10 text-center">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Cognitive Constellation</h1>
-          <Button asChild variant="outline">
-            <Link to="/" className="flex items-center">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link to="/" className="flex items-center">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+              </Link>
+            </Button>
+            <Button onClick={handleRefreshConstellation} variant="outline" className="flex items-center">
+              <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
+            </Button>
+          </div>
         </div>
         <div className="text-center py-20 border-2 border-dashed rounded-lg">
           <h2 className="text-xl font-semibold">No concepts found yet!</h2>
@@ -129,11 +172,16 @@ const CognitiveConstellation: React.FC = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Cognitive Constellation</h1>
-        <Button asChild variant="outline">
-          <Link to="/" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/" className="flex items-center">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+            </Link>
+          </Button>
+          <Button onClick={handleRefreshConstellation} variant="outline" className="flex items-center">
+            <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
+          </Button>
+        </div>
       </div>
 
       <p className="text-muted-foreground mb-6">

@@ -24,7 +24,6 @@ serve(async (req) => {
   const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
   try {
-    const { studySetId } = await req.json();
     const authHeader = req.headers.get('Authorization');
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -40,28 +39,29 @@ serve(async (req) => {
       });
     }
 
-    // Fetch the source text for the given study set
-    const { data: studySetData, error: fetchSetError } = await supabase
+    // Fetch all study sets for the current user that have source_text
+    const { data: userStudySets, error: fetchSetsError } = await supabase
       .from('study_sets')
-      .select('source_text')
-      .eq('id', studySetId)
-      .eq('user_id', user.id) // Ensure user owns the set
-      .single();
+      .select('id, source_text')
+      .eq('user_id', user.id)
+      .not('source_text', 'is', null);
 
-    if (fetchSetError) {
-      console.error("Error fetching study set source text:", fetchSetError);
-      throw new Error(`Failed to fetch source text: ${fetchSetError.message}`);
-    }
-    if (!studySetData || !studySetData.source_text) {
-      throw new Error("No source text found for this study set.");
+    if (fetchSetsError) {
+      console.error("Error fetching user study sets:", fetchSetsError);
+      throw new Error(`Failed to fetch user study sets: ${fetchSetsError.message}`);
     }
 
-    const content = studySetData.source_text;
+    if (!userStudySets || userStudySets.length === 0) {
+      return new Response(JSON.stringify({ message: "No study sets with source text found for re-evaluation." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     // Fetch existing concepts for the user to provide context to the AI
     const { data: existingConcepts, error: fetchConceptsError } = await supabase
       .from('concepts')
-      .select('name, description')
+      .select('id, name, description')
       .eq('user_id', user.id);
 
     if (fetchConceptsError) {
@@ -69,151 +69,158 @@ serve(async (req) => {
       // Continue without existing concepts if there's an error, or throw
     }
 
+    const existingConceptMap = new Map(existingConcepts?.map(c => [c.name, c.id]));
     const existingConceptNames = existingConcepts ? existingConcepts.map(c => c.name) : [];
 
-    const prompt = `
-      You are an expert at identifying key concepts and their relationships within a given text.
-      Based on the following text, re-evaluate and generate a list of core concepts, and a list of relationships between these concepts.
-      Consider the following existing concepts for context, but also identify new ones if present: ${existingConceptNames.join(', ')}.
+    let totalConceptsProcessed = 0;
+    let totalRelationshipsProcessed = 0;
 
-      The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
-      The JSON object should have two top-level keys: "concepts" and "relationships".
+    for (const studySet of userStudySets) {
+      const content = studySet.source_text;
+      if (!content) continue; // Should not happen due to .not('source_text', 'is', null)
 
-      "concepts" should be an array of objects, each with a "name" (string) and an optional "description" (string, a brief summary of the concept).
-      "relationships" should be an array of objects, each with "source_name" (string, name of the source concept), "target_name" (string, name of the target concept), "type" (string, e.g., "related_to", "is_prerequisite_for", "is_part_of", "causes", "explains"), and "strength" (number, 0.0 to 1.0, indicating confidence or relevance).
+      const prompt = `
+        You are an expert at identifying key concepts and their relationships within a given text.
+        Based on the following text, re-evaluate and generate a list of core concepts, and a list of relationships between these concepts.
+        Consider the following existing concepts for context, but also identify new ones if present: ${existingConceptNames.join(', ')}.
 
-      Ensure that all "source_name" and "target_name" in "relationships" refer to "name" values present in the "concepts" array (either new or existing).
-      Keep the concepts and relationships concise and directly derived from the text.
+        The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
+        The JSON object should have two top-level keys: "concepts" and "relationships".
 
-      Example format:
-      {
-        "concepts": [
-          { "name": "Concept A", "description": "A foundational idea." },
-          { "name": "Concept B", "description": "A related idea." }
-        ],
-        "relationships": [
-          { "source_name": "Concept A", "target_name": "Concept B", "type": "related_to", "strength": 0.9 }
-        ]
-      }
+        "concepts" should be an array of objects, each with a "name" (string) and an optional "description" (string, a brief summary of the concept).
+        "relationships" should be an array of objects, each with "source_name" (string, name of the source concept), "target_name" (string, name of the target concept), "type" (string, e.g., "related_to", "is_prerequisite_for", "is_part_of", "causes", "explains"), and "strength" (number, 0.0 to 1.0, indicating confidence or relevance).
 
-      Here is the text:
-      ---
-      ${content}
-      ---
-    `;
+        Ensure that all "source_name" and "target_name" in "relationships" refer to "name" values present in the "concepts" array (either new or existing).
+        Keep the concepts and relationships concise and directly derived from the text.
 
-    const geminiResponse = await fetch(GEMINI_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }],
-      }),
-    });
+        Example format:
+        {
+          "concepts": [
+            { "name": "Concept A", "description": "A foundational idea." },
+            { "name": "Concept B", "description": "A related idea." }
+          ],
+          "relationships": [
+            { "source_name": "Concept A", "target_name": "Concept B", "type": "related_to", "strength": 0.9 }
+          ]
+        }
 
-    if (!geminiResponse.ok) {
-      const errorBody = await geminiResponse.json();
-      console.error("Gemini API Error:", errorBody);
-      throw new Error(`Gemini API request failed: ${errorBody.error?.message || 'Unknown error'}`);
-    }
+        Here is the text:
+        ---
+        ${content}
+        ---
+      `;
 
-    const geminiData = await geminiResponse.json();
-    let resultText = geminiData.candidates[0].content.parts[0].text;
+      const geminiResponse = await fetch(GEMINI_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: prompt }]
+          }],
+        }),
+      });
 
-    if (!resultText) {
-      throw new Error("AI failed to generate a response.");
-    }
-
-    const jsonMatch = resultText.match(/```json\n([\s\S]*?)\n```/);
-    if (jsonMatch && jsonMatch[1]) {
-      resultText = jsonMatch[1];
-    }
-
-    let parsedData;
-    try {
-      parsedData = JSON.parse(resultText);
-    } catch (parseError) {
-      console.error("Failed to parse AI response as JSON:", resultText, parseError);
-      throw new Error("AI returned invalid JSON. Please try again or refine your input.");
-    }
-
-    if (!parsedData.concepts || !Array.isArray(parsedData.concepts)) {
-      throw new Error("AI response missing 'concepts' array.");
-    }
-    if (!parsedData.relationships || !Array.isArray(parsedData.relationships)) {
-      throw new Error("AI response missing 'relationships' array.");
-    }
-
-    const newConcepts = parsedData.concepts;
-    const newRelationships = parsedData.relationships;
-
-    const conceptNameToIdMap = new Map<string, string>();
-
-    // Process concepts (upserting existing, inserting new)
-    for (const concept of newConcepts) {
-      const { data: existingConcept, error: fetchConceptError } = await supabase
-        .from('concepts')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('name', concept.name)
-        .single();
-
-      if (fetchConceptError && fetchConceptError.code !== 'PGRST116') {
-        console.error("Error fetching existing concept during re-evaluation:", fetchConceptError);
+      if (!geminiResponse.ok) {
+        const errorBody = await geminiResponse.json();
+        console.error(`Gemini API Error for set ${studySet.id}:`, errorBody);
+        // Continue to next set, but log the error
         continue;
       }
 
-      let conceptId: string;
-      if (existingConcept) {
-        conceptId = existingConcept.id;
-        // Optionally update description if it changed
-        await supabase.from('concepts').update({ description: concept.description }).eq('id', conceptId);
-      } else {
-        const { data: insertedConcept, error: insertConceptError } = await supabase
-          .from('concepts')
-          .insert({ user_id: user.id, name: concept.name, description: concept.description })
-          .select('id')
-          .single();
-        if (insertConceptError) {
-          console.error("Error inserting concept during re-evaluation:", insertConceptError);
-          continue;
-        }
-        conceptId = insertedConcept.id;
+      const geminiData = await geminiResponse.json();
+      let resultText = geminiData.candidates[0].content.parts[0].text;
+
+      if (!resultText) {
+        console.warn(`AI failed to generate a response for set ${studySet.id}.`);
+        continue;
       }
-      conceptNameToIdMap.set(concept.name, conceptId);
+
+      const jsonMatch = resultText.match(/```json\n([\s\S]*?)\n```/);
+      if (jsonMatch && jsonMatch[1]) {
+        resultText = jsonMatch[1];
+      }
+
+      let parsedData;
+      try {
+        parsedData = JSON.parse(resultText);
+      } catch (parseError) {
+        console.error(`Failed to parse AI response as JSON for set ${studySet.id}:`, resultText, parseError);
+        continue;
+      }
+
+      if (!parsedData.concepts || !Array.isArray(parsedData.concepts)) {
+        console.warn(`AI response missing 'concepts' array for set ${studySet.id}.`);
+        continue;
+      }
+      if (!parsedData.relationships || !Array.isArray(parsedData.relationships)) {
+        console.warn(`AI response missing 'relationships' array for set ${studySet.id}.`);
+        continue;
+      }
+
+      const newConcepts = parsedData.concepts;
+      const newRelationships = parsedData.relationships;
+
+      // Process concepts (upserting existing, inserting new)
+      for (const concept of newConcepts) {
+        let conceptId: string | undefined = existingConceptMap.get(concept.name);
+
+        if (conceptId) {
+          // Concept exists, update its description if it changed
+          await supabase.from('concepts').update({ description: concept.description }).eq('id', conceptId);
+        } else {
+          // Concept is new, insert it
+          const { data: insertedConcept, error: insertConceptError } = await supabase
+            .from('concepts')
+            .insert({ user_id: user.id, name: concept.name, description: concept.description })
+            .select('id')
+            .single();
+          if (insertConceptError) {
+            console.error("Error inserting concept during re-evaluation:", insertConceptError);
+            continue;
+          }
+          conceptId = insertedConcept.id;
+          existingConceptMap.set(concept.name, conceptId); // Add to map for subsequent relationships
+          totalConceptsProcessed++;
+        }
+      }
+
+      // Process relationships (upserting)
+      if (newRelationships && newRelationships.length > 0) {
+        const relationshipsToUpsert = [];
+        for (const rel of newRelationships) {
+          const sourceId = existingConceptMap.get(rel.source_name);
+          const targetId = existingConceptMap.get(rel.target_name);
+          if (sourceId && targetId) {
+            relationshipsToUpsert.push({
+              user_id: user.id,
+              source_concept_id: sourceId,
+              target_concept_id: targetId,
+              type: rel.type,
+              strength: rel.strength || 0.5,
+            });
+          }
+        }
+
+        if (relationshipsToUpsert.length > 0) {
+          const { error: upsertRelError } = await supabase
+            .from('concept_relationships')
+            .upsert(relationshipsToUpsert, { onConflict: 'user_id,source_concept_id,target_concept_id,type' });
+          if (upsertRelError) {
+            console.error("Error upserting relationships during re-evaluation:", upsertRelError);
+          } else {
+            totalRelationshipsProcessed += relationshipsToUpsert.length;
+          }
+        }
+      }
     }
 
-    // Process relationships (upserting)
-    if (newRelationships && newRelationships.length > 0) {
-      const relationshipsToUpsert = [];
-      for (const rel of newRelationships) {
-        const sourceId = conceptNameToIdMap.get(rel.source_name);
-        const targetId = conceptNameToIdMap.get(rel.target_name);
-        if (sourceId && targetId) {
-          relationshipsToUpsert.push({
-            user_id: user.id,
-            source_concept_id: sourceId,
-            target_concept_id: targetId,
-            type: rel.type,
-            strength: rel.strength || 0.5,
-          });
-        }
-      }
-
-      if (relationshipsToUpsert.length > 0) {
-        const { error: upsertRelError } = await supabase
-          .from('concept_relationships')
-          .upsert(relationshipsToUpsert, { onConflict: 'user_id,source_concept_id,target_concept_id,type' });
-        if (upsertRelError) {
-          console.error("Error upserting relationships during re-evaluation:", upsertRelError);
-        }
-      }
-    }
-
-    return new Response(JSON.stringify({ message: "Constellation re-evaluated successfully." }), {
+    return new Response(JSON.stringify({ 
+      message: "Constellation re-evaluated successfully.",
+      concepts_processed: totalConceptsProcessed,
+      relationships_processed: totalRelationshipsProcessed,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

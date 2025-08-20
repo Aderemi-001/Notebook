@@ -33,6 +33,7 @@ interface StudySetData {
   title: string;
   description: string | null;
   cards: { id: string; term: string; definition: string }[];
+  source_text: string | null; // Add source_text to the fetched data
 }
 
 const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
@@ -42,6 +43,7 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
       id,
       title,
       description,
+      source_text,
       cards (
         id,
         term,
@@ -64,6 +66,7 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
 const EditSet = () => {
   const { setId } = useParams<{ setId: string }>();
   const [file, setFile] = useState<File | null>(null);
+  const [sourceTextContent, setSourceTextContent] = useState<string | null>(null); // New state for source text
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const navigate = useNavigate();
@@ -109,6 +112,7 @@ const EditSet = () => {
           definition: card.definition,
         })),
       });
+      setSourceTextContent(studySet.source_text); // Initialize sourceTextContent from fetched data
     }
   }, [studySet, form]);
 
@@ -130,6 +134,7 @@ const EditSet = () => {
         .update({
           title: values.title,
           description: values.description,
+          source_text: sourceTextContent, // Update the source text here
         })
         .eq('id', setId);
 
@@ -208,7 +213,7 @@ const EditSet = () => {
     }
 
     const toastId = showLoading("AI is generating your flashcards, concepts, and relationships...");
-    let fileContent = "";
+    let extractedFileContent = ""; // Use a local variable for extraction
 
     try {
       if (file.type === "application/pdf") {
@@ -223,7 +228,7 @@ const EditSet = () => {
               for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const textContent = await page.getTextContent();
-                fileContent += textContent.items.map((item: any) => item.str).join(' ') + '\n';
+                extractedFileContent += textContent.items.map((item: any) => item.str).join(' ') + '\n';
               }
               resolve();
             } catch (pdfError) {
@@ -243,14 +248,16 @@ const EditSet = () => {
                  file.name.endsWith('.ts') ||
                  file.name.endsWith('.css')
       ) {
-          fileContent = await file.text();
+          extractedFileContent = await file.text();
       } else {
           throw new Error(`Unsupported file type: ${file.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.`);
       }
 
-      if (!fileContent.trim()) {
+      if (!extractedFileContent.trim()) {
           throw new Error("Could not extract any text from the file.");
       }
+
+      setSourceTextContent(extractedFileContent); // Store the extracted content in state
 
       const { data: { session } } = await supabase.auth.getSession(); // Re-fetch session to get access_token
       if (!session) {
@@ -266,7 +273,7 @@ const EditSet = () => {
             'Authorization': `Bearer ${session.access_token}`,
             'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1b3NkbWVjbGR6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
           },
-          body: JSON.stringify({ content: fileContent }),
+          body: JSON.stringify({ content: extractedFileContent }),
         }
       );
       
