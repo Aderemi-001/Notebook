@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Keep these imports for sub-components
-import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import FlippableCard from "@/components/FlippableCard"; // Import the new FlippableCard
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -277,28 +277,32 @@ const StudyMode = () => {
       )}
 
       {studyFinished ? (
-        <NotebookCard className="w-full max-w-md p-8 text-center"> {/* Changed to NotebookCard */}
-          <CardTitle className="mb-4">Study Session Complete!</CardTitle>
-          <CardContent>
-            <p className="text-lg mb-6">You've reviewed all due cards in this set.</p>
-            <Button onClick={handleRestartStudy}>
-              <RotateCcw className="mr-2 h-4 w-4" /> Restart Study
-            </Button>
-          </CardContent>
-        </NotebookCard>
+        <div className="w-full max-w-md">
+          <FlippableCard
+            isFlipped={false} // Not flipping when study is finished
+            frontContent={
+              <>
+                <CardTitle className="mb-4">Study Session Complete!</CardTitle>
+                <CardContent>
+                  <p className="text-lg mb-6">You've reviewed all due cards in this set.</p>
+                  <Button onClick={handleRestartStudy}>
+                    <RotateCcw className="mr-2 h-4 w-4" /> Restart Study
+                  </Button>
+                </CardContent>
+              </>
+            }
+            backContent={<></>} // No back content needed here
+            className="h-64"
+          />
+        </div>
       ) : (
         <>
-          <div
-            className="relative w-full max-w-md h-64 cursor-pointer perspective"
+          <FlippableCard
+            isFlipped={showDefinition}
             onClick={handleFlipCard}
-          >
-            <NotebookCard // Changed to NotebookCard
-              className={`absolute w-full h-full transition-transform duration-700 ease-in-out transform-gpu ${
-                showDefinition ? 'rotate-y-180' : 'rotate-y-0'
-              }`}
-            >
-              {/* Front of the card (Term) */}
-              <div className="absolute w-full h-full flex flex-col justify-center items-center text-center backface-hidden p-6">
+            className="w-full max-w-md h-64"
+            frontContent={
+              <>
                 <CardHeader>
                   <CardTitle className="text-2xl">Term</CardTitle>
                 </CardHeader>
@@ -307,10 +311,10 @@ const StudyMode = () => {
                     {currentCard?.term}
                   </p>
                 </CardContent>
-              </div>
-
-              {/* Back of the card (Definition) */}
-              <div className="absolute w-full h-full flex flex-col justify-center items-center text-center backface-hidden rotate-y-180 p-6">
+              </>
+            }
+            backContent={
+              <>
                 <CardHeader>
                   <CardTitle className="text-2xl">Definition</CardTitle>
                 </CardHeader>
@@ -319,9 +323,9 @@ const StudyMode = () => {
                     {currentCard?.definition}
                   </p>
                 </CardContent>
-              </div>
-            </NotebookCard>
-          </div>
+              </>
+            }
+          />
 
           <div className="mt-8 flex gap-4">
             <Button onClick={handleFlipCard} variant="outline">
