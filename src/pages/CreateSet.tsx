@@ -100,21 +100,35 @@ const CreateSet = () => {
     const toastId = showLoading("AI is processing your file...");
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("You must be logged in to import a file.");
+      }
+
       const formData = new FormData();
       formData.append("file", file);
 
-      const { data, error } = await supabase.functions.invoke('process-file', {
-        body: formData,
-        headers: {
-          // This empty headers object is crucial for FormData with supabase-js v2
-          // It prevents the client from setting a default 'Content-Type: application/json'
+      // Using fetch directly for more control over headers
+      const response = await fetch(
+        `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/process-file`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1b3NkbWVjbGR6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+            // NOTE: Do NOT set 'Content-Type' here. The browser will automatically
+            // set it to 'multipart/form-data' with the correct boundary.
+          },
+          body: formData,
         }
-      });
-
+      );
+      
+      const data = await response.json();
+      
       dismissToast(toastId);
 
-      if (error || data.error) {
-        throw new Error(data?.error || error.message);
+      if (!response.ok || data.error) {
+        throw new Error(data?.error || "Failed to process file.");
       }
       
       const newCards = data.cards;
@@ -221,7 +235,7 @@ const CreateSet = () => {
                       name={`cards.${index}.definition`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Definition</FormLabel>
+                          <FormLabel>Definition</Label>
                           <FormControl>
                             <Input placeholder="Definition" {...field} />
                           </FormControl>
