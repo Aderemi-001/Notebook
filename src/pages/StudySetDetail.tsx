@@ -237,9 +237,9 @@ const StudySetDetail = () => {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex flex-wrap justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">{studySet.title}</h1>
-        <div className="flex flex-wrap gap-2 mt-4 sm:mt-0">
+        <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link to="/" className="flex items-center">
               <React.Fragment>
