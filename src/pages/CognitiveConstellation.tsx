@@ -92,7 +92,7 @@ const CognitiveConstellation: React.FC = () => {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
-            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1b3NkbWVjbGR6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
           },
           body: JSON.stringify({}), // No specific studySetId needed, function processes all for user
         }
@@ -141,7 +141,7 @@ const CognitiveConstellation: React.FC = () => {
       <div className="container mx-auto py-10 text-center">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Cognitive Constellation</h1>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
             <Button asChild variant="outline">
               <Link to="/" className="flex items-center">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
@@ -172,7 +172,7 @@ const CognitiveConstellation: React.FC = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Cognitive Constellation</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
           <Button asChild variant="outline">
             <Link to="/" className="flex items-center">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home

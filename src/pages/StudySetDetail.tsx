@@ -334,7 +334,7 @@ const StudySetDetail = () => {
             {studySet.is_public ? "Public" : "Private"}
           </Badge>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
           <Button asChild variant="outline">
             <Link to="/" className="flex items-center">
               <React.Fragment>

@@ -149,7 +149,7 @@ const Profile = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">User Profile</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
           <Button asChild variant="outline">
             <Link to="/" className="flex items-center">
               <React.Fragment>

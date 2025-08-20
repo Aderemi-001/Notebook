@@ -147,7 +147,7 @@ const Index = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">My Study Sets</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
           <Button asChild>
             <Link to="/create" className="flex items-center">
               <React.Fragment>
