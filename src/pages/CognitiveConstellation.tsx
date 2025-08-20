@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw } from 'lucide-react'; // Added RefreshCw icon
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast'; // Import toast utilities
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
+import GraphVisualization from '@/components/GraphVisualization'; // Import the new graph component
 
 interface Concept {
   id: string;
@@ -163,9 +163,6 @@ const CognitiveConstellation: React.FC = () => {
   }
 
   const { concepts, relationships } = data;
-
-  // Simple layout for demonstration - a real constellation would use a force-directed graph
-  // For now, we'll just list concepts and show relationships on click.
   const conceptMap = new Map(concepts.map(c => [c.id, c]));
 
   return (
@@ -188,23 +185,19 @@ const CognitiveConstellation: React.FC = () => {
         Explore the interconnected web of concepts extracted from your study material. Click on a concept to see its details and relationships.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="col-span-1 md:col-span-2 lg:col-span-2">
-          <NotebookCard className="h-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="col-span-1 md:col-span-2">
+          <NotebookCard className="h-[600px] relative">
             <CardHeader>
-              <CardTitle>Your Concepts</CardTitle>
+              <CardTitle>Your Concepts Graph</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto">
-              {concepts.map(concept => (
-                <Button
-                  key={concept.id}
-                  variant={selectedConcept?.id === concept.id ? "default" : "outline"}
-                  onClick={() => setSelectedConcept(concept)}
-                  className="justify-start text-left h-auto py-2 px-3"
-                >
-                  {concept.name}
-                </Button>
-              ))}
+            <CardContent className="h-[calc(100%-80px)]"> {/* Adjust height to fit within card */}
+              <GraphVisualization
+                concepts={concepts}
+                relationships={relationships}
+                selectedConcept={selectedConcept}
+                onSelectConcept={setSelectedConcept}
+              />
             </CardContent>
           </NotebookCard>
         </div>
