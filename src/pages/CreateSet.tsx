@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ const formSchema = z.object({
 
 const CreateSet = () => {
   const [file, setFile] = React.useState<File | null>(null);
+  const navigate = useNavigate();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,11 +38,52 @@ const CreateSet = () => {
     name: "cards",
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // For now, we'll just log the values and show a success message.
-    // Later, this will save the set.
-    console.log(values);
-    showSuccess("Set created successfully!");
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const toastId = showLoading("Saving your study set...");
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("You must be logged in to create a set.");
+      }
+
+      // Insert into study_sets table
+      const { data: set, error: setError } = await supabase
+        .from('study_sets')
+        .insert({
+          title: values.title,
+          description: values.description,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (setError) throw setError;
+
+      // Prepare cards for insertion
+      const cardsToInsert = values.cards.map(card => ({
+        set_id: set.id,
+        term: card.term,
+        definition: card.definition,
+      }));
+
+      // Insert into cards table
+      const { error: cardsError } = await supabase
+        .from('cards')
+        .insert(cardsToInsert);
+
+      if (cardsError) throw cardsError;
+
+      dismissToast(toastId);
+      showSuccess("Set created successfully!");
+      navigate('/');
+
+    } catch (error: any) {
+      dismissToast(toastId);
+      showError(error.message || "Failed to create set.");
+      console.error(error);
+    }
   }
 
   function onError(errors: any) {
