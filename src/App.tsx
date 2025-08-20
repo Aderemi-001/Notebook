@@ -14,11 +14,11 @@ import PastExams from "./pages/PastExams";
 import ExplorePublicSets from "./pages/ExplorePublicSets";
 import SearchCards from "./pages/SearchCards";
 import GenerateEssayQuestions from "./pages/GenerateEssayQuestions";
-import PastEssayQuestions from "./pages/PastEssayQuestions"; // Import the new page
+import PastEssayQuestions from "./pages/PastEssayQuestions";
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import React from "react";
+import * as React from "react"; // Changed import statement here
 
 const queryClient = new QueryClient();
 
@@ -118,7 +118,7 @@ function App() {
                 }
               />
               <Route
-                path="/past-essay-questions" {/* New route added here */}
+                path="/past-essay-questions"
                 element={
                   <AuthLayout>
                     <PastEssayQuestions />
