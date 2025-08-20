@@ -192,78 +192,80 @@ const NoteDetail: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">{isNewNote ? 'Create New Note' : 'Edit Note'}</h1>
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link to="/notes" className="flex items-center">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Notes
-            </Link>
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {!isNewNote && (
-                <>
-                  {preferences?.confirm_deletion ? (
-                    <AlertDialog>
-                      <AlertDialogTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+    <React.Fragment>
+      <div className="container mx-auto py-10">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">{isNewNote ? 'Create New Note' : 'Edit Note'}</h1>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link to="/notes" className="flex items-center">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Notes
+              </Link>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {!isNewNote && (
+                  <>
+                    {preferences?.confirm_deletion ? (
+                      <AlertDialog>
+                        <AlertDialogTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete Note
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your
+                              "{noteTitle}" note.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteNote}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    ) : (
+                      <DropdownMenuItem onClick={handleDeleteNote} className="flex items-center text-destructive">
                         <Trash2 className="mr-2 h-4 w-4" /> Delete Note
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your
-                            "{noteTitle}" note.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleDeleteNote}>
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  ) : (
-                    <DropdownMenuItem onClick={handleDeleteNote} className="flex items-center text-destructive">
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete Note
-                    </DropdownMenuItem>
-                  )}
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-      </div>
 
-      <NotebookCard className="mb-6">
-        <CardHeader>
-          <CardTitle>Note Details</CardTitle>
-          <CardDescription>Give your note a title and start writing!</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            placeholder="Note Title"
-            value={noteTitle}
-            onChange={(e) => setNoteTitle(e.target.value)}
-            className="text-2xl font-bold py-6"
-          />
-          <RichTextEditor
-            key={noteId} {/* Add key prop here */}
-            initialContent={noteContent}
-            onContentChange={setNoteContent}
-            placeholder="Start writing your amazing note here..."
-          />
-        </CardContent>
-      </NotebookCard>
-    </div>
+        <NotebookCard className="mb-6">
+          <CardHeader>
+            <CardTitle>Note Details</CardTitle>
+            <CardDescription>Give your note a title and start writing!</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              placeholder="Note Title"
+              value={noteTitle}
+              onChange={(e) => setNoteTitle(e.target.value)}
+              className="text-2xl font-bold py-6"
+            />
+            <RichTextEditor
+              key={noteId} {/* Add key prop here */}
+              initialContent={noteContent}
+              onContentChange={setNoteContent}
+              placeholder="Start writing your amazing note here..."
+            />
+          </CardContent>
+        </NotebookCard>
+      </div>
+    </React.Fragment>
   );
 };
 
