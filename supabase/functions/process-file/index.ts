@@ -24,7 +24,7 @@ async function extractTextFromPdf(fileBuffer: ArrayBuffer): Promise<string> {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   if (!OPENAI_API_KEY) {

@@ -105,6 +105,10 @@ const CreateSet = () => {
 
       const { data, error } = await supabase.functions.invoke('process-file', {
         body: formData,
+        headers: {
+          // This empty headers object is crucial for FormData with supabase-js v2
+          // It prevents the client from setting a default 'Content-Type: application/json'
+        }
       });
 
       dismissToast(toastId);
