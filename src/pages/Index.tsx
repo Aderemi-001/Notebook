@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon } from "lucide-react"; // Added SettingsIcon
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast'; // Import toast utilities
 
 interface StudySet {
   id: string;
@@ -142,6 +143,24 @@ const Index = () => {
     (set.description && set.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const handleSignOut = async () => {
+    const toastId = showLoading('Signing out...');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+      dismissToast(toastId);
+      showSuccess('Signed out successfully!');
+      queryClient.clear();
+      // No need to navigate here, AuthLayout will handle redirect to /login
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message || 'Failed to sign out.');
+      console.error('Sign out error:', err);
+    }
+  };
+
   if (isError) {
     return (
       <div className="container mx-auto py-10 text-center text-red-500">
@@ -161,6 +180,7 @@ const Index = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {/* Study Set Management */}
             <DropdownMenuItem asChild>
               <Link to="/create" className="flex items-center">
                 <PlusCircle className="mr-2 h-4 w-4" /> Create Set
@@ -176,6 +196,9 @@ const Index = () => {
                 <Search className="mr-2 h-4 w-4" /> Search My Cards
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+
+            {/* AI Tools & Practice */}
             <DropdownMenuItem asChild>
               <Link to="/generate-exam" className="flex items-center">
                 <Brain className="mr-2 h-4 w-4" /> Generate Exam
@@ -187,6 +210,14 @@ const Index = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
+              <Link to="/constellation" className="flex items-center">
+                <Network className="mr-2 h-4 w-4" /> Cognitive Constellation
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+
+            {/* History & Review */}
+            <DropdownMenuItem asChild>
               <Link to="/past-exams" className="flex items-center">
                 <History className="mr-2 h-4 w-4" /> Past Exams
               </Link>
@@ -196,21 +227,21 @@ const Index = () => {
                 <FileText className="mr-2 h-4 w-4" /> Past Essay Questions
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/constellation" className="flex items-center">
-                <Network className="mr-2 h-4 w-4" /> Cognitive Constellation
-              </Link>
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
+
+            {/* Account & App */}
             <DropdownMenuItem asChild>
               <Link to="/profile" className="flex items-center">
                 <User className="mr-2 h-4 w-4" /> Profile
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/settings" className="flex items-center"> {/* New Settings link */}
+              <Link to="/settings" className="flex items-center">
                 <SettingsIcon className="mr-2 h-4 w-4" /> Settings
               </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSignOut} className="flex items-center text-destructive">
+              <LogOut className="mr-2 h-4 w-4" /> Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
