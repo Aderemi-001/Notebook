@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -122,6 +122,49 @@ const StudySetDetail = () => {
     }
   };
 
+  const handleResetProgress = async () => {
+    if (!setId) return;
+
+    const toastId = showLoading("Resetting progress...");
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated.");
+      }
+
+      // First, get all card IDs for this study set
+      const { data: cardsInSet, error: fetchCardsError } = await supabase
+        .from('cards')
+        .select('id')
+        .eq('set_id', setId);
+
+      if (fetchCardsError) throw fetchCardsError;
+
+      const cardIds = cardsInSet?.map(card => card.id) || [];
+
+      if (cardIds.length > 0) {
+        // Delete user progress for these cards and the current user
+        const { error: deleteProgressError } = await supabase
+          .from('user_progress')
+          .delete()
+          .eq('user_id', user.id)
+          .in('card_id', cardIds);
+
+        if (deleteProgressError) throw deleteProgressError;
+      }
+
+      dismissToast(toastId);
+      showSuccess("Study progress reset successfully!");
+      queryClient.invalidateQueries({ queryKey: ['studySet', setId] }); // Invalidate current set details
+      queryClient.invalidateQueries({ queryKey: ['studyCards', setId] }); // Invalidate study mode cards
+      queryClient.invalidateQueries({ queryKey: ['studySets'] }); // Invalidate main list to update due counts
+    } catch (error: any) {
+      dismissToast(toastId);
+      showError(error.message || "Failed to reset progress.");
+      console.error("Reset progress error:", error);
+    }
+  };
+
   if (!setId) {
     return (
       <div className="container mx-auto py-10 text-center text-red-500">
@@ -197,6 +240,29 @@ const StudySetDetail = () => {
               </React.Fragment>
             </Link>
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="flex items-center">
+                <React.Fragment>
+                  <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
+                </React.Fragment>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetProgress}>
+                  Reset Progress
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" className="flex items-center">
