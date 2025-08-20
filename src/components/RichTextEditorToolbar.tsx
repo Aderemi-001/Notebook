@@ -30,7 +30,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
   }
 
   return (
-    <div className="flex flex-nowrap w-full border-b overflow-x-auto px-2 py-1">
+    <div className="flex flex-nowrap w-full border-b overflow-x-auto scrollbar-hide px-2 py-1">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
