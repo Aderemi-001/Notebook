@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,6 +72,15 @@ const CollaborationSpacesIndex: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    getUserId();
+  }, []);
 
   const { data: spaces, isLoading, isError, error } = useQuery<CollaborationSpace[], Error>({
     queryKey: ['collaborationSpaces'],
@@ -87,8 +96,7 @@ const CollaborationSpacesIndex: React.FC = () => {
   const handleDeleteSpace = async (spaceId: string, spaceName: string) => {
     const toastId = showLoading(`Deleting collaboration space "${spaceName}"...`);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!currentUserId) {
         throw new Error("User not authenticated.");
       }
 
@@ -99,7 +107,7 @@ const CollaborationSpacesIndex: React.FC = () => {
         .eq('id', spaceId)
         .single();
 
-      if (fetchSpaceError || !spaceData || spaceData.created_by_user_id !== user.id) {
+      if (fetchSpaceError || !spaceData || spaceData.created_by_user_id !== currentUserId) {
         throw new Error("You do not have permission to delete this space.");
       }
 
@@ -121,7 +129,7 @@ const CollaborationSpacesIndex: React.FC = () => {
     }
   };
 
-  if (isLoading || isLoadingPreferences) {
+  if (isLoading || isLoadingPreferences || currentUserId === null) { // Wait for currentUserId to be set
     return (
       <div className="container mx-auto py-10">
         <Skeleton className="h-8 w-1/2 mb-8" />
@@ -208,7 +216,7 @@ const CollaborationSpacesIndex: React.FC = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredSpaces.map((space) => {
-            const isCreator = space.created_by_user_id === supabase.auth.getUser().then(res => res.data.user?.id); // This is a promise, needs to be handled better
+            const isCreator = space.created_by_user_id === currentUserId;
             const userRole = space.space_members?.[0]?.role || 'member'; // Assuming only one membership per user per space
 
             return (
