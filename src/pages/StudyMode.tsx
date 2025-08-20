@@ -12,6 +12,10 @@ interface CardItem {
   id: string;
   term: string;
   definition: string;
+  repetition_level: number;
+  ease_factor: number;
+  next_review_at: string;
+  status: 'learning' | 'mastered';
 }
 
 interface UserProgress {
@@ -20,49 +24,6 @@ interface UserProgress {
   next_review_at: string;
   status: 'learning' | 'mastered';
 }
-
-const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("User not authenticated.");
-  }
-
-  // Fetch cards for the set, ordered by their next review date for the current user
-  const { data, error } = await supabase
-    .from('cards')
-    .select(`
-      id,
-      term,
-      definition,
-      user_progress!left(
-        repetition_level,
-        ease_factor,
-        next_review_at,
-        status
-      )
-    `)
-    .eq('set_id', setId)
-    .eq('user_progress.user_id', user.id) // Filter progress for the current user
-    .order('next_review_at', { ascending: true, foreignTable: 'user_progress' }) // Order by next_review_at
-    .order('created_at', { ascending: true }); // Fallback order for new cards or no progress
-
-  if (error) {
-    console.error("Error fetching cards for study set:", error);
-    throw new Error("Failed to fetch cards.");
-  }
-
-  // Map data to ensure user_progress is directly on the card object for easier access
-  return data.map(card => ({
-    id: card.id,
-    term: card.term,
-    definition: card.definition,
-    // Flatten user_progress into the card object, or provide defaults
-    repetition_level: card.user_progress?.[0]?.repetition_level ?? 0,
-    ease_factor: card.user_progress?.[0]?.ease_factor ?? 2.5,
-    next_review_at: card.user_progress?.[0]?.next_review_at ?? new Date().toISOString(),
-    status: card.user_progress?.[0]?.status ?? 'learning',
-  })) as CardItem[];
-};
 
 const calculateNextReview = (
   currentProgress: UserProgress | null,
@@ -73,26 +34,23 @@ const calculateNextReview = (
   let I = 0; // Interval in days
 
   if (quality < 3) { // Incorrect response (Difficult)
-    n = 0;
+    n = 0; // Reset repetition level
     EF = Math.max(1.3, EF - 0.20); // Decrease EF, minimum 1.3
+    I = 0; // Review immediately or next session
   } else { // Correct response (Mastered)
     n += 1;
     EF = EF + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-  }
+    EF = Math.max(1.3, EF); // Ensure EF doesn't drop below 1.3
 
-  if (n === 0) {
-    I = 0; // Review immediately or next session
-  } else if (n === 1) {
-    I = 1; // 1 day
-  } else if (n === 2) {
-    I = 6; // 6 days
-  } else {
-    I = Math.round(I * EF); // Previous interval * Ease Factor
-  }
-
-  // Ensure interval is at least 1 day if it's a correct answer and not the first repetition
-  if (quality >= 3 && I === 0 && n > 0) {
-    I = 1;
+    if (n === 1) {
+      I = 1; // First successful repetition: 1 day
+    } else if (n === 2) {
+      I = 6; // Second successful repetition: 6 days
+    } else { // n > 2
+      // For subsequent repetitions, I(n) = I(n-1) * EF
+      // We approximate I(n-1) based on I(2) and previous EFs
+      I = Math.round(6 * Math.pow(EF, n - 2));
+    }
   }
 
   const nextReviewDate = new Date();
@@ -104,6 +62,71 @@ const calculateNextReview = (
     next_review_at: nextReviewDate.toISOString(),
     status: quality >= 3 ? 'mastered' : 'learning',
   };
+};
+
+const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
+
+  const now = new Date(); // Get current time once
+
+  // Fetch all cards for the set with their user progress for the current user
+  const { data, error } = await supabase
+    .from('cards')
+    .select(`
+      id,
+      term,
+      definition,
+      user_progress!left(
+        repetition_level,
+        ease_factor,
+        next_review_at,
+        status,
+        user_id
+      )
+    `)
+    .eq('set_id', setId);
+
+  if (error) {
+    console.error("Error fetching cards for study set:", error);
+    throw new Error("Failed to fetch cards.");
+  }
+
+  if (!data) {
+    return [];
+  }
+
+  // Process and filter cards to get only those due for review or new cards
+  const dueCards = data
+    .map(card => {
+      const progress = card.user_progress?.[0]; // Get the first (and likely only) progress entry for this user/card
+      return {
+        id: card.id,
+        term: card.term,
+        definition: card.definition,
+        repetition_level: progress?.repetition_level ?? 0,
+        ease_factor: progress?.ease_factor ?? 2.5,
+        next_review_at: progress?.next_review_at ?? now.toISOString(), // Default to now for new cards
+        status: progress?.status ?? 'learning',
+        progress_user_id: progress?.user_id, // Store this to check if progress is for current user
+      };
+    })
+    .filter(card => {
+      const cardNextReviewDate = new Date(card.next_review_at);
+      // A card is included if:
+      // 1. It's a new card (no progress_user_id or progress_user_id doesn't match current user)
+      //    OR
+      // 2. It has progress for the current user AND its next_review_at is less than or equal to now.
+      const isNewCardForCurrentUser = !card.progress_user_id || card.progress_user_id !== user.id;
+      const isDueForReview = cardNextReviewDate <= now;
+
+      return isNewCardForCurrentUser || (card.progress_user_id === user.id && isDueForReview);
+    })
+    .sort((a, b) => new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime()); // Sort by earliest review date
+
+  return dueCards;
 };
 
 const StudyMode = () => {
@@ -222,7 +245,7 @@ const StudyMode = () => {
   if (!cards || cards.length === 0) {
     return (
       <div className="text-center py-10 border-2 border-dashed rounded-lg">
-        <p className="text-muted-foreground">This study set has no cards yet.</p>
+        <p className="text-muted-foreground">This study set has no cards due for review, or no cards at all.</p>
         <Button asChild className="mt-4">
           <Link to={`/sets/${setId}`} className="flex items-center">
             <React.Fragment>
@@ -251,7 +274,7 @@ const StudyMode = () => {
         <Card className="w-full max-w-md p-8 text-center">
           <CardTitle className="mb-4">Study Session Complete!</CardTitle>
           <CardContent>
-            <p className="text-lg mb-6">You've reviewed all {cards.length} cards in this set.</p>
+            <p className="text-lg mb-6">You've reviewed all due cards in this set.</p>
             <Button onClick={handleRestartStudy}>
               <RotateCcw className="mr-2 h-4 w-4" /> Restart Study
             </Button>
