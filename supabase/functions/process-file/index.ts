@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import OpenAI from "https://deno.land/x/openai@v4.24.1/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,15 +6,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Initialize OpenAI client using the secret API key
-const openai = new OpenAI({
-  apiKey: Deno.env.get("OPENAI_API_KEY"),
-});
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  if (!GEMINI_API_KEY) {
+    return new Response(JSON.stringify({ error: "GEMINI_API_KEY is not set in project secrets." }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
+
+  const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
 
   try {
     const formData = await req.formData();
@@ -31,7 +36,6 @@ serve(async (req) => {
     let content = "";
     const fileBuffer = await file.arrayBuffer();
 
-    // For now, we'll stick to simple text files that we know work
     if (file.type.startsWith("text/") || file.name.endsWith('.md') || file.name.endsWith('.csv')) {
         content = new TextDecoder().decode(fileBuffer);
     } else {
@@ -48,13 +52,12 @@ serve(async (req) => {
         });
     }
 
-    // --- AI Processing is now re-enabled ---
     const prompt = `
       You are an expert at creating flashcard study sets.
       Based on the following text, generate a list of key terms and their definitions.
-      The output should be a valid JSON object with a single key "cards", which is an array of objects.
+      The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
+      The JSON object should have a single key "cards", which is an array of objects.
       Each object in the array should have two properties: "term" and "definition".
-      Do not include any explanations or introductory text outside of the JSON object.
 
       Example format:
       {
@@ -70,19 +73,33 @@ serve(async (req) => {
       ---
     `;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
+    const geminiResponse = await fetch(GEMINI_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+      }),
     });
 
-    const result = completion.choices[0].message.content;
+    if (!geminiResponse.ok) {
+      const errorBody = await geminiResponse.json();
+      console.error("Gemini API Error:", errorBody);
+      throw new Error(`Gemini API request failed: ${errorBody.error?.message || 'Unknown error'}`);
+    }
 
-    if (!result) {
+    const geminiData = await geminiResponse.json();
+    
+    const resultText = geminiData.candidates[0].content.parts[0].text;
+
+    if (!resultText) {
       throw new Error("AI failed to generate a response.");
     }
 
-    return new Response(result, {
+    return new Response(resultText, {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
