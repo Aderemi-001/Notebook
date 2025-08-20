@@ -132,6 +132,9 @@
   mark[data-color="#ef4444"] { /* Red */
     @apply bg-red-200 dark:bg-red-700;
   }
+  mark[data-color="#a855f7"] { /* Purple */
+    @apply bg-purple-200 dark:bg-purple-700;
+  }
 }
 
 .login-page-scribble-bg {

@@ -20,6 +20,7 @@ const HIGHLIGHT_COLORS = [
   { name: 'Green', hex: '#4ade80', dataColor: 'green' },
   { name: 'Blue', hex: '#60a5fa', dataColor: 'blue' },
   { name: 'Red', hex: '#ef4444', dataColor: 'red' },
+  { name: 'Purple', hex: '#a855f7', dataColor: 'purple' }, // Added purple
 ];
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className }) => {
