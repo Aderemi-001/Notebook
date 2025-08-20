@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"; // Keep these imports for sub-components
 import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
-import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff } from 'lucide-react'; // Added Flag, FlagOff
+import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe } from 'lucide-react'; // Added Flag, FlagOff, Globe
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,11 +28,13 @@ import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast
 import { cn } from "@/lib/utils";
 import StudyProgressSummary from '@/components/StudyProgressSummary'; // Import the new component
 import { isPast } from 'date-fns'; // Import isPast
+import { Badge } from '@/components/ui/badge'; // Import Badge
 
 interface StudySet {
   id: string;
   title: string;
   description: string | null;
+  is_public: boolean; // Added is_public
   cards: CardItem[];
   mastered_cards_count: number; // Ensure this is always a number
   due_cards_count: number; // Add due_cards_count
@@ -63,6 +65,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
       id,
       title,
       description,
+      is_public,
       cards (
         id,
         term,
@@ -162,7 +165,7 @@ const StudySetDetail = () => {
 
     const toastId = showLoading("Resetting progress...");
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } = { user: null } } = await supabase.auth.getUser(); // Destructure with default
       if (!user) {
         throw new Error("User not authenticated.");
       }
@@ -269,7 +272,13 @@ const StudySetDetail = () => {
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">{studySet.title}</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold">{studySet.title}</h1>
+          <Badge variant={studySet.is_public ? "default" : "secondary"} className="flex items-center gap-1">
+            <Globe className="h-3 w-3" />
+            {studySet.is_public ? "Public" : "Private"}
+          </Badge>
+        </div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link to="/" className="flex items-center">

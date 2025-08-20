@@ -14,12 +14,15 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import * as pdfjsLib from 'pdfjs-dist';
+import { Switch } from "@/components/ui/switch"; // Import Switch
+import { Label } from "@/components/ui/label"; // Import Label
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
+  is_public: z.boolean().default(false), // Added is_public field
   cards: z.array(z.object({
     term: z.string().min(1, "Term is required"),
     definition: z.string().min(1, "Definition is required"),
@@ -38,6 +41,7 @@ const CreateSet = () => {
     defaultValues: {
       title: "",
       description: "",
+      is_public: false, // Default to private
       cards: [{ term: "", definition: "" }],
     },
   });
@@ -71,6 +75,7 @@ const CreateSet = () => {
           description: values.description,
           user_id: currentUser.id,
           source_text: sourceTextContent, // Save the source text here
+          is_public: values.is_public, // Save the public status
         })
         .select()
         .single();
@@ -326,6 +331,28 @@ const CreateSet = () => {
                         <Textarea placeholder="A brief description of your study set." {...field} />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="mt-4 flex items-center space-x-2">
+                <FormField
+                  control={form.control}
+                  name="is_public"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">Make Public</FormLabel>
+                        <FormDescription>
+                          Allow other users to view and study this set.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 />

@@ -4,7 +4,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"; // Added FormDescription
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Keep these imports for sub-components
 import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
 import { Trash2, ArrowLeft } from "lucide-react";
@@ -15,12 +15,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as pdfjsLib from 'pdfjs-dist';
+import { Switch } from "@/components/ui/switch"; // Import Switch
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
+  is_public: z.boolean().default(false), // Added is_public field
   cards: z.array(z.object({
     id: z.string().optional(),
     term: z.string().min(1, "Term is required"),
@@ -32,6 +34,7 @@ interface StudySetData {
   id: string;
   title: string;
   description: string | null;
+  is_public: boolean; // Added is_public to interface
   cards: { id: string; term: string; definition: string }[];
   source_text: string | null; // Add source_text to the fetched data
 }
@@ -44,6 +47,7 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
       title,
       description,
       source_text,
+      is_public,
       cards (
         id,
         term,
@@ -77,6 +81,7 @@ const EditSet = () => {
     defaultValues: {
       title: "",
       description: "",
+      is_public: false, // Default to private
       cards: [{ term: "", definition: "" }],
     },
   });
@@ -106,6 +111,7 @@ const EditSet = () => {
       form.reset({
         title: studySet.title,
         description: studySet.description || "",
+        is_public: studySet.is_public, // Set public status from fetched data
         cards: studySet.cards.map(card => ({
           id: card.id,
           term: card.term,
@@ -135,6 +141,7 @@ const EditSet = () => {
           title: values.title,
           description: values.description,
           source_text: sourceTextContent, // Update the source text here
+          is_public: values.is_public, // Update the public status
         })
         .eq('id', setId);
 
@@ -271,7 +278,7 @@ const EditSet = () => {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
-            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1b3NkbWVjbGR6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
           },
           body: JSON.stringify({ content: extractedFileContent }),
         }
@@ -317,7 +324,7 @@ const EditSet = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) { // Corrected: Check if existingConcept is truthy
+          if (existsSync) { // Corrected: Check if existingConcept is truthy
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
@@ -459,6 +466,28 @@ const EditSet = () => {
                         <Textarea placeholder="A brief description of your study set." {...field} />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="mt-4 flex items-center space-x-2">
+                <FormField
+                  control={form.control}
+                  name="is_public"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">Make Public</FormLabel>
+                        <FormDescription>
+                          Allow other users to view and study this set.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 />

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"; // Keep these imports for sub-components
 import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network } from "lucide-react"; // Added Network icon
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe } from "lucide-react"; // Added Network icon, Globe
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,11 +9,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState, useEffect } from "react";
 import { formatDistanceToNowStrict, isPast } from 'date-fns';
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 
 interface StudySet {
   id: string;
   title: string;
   description: string | null;
+  is_public: boolean; // Added is_public
   cards_count: number;
   next_review_at?: string | null;
   due_cards_count?: number;
@@ -93,8 +95,20 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
       }
     }
 
+    // Fetch is_public status for the set
+    const { data: setPublicStatus, error: publicStatusError } = await supabase
+      .from('study_sets')
+      .select('is_public')
+      .eq('id', set.id)
+      .single();
+
+    if (publicStatusError) {
+      console.error(`Error fetching public status for set ${set.id}:`, publicStatusError);
+    }
+
     return {
       ...set,
+      is_public: setPublicStatus?.is_public ?? false, // Default to false if not found
       next_review_at: earliestReviewAt,
       due_cards_count: dueCardsCount,
     };
@@ -194,14 +208,18 @@ const Index = () => {
           {filteredStudySets.map((set) => (
             <Link to={`/sets/${set.id}`} key={set.id}>
               <NotebookCard className="hover:shadow-md transition-shadow h-full"> {/* Changed to NotebookCard */}
-                <CardHeader>
-                  <CardTitle>{set.title}</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg font-semibold">{set.title}</CardTitle>
+                  <Badge variant={set.is_public ? "default" : "secondary"} className="flex items-center gap-1">
+                    <Globe className="h-3 w-3" />
+                    {set.is_public ? "Public" : "Private"}
+                  </Badge>
+                </CardHeader>
+                <CardContent>
                   {set.description && (
                     <CardDescription>{set.description}</CardDescription>
                   )}
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center text-sm text-muted-foreground">
+                  <div className="flex items-center text-sm text-muted-foreground mt-2">
                     <BookOpen className="mr-2 h-4 w-4" />
                     <span>{set.cards_count} cards</span>
                   </div>
