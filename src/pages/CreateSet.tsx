@@ -12,10 +12,10 @@ import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'; // Corrected import for pdfjs-dist
+import * as pdfjsLib from 'pdfjs-dist'; // Corrected import for pdfjs-dist
 
 // Set the worker source for pdfjs-dist
-GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -115,7 +115,7 @@ const CreateSet = () => {
           reader.onload = async (e) => {
             try {
               const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
-              const loadingTask = getDocument({ data: pdfData }); // Use getDocument directly
+              const loadingTask = pdfjsLib.getDocument({ data: pdfData }); // Use pdfjsLib.getDocument
               const pdf = await loadingTask.promise;
               for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
