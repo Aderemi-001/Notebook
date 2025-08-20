@@ -27,7 +27,7 @@ import {
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import StudyProgressSummary from '@/components/StudyProgressSummary';
-import { isPast } from 'date-fns';
+import { isPast, isValid } from 'date-fns'; // Import isValid
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -488,49 +488,54 @@ const StudySetDetail = () => {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {studySet.cards.map((card) => (
-            <NotebookCard
-              key={card.id} 
-              className={cn(
-                "hover:shadow-md transition-shadow",
-                card.is_flagged && "border-yellow-500 border-2",
-                card.status === 'mastered' && "border-green-500 border-2",
-                card.status === 'learning' && card.has_progress && card.repetition_level === 0 && isPast(new Date(card.next_review_at)) && "border-red-500 border-2",
-                card.status === 'learning' && card.has_progress && card.repetition_level === 0 && card.next_review_at && !isPast(new Date(card.next_review_at)) && "border-orange-500 border-2"
-              )}
-            >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-semibold">{card.term}</CardTitle>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleToggleFlag(card.id, card.is_flagged || false);
-                        }}
-                        className="h-8 w-8"
-                      >
-                        {card.is_flagged ? (
-                          <Flag className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                        ) : (
-                          <FlagOff className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {card.is_flagged ? "Unflag card" : "Flag card"}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>{card.definition}</CardDescription>
-              </CardContent>
-            </NotebookCard>
-          ))}
+          {studySet.cards.map((card) => {
+            const cardNextReviewDate = card.next_review_at ? new Date(card.next_review_at) : null;
+            const isCardDue = cardNextReviewDate && isValid(cardNextReviewDate) && isPast(cardNextReviewDate);
+
+            return (
+              <NotebookCard
+                key={card.id} 
+                className={cn(
+                  "hover:shadow-md transition-shadow",
+                  card.is_flagged && "border-yellow-500 border-2",
+                  card.status === 'mastered' && "border-green-500 border-2",
+                  card.status === 'learning' && card.has_progress && card.repetition_level === 0 && isCardDue && "border-red-500 border-2",
+                  card.status === 'learning' && card.has_progress && card.repetition_level === 0 && cardNextReviewDate && isValid(cardNextReviewDate) && !isCardDue && "border-orange-500 border-2"
+                )}
+              >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg font-semibold">{card.term}</CardTitle>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleToggleFlag(card.id, card.is_flagged || false);
+                          }}
+                          className="h-8 w-8"
+                        >
+                          {card.is_flagged ? (
+                            <Flag className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          ) : (
+                            <FlagOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {card.is_flagged ? "Unflag card" : "Flag card"}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>{card.definition}</CardDescription>
+                </CardContent>
+              </NotebookCard>
+            );
+          })}
         </div>
       )}
 
