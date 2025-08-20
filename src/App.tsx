@@ -15,8 +15,11 @@ import ExplorePublicSets from "./pages/ExplorePublicSets";
 import SearchCards from "./pages/SearchCards";
 import GenerateEssayQuestions from "./pages/GenerateEssayQuestions";
 import PastEssayQuestions from "./pages/PastEssayQuestions";
-import EssayPractice from "./pages/EssayPractice"; // Import the new EssayPractice page
+import EssayPractice from "./pages/EssayPractice";
 import Settings from "./pages/Settings";
+import NotesIndex from "./pages/NotesIndex"; // Import new NotesIndex page
+import CreateNote from "./pages/CreateNote"; // Import new CreateNote page
+import EditNote from "./pages/EditNote"; // Import new EditNote page
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -128,7 +131,7 @@ function App() {
                 }
               />
               <Route
-                path="/essay-practice/:questionId" // New route for essay practice
+                path="/essay-practice/:questionId"
                 element={
                   <AuthLayout>
                     <EssayPractice />
@@ -153,6 +156,31 @@ function App() {
               />
               <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} />
               <Route path="/login" element={<Login />} />
+              {/* New Notes Routes */}
+              <Route
+                path="/notes"
+                element={
+                  <AuthLayout>
+                    <NotesIndex />
+                  </AuthLayout>
+                }
+              />
+              <Route
+                path="/create-note"
+                element={
+                  <AuthLayout>
+                    <CreateNote />
+                  </AuthLayout>
+                }
+              />
+              <Route
+                path="/notes/:noteId/edit"
+                element={
+                  <AuthLayout>
+                    <EditNote />
+                  </AuthLayout>
+                }
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster richColors />
