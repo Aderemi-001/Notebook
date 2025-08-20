@@ -36,10 +36,20 @@ serve(async (req) => {
     let content = "";
     const fileBuffer = await file.arrayBuffer();
 
-    if (file.type.startsWith("text/") || file.name.endsWith('.md') || file.name.endsWith('.csv')) {
+    // Check for common text-based file types
+    if (file.type.startsWith("text/") || 
+        file.name.endsWith('.md') || 
+        file.name.endsWith('.csv') ||
+        file.name.endsWith('.json') ||
+        file.name.endsWith('.xml') ||
+        file.name.endsWith('.html') ||
+        file.name.endsWith('.js') ||
+        file.name.endsWith('.ts') ||
+        file.name.endsWith('.css')
+    ) {
         content = new TextDecoder().decode(fileBuffer);
     } else {
-        return new Response(JSON.stringify({ error: `Unsupported file type: ${file.type}. Please use .txt, .csv, or .md.` }), {
+        return new Response(JSON.stringify({ error: `Unsupported file type: ${file.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, or .css.` }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400,
         });
