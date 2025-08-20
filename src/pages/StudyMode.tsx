@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
 
@@ -14,18 +14,96 @@ interface CardItem {
   definition: string;
 }
 
+interface UserProgress {
+  repetition_level: number;
+  ease_factor: number;
+  next_review_at: string;
+  status: 'learning' | 'mastered';
+}
+
 const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
+
+  // Fetch cards for the set, ordered by their next review date for the current user
   const { data, error } = await supabase
     .from('cards')
-    .select('id, term, definition')
+    .select(`
+      id,
+      term,
+      definition,
+      user_progress!left(
+        repetition_level,
+        ease_factor,
+        next_review_at,
+        status
+      )
+    `)
     .eq('set_id', setId)
-    .order('created_at', { ascending: true });
+    .eq('user_progress.user_id', user.id) // Filter progress for the current user
+    .order('next_review_at', { ascending: true, foreignTable: 'user_progress' }) // Order by next_review_at
+    .order('created_at', { ascending: true }); // Fallback order for new cards or no progress
 
   if (error) {
     console.error("Error fetching cards for study set:", error);
     throw new Error("Failed to fetch cards.");
   }
-  return data || [];
+
+  // Map data to ensure user_progress is directly on the card object for easier access
+  return data.map(card => ({
+    id: card.id,
+    term: card.term,
+    definition: card.definition,
+    // Flatten user_progress into the card object, or provide defaults
+    repetition_level: card.user_progress?.[0]?.repetition_level ?? 0,
+    ease_factor: card.user_progress?.[0]?.ease_factor ?? 2.5,
+    next_review_at: card.user_progress?.[0]?.next_review_at ?? new Date().toISOString(),
+    status: card.user_progress?.[0]?.status ?? 'learning',
+  })) as CardItem[];
+};
+
+const calculateNextReview = (
+  currentProgress: UserProgress | null,
+  quality: 0 | 1 | 2 | 3 | 4 | 5 // 5 for perfect, 0 for complete failure
+) => {
+  let n = currentProgress?.repetition_level ?? 0;
+  let EF = currentProgress?.ease_factor ?? 2.5;
+  let I = 0; // Interval in days
+
+  if (quality < 3) { // Incorrect response (Difficult)
+    n = 0;
+    EF = Math.max(1.3, EF - 0.20); // Decrease EF, minimum 1.3
+  } else { // Correct response (Mastered)
+    n += 1;
+    EF = EF + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+  }
+
+  if (n === 0) {
+    I = 0; // Review immediately or next session
+  } else if (n === 1) {
+    I = 1; // 1 day
+  } else if (n === 2) {
+    I = 6; // 6 days
+  } else {
+    I = Math.round(I * EF); // Previous interval * Ease Factor
+  }
+
+  // Ensure interval is at least 1 day if it's a correct answer and not the first repetition
+  if (quality >= 3 && I === 0 && n > 0) {
+    I = 1;
+  }
+
+  const nextReviewDate = new Date();
+  nextReviewDate.setDate(nextReviewDate.getDate() + I);
+
+  return {
+    repetition_level: n,
+    ease_factor: parseFloat(EF.toFixed(2)), // Store with 2 decimal places
+    next_review_at: nextReviewDate.toISOString(),
+    status: quality >= 3 ? 'mastered' : 'learning',
+  };
 };
 
 const StudyMode = () => {
@@ -33,6 +111,7 @@ const StudyMode = () => {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showDefinition, setShowDefinition] = useState(false);
   const [studyFinished, setStudyFinished] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: cards, isLoading, isError, error, refetch } = useQuery<CardItem[], Error>({
     queryKey: ['studyCards', setId],
@@ -46,7 +125,7 @@ const StudyMode = () => {
     setShowDefinition(!showDefinition);
   };
 
-  const updateCardProgress = async (cardId: string, status: 'learning' | 'mastered') => {
+  const updateCardProgress = async (cardId: string, quality: 0 | 1 | 2 | 3 | 4 | 5) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -54,24 +133,46 @@ const StudyMode = () => {
         return;
       }
 
-      const { error } = await supabase
+      // Get current progress for the card
+      const { data: existingProgress, error: fetchProgressError } = await supabase
+        .from('user_progress')
+        .select('repetition_level, ease_factor, next_review_at, status')
+        .eq('user_id', user.id)
+        .eq('card_id', cardId)
+        .single();
+
+      if (fetchProgressError && fetchProgressError.code !== 'PGRST116') { // PGRST116 means no rows found
+        throw fetchProgressError;
+      }
+
+      const newProgress = calculateNextReview(existingProgress || null, quality);
+
+      const { error: upsertError } = await supabase
         .from('user_progress')
         .upsert(
-          { user_id: user.id, card_id: cardId, status: status },
+          {
+            user_id: user.id,
+            card_id: cardId,
+            status: newProgress.status,
+            repetition_level: newProgress.repetition_level,
+            ease_factor: newProgress.ease_factor,
+            next_review_at: newProgress.next_review_at,
+          },
           { onConflict: 'user_id,card_id' }
         );
 
-      if (error) throw error;
-      showSuccess(`Card marked as ${status}!`);
+      if (upsertError) throw upsertError;
+      showSuccess(`Card marked as ${newProgress.status}!`);
+      queryClient.invalidateQueries({ queryKey: ['studySet', setId] }); // Invalidate detail page to update mastered count
     } catch (err: any) {
       showError(`Failed to update card progress: ${err.message}`);
       console.error("Error updating card progress:", err);
     }
   };
 
-  const handleNextCard = (status: 'learning' | 'mastered') => {
+  const handleNextCard = (quality: 0 | 1 | 2 | 3 | 4 | 5) => {
     if (currentCard) {
-      updateCardProgress(currentCard.id, status);
+      updateCardProgress(currentCard.id, quality);
     }
 
     if (currentCardIndex < (cards?.length || 0) - 1) {
@@ -86,7 +187,7 @@ const StudyMode = () => {
     setCurrentCardIndex(0);
     setShowDefinition(false);
     setStudyFinished(false);
-    refetch();
+    refetch(); // Re-fetch cards to get updated order based on next_review_at
   };
 
   if (!setId) {
@@ -199,16 +300,16 @@ const StudyMode = () => {
             </Button>
             {showDefinition && (
               <>
-                <Button onClick={() => handleNextCard('mastered')} className="bg-green-500 hover:bg-green-600">
+                <Button onClick={() => handleNextCard(5)} className="bg-green-500 hover:bg-green-600">
                   Mastered
                 </Button>
-                <Button onClick={() => handleNextCard('learning')} variant="destructive">
+                <Button onClick={() => handleNextCard(1)} variant="destructive">
                   Difficult
                 </Button>
               </>
             )}
             {!showDefinition && (
-              <Button onClick={() => handleNextCard('learning')}>
+              <Button onClick={() => handleNextCard(0)}>
                 Next Card
               </Button>
             )}

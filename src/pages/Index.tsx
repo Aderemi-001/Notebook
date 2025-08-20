@@ -1,17 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { PlusCircle, BookOpen, User } from "lucide-react";
+import { PlusCircle, BookOpen, User, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+import { formatDistanceToNowStrict, isPast } from 'date-fns';
 
 interface StudySet {
   id: string;
   title: string;
   description: string | null;
   cards_count: number;
+  next_review_at?: string | null; // Added for SRS
 }
 
 const fetchStudySets = async (): Promise<StudySet[]> => {
@@ -28,7 +30,31 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
     console.error("Error fetching study sets:", error);
     throw new Error("Failed to fetch study sets.");
   }
-  return data || [];
+
+  const studySets = data || [];
+
+  // Fetch the earliest next_review_at for each set
+  const setsWithReviewDates = await Promise.all(studySets.map(async (set) => {
+    const { data: earliestCard, error: cardError } = await supabase
+      .from('user_progress')
+      .select('next_review_at')
+      .eq('user_id', user.id)
+      .in('card_id', set.cards.map((card: any) => card.id)) // Assuming cards are nested in the RPC response
+      .order('next_review_at', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (cardError && cardError.code !== 'PGRST116') { // PGRST116 means no rows found
+      console.error(`Error fetching earliest review date for set ${set.id}:`, cardError);
+    }
+
+    return {
+      ...set,
+      next_review_at: earliestCard?.next_review_at || null,
+    };
+  }));
+
+  return setsWithReviewDates;
 };
 
 const Index = () => {
@@ -38,7 +64,10 @@ const Index = () => {
     queryFn: fetchStudySets,
   });
 
-  queryClient.invalidateQueries({ queryKey: ['studySets'] });
+  // Invalidate queries on mount to ensure fresh data, especially for review dates
+  React.useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['studySets'] });
+  }, [queryClient]);
 
   if (isError) {
     return (
@@ -107,6 +136,14 @@ const Index = () => {
                     <BookOpen className="mr-2 h-4 w-4" />
                     <span>{set.cards_count} cards</span>
                   </div>
+                  {set.next_review_at && (
+                    <div className="flex items-center text-sm text-muted-foreground mt-2">
+                      <Clock className="mr-2 h-4 w-4" />
+                      <span className={isPast(new Date(set.next_review_at)) ? 'text-red-500' : ''}>
+                        {isPast(new Date(set.next_review_at)) ? 'Due now' : `Next review ${formatDistanceToNowStrict(new Date(set.next_review_at), { addSuffix: true })}`}
+                      </span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </Link>
