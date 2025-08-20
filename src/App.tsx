@@ -12,6 +12,7 @@ import ExplorePublicSets from "./pages/ExplorePublicSets";
 import GenerateExam from "./pages/GenerateExam";
 import TakeExam from "./pages/TakeExam";
 import PastExams from "./pages/PastExams";
+import SearchSets from "./pages/SearchSets"; // New import
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -114,6 +115,14 @@ function App() {
                   </AuthLayout>
                 }
               />
+              <Route
+                path="/search" // New route
+                element={
+                  <AuthLayout>
+                    <SearchSets />
+                  </AuthLayout>
+                }
+              />
               <Route path="/login" element={<Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -121,7 +130,6 @@ function App() {
           </React.Fragment>
         </BrowserRouter>
       </div>
-      {/* Re-enabled */}
     </QueryClientProvider>
   );
 }

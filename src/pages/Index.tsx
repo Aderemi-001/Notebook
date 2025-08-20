@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History } from "lucide-react"; // Import History icon
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -167,8 +167,13 @@ const Index = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
+              <Link to="/search" className="flex items-center"> {/* New link */}
+                <Search className="mr-2 h-4 w-4" /> Search All Sets
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
               <Link to="/explore" className="flex items-center">
-                <Search className="mr-2 h-4 w-4" /> Explore Public Sets
+                <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
@@ -177,13 +182,13 @@ const Index = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/past-exams" className="flex items-center"> {/* New link */}
+              <Link to="/past-exams" className="flex items-center">
                 <History className="mr-2 h-4 w-4" /> Past Exams
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/constellation" className="flex items-center">
-                <Network className="mr-2 h-4 w-4" /> Constellation
+                <Network className="mr-2 h-4 w-4" /> Cognitive Constellation
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
