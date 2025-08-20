@@ -12,10 +12,10 @@ import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import * as pdfjsLib from 'pdfjs-dist/build/pdf'; // Import pdfjs-dist for client-side PDF parsing
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'; // Corrected import for pdfjs-dist
 
 // Set the worker source for pdfjs-dist
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -115,7 +115,7 @@ const CreateSet = () => {
           reader.onload = async (e) => {
             try {
               const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
-              const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+              const loadingTask = getDocument({ data: pdfData }); // Use getDocument directly
               const pdf = await loadingTask.promise;
               for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
@@ -161,7 +161,7 @@ const CreateSet = () => {
           headers: {
             'Content-Type': 'application/json', // Send as JSON
             'Authorization': `Bearer ${session.access_token}`,
-            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1b3NkbWVjbGR6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1b3NkbWVjbGR6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImexdCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
           },
           body: JSON.stringify({ content: fileContent }), // Send extracted content
         }
