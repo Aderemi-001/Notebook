@@ -13,7 +13,7 @@ const NotebookCard = React.forwardRef<HTMLDivElement, NotebookCardProps>(
       className={cn(
         "relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300",
         "border border-gray-200 rounded-md", // More defined border
-        "before:content-[''] before:absolute before:left-4 before:top-0 before:bottom-0 before:w-px before:bg-red-400", // Red margin line
+        // "before:content-[''] before:absolute before:left-4 before:top-0 before:bottom-0 before:w-px before:bg-red-400", // Red margin line - REMOVED
         "pl-6", // Add padding to the left for the holes and margin line
         className
       )}
