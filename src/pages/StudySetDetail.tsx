@@ -27,7 +27,7 @@ import {
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import StudyProgressSummary from '@/components/StudyProgressSummary';
-import { isPast, isValid, format } from 'date-fns'; // Added format
+import { isPast, isValid, format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -36,7 +36,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useUserPreferences } from '@/hooks/use-user-preferences'; // Import the hook
+import { useUserPreferences } from '@/hooks/use-user-preferences';
 
 interface StudySet {
   id: string;
@@ -167,7 +167,7 @@ const StudySetDetail = () => {
   const queryClient = useQueryClient();
 
   const [isOwner, setIsOwner] = useState(false);
-  const { preferences, isLoading: isLoadingPreferences } = useUserPreferences(); // Use preferences hook
+  const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
 
   const { data: studySet, isLoading, isError, error } = useQuery<StudySet, Error>({
     queryKey: ['studySet', setId],
@@ -206,7 +206,7 @@ const StudySetDetail = () => {
       dismissToast(toastId);
       showSuccess("Study set deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
-      queryClient.invalidateQueries({ queryKey: ['linkedNotes', setId] }); // Invalidate linked notes
+      queryClient.invalidateQueries({ queryKey: ['linkedNotes', setId] });
       navigate('/');
     } catch (error: any) {
       dismissToast(toastId);
@@ -383,91 +383,90 @@ const StudySetDetail = () => {
             {studySet.is_public ? "Public" : "Private"}
           </Badge>
         </div>
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link to="/" className="flex items-center">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sets
-            </Link>
-          </Button>
-          {studySet.cards.length > 0 && (
-            <Button asChild>
-              <Link to={`/sets/${setId}/study`} className="flex items-center">
-                <PlayCircle className="mr-2 h-4 w-4" /> Start Study
-              </Link>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <MoreVertical className="h-4 w-4" />
             </Button>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {isOwner && (
-                <>
-                  <DropdownMenuItem asChild>
-                    <Link to={`/sets/${setId}/edit`} className="flex items-center">
-                      <Pencil className="mr-2 h-4 w-4" /> Edit Set
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <AlertDialog>
-                      <AlertDialogTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                        <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleResetProgress}>
-                            Reset Progress
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  {preferences?.confirm_deletion ? (
-                    <AlertDialog>
-                      <AlertDialogTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete Set
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your
-                            "{studySet.title}" study set and all its associated cards.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleDeleteSet}>
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  ) : (
-                    <DropdownMenuItem onClick={handleDeleteSet} className="flex items-center text-destructive">
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete Set
-                    </DropdownMenuItem>
-                  )}
-                </>
-              )}
-              {studySet.is_public && !isOwner && (
-                <DropdownMenuItem onClick={handleAddToMySets} className="flex items-center">
-                  <Plus className="mr-2 h-4 w-4" /> Add to My Sets
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/" className="flex items-center">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Sets
+              </Link>
+            </DropdownMenuItem>
+            {studySet.cards.length > 0 && (
+              <DropdownMenuItem asChild>
+                <Link to={`/sets/${setId}/study`} className="flex items-center">
+                  <PlayCircle className="mr-2 h-4 w-4" /> Start Study
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {isOwner && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to={`/sets/${setId}/edit`} className="flex items-center">
+                    <Pencil className="mr-2 h-4 w-4" /> Edit Set
+                  </Link>
                 </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                <DropdownMenuItem asChild>
+                  <AlertDialog>
+                    <AlertDialogTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                      <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleResetProgress}>
+                          Reset Progress
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {preferences?.confirm_deletion ? (
+                  <AlertDialog>
+                    <AlertDialogTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete Set
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete your
+                          "{studySet.title}" study set and all its associated cards.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteSet}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                ) : (
+                  <DropdownMenuItem onClick={handleDeleteSet} className="flex items-center text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete Set
+                  </DropdownMenuItem>
+                )}
+              </>
+            )}
+            {studySet.is_public && !isOwner && (
+              <DropdownMenuItem onClick={handleAddToMySets} className="flex items-center">
+                <Plus className="mr-2 h-4 w-4" /> Add to My Sets
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {studySet.description && (
@@ -487,49 +486,47 @@ const StudySetDetail = () => {
           <p className="text-muted-foreground">No cards in this set yet.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto scrollbar-hide pb-4"> {/* Added overflow-x-auto and scrollbar-hide */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 min-w-max"> {/* Added min-w-max */}
-            {studySet.cards.map((card) => {
-              const cardNextReviewDate = card.next_review_at ? new Date(card.next_review_at) : null;
-              const isCardDue = cardNextReviewDate && isValid(cardNextReviewDate) && isPast(cardNextReviewDate);
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {studySet.cards.map((card) => {
+            const cardNextReviewDate = card.next_review_at ? new Date(card.next_review_at) : null;
+            const isCardDue = cardNextReviewDate && isValid(cardNextReviewDate) && isPast(cardNextReviewDate);
 
-              return (
-                <NotebookCard
-                  key={card.id} 
-                  className={cn(
-                    "hover:shadow-md transition-shadow",
-                    card.is_flagged && "border-yellow-500 border-2",
-                    card.status === 'mastered' && "border-green-500 border-2",
-                    card.status === 'learning' && card.has_progress && card.repetition_level === 0 && isCardDue && "border-red-500 border-2",
-                    card.status === 'learning' && card.has_progress && card.repetition_level === 0 && cardNextReviewDate && isValid(cardNextReviewDate) && !isCardDue && "border-orange-500 border-2"
-                  )}
-                >
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-lg font-semibold">{card.term}</CardTitle>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleToggleFlag(card.id, card.is_flagged || false);
-                            }}
-                            className="h-8 w-8"
-                          >
-                            {card.is_flagged ? (
-                              <Flag className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                            ) : (
-                              <FlagOff className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {card.is_flagged ? "Unflag card" : "Flag card"}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+            return (
+              <NotebookCard
+                key={card.id} 
+                className={cn(
+                  "hover:shadow-md transition-shadow",
+                  card.is_flagged && "border-yellow-500 border-2",
+                  card.status === 'mastered' && "border-green-500 border-2",
+                  card.status === 'learning' && card.has_progress && card.repetition_level === 0 && isCardDue && "border-red-500 border-2",
+                  card.status === 'learning' && card.has_progress && card.repetition_level === 0 && cardNextReviewDate && isValid(cardNextReviewDate) && !isCardDue && "border-orange-500 border-2"
+                )}
+              >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg font-semibold">{card.term}</CardTitle>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleToggleFlag(card.id, card.is_flagged || false);
+                          }}
+                          className="h-8 w-8"
+                        >
+                          {card.is_flagged ? (
+                            <Flag className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          ) : (
+                            <FlagOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {card.is_flagged ? "Unflag card" : "Flag card"}
+                      </TooltipContent>
+                    </Tooltip>
                   </CardHeader>
                   <CardContent>
                     <CardDescription>{card.definition}</CardDescription>
