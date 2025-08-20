@@ -8,11 +8,10 @@ import StudyMode from "./pages/StudyMode";
 import EditSet from "./pages/EditSet";
 import Profile from "./pages/Profile";
 import CognitiveConstellation from "./pages/CognitiveConstellation";
-import ExplorePublicSets from "./pages/ExplorePublicSets";
 import GenerateExam from "./pages/GenerateExam";
 import TakeExam from "./pages/TakeExam";
 import PastExams from "./pages/PastExams";
-import SearchSets from "./pages/SearchSets"; // New import
+import SearchSets from "./pages/SearchSets";
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -83,14 +82,7 @@ function App() {
                   </AuthLayout>
                 }
               />
-              <Route
-                path="/explore"
-                element={
-                  <AuthLayout>
-                    <ExplorePublicSets />
-                  </AuthLayout>
-                }
-              />
+              {/* Removed ExplorePublicSets route */}
               <Route
                 path="/generate-exam"
                 element={
@@ -116,7 +108,7 @@ function App() {
                 }
               />
               <Route
-                path="/search" // New route
+                path="/search"
                 element={
                   <AuthLayout>
                     <SearchSets />

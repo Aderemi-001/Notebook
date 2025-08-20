@@ -27,31 +27,38 @@ interface VisibleStudySet {
   is_owner: boolean;
 }
 
-const fetchAllVisibleStudySets = async (): Promise<VisibleStudySet[]> => {
-  const { data, error } = await supabase
-    .rpc('get_all_visible_study_sets_with_card_count');
+const searchVisibleStudySets = async (searchTerm: string): Promise<VisibleStudySet[]> => {
+  // If search term is empty, fetch all visible sets (similar to previous behavior)
+  // Otherwise, use the new RPC for searching
+  if (!searchTerm.trim()) {
+    const { data, error } = await supabase
+      .rpc('get_all_visible_study_sets_with_card_count'); // Re-using the existing RPC for no search term
 
-  if (error) {
-    console.error("Error fetching all visible study sets:", error);
-    throw new Error("Failed to fetch study sets.");
+    if (error) {
+      console.error("Error fetching all visible study sets:", error);
+      throw new Error("Failed to fetch study sets.");
+    }
+    return data || [];
+  } else {
+    const { data, error } = await supabase
+      .rpc('search_visible_study_sets', { search_query: searchTerm });
+
+    if (error) {
+      console.error("Error searching visible study sets:", error);
+      throw new Error("Failed to search study sets.");
+    }
+    return data || [];
   }
-
-  return data || [];
 };
 
 const SearchSets: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: allVisibleStudySets, isLoading, isError, error } = useQuery<VisibleStudySet[], Error>({
-    queryKey: ['allVisibleStudySets'],
-    queryFn: fetchAllVisibleStudySets,
+  const { data: foundStudySets, isLoading, isError, error } = useQuery<VisibleStudySet[], Error>({
+    queryKey: ['searchAllVisibleStudySets', searchTerm],
+    queryFn: () => searchVisibleStudySets(searchTerm),
+    keepPreviousData: true, // Keep previous data while fetching new results
   });
-
-  const filteredStudySets = allVisibleStudySets?.filter(set =>
-    set.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (set.description && set.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (set.display_name && set.display_name.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
 
   if (isError) {
     return (
@@ -82,13 +89,13 @@ const SearchSets: React.FC = () => {
       </div>
 
       <p className="text-muted-foreground mb-6">
-        Search across all your private sets and public sets shared by others.
+        Search across all your private sets and public sets shared by others, including card content.
       </p>
 
       <div className="mb-6">
         <Input
           type="text"
-          placeholder="Search by title, description, or creator..."
+          placeholder="Search by title, description, creator, or card content..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full"
@@ -109,7 +116,7 @@ const SearchSets: React.FC = () => {
             </NotebookCard>
           ))}
         </div>
-      ) : (filteredStudySets?.length === 0 || !filteredStudySets) ? (
+      ) : (foundStudySets?.length === 0 || !foundStudySets) ? (
         <div className="text-center py-20 border-2 border-dashed rounded-lg">
           <h2 className="text-xl font-semibold">No study sets found!</h2>
           <p className="text-muted-foreground mt-2">
@@ -118,7 +125,7 @@ const SearchSets: React.FC = () => {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredStudySets.map((set) => (
+          {foundStudySets.map((set) => (
             <Link to={`/sets/${set.id}`} key={set.id}>
               <NotebookCard className="hover:shadow-md transition-shadow h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
