@@ -4,7 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider.tsx";
 
 createRoot(document.getElementById("root")!).render(
-  <ThemeProvider defaultTheme="system" enableSystem attribute="class">
+  <ThemeProvider defaultTheme="light" attribute="class">
     <App />
   </ThemeProvider>
 );
