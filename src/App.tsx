@@ -7,7 +7,8 @@ import StudySetDetail from "./pages/StudySetDetail";
 import StudyMode from "./pages/StudyMode";
 import EditSet from "./pages/EditSet";
 import Profile from "./pages/Profile";
-import CognitiveConstellation from "./pages/CognitiveConstellation"; // Import the new page
+import CognitiveConstellation from "./pages/CognitiveConstellation";
+import ExplorePublicSets from "./pages/ExplorePublicSets"; // Import the new page
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -70,10 +71,18 @@ function App() {
               }
             />
             <Route
-              path="/constellation" // New route for Cognitive Constellation
+              path="/constellation"
               element={
                 <AuthLayout>
                   <CognitiveConstellation />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/explore" // New route for ExplorePublicSets
+              element={
+                <AuthLayout>
+                  <ExplorePublicSets />
                 </AuthLayout>
               }
             />

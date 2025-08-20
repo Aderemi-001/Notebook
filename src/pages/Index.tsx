@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"; // Keep these imports for sub-components
 import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe } from "lucide-react"; // Added Network icon, Globe
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search } from "lucide-react"; // Added Network icon, Globe, Search
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -152,6 +152,13 @@ const Index = () => {
             <Link to="/create" className="flex items-center">
               <React.Fragment>
                 <PlusCircle className="mr-2 h-4 w-4" /> Create Set
+              </React.Fragment>
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/explore" className="flex items-center"> {/* New button for Explore Public Sets */}
+              <React.Fragment>
+                <Search className="mr-2 h-4 w-4" /> Explore Public Sets
               </React.Fragment>
             </Link>
           </Button>
