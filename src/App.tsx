@@ -15,10 +15,8 @@ import ExplorePublicSets from "./pages/ExplorePublicSets";
 import SearchCards from "./pages/SearchCards";
 import GenerateEssayQuestions from "./pages/GenerateEssayQuestions";
 import PastEssayQuestions from "./pages/PastEssayQuestions";
-import EssayPractice from "./pages/EssayPractice";
+import EssayPractice from "./pages/EssayPractice"; // Import the new EssayPractice page
 import Settings from "./pages/Settings";
-import NotesIndex from "./pages/NotesIndex"; // Import NotesIndex
-import NoteDetail from "./pages/NoteDetail";   // Import NoteDetail
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -130,7 +128,7 @@ function App() {
                 }
               />
               <Route
-                path="/essay-practice/:questionId"
+                path="/essay-practice/:questionId" // New route for essay practice
                 element={
                   <AuthLayout>
                     <EssayPractice />
@@ -154,23 +152,7 @@ function App() {
                 }
               />
               <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} />
-              {/* New Notes Routes */}
-              <Route
-                path="/notes"
-                element={
-                  <AuthLayout>
-                    <NotesIndex />
-                  </AuthLayout>
-                }
-              />
-              <Route
-                path="/notes/:noteId"
-                element={
-                  <AuthLayout>
-                    <NoteDetail />
-                  </AuthLayout>
-                }
-              />
+              <Route path="/login" element={<Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster richColors />

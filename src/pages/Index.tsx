@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut, NotebookText } from "lucide-react";
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -194,14 +194,6 @@ const Index = () => {
             <DropdownMenuItem asChild>
               <Link to="/search-cards" className="flex items-center">
                 <Search className="mr-2 h-4 w-4" /> Search My Cards
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
-            {/* Notes Section */}
-            <DropdownMenuItem asChild>
-              <Link to="/notes" className="flex items-center">
-                <NotebookText className="mr-2 h-4 w-4" /> My Notes
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
