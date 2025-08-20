@@ -216,7 +216,7 @@ const CreateSet = () => {
           }
 
           let conceptId: string;
-          if (existsSync) {
+          if (existingConcept) { // Corrected: Check if existingConcept is truthy
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
@@ -231,6 +231,21 @@ const CreateSet = () => {
             conceptId = insertedConcept.id;
           }
           conceptNameToIdMap.set(concept.name, conceptId);
+        }
+
+        // Link cards to concepts (simplified: link all new cards to all new concepts for now)
+        // A more sophisticated approach would involve AI linking specific cards to specific concepts
+        const cardsInForm = form.getValues('cards');
+        const cardConceptLinksToInsert = [];
+        for (const card of cardsInForm) {
+          // This is a placeholder. In a real app, AI would identify which concepts are in which card.
+          // For now, we'll link all new cards to all new concepts.
+          // This part needs to be refined if we want precise card-concept links.
+          // For the "Cognitive Constellation" visualization, the primary links are concept-to-concept.
+          // Card-concept links are for showing which cards contribute to a concept.
+          // For simplicity, we'll skip direct card-concept linking from AI output for now,
+          // as the AI output doesn't specify which card contains which concept.
+          // This can be added later if needed for a more granular view.
         }
 
         // Insert relationships

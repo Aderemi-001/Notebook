@@ -310,7 +310,7 @@ const EditSet = () => {
           }
 
           let conceptId: string;
-          if (existsSync) {
+          if (existingConcept) { // Corrected: Check if existingConcept is truthy
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
