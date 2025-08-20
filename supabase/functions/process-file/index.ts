@@ -1,6 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-// Using esm.sh for Deno compatibility with pdfjs-dist
-import { getDocument } from "https://esm.sh/pdfjs-dist@3.11.174";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,70 +6,74 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper function to extract text from a PDF file buffer
-async function extractTextFromPdf(fileBuffer: ArrayBuffer): Promise<string> {
-    // The type assertion is needed because the esm.sh module typing is generic
-    const pdf = await getDocument({ data: fileBuffer } as any).promise;
-    let text = "";
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        // deno-lint-ignore no-explicit-any
-        const strings = content.items.map((item: any) => item.str);
-        text += strings.join(" ") + "\n";
-    }
-    return text;
-}
-
 serve(async (req) => {
-  // Handle CORS preflight requests
+  console.log(`[${new Date().toISOString()}] Function invoked with method: ${req.method}`);
+
   if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS preflight request.");
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    console.log("Function invoked. Starting diagnostic test: file reading.");
+    console.log("Attempting to parse FormData.");
     const formData = await req.formData();
+    console.log("FormData parsed successfully.");
+
     const file = formData.get("file") as File;
 
     if (!file) {
+      console.error("Error: No file found in FormData.");
       return new Response(JSON.stringify({ error: "No file provided." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
-    let content = "";
-    const fileBuffer = await file.arrayBuffer();
+    console.log(`File received: ${file.name}, type: ${file.type}, size: ${file.size} bytes.`);
 
-    // Extract content based on file type
+    // Temporarily disable PDF processing to isolate the issue.
     if (file.type === "application/pdf") {
-        content = await extractTextFromPdf(fileBuffer);
-    } else if (file.type.startsWith("text/") || file.name.endsWith('.md') || file.name.endsWith('.csv')) {
+      console.error("Error: PDF processing is temporarily disabled for diagnostics.");
+      return new Response(JSON.stringify({ error: "PDF processing is currently disabled for testing. Please try a .txt file." }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+      });
+    }
+
+    let content = "";
+    console.log("Reading file content as ArrayBuffer.");
+    const fileBuffer = await file.arrayBuffer();
+    console.log("File read into ArrayBuffer successfully.");
+
+    if (file.type.startsWith("text/") || file.name.endsWith('.md') || file.name.endsWith('.csv')) {
+        console.log("Decoding file content as text.");
         content = new TextDecoder().decode(fileBuffer);
+        console.log("File decoded successfully.");
     } else {
-        return new Response(JSON.stringify({ error: `Unsupported file type: ${file.type}` }), {
+        console.error(`Unsupported file type: ${file.type}`);
+        return new Response(JSON.stringify({ error: `Unsupported file type: ${file.type}. Please use .txt, .csv, or .md.` }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400,
         });
     }
 
     if (!content.trim()) {
+        console.error("Error: Extracted content is empty.");
         return new Response(JSON.stringify({ error: "Could not extract any text from the file." }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400,
         });
     }
 
-    // DIAGNOSTIC STEP: Return extracted text instead of calling AI
     const snippet = content.substring(0, 400);
+    console.log("Diagnostic successful. Returning content snippet.");
     return new Response(JSON.stringify({ diagnostic_success: true, content_snippet: snippet }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 
   } catch (error) {
-    console.error("Error during file processing diagnostic:", error);
+    console.error("Critical error in function execution:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
