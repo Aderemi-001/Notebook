@@ -33,7 +33,7 @@ import { useUserPreferences } from '@/hooks/use-user-preferences';
 interface Note {
   id: string;
   title: string;
-  content: any; // JSONB content from TipTap
+  content: string; // Changed to string as it's stored as HTML
   created_at: string;
   updated_at: string;
   study_set_id: string | null;
@@ -67,29 +67,14 @@ const fetchUserNotes = async (): Promise<Note[]> => {
   return data || [];
 };
 
-// Function to convert TipTap JSON content to plain text preview
-const getPlainTextPreview = (content: any, maxLength: number = 150): string => {
-  if (!content) return '';
+// Function to convert HTML content to plain text preview
+const getPlainTextPreview = (htmlContent: string, maxLength: number = 150): string => {
+  if (!htmlContent) return '';
   try {
-    // If content is already a string (e.g., from AI summary), use it directly
-    if (typeof content === 'string') {
-      return content.length > maxLength ? content.substring(0, maxLength) + '...' : content;
-    }
-    // Assuming TipTap content is a JSON object with a 'content' array
-    if (content.type === 'doc' && Array.isArray(content.content)) {
-      let text = '';
-      for (const node of content.content) {
-        if (node.type === 'paragraph' && Array.isArray(node.content)) {
-          for (const item of node.content) {
-            if (item.type === 'text' && item.text) {
-              text += item.text + ' ';
-            }
-          }
-        }
-        if (text.length >= maxLength) break;
-      }
-      return text.trim().length > maxLength ? text.trim().substring(0, maxLength) + '...' : text.trim();
-    }
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const text = doc.body.textContent || '';
+    return text.trim().length > maxLength ? text.trim().substring(0, maxLength) + '...' : text.trim();
   } catch (e) {
     console.error("Error parsing note content for preview:", e);
   }
