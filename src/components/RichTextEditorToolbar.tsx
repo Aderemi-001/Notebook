@@ -1,7 +1,7 @@
 import React from 'react';
 import { Editor } from '@tiptap/react';
 import { Toggle } from '@/components/ui/toggle';
-import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo, X } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo, X, ListTodo } from 'lucide-react'; // Import ListTodo
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // Import Popover components
 
@@ -147,6 +147,15 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
         aria-label="Toggle ordered list"
       >
         <ListOrdered className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive('taskList')} {/* Check for taskList active state */}
+        onPressedChange={() => editor.chain().focus().toggleTaskList().run()}
+        disabled={!editor.can().chain().focus().toggleTaskList().run()}
+        aria-label="Toggle todo list"
+      >
+        <ListTodo className="h-4 w-4" /> {/* New icon for todo list */}
       </Toggle>
       <Toggle
         size="sm"

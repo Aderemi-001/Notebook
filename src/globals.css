@@ -142,6 +142,36 @@
   .prose {
     overflow-wrap: break-word;
   }
+
+  /* Tiptap TaskList Styling */
+  ul[data-type="taskList"] {
+    @apply list-none p-0; /* Remove default list styling */
+  }
+
+  ul[data-type="taskList"] li {
+    @apply flex items-start gap-2 py-1; /* Align checkbox and text */
+  }
+
+  ul[data-type="taskList"] li > label {
+    @apply flex-shrink-0 mt-1; /* Position checkbox */
+  }
+
+  ul[data-type="taskList"] li > div {
+    @apply flex-grow; /* Allow text to take remaining space */
+  }
+
+  ul[data-type="taskList"] li.checked > div {
+    @apply text-muted-foreground line-through; /* Style for completed tasks */
+  }
+
+  /* Custom checkbox styling for TaskList */
+  ul[data-type="taskList"] input[type="checkbox"] {
+    @apply h-4 w-4 rounded border border-primary text-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  ul[data-type="taskList"] input[type="checkbox"]:checked {
+    @apply bg-primary text-primary-foreground;
+  }
 }
 
 .login-page-scribble-bg {

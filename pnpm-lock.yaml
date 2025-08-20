@@ -119,6 +119,9 @@ importers:
       '@tiptap/extension-highlight':
         specifier: ^3.2.0
         version: 3.2.0(@tiptap/core@3.2.0(@tiptap/pm@3.2.0))
+      '@tiptap/extension-task-list':
+        specifier: ^3.2.0
+        version: 3.2.0(@tiptap/extension-list@3.2.0(@tiptap/core@3.2.0(@tiptap/pm@3.2.0))(@tiptap/pm@3.2.0))
       '@tiptap/react':
         specifier: ^3.2.0
         version: 3.2.0(@floating-ui/dom@1.6.13)(@tiptap/core@3.2.0(@tiptap/pm@3.2.0))(@tiptap/pm@3.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1623,6 +1626,11 @@ packages:
     resolution: {integrity: sha512-gIfaIJmvQNBxjvtJfNQ8LhvWuGEFVFDMJxLa80speY4ngsDYZ3K8Ea4+0FTctKJVIXEZ5cDoHZR96ELkQMPzWA==}
     peerDependencies:
       '@tiptap/core': ^3.2.0
+
+  '@tiptap/extension-task-list@3.2.0':
+    resolution: {integrity: sha512-x/qLFifGHhOn/c2Z7MTCy5ChkpzgIpDP4qy3m502i2oGKBcs8K6bRBSYxf4iD3WZcFxlua+Ada/bvPohw/VG9w==}
+    peerDependencies:
+      '@tiptap/extension-list': ^3.2.0
 
   '@tiptap/extension-text@3.2.0':
     resolution: {integrity: sha512-VDQPjVr6zd3MGh8+xPIIj+fuIhnws9tpAmP7jvBep+0tL7P2RYpN2NSj0zqeStHPcGfv9iMuXEuuMkEsi5gIZg==}
@@ -4507,6 +4515,10 @@ snapshots:
   '@tiptap/extension-strike@3.2.0(@tiptap/core@3.2.0(@tiptap/pm@3.2.0))':
     dependencies:
       '@tiptap/core': 3.2.0(@tiptap/pm@3.2.0)
+
+  '@tiptap/extension-task-list@3.2.0(@tiptap/extension-list@3.2.0(@tiptap/core@3.2.0(@tiptap/pm@3.2.0))(@tiptap/pm@3.2.0))':
+    dependencies:
+      '@tiptap/extension-list': 3.2.0(@tiptap/core@3.2.0(@tiptap/pm@3.2.0))(@tiptap/pm@3.2.0)
 
   '@tiptap/extension-text@3.2.0(@tiptap/core@3.2.0(@tiptap/pm@3.2.0))':
     dependencies:

@@ -2,6 +2,8 @@ import React from 'react';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
+import TaskList from '@tiptap/extension-task-list'; // Import TaskList
+import TaskItem from '@tiptap/extension-task-item'; // Import TaskItem
 import { cn } from '@/lib/utils';
 import RichTextEditorToolbar from './RichTextEditorToolbar'; // Import the new toolbar component
 
@@ -23,12 +25,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         },
         bulletList: {
           HTMLAttributes: {
-            class: 'list-disc', // Removed list-inside
+            class: 'list-disc',
           },
         },
         orderedList: {
           HTMLAttributes: {
-            class: 'list-decimal', // Removed list-inside
+            class: 'list-decimal',
           },
         },
         codeBlock: {
@@ -55,7 +57,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       }),
       Highlight.configure({
         multicolor: true,
-        // HTMLAttributes are removed here as styling is handled by globals.css based on data-color
+      }),
+      TaskList, // Add TaskList extension
+      TaskItem.configure({ // Configure TaskItem
+        nested: true,
       }),
     ],
     content: content,
