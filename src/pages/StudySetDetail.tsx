@@ -139,7 +139,7 @@ const StudySetDetail = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [isOwner, setIsOwner] = useState(false); // Moved to top
+  const [isOwner, setIsOwner] = useState(false);
 
   const { data: studySet, isLoading, isError, error } = useQuery<StudySet, Error>({
     queryKey: ['studySet', setId],
@@ -147,7 +147,7 @@ const StudySetDetail = () => {
     enabled: !!setId,
   });
 
-  useEffect(() => { // Moved to top
+  useEffect(() => {
     const checkOwner = async () => {
       if (studySet?.user_id) {
         const { data: { user } } = await supabase.auth.getUser();
@@ -155,7 +155,7 @@ const StudySetDetail = () => {
       }
     };
     checkOwner();
-  }, [studySet?.user_id]); // Re-run when studySet.user_id changes
+  }, [studySet?.user_id]);
 
   const handleDeleteSet = async () => {
     if (!setId) return;
@@ -485,7 +485,7 @@ const StudySetDetail = () => {
                       {card.is_flagged ? "Unflag card" : "Flag card"}
                     </TooltipContent>
                   </Tooltip>
-                </CardProvider>
+                </TooltipProvider>
               </CardHeader>
               <CardContent>
                 <CardDescription>{card.definition}</CardDescription>
