@@ -246,6 +246,11 @@ const Index = () => {
 
             {/* Study Set Management */}
             <DropdownMenuItem asChild>
+              <Link to="/" className="flex items-center">
+                <BookOpen className="mr-2 h-4 w-4" /> My Study Sets
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
               <Link to="/create" className="flex items-center">
                 <PlusCircle className="mr-2 h-4 w-4" /> Create Set
               </Link>
@@ -255,7 +260,6 @@ const Index = () => {
                 <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
               </Link>
             </DropdownMenuItem>
-            {/* Removed Search My Cards link as it's integrated */}
             <DropdownMenuSeparator />
 
             {/* Notes Section */}
