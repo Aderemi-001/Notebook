@@ -1,1 +1,47 @@
-...
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+interface AuthLayoutProps {
+  children: React.ReactNode;
+}
+
+const AuthLayout = ({ children }: AuthLayoutProps) => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/login');
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate('/login');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+};
+
+export default AuthLayout;
