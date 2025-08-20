@@ -235,7 +235,7 @@ const CreateSet = () => {
                       name={`cards.${index}.definition`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Definition</Label>
+                          <FormLabel>Definition</FormLabel>
                           <FormControl>
                             <Input placeholder="Definition" {...field} />
                           </FormControl>
