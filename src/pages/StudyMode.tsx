@@ -129,7 +129,6 @@ const StudyMode = () => {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showDefinition, setShowDefinition] = useState(false);
   const [studyFinished, setStudyFinished] = useState(false);
-  const [cardAnimation, setCardAnimation] = useState<'in' | 'out' | null>(null);
   const queryClient = useQueryClient();
 
   const { data: cards, isLoading, isError, error, refetch } = useQuery<CardItem[], Error>({
@@ -196,40 +195,19 @@ const StudyMode = () => {
     }
 
     if (currentCardIndex < (cards?.length || 0) - 1) {
-      setCardAnimation('out');
-      setTimeout(() => {
-        setCurrentCardIndex(prevIndex => prevIndex + 1);
-        setShowDefinition(false);
-        setCardAnimation('in');
-      }, 500);
+      setCurrentCardIndex(prevIndex => prevIndex + 1);
+      setShowDefinition(false);
     } else {
-      setCardAnimation('out');
-      setTimeout(() => {
-        setStudyFinished(true);
-        setCardAnimation(null);
-      }, 500);
+      setStudyFinished(true);
     }
   };
 
   const handleRestartStudy = () => {
-    setCardAnimation('out');
-    setTimeout(() => {
-      setCurrentCardIndex(0);
-      setShowDefinition(false);
-      setStudyFinished(false);
-      refetch();
-      setCardAnimation('in');
-    }, 500);
+    setCurrentCardIndex(0);
+    setShowDefinition(false);
+    setStudyFinished(false);
+    refetch();
   };
-
-  useEffect(() => {
-    setCardAnimation('in');
-    const timer = setTimeout(() => {
-      setCardAnimation(null);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [currentCardIndex]);
-
 
   if (!setId) {
     return (
@@ -319,42 +297,36 @@ const StudyMode = () => {
         </div>
       ) : (
         <>
-          <div className={cn(
-            "w-full max-w-md h-64 relative",
-            cardAnimation === 'out' && 'animate-slide-out-left absolute',
-            cardAnimation === 'in' && 'animate-slide-in-right'
-          )}>
-            <FlippableCard
-              key={currentCard?.id || 'study-card'}
-              isFlipped={showDefinition}
-              onClick={handleFlipCard}
-              className="w-full h-full"
-              frontContent={
-                <>
-                  <CardHeader>
-                    <CardTitle className="text-2xl">Term</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow flex items-center justify-center">
-                    <p className="text-xl font-medium">
-                      {currentCard?.term}
-                    </p>
-                  </CardContent>
-                </>
-              }
-              backContent={
-                <>
-                  <CardHeader>
-                    <CardTitle className="text-2xl">Definition</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow flex items-center justify-center">
-                    <p className="text-xl font-medium">
-                      {currentCard?.definition}
-                    </p>
-                  </CardContent>
-                </>
-              }
-            />
-          </div>
+          <FlippableCard
+            key={currentCard?.id || 'study-card'}
+            isFlipped={showDefinition}
+            onClick={handleFlipCard}
+            className="w-full max-w-md h-64"
+            frontContent={
+              <>
+                <CardHeader>
+                  <CardTitle className="text-2xl">Term</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow flex items-center justify-center">
+                  <p className="text-xl font-medium">
+                    {currentCard?.term}
+                  </p>
+                </CardContent>
+              </>
+            }
+            backContent={
+              <>
+                <CardHeader>
+                  <CardTitle className="text-2xl">Definition</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow flex items-center justify-center">
+                  <p className="text-xl font-medium">
+                    {currentCard?.definition}
+                  </p>
+                </CardContent>
+              </>
+            }
+          />
 
           <div className="mt-8 flex gap-4">
             <Button onClick={handleFlipCard} variant="outline">
