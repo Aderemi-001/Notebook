@@ -30,28 +30,34 @@ interface UserProgress {
 
 const calculateNextReview = (
   currentProgress: UserProgress | null,
-  quality: 0 | 1 | 2 | 3 | 4 | 5
+  quality: 0 | 1 | 2
 ) => {
   let n = currentProgress?.repetition_level ?? 0;
   let EF = currentProgress?.ease_factor ?? 2.5;
   let I = 0;
+  let status: 'learning' | 'mastered' = 'learning';
 
-  if (quality < 3) {
+  if (quality === 0) { // Again
     n = 0;
     EF = Math.max(1.3, EF - 0.20);
-    I = 0;
-  } else {
+    I = 0; // Immediately
+  } else if (quality === 1) { // Hard
+    n = 0; // Reset repetition level
+    EF = Math.max(1.3, EF - 0.15); // Slightly less severe decrease
+    I = 1; // 1 day
+  } else { // quality === 2 (Good)
     n += 1;
-    EF = EF + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-    EF = Math.max(1.3, EF);
+    EF = EF + 0.1; // Simple increase for good recall
+    EF = Math.max(1.3, EF); // Ensure EF doesn't go below 1.3
 
     if (n === 1) {
-      I = 1;
+      I = 1; // First successful recall, 1 day
     } else if (n === 2) {
-      I = 6;
+      I = 6; // Second successful recall, 6 days
     } else {
-      I = Math.round(6 * Math.pow(EF, n - 2));
+      I = Math.round(6 * Math.pow(EF, n - 2)); // Standard SM-2 for subsequent recalls
     }
+    status = 'mastered'; // Mark as mastered if recalled well
   }
 
   const nextReviewDate = new Date();
@@ -61,7 +67,7 @@ const calculateNextReview = (
     repetition_level: n,
     ease_factor: parseFloat(EF.toFixed(2)),
     next_review_at: nextReviewDate.toISOString(),
-    status: quality >= 3 ? 'mastered' : 'learning',
+    status: status,
   };
 };
 
@@ -145,7 +151,7 @@ const StudyMode = () => {
     setShowDefinition(!showDefinition);
   };
 
-  const updateCardProgress = useCallback(async (cardId: string, quality: 0 | 1 | 2 | 3 | 4 | 5) => {
+  const updateCardProgress = useCallback(async (cardId: string, quality: 0 | 1 | 2) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -189,7 +195,7 @@ const StudyMode = () => {
     }
   }, [queryClient, setId]);
 
-  const handleNextCard = (quality: 0 | 1 | 2 | 3 | 4 | 5) => {
+  const handleNextCard = (quality: 0 | 1 | 2) => {
     if (currentCard) {
       updateCardProgress(currentCard.id, quality);
     }
@@ -339,20 +345,11 @@ const StudyMode = () => {
                 <Button onClick={() => handleNextCard(0)} variant="destructive" className="w-full sm:w-auto">
                   Again (0)
                 </Button>
-                <Button onClick={() => handleNextCard(1)} variant="destructive" className="w-full sm:w-auto">
+                <Button onClick={() => handleNextCard(1)} variant="secondary" className="w-full sm:w-auto">
                   Hard (1)
                 </Button>
-                <Button onClick={() => handleNextCard(2)} variant="secondary" className="w-full sm:w-auto">
-                  Medium (2)
-                </Button>
-                <Button onClick={() => handleNextCard(3)} variant="default" className="w-full sm:w-auto">
-                  Good (3)
-                </Button>
-                <Button onClick={() => handleNextCard(4)} className="bg-green-500 hover:bg-green-600 w-full sm:w-auto">
-                  Easy (4)
-                </Button>
-                <Button onClick={() => handleNextCard(5)} className="bg-green-700 hover:bg-green-800 text-white w-full sm:w-auto">
-                  Perfect (5)
+                <Button onClick={() => handleNextCard(2)} className="bg-green-500 hover:bg-green-600 w-full sm:w-auto">
+                  Good (2)
                 </Button>
               </>
             )}
