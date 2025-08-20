@@ -167,11 +167,15 @@ const Index = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/explore-public-sets" className="flex items-center"> {/* Re-add this link */}
+              <Link to="/explore-public-sets" className="flex items-center">
                 <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
               </Link>
             </DropdownMenuItem>
-            {/* Removed Search All Sets link */}
+            <DropdownMenuItem asChild>
+              <Link to="/search-cards" className="flex items-center"> {/* New link */}
+                <Search className="mr-2 h-4 w-4" /> Search My Cards
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/generate-exam" className="flex items-center">
                 <Brain className="mr-2 h-4 w-4" /> Generate Exam

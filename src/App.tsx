@@ -11,7 +11,8 @@ import CognitiveConstellation from "./pages/CognitiveConstellation";
 import GenerateExam from "./pages/GenerateExam";
 import TakeExam from "./pages/TakeExam";
 import PastExams from "./pages/PastExams";
-import ExplorePublicSets from "./pages/ExplorePublicSets"; // Re-add this import
+import ExplorePublicSets from "./pages/ExplorePublicSets";
+import SearchCards from "./pages/SearchCards"; // New import
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -83,10 +84,18 @@ function App() {
                 }
               />
               <Route
-                path="/explore-public-sets" // Re-add this route
+                path="/explore-public-sets"
                 element={
                   <AuthLayout>
                     <ExplorePublicSets />
+                  </AuthLayout>
+                }
+              />
+              <Route
+                path="/search-cards" // New route
+                element={
+                  <AuthLayout>
+                    <SearchCards />
                   </AuthLayout>
                 }
               />
@@ -114,7 +123,6 @@ function App() {
                   </AuthLayout>
                 }
               />
-              {/* Removed SearchSets route */}
               <Route path="/login" element={<Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
