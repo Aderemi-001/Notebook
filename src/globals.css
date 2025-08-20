@@ -52,33 +52,34 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 220 10% 10%; /* Very dark grey */
+    --foreground: 210 20% 90%; /* Light grey */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 10% 15%; /* Slightly lighter dark grey for cards */
+    --card-foreground: 210 20% 90%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 10% 15%;
+    --popover-foreground: 210 20% 90%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 217.2 91.2% 59.8%; /* Vibrant blue */
+    --primary-foreground: 210 40% 98%; /* White */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%; /* Dark grey */
+    --secondary-foreground: 210 20% 90%;
 
     --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted-foreground: 215 10% 60%; /* Medium grey for muted text */
 
     --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent-foreground: 210 20% 90%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84.2% 60.2%; /* Red */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 217.2 20% 25%; /* Lighter border for visibility */
+    --input: 217.2 20% 25%;
+    --ring: 217.2 91.2% 59.8%; /* Primary blue */
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -107,12 +108,22 @@
     );
     background-size: 100% 26px; /* Adjust to match line spacing + thickness */
   }
+
+  .dark body {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 24px,
+      hsl(220 10% 20%) 25px, /* Darker lines for dark mode */
+      hsl(220 10% 20%) 26px
+    );
+  }
 }
 
 .login-page-scribble-bg {
   background-color: hsl(var(--background)); /* Ensure background color is set */
   background-image: 
-    url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M-1 1 l2 -2 M0 10 l10 -10 M9 11 l2 -2' stroke='%23a0a0a0' stroke-width='0.5' opacity='0.5'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M-1 1 l2 -2 M0 10 l10 -10 M9 11 l2 -2' stroke='%23404040' stroke-width='0.8' opacity='0.7'/%3E%3C/svg%3E"),
     repeating-linear-gradient(
       to bottom,
       transparent,
@@ -122,4 +133,16 @@
     );
   background-size: 10px 10px, 100% 26px; /* Size for scribble, then for notebook lines */
   background-repeat: repeat, repeat;
+}
+
+.dark .login-page-scribble-bg {
+  background-image: 
+    url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M-1 1 l2 -2 M0 10 l10 -10 M9 11 l2 -2' stroke='%23282828' stroke-width='0.8' opacity='0.7'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 24px,
+      hsl(220 10% 20%) 25px,
+      hsl(220 10% 20%) 26px
+    );
 }
