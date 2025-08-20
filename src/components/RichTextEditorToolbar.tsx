@@ -61,8 +61,8 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
       </Toggle>
       
       {/* Highlight color options */}
-      <div className="flex items-center gap-1 border-l pl-2 ml-2">
-        <span className="text-sm text-muted-foreground mr-1">Highlight:</span>
+      <div className="flex items-center gap-2 border-l pl-2 ml-2"> {/* Changed gap-1 to gap-2 */}
+        <span className="text-sm text-muted-foreground mr-2 h-8 flex items-center">Highlight:</span> {/* Added h-8 flex items-center and changed mr-1 to mr-2 */}
         {HIGHLIGHT_COLORS.map((colorOption) => (
           <TooltipProvider key={colorOption.dataColor}>
             <Tooltip>
