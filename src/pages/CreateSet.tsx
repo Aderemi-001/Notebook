@@ -5,24 +5,56 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Keep these imports for sub-components
-import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
-import { Trash2 } from "lucide-react";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NotebookCard } from "@/components/NotebookCard";
+import { Trash2, Loader2, Brain, ArrowLeft, Save } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as pdfjsLib from 'pdfjs-dist';
-import { Switch } from "@/components/ui/switch"; // Import Switch
-import { Label } from "@/components/ui/label"; // Import Label
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import StudySetFormFields from "@/components/StudySetFormFields";
+import FlashcardEditor from "@/components/FlashcardEditor";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
+interface StudySetGroup {
+  id: string;
+  name: string;
+}
+
+const fetchUserStudySetGroups = async (): Promise<StudySetGroup[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return [];
+  }
+  const { data, error } = await supabase
+    .from('study_set_groups')
+    .select('id, name')
+    .eq('user_id', user.id)
+    .order('name', { ascending: true });
+  if (error) {
+    console.error("Error fetching study set groups:", error);
+    throw new Error("Failed to fetch your study set groups.");
+  }
+  return data || [];
+};
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  is_public: z.boolean().default(false), // Added is_public field
+  is_public: z.boolean().default(false),
+  group_id: z.string().nullable().optional(), // New field for group_id
   cards: z.array(z.object({
     term: z.string().min(1, "Term is required"),
     definition: z.string().min(1, "Definition is required"),
@@ -31,22 +63,29 @@ const formSchema = z.object({
 
 const CreateSet = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [sourceTextContent, setSourceTextContent] = useState<string | null>(null); // New state for source text
+  const [sourceTextContent, setSourceTextContent] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const { data: userGroups, isLoading: isLoadingGroups, isError: isErrorGroups, error: errorGroups } = useQuery<StudySetGroup[], Error>({
+    queryKey: ['userStudySetGroups'],
+    queryFn: fetchUserStudySetGroups,
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
-      is_public: false, // Default to private
+      is_public: false,
+      group_id: null, // Default to no group
       cards: [{ term: "", definition: "" }],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { append } = useFieldArray({
     control: form.control,
     name: "cards",
   });
@@ -74,8 +113,9 @@ const CreateSet = () => {
           title: values.title,
           description: values.description,
           user_id: currentUser.id,
-          source_text: sourceTextContent, // Save the source text here
-          is_public: values.is_public, // Save the public status
+          source_text: sourceTextContent,
+          is_public: values.is_public,
+          group_id: values.group_id, // Save the group_id
         })
         .select()
         .single();
@@ -97,6 +137,7 @@ const CreateSet = () => {
       dismissToast(toastId);
       showSuccess("Set created successfully!");
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
+      queryClient.invalidateQueries({ queryKey: ['studySetsInGroup'] }); // Invalidate group-specific sets
       navigate('/');
 
     } catch (error: any) {
@@ -123,7 +164,7 @@ const CreateSet = () => {
     }
 
     const toastId = showLoading("AI is generating your flashcards, concepts, and relationships...");
-    let extractedFileContent = ""; // Use a local variable for extraction
+    let extractedFileContent = "";
 
     try {
       if (file.type === "application/pdf") {
@@ -167,9 +208,9 @@ const CreateSet = () => {
           throw new Error("Could not extract any text from the file.");
       }
 
-      setSourceTextContent(extractedFileContent); // Store the extracted content in state
+      setSourceTextContent(extractedFileContent);
 
-      const { data: { session } } = await supabase.auth.getSession(); // Re-fetch session to get access_token
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error("Session not found. Please try logging in again.");
       }
@@ -207,7 +248,6 @@ const CreateSet = () => {
       form.setValue('cards', newCards, { shouldValidate: true });
       showSuccess(`${newCards.length} cards imported successfully!`);
 
-      // Process concepts and relationships
       if (newConcepts && newConcepts.length > 0) {
         const conceptNameToIdMap = new Map<string, string>();
 
@@ -219,13 +259,13 @@ const CreateSet = () => {
             .eq('name', concept.name)
             .single();
 
-          if (fetchConceptError && fetchConceptError.code !== 'PGRST116') { // PGRST116 means no rows found
+          if (fetchConceptError && fetchConceptError.code !== 'PGRST116') {
             console.error("Error fetching existing concept:", fetchConceptError);
             continue;
           }
 
           let conceptId: string;
-          if (existingConcept) { // Corrected: Check if existingConcept is truthy
+          if (existingConcept) {
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
@@ -242,22 +282,6 @@ const CreateSet = () => {
           conceptNameToIdMap.set(concept.name, conceptId);
         }
 
-        // Link cards to concepts (simplified: link all new cards to all new concepts for now)
-        // A more sophisticated approach would involve AI linking specific cards to specific concepts
-        const cardsInForm = form.getValues('cards');
-        const cardConceptLinksToInsert = [];
-        for (const card of cardsInForm) {
-          // This is a placeholder. In a real app, AI would identify which concepts are in which card.
-          // For now, we'll link all new cards to all new concepts.
-          // This part needs to be refined if we want precise card-concept links.
-          // For the "Cognitive Constellation" visualization, the primary links are concept-to-concept.
-          // Card-concept links are for showing which cards contribute to a concept.
-          // For simplicity, we'll skip direct card-concept linking from AI output for now,
-          // as the AI output doesn't specifies which card contains which concept.
-          // This can be added later if needed for a more granular view.
-        }
-
-        // Insert relationships
         if (newRelationships && newRelationships.length > 0) {
           const relationshipsToInsert = [];
           for (const rel of newRelationships) {
@@ -305,7 +329,7 @@ const CreateSet = () => {
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
-          <NotebookCard> {/* Changed to NotebookCard */}
+          <NotebookCard>
             <CardContent className="pt-6 pl-10">
               <FormField
                 control={form.control}
@@ -330,6 +354,42 @@ const CreateSet = () => {
                       <FormControl>
                         <Textarea placeholder="A brief description of your study set." {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="mt-4">
+                <FormField
+                  control={form.control}
+                  name="group_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Group (Optional)</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value === "null" ? null : value)} value={field.value || "null"}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a group" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="null">No Group</SelectItem>
+                          {isLoadingGroups ? (
+                            <SelectItem disabled value="loading">Loading groups...</SelectItem>
+                          ) : userGroups?.length === 0 ? (
+                            <SelectItem disabled value="no-groups">No groups available</SelectItem>
+                          ) : (
+                            userGroups?.map(group => (
+                              <SelectItem key={group.id} value={group.id}>
+                                {group.name}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Organize this study set into a group.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -360,11 +420,11 @@ const CreateSet = () => {
             </CardContent>
           </NotebookCard>
 
-          <NotebookCard> {/* Changed to NotebookCard */}
+          <NotebookCard>
             <CardHeader className="pl-10">
               <CardTitle>Import from file with AI</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row items-center gap-4 pl-10"> {/* Added pl-10 */}
+            <CardContent className="flex flex-col sm:flex-row items-center gap-4 pl-10">
               <Input 
                 type="file" 
                 accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf" 
@@ -382,68 +442,7 @@ const CreateSet = () => {
             </CardContent>
           </NotebookCard>
 
-          <NotebookCard> {/* Changed to NotebookCard */}
-            <CardHeader className="pl-10">
-              <CardTitle>Flashcards</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pl-10"> {/* Added pl-10 */}
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex items-start gap-4 p-4 border rounded-md">
-                  <div className="font-bold text-gray-500 mt-2">{index + 1}</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
-                    <FormField
-                      control={form.control}
-                      name={`cards.${index}.term`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Term</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Term" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`cards.${index}.definition`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Definition</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Definition" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => remove(index)}
-                    disabled={fields.length <= 1}
-                    className="mt-7"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-               {form.formState.errors.cards && !form.formState.errors.cards.root && (
-                <p className="text-sm font-medium text-destructive">
-                  {form.formState.errors.cards.message}
-                </p>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => append({ term: "", definition: "" })}
-              >
-                Add Card
-              </Button>
-            </CardContent>
-          </NotebookCard>
+          <FlashcardEditor form={form} />
 
           <div className="flex justify-end">
             <Button type="submit">Create Set</Button>
