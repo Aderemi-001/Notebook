@@ -1,9 +1,16 @@
 import React from 'react';
 import { Editor } from '@tiptap/react';
 import { Toggle } from '@/components/ui/toggle';
-import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo, X, ListTodo } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo, X, ListTodo, MoreHorizontal } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface RichTextEditorToolbarProps {
   editor: Editor | null;
@@ -24,42 +31,73 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
 
   return (
     <div className="flex flex-wrap gap-1 p-2 border-b">
-      <Toggle
-        size="sm"
-        pressed={editor.isActive('bold')}
-        onPressedChange={() => editor.chain().focus().toggleBold().run()}
-        disabled={!editor.can().chain().focus().toggleBold().run()}
-        aria-label="Toggle bold"
-      >
-        <Bold className="h-4 w-4" />
-      </Toggle>
-      <Toggle
-        size="sm"
-        pressed={editor.isActive('italic')}
-        onPressedChange={() => editor.chain().focus().toggleItalic().run()}
-        disabled={!editor.can().chain().focus().toggleItalic().run()}
-        aria-label="Toggle italic"
-      >
-        <Italic className="h-4 w-4" />
-      </Toggle>
-      <Toggle
-        size="sm"
-        pressed={editor.isActive('strike')}
-        onPressedChange={() => editor.chain().focus().toggleStrike().run()}
-        disabled={!editor.can().chain().focus().toggleStrike().run()}
-        aria-label="Toggle strikethrough"
-      >
-        <Strikethrough className="h-4 w-4" />
-      </Toggle>
-      <Toggle
-        size="sm"
-        pressed={editor.isActive('code')}
-        onPressedChange={() => editor.chain().focus().toggleCode().run()}
-        disabled={!editor.can().chain().focus().toggleCode().run()}
-        aria-label="Toggle code"
-      >
-        <Code className="h-4 w-4" />
-      </Toggle>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              size="sm"
+              pressed={editor.isActive('bold')}
+              onPressedChange={() => editor.chain().focus().toggleBold().run()}
+              disabled={!editor.can().chain().focus().toggleBold().run()}
+              aria-label="Toggle bold"
+            >
+              <Bold className="h-4 w-4" />
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>Bold</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              size="sm"
+              pressed={editor.isActive('italic')}
+              onPressedChange={() => editor.chain().focus().toggleItalic().run()}
+              disabled={!editor.can().chain().focus().toggleItalic().run()}
+              aria-label="Toggle italic"
+            >
+              <Italic className="h-4 w-4" />
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>Italic</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              size="sm"
+              pressed={editor.isActive('strike')}
+              onPressedChange={() => editor.chain().focus().toggleStrike().run()}
+              disabled={!editor.can().chain().focus().toggleStrike().run()}
+              aria-label="Toggle strikethrough"
+            >
+              <Strikethrough className="h-4 w-4" />
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>Strikethrough</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              size="sm"
+              pressed={editor.isActive('code')}
+              onPressedChange={() => editor.chain().focus().toggleCode().run()}
+              disabled={!editor.can().chain().focus().toggleCode().run()}
+              aria-label="Toggle code"
+            >
+              <Code className="h-4 w-4" />
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>Code</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       
       {/* Highlight color options using Popover */}
       <Popover>
@@ -130,66 +168,141 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
         </PopoverContent>
       </Popover>
 
-      <Toggle
-        size="sm"
-        pressed={editor.isActive('bulletList')}
-        onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
-        disabled={!editor.can().chain().focus().toggleBulletList().run()}
-        aria-label="Toggle bullet list"
-      >
-        <List className="h-4 w-4" />
-      </Toggle>
-      <Toggle
-        size="sm"
-        pressed={editor.isActive('orderedList')}
-        onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
-        disabled={!editor.can().chain().focus().toggleOrderedList().run()}
-        aria-label="Toggle ordered list"
-      >
-        <ListOrdered className="h-4 w-4" />
-      </Toggle>
-      <Toggle
-        size="sm"
-        pressed={editor.isActive('taskList')}
-        onPressedChange={() => editor.chain().focus().toggleTaskList().run()}
-        disabled={!editor.can().chain().focus().toggleTaskList().run()}
-        aria-label="Toggle todo list"
-      >
-        <ListTodo className="h-4 w-4" />
-      </Toggle>
-      <Toggle
-        size="sm"
-        pressed={editor.isActive('blockquote')}
-        onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
-        disabled={!editor.can().chain().focus().toggleBlockquote().run()}
-        aria-label="Toggle blockquote"
-      >
-        <Quote className="h-4 w-4" />
-      </Toggle>
-      <Toggle
-        size="sm"
-        onPressedChange={() => editor.chain().focus().setHorizontalRule().run()}
-        disabled={!editor.can().chain().focus().setHorizontalRule().run()}
-        aria-label="Insert horizontal rule"
-      >
-        <Minus className="h-4 w-4" />
-      </Toggle>
-      <Toggle
-        size="sm"
-        onPressedChange={() => editor.chain().focus().undo().run()}
-        disabled={!editor.can().chain().focus().undo().run()}
-        aria-label="Undo"
-      >
-        <Undo className="h-4 w-4" />
-      </Toggle>
-      <Toggle
-        size="sm"
-        onPressedChange={() => editor.chain().focus().redo().run()}
-        disabled={!editor.can().chain().focus().redo().run()}
-        aria-label="Redo"
-      >
-        <Redo className="h-4 w-4" />
-      </Toggle>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              size="sm"
+              pressed={editor.isActive('bulletList')}
+              onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
+              disabled={!editor.can().chain().focus().toggleBulletList().run()}
+              aria-label="Toggle bullet list"
+            >
+              <List className="h-4 w-4" />
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>Bullet List</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              size="sm"
+              pressed={editor.isActive('orderedList')}
+              onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
+              disabled={!editor.can().chain().focus().toggleOrderedList().run()}
+              aria-label="Toggle ordered list"
+            >
+              <ListOrdered className="h-4 w-4" />
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>Ordered List</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              size="sm"
+              pressed={editor.isActive('taskList')}
+              onPressedChange={() => editor.chain().focus().toggleTaskList().run()}
+              disabled={!editor.can().chain().focus().toggleTaskList().run()}
+              aria-label="Toggle todo list"
+            >
+              <ListTodo className="h-4 w-4" />
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>Todo List</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      {/* "More" Dropdown for less common formatting */}
+      <DropdownMenu>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Toggle size="sm" aria-label="More formatting options">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Toggle>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>More Formatting</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <DropdownMenuContent align="start" className="w-auto p-1 flex flex-wrap gap-1">
+          <DropdownMenuItem asChild>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Toggle
+                    size="sm"
+                    pressed={editor.isActive('blockquote')}
+                    onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
+                    disabled={!editor.can().chain().focus().toggleBlockquote().run()}
+                    aria-label="Toggle blockquote"
+                  >
+                    <Quote className="h-4 w-4" />
+                  </Toggle>
+                </TooltipTrigger>
+                <TooltipContent>Blockquote</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Toggle
+                    size="sm"
+                    onPressedChange={() => editor.chain().focus().setHorizontalRule().run()}
+                    disabled={!editor.can().chain().focus().setHorizontalRule().run()}
+                    aria-label="Insert horizontal rule"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Toggle>
+                </TooltipTrigger>
+                <TooltipContent>Horizontal Rule</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              size="sm"
+              onPressedChange={() => editor.chain().focus().undo().run()}
+              disabled={!editor.can().chain().focus().undo().run()}
+              aria-label="Undo"
+            >
+              <Undo className="h-4 w-4" />
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>Undo</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              size="sm"
+              onPressedChange={() => editor.chain().focus().redo().run()}
+              disabled={!editor.can().chain().focus().redo().run()}
+              aria-label="Redo"
+            >
+              <Redo className="h-4 w-4" />
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>Redo</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 };
