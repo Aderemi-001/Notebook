@@ -1,5 +1,7 @@
+"use client";
+
 import React from "react";
-import { Card, CardProps, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/BaseCard"; // Changed import path
+import { Card, CardProps, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/BaseCard";
 import { cn } from "@/lib/utils";
 
 interface NotebookCardProps extends CardProps {
