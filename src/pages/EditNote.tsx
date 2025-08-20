@@ -238,11 +238,11 @@ const EditNote: React.FC = () => {
       </div>
 
       <NotebookCard className="mb-6">
-        <CardHeader className="pl-10"> {/* Added pl-10 */}
+        <CardHeader className="pl-10">
           <CardTitle>Note Details</CardTitle>
           <CardDescription>Edit your note's title and content.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 pl-10"> {/* Added pl-10 */}
+        <CardContent className="space-y-4 pl-10">
           <div>
             <Label htmlFor="note-title">Title</Label>
             <Input
@@ -261,7 +261,8 @@ const EditNote: React.FC = () => {
               editable={!isSaving}
             />
           </div>
-          <div className="flex justify-end gap-2">
+          {/* Summarize button moved here */}
+          <div className="flex justify-end">
             <Button
               onClick={handleSummarizeWithAI}
               disabled={isSummarizing || !content.trim()}
@@ -277,28 +278,17 @@ const EditNote: React.FC = () => {
                 </>
               )}
             </Button>
-            <Button onClick={handleSaveNote} disabled={isSaving || !title.trim()}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" /> Save Changes
-                </>
-              )}
-            </Button>
           </div>
         </CardContent>
       </NotebookCard>
 
       {aiSummary && (
         <NotebookCard className="mb-6">
-          <CardHeader className="pl-10"> {/* Added pl-10 */}
+          <CardHeader className="pl-10">
             <CardTitle>AI Summary</CardTitle>
             <CardDescription>Key takeaways from your note.</CardDescription>
           </CardHeader>
-          <CardContent className="pl-10"> {/* Added pl-10 */}
+          <CardContent className="pl-10">
             <p className="whitespace-pre-wrap text-muted-foreground">{aiSummary}</p>
             <Button
               variant="outline"
@@ -317,11 +307,11 @@ const EditNote: React.FC = () => {
       )}
 
       <NotebookCard className="mb-6">
-        <CardHeader className="pl-10"> {/* Added pl-10 */}
+        <CardHeader className="pl-10">
           <CardTitle>Link to Study Set</CardTitle>
           <CardDescription>Associate this note with a study set.</CardDescription>
         </CardHeader>
-        <CardContent className="pl-10"> {/* Added pl-10 */}
+        <CardContent className="pl-10">
           <Select onValueChange={(value) => setSelectedStudySetId(value === "null" ? null : value)} value={selectedStudySetId || "null"}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a study set (optional)" />
@@ -344,6 +334,21 @@ const EditNote: React.FC = () => {
           {isErrorSets && <p className="text-sm text-red-500 mt-1">Error loading sets: {errorSets?.message}</p>}
         </CardContent>
       </NotebookCard>
+
+      {/* Save button moved to the very end of the page */}
+      <div className="flex justify-end mt-8">
+        <Button onClick={handleSaveNote} disabled={isSaving || !title.trim()}>
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Save Changes
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" /> Save Changes
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 };
