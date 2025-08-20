@@ -304,7 +304,7 @@ const DailyReview: React.FC = () => {
                     </CardDescription>
                   )}
                 </CardHeader>
-                <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto">
+                <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto scrollbar-hide">
                   <p className="text-xl font-medium">
                     {currentCard?.term}
                   </p>
@@ -321,7 +321,7 @@ const DailyReview: React.FC = () => {
                     </CardDescription>
                   )}
                 </CardHeader>
-                <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto">
+                <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto scrollbar-hide">
                   <p className="text-xl font-medium">
                     {currentCard?.definition}
                   </p>
