@@ -12,7 +12,6 @@ import GenerateExam from "@/pages/GenerateExam";
 import TakeExam from "@/pages/TakeExam";
 import PastExams from "@/pages/PastExams";
 import ExplorePublicSets from "@/pages/ExplorePublicSets";
-import SearchCards from "@/pages/SearchCards";
 import GenerateEssayQuestions from "@/pages/GenerateEssayQuestions";
 import PastEssayQuestions from "@/pages/PastEssayQuestions";
 import EssayPractice from "@/pages/EssayPractice";
@@ -129,14 +128,7 @@ const AppContent: React.FC = () => {
                 </AuthLayout>
               }
             />
-            <Route
-              path="/search-cards"
-              element={
-                <AuthLayout>
-                  <SearchCards />
-                </AuthLayout>
-              }
-            />
+            {/* Removed SearchCards route */}
             <Route
               path="/generate-exam"
               element={

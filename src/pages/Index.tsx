@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut, NotebookText, LayoutDashboard } from "lucide-react"; // Added LayoutDashboard icon
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut, NotebookText, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast'; // Import toast utilities
+import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 
 interface StudySet {
   id: string;
@@ -27,6 +27,14 @@ interface StudySet {
   cards_count: number;
   next_review_at?: string | null;
   due_cards_count?: number;
+}
+
+interface SearchResultCard {
+  card_id: string;
+  term: string;
+  definition: string;
+  set_id: string;
+  set_title: string;
 }
 
 const fetchStudySets = async (): Promise<StudySet[]> => {
@@ -125,13 +133,51 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
   return setsWithReviewData;
 };
 
+const fetchSearchResults = async (searchTerm: string): Promise<SearchResultCard[]> => {
+  if (!searchTerm.trim()) {
+    return [];
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
+
+  const { data, error } = await supabase
+    .rpc('search_user_cards', { search_query: searchTerm });
+
+  if (error) {
+    console.error("Error searching cards:", error);
+    throw new Error("Failed to search cards.");
+  }
+  return data || [];
+};
+
 const Index = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
-  const { data: studySets, isLoading, isError, error } = useQuery<StudySet[], Error>({
+  // Debounce the search term to avoid excessive API calls
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms debounce
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchTerm]);
+
+  const { data: studySets, isLoading: isLoadingStudySets, isError: isErrorStudySets, error: errorStudySets } = useQuery<StudySet[], Error>({
     queryKey: ['studySets'],
     queryFn: fetchStudySets,
+  });
+
+  const { data: searchResults, isLoading: isLoadingSearchResults, isError: isErrorSearchResults, error: errorSearchResults } = useQuery<SearchResultCard[], Error>({
+    queryKey: ['searchCards', debouncedSearchTerm],
+    queryFn: () => fetchSearchResults(debouncedSearchTerm),
+    enabled: !!debouncedSearchTerm.trim(), // Only run query if debouncedSearchTerm is not empty
   });
 
   React.useEffect(() => {
@@ -153,7 +199,7 @@ const Index = () => {
       dismissToast(toastId);
       showSuccess('Signed out successfully!');
       queryClient.clear();
-      // No need to navigate here, AuthLayout will handle redirect to /login
+      // AuthLayout will handle redirect to /login
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message || 'Failed to sign out.');
@@ -161,13 +207,23 @@ const Index = () => {
     }
   };
 
-  if (isError) {
+  if (isErrorStudySets) {
     return (
       <div className="container mx-auto py-10 text-center text-red-500">
-        Error loading study sets: {error?.message || "Unknown error"}
+        Error loading study sets: {errorStudySets?.message || "Unknown error"}
       </div>
     );
   }
+
+  if (isErrorSearchResults && debouncedSearchTerm.trim()) {
+    return (
+      <div className="container mx-auto py-10 text-center text-red-500">
+        Error searching cards: {errorSearchResults?.message || "Unknown error"}
+      </div>
+    );
+  }
+
+  const showSearchResults = debouncedSearchTerm.trim() && (isLoadingSearchResults || (searchResults && searchResults.length > 0) || (searchResults && searchResults.length === 0));
 
   return (
     <div className="container mx-auto py-10">
@@ -199,11 +255,7 @@ const Index = () => {
                 <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/search-cards" className="flex items-center">
-                <Search className="mr-2 h-4 w-4" /> Search My Cards
-              </Link>
-            </DropdownMenuItem>
+            {/* Removed Search My Cards link as it's integrated */}
             <DropdownMenuSeparator />
 
             {/* Notes Section */}
@@ -266,73 +318,123 @@ const Index = () => {
       <div className="mb-6">
         <Input
           type="text"
-          placeholder="Search study sets by title or description..."
+          placeholder="Search sets by title/description or cards by term/definition..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full"
         />
       </div>
 
-      {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(3)].map((_, i) => (
-            <NotebookCard key={i}>
-              <CardHeader className="pl-10">
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2 mt-2" />
-              </CardHeader>
-              <CardContent className="pl-10">
-                <Skeleton className="h-4 w-1/4" />
-              </CardContent>
-            </NotebookCard>
-          ))}
-        </div>
-      ) : (filteredStudySets?.length === 0 || !filteredStudySets) ? (
-        <div className="text-center py-20 border-2 border-dashed rounded-lg">
-          <h2 className="text-xl font-semibold">No study sets found!</h2>
-          <p className="text-muted-foreground mt-2">
-            {searchTerm ? "Try a different search term or " : ""}Click "Create Set" to get started.
-          </p>
-        </div>
+      {showSearchResults ? (
+        <>
+          <h2 className="text-2xl font-semibold mb-4">Card Search Results</h2>
+          {isLoadingSearchResults ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(3)].map((_, i) => (
+                <NotebookCard key={i}>
+                  <CardHeader className="pl-10">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2 mt-2" />
+                  </CardHeader>
+                  <CardContent className="pl-10">
+                    <Skeleton className="h-4 w-1/4" />
+                  </CardContent>
+                </NotebookCard>
+              ))}
+            </div>
+          ) : searchResults?.length === 0 ? (
+            <div className="text-center py-10 border-2 border-dashed rounded-lg">
+              <h2 className="text-xl font-semibold">No cards found for "{debouncedSearchTerm}"</h2>
+              <p className="text-muted-foreground mt-2">
+                Try a different search term.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {searchResults?.map((card) => (
+                <Link to={`/sets/${card.set_id}`} key={card.card_id}>
+                  <NotebookCard className="hover:shadow-md transition-shadow h-full">
+                    <CardHeader className="pl-10">
+                      <CardTitle className="text-lg font-semibold">{card.term}</CardTitle>
+                      <CardDescription>{card.definition}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pl-10">
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <BookOpen className="mr-2 h-4 w-4" />
+                        <span>From Set: {card.set_title}</span>
+                      </div>
+                    </CardContent>
+                  </NotebookCard>
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredStudySets.map((set) => (
-            <Link to={`/sets/${set.id}`} key={set.id}>
-              <NotebookCard className="hover:shadow-md transition-shadow h-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pl-10">
-                  <CardTitle className="text-lg font-semibold">{set.title}</CardTitle>
-                  <Badge variant={set.is_public ? "default" : "secondary"} className="flex items-center gap-1">
-                    <Globe className="h-3 w-3" />
-                    {set.is_public ? "Public" : "Private"}
-                  </Badge>
-                </CardHeader>
-                <CardContent className="pl-10">
-                  {set.description && (
-                    <CardDescription>{set.description}</CardDescription>
-                  )}
-                  <div className="flex items-center text-sm text-muted-foreground mt-2">
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    <span>{set.cards_count} cards</span>
-                  </div>
-                  {set.due_cards_count !== undefined && set.due_cards_count > 0 && (
-                    <div className="flex items-center text-sm text-red-500 mt-2">
-                      <AlertCircle className="mr-2 h-4 w-4" />
-                      <span>{set.due_cards_count} cards due for review</span>
-                    </div>
-                  )}
-                  {set.next_review_at && (
-                    <div className="flex items-center text-sm text-muted-foreground mt-2">
-                      <Clock className="mr-2 h-4 w-4" />
-                      <span className={isPast(new Date(set.next_review_at)) ? 'text-red-500' : ''}>
-                        {isPast(new Date(set.next_review_at)) ? 'Due now' : `Next review ${formatDistanceToNowStrict(new Date(set.next_review_at), { addSuffix: true })}`}
-                      </span>
-                    </div>
-                  )}
-                </CardContent>
-              </NotebookCard>
-            </Link>
-          ))}
-        </div>
+        <>
+          <h2 className="text-2xl font-semibold mb-4">My Study Sets</h2>
+          {isLoadingStudySets ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(3)].map((_, i) => (
+                <NotebookCard key={i}>
+                  <CardHeader className="pl-10">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2 mt-2" />
+                  </CardHeader>
+                  <CardContent className="pl-10">
+                    <Skeleton className="h-4 w-1/4" />
+                  </CardContent>
+                </NotebookCard>
+              ))}
+            </div>
+          ) : (filteredStudySets?.length === 0 || !filteredStudySets) ? (
+            <div className="text-center py-20 border-2 border-dashed rounded-lg">
+              <h2 className="text-xl font-semibold">No study sets found!</h2>
+              <p className="text-muted-foreground mt-2">
+                {searchTerm ? "Try a different search term or " : ""}Click "Create Set" to get started.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredStudySets.map((set) => (
+                <Link to={`/sets/${set.id}`} key={set.id}>
+                  <NotebookCard className="hover:shadow-md transition-shadow h-full">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pl-10">
+                      <CardTitle className="text-lg font-semibold">{set.title}</CardTitle>
+                      <Badge variant={set.is_public ? "default" : "secondary"} className="flex items-center gap-1">
+                        <Globe className="h-3 w-3" />
+                        {set.is_public ? "Public" : "Private"}
+                      </Badge>
+                    </CardHeader>
+                    <CardContent className="pl-10">
+                      {set.description && (
+                        <CardDescription>{set.description}</CardDescription>
+                      )}
+                      <div className="flex items-center text-sm text-muted-foreground mt-2">
+                        <BookOpen className="mr-2 h-4 w-4" />
+                        <span>{set.cards_count} cards</span>
+                      </div>
+                      {set.due_cards_count !== undefined && set.due_cards_count > 0 && (
+                        <div className="flex items-center text-sm text-red-500 mt-2">
+                          <AlertCircle className="mr-2 h-4 w-4" />
+                          <span>{set.due_cards_count} cards due for review</span>
+                        </div>
+                      )}
+                      {set.next_review_at && (
+                        <div className="flex items-center text-sm text-muted-foreground mt-2">
+                          <Clock className="mr-2 h-4 w-4" />
+                          <span className={isPast(new Date(set.next_review_at)) ? 'text-red-500' : ''}>
+                            {isPast(new Date(set.next_review_at)) ? 'Due now' : `Next review ${formatDistanceToNowStrict(new Date(set.next_review_at), { addSuffix: true })}`}
+                          </span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </NotebookCard>
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
