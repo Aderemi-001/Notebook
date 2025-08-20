@@ -97,7 +97,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-y-scroll scrollbar-hide; /* Added overflow-y-scroll and scrollbar-hide */
     /* Add notebook lines */
     background-image: repeating-linear-gradient(
       to bottom,
@@ -114,7 +114,7 @@
       to bottom,
       transparent,
       transparent 24px,
-      hsl(220 10% 18%) 25px, /* Darker lines for dark mode */
+      hsl(220 10% 18%) 25px,
       hsl(220 10% 18%) 26px
     );
   }
