@@ -30,7 +30,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
   }
 
   return (
-    <div className="flex flex-wrap gap-1 p-2 border-b">
+    <div className="flex flex-nowrap w-full border-b overflow-x-auto scrollbar-hide px-2 py-1">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -40,6 +40,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleBold().run()}
               disabled={!editor.can().chain().focus().toggleBold().run()}
               aria-label="Toggle bold"
+              className="px-2"
             >
               <Bold className="h-4 w-4" />
             </Toggle>
@@ -57,6 +58,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleItalic().run()}
               disabled={!editor.can().chain().focus().toggleItalic().run()}
               aria-label="Toggle italic"
+              className="px-2"
             >
               <Italic className="h-4 w-4" />
             </Toggle>
@@ -74,6 +76,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleStrike().run()}
               disabled={!editor.can().chain().focus().toggleStrike().run()}
               aria-label="Toggle strikethrough"
+              className="px-2"
             >
               <Strikethrough className="h-4 w-4" />
             </Toggle>
@@ -91,6 +94,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleCode().run()}
               disabled={!editor.can().chain().focus().toggleCode().run()}
               aria-label="Toggle code"
+              className="px-2"
             >
               <Code className="h-4 w-4" />
             </Toggle>
@@ -109,6 +113,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
                   size="sm"
                   pressed={editor.isActive('highlight')}
                   aria-label="Toggle highlight colors"
+                  className="px-2"
                 >
                   <Highlighter className="h-4 w-4" />
                 </Toggle>
@@ -156,7 +161,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
                   disabled={!editor.can().chain().focus().unsetHighlight().run()}
                   aria-label="Remove Highlight"
                 >
-                  <Highlighter className="h-4 w-4 text-gray-500" />
+                  <Highlighter className="h-4 w-4" />
                   <X className="absolute top-0 right-0 h-3 w-3 text-red-500" />
                 </Toggle>
               </TooltipTrigger>
@@ -177,6 +182,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
               disabled={!editor.can().chain().focus().toggleBulletList().run()}
               aria-label="Toggle bullet list"
+              className="px-2"
             >
               <List className="h-4 w-4" />
             </Toggle>
@@ -194,6 +200,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
               disabled={!editor.can().chain().focus().toggleOrderedList().run()}
               aria-label="Toggle ordered list"
+              className="px-2"
             >
               <ListOrdered className="h-4 w-4" />
             </Toggle>
@@ -211,6 +218,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleTaskList().run()}
               disabled={!editor.can().chain().focus().toggleTaskList().run()}
               aria-label="Toggle todo list"
+              className="px-2"
             >
               <ListTodo className="h-4 w-4" />
             </Toggle>
@@ -225,7 +233,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Toggle size="sm" aria-label="More formatting options">
+                <Toggle size="sm" aria-label="More formatting options" className="px-2">
                   <MoreHorizontal className="h-4 w-4" />
                 </Toggle>
               </DropdownMenuTrigger>
@@ -280,6 +288,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().undo().run()}
               disabled={!editor.can().chain().focus().undo().run()}
               aria-label="Undo"
+              className="px-2"
             >
               <Undo className="h-4 w-4" />
             </Toggle>
@@ -296,6 +305,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().redo().run()}
               disabled={!editor.can().chain().focus().redo().run()}
               aria-label="Redo"
+              className="px-2"
             >
               <Redo className="h-4 w-4" />
             </Toggle>
