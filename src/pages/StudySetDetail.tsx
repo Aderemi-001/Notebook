@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -326,12 +326,15 @@ const StudySetDetail = () => {
     );
   }
 
-  const isOwnerPromise = supabase.auth.getUser().then(({ data: { user } }) => user?.id === studySet.user_id);
   const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
-    isOwnerPromise.then(ownerStatus => setIsOwner(ownerStatus));
-  }, [isOwnerPromise]);
+    const checkOwner = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsOwner(user?.id === studySet.user_id);
+    };
+    checkOwner();
+  }, [studySet.user_id]);
 
   return (
     <div className="container mx-auto py-10">
