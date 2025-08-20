@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
+import { cn } from "@/lib/utils"; // Import cn for conditional class names
 
 interface StudySet {
   id: string;
@@ -31,9 +32,15 @@ interface CardItem {
   id: string;
   term: string;
   definition: string;
+  status?: 'learning' | 'mastered'; // Add status to CardItem
 }
 
 const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
+
   const { data, error } = await supabase
     .from('study_sets')
     .select(`
@@ -43,7 +50,11 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
       cards (
         id,
         term,
-        definition
+        definition,
+        user_progress!left(
+          status,
+          user_id
+        )
       )
     `)
     .eq('id', setId)
@@ -57,24 +68,24 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
     throw new Error("Study set not found.");
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
   let masteredCount = 0;
-  if (user) {
-    const { count, error: countError } = await supabase
-      .from('user_progress')
-      .select('id', { count: 'exact' })
-      .eq('user_id', user.id)
-      .eq('status', 'mastered')
-      .in('card_id', data.cards.map(card => card.id));
-
-    if (countError) {
-      console.error("Error fetching mastered card count:", countError);
-    } else {
-      masteredCount = count || 0;
+  const processedCards: CardItem[] = data.cards.map(card => {
+    const progress = card.user_progress?.[0]; // Get the first (and likely only) progress entry for this user/card
+    const cardStatus = (progress && progress.user_id === user.id) ? progress.status : 'learning';
+    
+    if (cardStatus === 'mastered') {
+      masteredCount++;
     }
-  }
 
-  return { ...data, mastered_cards_count: masteredCount } as StudySet;
+    return {
+      id: card.id,
+      term: card.term,
+      definition: card.definition,
+      status: cardStatus,
+    };
+  });
+
+  return { ...data, cards: processedCards, mastered_cards_count: masteredCount } as StudySet;
 };
 
 const StudySetDetail = () => {
@@ -232,7 +243,13 @@ const StudySetDetail = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {studySet.cards.map((card) => (
-            <Card key={card.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={card.id} 
+              className={cn(
+                "hover:shadow-md transition-shadow",
+                card.status === 'mastered' && "border-green-500 border-2" // Apply green border for mastered cards
+              )}
+            >
               <CardHeader>
                 <CardTitle>{card.term}</CardTitle>
               </CardHeader>
