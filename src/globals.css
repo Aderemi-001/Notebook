@@ -4,10 +4,10 @@
 
 @layer base {
   :root {
-    --background: 30 20% 98%; /* Paper-like background */
+    --background: 36 100% 99%; /* Very light cream/paper color */
     --foreground: 222.2 84% 4.9%;
 
-    --card: 30 20% 98%; /* Match card background to paper */
+    --card: 36 100% 99%; /* Match card background to paper */
     --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
@@ -97,5 +97,14 @@
 
   body {
     @apply bg-background text-foreground;
+    /* Add notebook lines */
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 24px, /* Line spacing */
+      hsl(210 40% 96.1%) 25px, /* Line color */
+      hsl(210 40% 96.1%) 26px /* Line thickness */
+    );
+    background-size: 100% 26px; /* Adjust to match line spacing + thickness */
   }
 }

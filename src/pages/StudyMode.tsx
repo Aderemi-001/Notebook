@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Keep these imports for sub-components
+import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
-import { Progress } from "@/components/ui/progress"; // Import the Progress component
+import { Progress } from "@/components/ui/progress";
 
 interface CardItem {
   id: string;
@@ -28,28 +29,26 @@ interface UserProgress {
 
 const calculateNextReview = (
   currentProgress: UserProgress | null,
-  quality: 0 | 1 | 2 | 3 | 4 | 5 // 5 for perfect, 0 for complete failure
+  quality: 0 | 1 | 2 | 3 | 4 | 5
 ) => {
   let n = currentProgress?.repetition_level ?? 0;
   let EF = currentProgress?.ease_factor ?? 2.5;
-  let I = 0; // Interval in days
+  let I = 0;
 
-  if (quality < 3) { // Incorrect response (Difficult)
-    n = 0; // Reset repetition level
-    EF = Math.max(1.3, EF - 0.20); // Decrease EF, minimum 1.3
-    I = 0; // Review immediately or next session
-  } else { // Correct response (Mastered)
+  if (quality < 3) {
+    n = 0;
+    EF = Math.max(1.3, EF - 0.20);
+    I = 0;
+  } else {
     n += 1;
     EF = EF + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-    EF = Math.max(1.3, EF); // Ensure EF doesn't drop below 1.3
+    EF = Math.max(1.3, EF);
 
     if (n === 1) {
-      I = 1; // First successful repetition: 1 day
+      I = 1;
     } else if (n === 2) {
-      I = 6; // Second successful repetition: 6 days
-    } else { // n > 2
-      // For subsequent repetitions, I(n) = I(n-1) * EF
-      // We approximate I(n-1) based on I(2) and previous EFs
+      I = 6;
+    } else {
       I = Math.round(6 * Math.pow(EF, n - 2));
     }
   }
@@ -59,7 +58,7 @@ const calculateNextReview = (
 
   return {
     repetition_level: n,
-    ease_factor: parseFloat(EF.toFixed(2)), // Store with 2 decimal places
+    ease_factor: parseFloat(EF.toFixed(2)),
     next_review_at: nextReviewDate.toISOString(),
     status: quality >= 3 ? 'mastered' : 'learning',
   };
@@ -71,9 +70,8 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
     throw new Error("User not authenticated.");
   }
 
-  const now = new Date(); // Get current time once
+  const now = new Date();
 
-  // Fetch all cards for the set with their user progress for the current user
   const { data, error } = await supabase
     .from('cards')
     .select(`
@@ -99,33 +97,28 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
     return [];
   }
 
-  // Process and filter cards to get only those due for review or new cards
   const dueCards = data
     .map(card => {
-      const progress = card.user_progress?.[0]; // Get the first (and likely only) progress entry for this user/card
+      const progress = card.user_progress?.[0];
       return {
         id: card.id,
         term: card.term,
         definition: card.definition,
         repetition_level: progress?.repetition_level ?? 0,
         ease_factor: progress?.ease_factor ?? 2.5,
-        next_review_at: progress?.next_review_at ?? now.toISOString(), // Default to now for new cards
+        next_review_at: progress?.next_review_at ?? now.toISOString(),
         status: progress?.status ?? 'learning',
-        progress_user_id: progress?.user_id, // Store this to check if progress is for current user
+        progress_user_id: progress?.user_id,
       };
     })
     .filter(card => {
       const cardNextReviewDate = new Date(card.next_review_at);
-      // A card is included if:
-      // 1. It's a new card (no progress_user_id or progress_user_id doesn't match current user)
-      //    OR
-      // 2. It has progress for the current user AND its next_review_at is less than or equal to now.
       const isNewCardForCurrentUser = !card.progress_user_id || card.progress_user_id !== user.id;
       const isDueForReview = cardNextReviewDate <= now;
 
       return isNewCardForCurrentUser || (card.progress_user_id === user.id && isDueForReview);
     })
-    .sort((a, b) => new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime()); // Sort by earliest review date
+    .sort((a, b) => new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime());
 
   return dueCards;
 };
@@ -160,7 +153,6 @@ const StudyMode = () => {
         return;
       }
 
-      // Get current progress for the card
       const { data: existingProgress, error: fetchProgressError } = await supabase
         .from('user_progress')
         .select('repetition_level, ease_factor, next_review_at, status')
@@ -168,7 +160,7 @@ const StudyMode = () => {
         .eq('card_id', cardId)
         .single();
 
-      if (fetchProgressError && fetchProgressError.code !== 'PGRST116') { // PGRST116 means no rows found
+      if (fetchProgressError && fetchProgressError.code !== 'PGRST116') {
         throw fetchProgressError;
       }
 
@@ -190,7 +182,7 @@ const StudyMode = () => {
 
       if (upsertError) throw upsertError;
       showSuccess(`Card marked as ${newProgress.status}!`);
-      queryClient.invalidateQueries({ queryKey: ['studySet', setId] }); // Invalidate detail page to update mastered count
+      queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
     } catch (err: any) {
       showError(`Failed to update card progress: ${err.message}`);
       console.error("Error updating card progress:", err);
@@ -214,7 +206,7 @@ const StudyMode = () => {
     setCurrentCardIndex(0);
     setShowDefinition(false);
     setStudyFinished(false);
-    refetch(); // Re-fetch cards to get updated order based on next_review_at
+    refetch();
   };
 
   if (!setId) {
@@ -285,7 +277,7 @@ const StudyMode = () => {
       )}
 
       {studyFinished ? (
-        <Card className="w-full max-w-md p-8 text-center">
+        <NotebookCard className="w-full max-w-md p-8 text-center"> {/* Changed to NotebookCard */}
           <CardTitle className="mb-4">Study Session Complete!</CardTitle>
           <CardContent>
             <p className="text-lg mb-6">You've reviewed all due cards in this set.</p>
@@ -293,14 +285,14 @@ const StudyMode = () => {
               <RotateCcw className="mr-2 h-4 w-4" /> Restart Study
             </Button>
           </CardContent>
-        </Card>
+        </NotebookCard>
       ) : (
         <>
           <div
             className="relative w-full max-w-md h-64 cursor-pointer perspective"
             onClick={handleFlipCard}
           >
-            <Card
+            <NotebookCard // Changed to NotebookCard
               className={`absolute w-full h-full transition-transform duration-700 ease-in-out transform-gpu ${
                 showDefinition ? 'rotate-y-180' : 'rotate-y-0'
               }`}
@@ -328,7 +320,7 @@ const StudyMode = () => {
                   </p>
                 </CardContent>
               </div>
-            </Card>
+            </NotebookCard>
           </div>
 
           <div className="mt-8 flex gap-4">

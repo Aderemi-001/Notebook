@@ -1,7 +1,8 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"; // Keep these imports for sub-components
+import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
 import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -18,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import { cn } from "@/lib/utils"; // Import cn for conditional class names
+import { cn } from "@/lib/utils";
 
 interface StudySet {
   id: string;
@@ -32,7 +33,7 @@ interface CardItem {
   id: string;
   term: string;
   definition: string;
-  status?: 'learning' | 'mastered'; // Add status to CardItem
+  status?: 'learning' | 'mastered';
 }
 
 const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
@@ -70,7 +71,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
 
   let masteredCount = 0;
   const processedCards: CardItem[] = data.cards.map(card => {
-    const progress = card.user_progress?.[0]; // Get the first (and likely only) progress entry for this user/card
+    const progress = card.user_progress?.[0];
     const cardStatus = (progress && progress.user_id === user.id) ? progress.status : 'learning';
     
     if (cardStatus === 'mastered') {
@@ -132,7 +133,6 @@ const StudySetDetail = () => {
         throw new Error("User not authenticated.");
       }
 
-      // First, get all card IDs for this study set
       const { data: cardsInSet, error: fetchCardsError } = await supabase
         .from('cards')
         .select('id')
@@ -143,7 +143,6 @@ const StudySetDetail = () => {
       const cardIds = cardsInSet?.map(card => card.id) || [];
 
       if (cardIds.length > 0) {
-        // Delete user progress for these cards and the current user
         const { error: deleteProgressError } = await supabase
           .from('user_progress')
           .delete()
@@ -155,9 +154,9 @@ const StudySetDetail = () => {
 
       dismissToast(toastId);
       showSuccess("Study progress reset successfully!");
-      queryClient.invalidateQueries({ queryKey: ['studySet', setId] }); // Invalidate current set details
-      queryClient.invalidateQueries({ queryKey: ['studyCards', setId] }); // Invalidate study mode cards
-      queryClient.invalidateQueries({ queryKey: ['studySets'] }); // Invalidate main list to update due counts
+      queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
+      queryClient.invalidateQueries({ queryKey: ['studyCards', setId] });
+      queryClient.invalidateQueries({ queryKey: ['studySets'] });
     } catch (error: any) {
       dismissToast(toastId);
       showError(error.message || "Failed to reset progress.");
@@ -181,7 +180,7 @@ const StudySetDetail = () => {
         <Skeleton className="h-4 w-full mb-6" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <Card key={i}>
+            <NotebookCard key={i}> {/* Changed to NotebookCard */}
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -189,7 +188,7 @@ const StudySetDetail = () => {
               <CardContent>
                 <Skeleton className="h-4 w-1/4" />
               </CardContent>
-            </Card>
+            </NotebookCard>
           ))}
         </div>
       </div>
@@ -309,11 +308,11 @@ const StudySetDetail = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {studySet.cards.map((card) => (
-            <Card 
+            <NotebookCard // Changed to NotebookCard
               key={card.id} 
               className={cn(
                 "hover:shadow-md transition-shadow",
-                card.status === 'mastered' && "border-green-500 border-2" // Apply green border for mastered cards
+                card.status === 'mastered' && "border-green-500 border-2"
               )}
             >
               <CardHeader>
@@ -322,7 +321,7 @@ const StudySetDetail = () => {
               <CardContent>
                 <CardDescription>{card.definition}</CardDescription>
               </CardContent>
-            </Card>
+            </NotebookCard>
           ))}
         </div>
       )}

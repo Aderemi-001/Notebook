@@ -8,9 +8,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; // Keep these imports for sub-components
+import { NotebookCard } from '@/components/NotebookCard'; // Import NotebookCard
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowLeft, LogOut } from 'lucide-react'; // Import LogOut icon
+import { ArrowLeft, LogOut } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const profileSchema = z.object({
@@ -108,7 +109,7 @@ const Profile = () => {
       }
       dismissToast(toastId);
       showSuccess('Signed out successfully!');
-      queryClient.clear(); // Clear all queries from the cache
+      queryClient.clear();
       navigate('/login');
     } catch (err: any) {
       dismissToast(toastId);
@@ -121,7 +122,7 @@ const Profile = () => {
     return (
       <div className="container mx-auto py-10">
         <Skeleton className="h-8 w-1/3 mb-8" />
-        <Card>
+        <NotebookCard> {/* Changed to NotebookCard */}
           <CardHeader>
             <Skeleton className="h-6 w-1/2" />
             <Skeleton className="h-4 w-3/4 mt-2" />
@@ -130,7 +131,7 @@ const Profile = () => {
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-24" />
           </CardContent>
-        </Card>
+        </NotebookCard>
       </div>
     );
   }
@@ -163,7 +164,7 @@ const Profile = () => {
         </div>
       </div>
 
-      <Card>
+      <NotebookCard> {/* Changed to NotebookCard */}
         <CardHeader>
           <CardTitle>Manage Your Profile</CardTitle>
           <CardDescription>Update your display name and other profile information.</CardDescription>
@@ -188,7 +189,7 @@ const Profile = () => {
             </form>
           </Form>
         </CardContent>
-      </Card>
+      </NotebookCard>
     </div>
   );
 };

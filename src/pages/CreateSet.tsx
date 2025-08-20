@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Keep these imports for sub-components
+import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
 import { Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import * as pdfjsLib from 'pdfjs-dist'; // Corrected import for pdfjs-dist
+import * as pdfjsLib from 'pdfjs-dist';
 
-// Set the worker source for pdfjs-dist
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 const formSchema = z.object({
@@ -54,7 +54,6 @@ const CreateSet = () => {
         throw new Error("You must be logged in to create a set.");
       }
 
-      // Insert into study_sets table
       const { data: set, error: setError } = await supabase
         .from('study_sets')
         .insert({
@@ -67,14 +66,12 @@ const CreateSet = () => {
 
       if (setError) throw setError;
 
-      // Prepare cards for insertion
       const cardsToInsert = values.cards.map(card => ({
         set_id: set.id,
         term: card.term,
         definition: card.definition,
       }));
 
-      // Insert into cards table
       const { error: cardsError } = await supabase
         .from('cards')
         .insert(cardsToInsert);
@@ -115,7 +112,7 @@ const CreateSet = () => {
           reader.onload = async (e) => {
             try {
               const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
-              const loadingTask = pdfjsLib.getDocument({ data: pdfData }); // Use pdfjsLib.getDocument
+              const loadingTask = pdfjsLib.getDocument({ data: pdfData });
               const pdf = await loadingTask.promise;
               for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
@@ -159,11 +156,11 @@ const CreateSet = () => {
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json', // Send as JSON
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
-            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1b3NkbWVjbGR6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImexdCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1b3NkbWVjbGR6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
           },
-          body: JSON.stringify({ content: fileContent }), // Send extracted content
+          body: JSON.stringify({ content: fileContent }),
         }
       );
       
@@ -202,7 +199,7 @@ const CreateSet = () => {
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
-          <Card>
+          <NotebookCard> {/* Changed to NotebookCard */}
             <CardContent className="pt-6">
               <FormField
                 control={form.control}
@@ -233,9 +230,9 @@ const CreateSet = () => {
                 />
               </div>
             </CardContent>
-          </Card>
+          </NotebookCard>
 
-          <Card>
+          <NotebookCard> {/* Changed to NotebookCard */}
             <CardHeader>
               <CardTitle>Import from file with AI</CardTitle>
             </CardHeader>
@@ -250,9 +247,9 @@ const CreateSet = () => {
                 Import with AI
               </Button>
             </CardContent>
-          </Card>
+          </NotebookCard>
 
-          <Card>
+          <NotebookCard> {/* Changed to NotebookCard */}
             <CardHeader>
               <CardTitle>Flashcards</CardTitle>
             </CardHeader>
@@ -313,7 +310,7 @@ const CreateSet = () => {
                 Add Card
               </Button>
             </CardContent>
-          </Card>
+          </NotebookCard>
 
           <div className="flex justify-end">
             <Button type="submit">Create Set</Button>

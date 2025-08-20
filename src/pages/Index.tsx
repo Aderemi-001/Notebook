@@ -1,21 +1,22 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"; // Keep these imports for sub-components
+import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
 import { PlusCircle, BookOpen, User, Clock, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useState, useEffect } from "react"; // Import useState and useEffect
+import React, { useState, useEffect } from "react";
 import { formatDistanceToNowStrict, isPast } from 'date-fns';
-import { Input } from "@/components/ui/input"; // Import Input component
+import { Input } from "@/components/ui/input";
 
 interface StudySet {
   id: string;
   title: string;
   description: string | null;
   cards_count: number;
-  next_review_at?: string | null; // Added for SRS
-  due_cards_count?: number; // New field for cards due for review
+  next_review_at?: string | null;
+  due_cards_count?: number;
 }
 
 const fetchStudySets = async (): Promise<StudySet[]> => {
@@ -27,7 +28,6 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
 
   const now = new Date();
 
-  // First, get the basic study set info from the RPC
   const { data: rawStudySets, error: rpcError } = await supabase
     .rpc('get_study_sets_with_card_count');
 
@@ -38,13 +38,11 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
 
   const studySets = rawStudySets || [];
 
-  // Now, for each study set, fetch its card IDs and then the earliest review date and due count
   const setsWithReviewData = await Promise.all(studySets.map(async (set) => {
-    // Fetch cards specifically for the current set
     const { data: cardsData, error: cardsError } = await supabase
       .from('cards')
       .select('id')
-      .eq('set_id', set.id); // Corrected: Filter cards by set_id
+      .eq('set_id', set.id);
 
     if (cardsError) {
       console.error(`Error fetching cards for set ${set.id}:`, cardsError);
@@ -57,12 +55,11 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
     let dueCardsCount = 0;
 
     if (cardIds.length > 0) {
-      // Fetch user progress for these specific cards for the current user
       const { data: progressData, error: progressError } = await supabase
         .from('user_progress')
         .select('card_id, next_review_at, status')
         .eq('user_id', user.id)
-        .in('card_id', cardIds); // This `cardIds` array now correctly contains only IDs for the current set.
+        .in('card_id', cardIds);
 
       if (progressError && progressError.code !== 'PGRST116') {
         console.error(`Error fetching progress for set ${set.id}:`, progressError);
@@ -72,11 +69,10 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
 
       let tempEarliestReviewAt: Date | null = null;
 
-      for (const cardId of cardIds) { // Iterating over card IDs specific to the current set
+      for (const cardId of cardIds) {
         const progress = progressMap.get(cardId);
         
         if (!progress) {
-          // New card for this set, considered due
           dueCardsCount++;
           if (!tempEarliestReviewAt || now < tempEarliestReviewAt) {
             tempEarliestReviewAt = now;
@@ -84,11 +80,9 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
         } else {
           const cardNextReviewDate = new Date(progress.next_review_at);
           if (cardNextReviewDate <= now && progress.status === 'learning') {
-            // Card is due for review and not yet mastered
             dueCardsCount++;
           }
           
-          // Update earliest review date for the set
           if (!tempEarliestReviewAt || cardNextReviewDate < tempEarliestReviewAt) {
             tempEarliestReviewAt = cardNextReviewDate;
           }
@@ -111,14 +105,13 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
 
 const Index = () => {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState(""); // State for search term
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: studySets, isLoading, isError, error } = useQuery<StudySet[], Error>({
     queryKey: ['studySets'],
     queryFn: fetchStudySets,
   });
 
-  // Invalidate queries on mount to ensure fresh data, especially for review dates
   React.useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['studySets'] });
   }, [queryClient]);
@@ -171,7 +164,7 @@ const Index = () => {
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <Card key={i}>
+            <NotebookCard key={i}> {/* Changed to NotebookCard */}
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -179,7 +172,7 @@ const Index = () => {
               <CardContent>
                 <Skeleton className="h-4 w-1/4" />
               </CardContent>
-            </Card>
+            </NotebookCard>
           ))}
         </div>
       ) : (filteredStudySets?.length === 0 || !filteredStudySets) ? (
@@ -193,7 +186,7 @@ const Index = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredStudySets.map((set) => (
             <Link to={`/sets/${set.id}`} key={set.id}>
-              <Card className="hover:shadow-md transition-shadow h-full">
+              <NotebookCard className="hover:shadow-md transition-shadow h-full"> {/* Changed to NotebookCard */}
                 <CardHeader>
                   <CardTitle>{set.title}</CardTitle>
                   {set.description && (
@@ -220,7 +213,7 @@ const Index = () => {
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </NotebookCard>
             </Link>
           ))}
         </div>

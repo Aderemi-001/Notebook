@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Keep these imports for sub-components
+import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
 import { Trash2, ArrowLeft } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
@@ -13,9 +14,8 @@ import React, { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import * as pdfjsLib from 'pdfjs-dist'; // Import for pdfjs-dist
+import * as pdfjsLib from 'pdfjs-dist';
 
-// Set the worker source for pdfjs-dist
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 const formSchema = z.object({
@@ -63,7 +63,7 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
 
 const EditSet = () => {
   const { setId } = useParams<{ setId: string }>();
-  const [file, setFile] = React.useState<File | null>(null); // State for file upload
+  const [file, setFile] = React.useState<File | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -271,7 +271,6 @@ const EditSet = () => {
         return;
       }
 
-      // Append new cards to the existing ones in the form
       newCards.forEach((card: { term: string; definition: string }) => {
         append({ term: card.term, definition: card.definition });
       });
@@ -300,7 +299,7 @@ const EditSet = () => {
         <Skeleton className="h-4 w-full mb-6" />
         <div className="grid gap-4">
           {[...Array(3)].map((_, i) => (
-            <Card key={i}>
+            <NotebookCard key={i}> {/* Changed to NotebookCard */}
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -308,7 +307,7 @@ const EditSet = () => {
               <CardContent>
                 <Skeleton className="h-4 w-1/4" />
               </CardContent>
-            </Card>
+            </NotebookCard>
           ))}
         </div>
       </div>
@@ -345,7 +344,7 @@ const EditSet = () => {
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
-          <Card>
+          <NotebookCard> {/* Changed to NotebookCard */}
             <CardContent className="pt-6">
               <FormField
                 control={form.control}
@@ -376,9 +375,9 @@ const EditSet = () => {
                 />
               </div>
             </CardContent>
-          </Card>
+          </NotebookCard>
 
-          <Card>
+          <NotebookCard> {/* Changed to NotebookCard */}
             <CardHeader>
               <CardTitle>Import from file with AI</CardTitle>
             </CardHeader>
@@ -393,9 +392,9 @@ const EditSet = () => {
                 Import with AI
               </Button>
             </CardContent>
-          </Card>
+          </NotebookCard>
 
-          <Card>
+          <NotebookCard> {/* Changed to NotebookCard */}
             <CardHeader>
               <CardTitle>Flashcards</CardTitle>
             </CardHeader>
@@ -456,7 +455,7 @@ const EditSet = () => {
                 Add Card
               </Button>
             </CardContent>
-          </Card>
+          </NotebookCard>
 
           <div className="flex justify-end">
             <Button type="submit">Save Changes</Button>
