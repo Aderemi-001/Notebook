@@ -8,11 +8,12 @@ import StudyMode from "./pages/StudyMode";
 import EditSet from "./pages/EditSet";
 import Profile from "./pages/Profile";
 import CognitiveConstellation from "./pages/CognitiveConstellation";
-import ExplorePublicSets from "./pages/ExplorePublicSets"; // Import the new page
+import ExplorePublicSets from "./pages/ExplorePublicSets";
+import GenerateExam from "./pages/GenerateExam"; // Import the new page
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import React from "react"; // Import React for React.Fragment
+import React from "react";
 
 const queryClient = new QueryClient();
 
@@ -79,10 +80,18 @@ function App() {
               }
             />
             <Route
-              path="/explore" // New route for ExplorePublicSets
+              path="/explore"
               element={
                 <AuthLayout>
                   <ExplorePublicSets />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/generate-exam" // New route for GenerateExam
+              element={
+                <AuthLayout>
+                  <GenerateExam />
                 </AuthLayout>
               }
             />

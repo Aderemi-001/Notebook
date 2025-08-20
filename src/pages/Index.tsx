@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu } from "lucide-react";
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -169,6 +169,11 @@ const Index = () => {
             <DropdownMenuItem asChild>
               <Link to="/explore" className="flex items-center">
                 <Search className="mr-2 h-4 w-4" /> Explore Public Sets
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/generate-exam" className="flex items-center">
+                <Brain className="mr-2 h-4 w-4" /> Generate Exam
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
