@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"; // Keep these imports for sub-components
-import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search } from "lucide-react"; // Added Network icon, Globe, Search
+import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { NotebookCard } from "@/components/NotebookCard";
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,13 +9,20 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState, useEffect } from "react";
 import { formatDistanceToNowStrict, isPast } from 'date-fns';
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge"; // Import Badge
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface StudySet {
   id: string;
   title: string;
   description: string | null;
-  is_public: boolean; // Added is_public
+  is_public: boolean;
   cards_count: number;
   next_review_at?: string | null;
   due_cards_count?: number;
@@ -147,36 +154,36 @@ const Index = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">My Study Sets</h1>
-        <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
-          <Button asChild>
-            <Link to="/create" className="flex items-center">
-              <React.Fragment>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Menu className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/create" className="flex items-center">
                 <PlusCircle className="mr-2 h-4 w-4" /> Create Set
-              </React.Fragment>
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/explore" className="flex items-center"> {/* New button for Explore Public Sets */}
-              <React.Fragment>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/explore" className="flex items-center">
                 <Search className="mr-2 h-4 w-4" /> Explore Public Sets
-              </React.Fragment>
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/constellation" className="flex items-center">
-              <React.Fragment>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/constellation" className="flex items-center">
                 <Network className="mr-2 h-4 w-4" /> Constellation
-              </React.Fragment>
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/profile" className="flex items-center">
-              <React.Fragment>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/profile" className="flex items-center">
                 <User className="mr-2 h-4 w-4" /> Profile
-              </React.Fragment>
-            </Link>
-          </Button>
-        </div>
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="mb-6">
@@ -192,7 +199,7 @@ const Index = () => {
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <NotebookCard key={i}> {/* Changed to NotebookCard */}
+            <NotebookCard key={i}>
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -214,7 +221,7 @@ const Index = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredStudySets.map((set) => (
             <Link to={`/sets/${set.id}`} key={set.id}>
-              <NotebookCard className="hover:shadow-md transition-shadow h-full"> {/* Changed to NotebookCard */}
+              <NotebookCard className="hover:shadow-md transition-shadow h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-lg font-semibold">{set.title}</CardTitle>
                   <Badge variant={set.is_public ? "default" : "secondary"} className="flex items-center gap-1">

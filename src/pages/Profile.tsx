@@ -8,12 +8,19 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; // Keep these imports for sub-components
-import { NotebookCard } from '@/components/NotebookCard'; // Import NotebookCard
+import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { NotebookCard } from '@/components/NotebookCard';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowLeft, LogOut } from 'lucide-react';
+import { ArrowLeft, LogOut, Menu } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ThemeToggle } from '@/components/ThemeToggle'; // Import ThemeToggle
+import { ThemeToggle } from '@/components/ThemeToggle';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 const profileSchema = z.object({
   display_name: z.string().min(1, 'Display name is required').max(50, 'Display name cannot exceed 50 characters'),
@@ -123,7 +130,7 @@ const Profile = () => {
     return (
       <div className="container mx-auto py-10">
         <Skeleton className="h-8 w-1/3 mb-8" />
-        <NotebookCard> {/* Changed to NotebookCard */}
+        <NotebookCard>
           <CardHeader>
             <Skeleton className="h-6 w-1/2" />
             <Skeleton className="h-4 w-3/4 mt-2" />
@@ -149,23 +156,27 @@ const Profile = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">User Profile</h1>
-        <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
-          <Button asChild variant="outline">
-            <Link to="/" className="flex items-center">
-              <React.Fragment>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Menu className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/" className="flex items-center">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
-              </React.Fragment>
-            </Link>
-          </Button>
-          <Button onClick={handleSignOut} variant="destructive" className="flex items-center">
-            <React.Fragment>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="flex items-center text-destructive">
               <LogOut className="mr-2 h-4 w-4" /> Sign Out
-            </React.Fragment>
-          </Button>
-        </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <NotebookCard> {/* Changed to NotebookCard */}
+      <NotebookCard>
         <CardHeader>
           <CardTitle>Manage Your Profile</CardTitle>
           <CardDescription>Update your display name and other profile information.</CardDescription>

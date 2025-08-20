@@ -1,13 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw } from 'lucide-react'; // Added RefreshCw icon
+import { ArrowLeft, RefreshCw, Menu } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast'; // Import toast utilities
+import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface Concept {
   id: string;
@@ -94,7 +101,7 @@ const CognitiveConstellation: React.FC = () => {
             'Authorization': `Bearer ${session.access_token}`,
             'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
           },
-          body: JSON.stringify({}), // No specific studySetId needed, function processes all for user
+          body: JSON.stringify({}),
         }
       );
 
@@ -106,7 +113,7 @@ const CognitiveConstellation: React.FC = () => {
       }
 
       showSuccess("Cognitive constellation refreshed successfully!");
-      queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] }); // Invalidate to refetch data
+      queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] });
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message || "An unexpected error occurred during refresh.");
@@ -141,16 +148,23 @@ const CognitiveConstellation: React.FC = () => {
       <div className="container mx-auto py-10 text-center">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Cognitive Constellation</h1>
-          <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
-            <Button asChild variant="outline">
-              <Link to="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
-              </Link>
-            </Button>
-            <Button onClick={handleRefreshConstellation} variant="outline" className="flex items-center">
-              <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link to="/" className="flex items-center">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleRefreshConstellation} className="flex items-center">
+                <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="text-center py-20 border-2 border-dashed rounded-lg">
           <h2 className="text-xl font-semibold">No concepts found yet!</h2>
@@ -164,24 +178,29 @@ const CognitiveConstellation: React.FC = () => {
 
   const { concepts, relationships } = data;
 
-  // Simple layout for demonstration - a real constellation would use a force-directed graph
-  // For now, we'll just list concepts and show relationships on click.
   const conceptMap = new Map(concepts.map(c => [c.id, c]));
 
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Cognitive Constellation</h1>
-        <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
-          <Button asChild variant="outline">
-            <Link to="/" className="flex items-center">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
-            </Link>
-          </Button>
-          <Button onClick={handleRefreshConstellation} variant="outline" className="flex items-center">
-            <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Menu className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/" className="flex items-center">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleRefreshConstellation} className="flex items-center">
+              <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <p className="text-muted-foreground mb-6">

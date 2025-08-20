@@ -1,9 +1,9 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"; // Keep these imports for sub-components
-import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
-import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe, Plus } from 'lucide-react'; // Added Flag, FlagOff, Globe, Plus
+import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { NotebookCard } from "@/components/NotebookCard";
+import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe, Plus, MoreVertical } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,22 +23,29 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"; // Import Tooltip components
+} from "@/components/ui/tooltip";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { cn } from "@/lib/utils";
-import StudyProgressSummary from '@/components/StudyProgressSummary'; // Import the new component
-import { isPast } from 'date-fns'; // Import isPast
-import { Badge } from '@/components/ui/badge'; // Import Badge
+import StudyProgressSummary from '@/components/StudyProgressSummary';
+import { isPast } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface StudySet {
   id: string;
   title: string;
   description: string | null;
-  is_public: boolean; // Added is_public
-  user_id: string; // Add user_id to check ownership
+  is_public: boolean;
+  user_id: string;
   cards: CardItem[];
-  mastered_cards_count: number; // Ensure this is always a number
-  due_cards_count: number; // Add due_cards_count
+  mastered_cards_count: number;
+  due_cards_count: number;
 }
 
 interface CardItem {
@@ -46,10 +53,10 @@ interface CardItem {
   term: string;
   definition: string;
   status?: 'learning' | 'mastered';
-  is_flagged?: boolean; // Added is_flagged
-  next_review_at?: string; // Added for due card calculation
-  repetition_level?: number; // Added repetition_level
-  has_progress?: boolean; // Added to indicate if the user has any progress for this card
+  is_flagged?: boolean;
+  next_review_at?: string;
+  repetition_level?: number;
+  has_progress?: boolean;
 }
 
 const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
@@ -86,7 +93,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
 
   if (error) {
     console.error("Error fetching study set details:", error);
-    throw error; // Throw the actual Supabase error
+    throw error;
   }
   if (!data) {
     throw new Error("Study set not found.");
@@ -96,17 +103,16 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
   let dueCount = 0;
   const processedCards: CardItem[] = data.cards.map(card => {
     const progress = card.user_progress?.[0];
-    const hasProgress = !!progress && progress.user_id === user.id; // Check if this specific user has progress
+    const hasProgress = !!progress && progress.user_id === user.id;
     const cardStatus = hasProgress ? progress.status : 'learning';
-    const nextReviewAt = hasProgress ? progress.next_review_at : now.toISOString(); // Default to now for new cards
+    const nextReviewAt = hasProgress ? progress.next_review_at : now.toISOString();
 
     if (cardStatus === 'mastered') {
       masteredCount++;
     }
 
-    // Check if card is due for review
     const cardNextReviewDate = new Date(nextReviewAt);
-    const isNewCardForCurrentUser = !hasProgress; // If no progress, it's new for this user
+    const isNewCardForCurrentUser = !hasProgress;
     const isDueForReview = cardNextReviewDate <= now;
 
     if (isNewCardForCurrentUser || (hasProgress && isDueForReview && cardStatus === 'learning')) {
@@ -121,7 +127,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
       is_flagged: card.is_flagged,
       next_review_at: nextReviewAt,
       repetition_level: progress?.repetition_level ?? 0,
-      has_progress: hasProgress, // Pass this flag to the component
+      has_progress: hasProgress,
     };
   });
 
@@ -167,7 +173,7 @@ const StudySetDetail = () => {
 
     const toastId = showLoading("Resetting progress...");
     try {
-      const { data: { user } = { user: null } } = await supabase.auth.getUser(); // Destructure with default
+      const { data: { user } = { user: null } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("User not authenticated.");
       }
@@ -196,7 +202,7 @@ const StudySetDetail = () => {
       queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
       queryClient.invalidateQueries({ queryKey: ['studyCards', setId] });
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
-      window.location.reload(); // Refresh the page
+      window.location.reload();
     } catch (error: any) {
       dismissToast(toastId);
       showError(error.message || "Failed to reset progress.");
@@ -216,7 +222,7 @@ const StudySetDetail = () => {
 
       dismissToast(toastId);
       showSuccess(currentFlagStatus ? "Card unflagged!" : "Card flagged!");
-      queryClient.invalidateQueries({ queryKey: ['studySet', setId] }); // Invalidate to refetch updated flag status
+      queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
     } catch (error: any) {
       dismissToast(toastId);
       showError(error.message || "Failed to update flag status.");
@@ -234,14 +240,13 @@ const StudySetDetail = () => {
         throw new Error("User not authenticated. Please log in to add sets.");
       }
 
-      // 1. Create a new study set for the current user
       const { data: newSet, error: newSetError } = await supabase
         .from('study_sets')
         .insert({
           title: `Copy of ${studySet.title}`,
           description: studySet.description ? `(Copied) ${studySet.description}` : '(Copied from a public set)',
           user_id: user.id,
-          is_public: false, // Copies are always private by default
+          is_public: false,
         })
         .select('id')
         .single();
@@ -249,12 +254,11 @@ const StudySetDetail = () => {
       if (newSetError) throw newSetError;
       if (!newSet) throw new Error("Failed to create new study set.");
 
-      // 2. Copy all cards from the original set to the new set
       const cardsToInsert = studySet.cards.map(card => ({
         set_id: newSet.id,
         term: card.term,
         definition: card.definition,
-        is_flagged: false, // Reset flag status for copied cards
+        is_flagged: false,
       }));
 
       if (cardsToInsert.length > 0) {
@@ -266,8 +270,8 @@ const StudySetDetail = () => {
 
       dismissToast(toastId);
       showSuccess(`"${studySet.title}" added to your sets!`);
-      queryClient.invalidateQueries({ queryKey: ['studySets'] }); // Invalidate user's study sets list
-      navigate(`/sets/${newSet.id}`); // Navigate to the new copied set
+      queryClient.invalidateQueries({ queryKey: ['studySets'] });
+      navigate(`/sets/${newSet.id}`);
     } catch (error: any) {
       dismissToast(toastId);
       showError(error.message || "Failed to add set to your collection.");
@@ -291,7 +295,7 @@ const StudySetDetail = () => {
         <Skeleton className="h-4 w-full mb-6" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <NotebookCard key={i}> {/* Changed to NotebookCard */}
+            <NotebookCard key={i}>
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -322,7 +326,12 @@ const StudySetDetail = () => {
     );
   }
 
-  const isOwner = supabase.auth.getUser().then(({ data: { user } }) => user?.id === studySet.user_id);
+  const isOwnerPromise = supabase.auth.getUser().then(({ data: { user } }) => user?.id === studySet.user_id);
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    isOwnerPromise.then(ownerStatus => setIsOwner(ownerStatus));
+  }, [isOwnerPromise]);
 
   return (
     <div className="container mx-auto py-10">
@@ -334,88 +343,86 @@ const StudySetDetail = () => {
             {studySet.is_public ? "Public" : "Private"}
           </Badge>
         </div>
-        <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
+        <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link to="/" className="flex items-center">
-              <React.Fragment>
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sets
-              </React.Fragment>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sets
             </Link>
           </Button>
           {studySet.cards.length > 0 && (
             <Button asChild>
               <Link to={`/sets/${setId}/study`} className="flex items-center">
-                <React.Fragment>
-                  <PlayCircle className="mr-2 h-4 w-4" /> Start Study
-                </React.Fragment>
+                <PlayCircle className="mr-2 h-4 w-4" /> Start Study
               </Link>
             </Button>
           )}
-          {/* Show Edit/Delete/Reset buttons only if the current user is the owner */}
-          {isOwner && (
-            <>
-              <Button asChild variant="secondary">
-                <Link to={`/sets/${setId}/edit`} className="flex items-center">
-                  <React.Fragment>
-                    <Pencil className="mr-2 h-4 w-4" /> Edit Set
-                  </React.Fragment>
-                </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreVertical className="h-4 w-4" />
               </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center">
-                    <React.Fragment>
-                      <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
-                    </React.Fragment>
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleResetProgress}>
-                      Reset Progress
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="flex items-center">
-                    <React.Fragment>
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete Set
-                    </React.Fragment>
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your
-                      "{studySet.title}" study set and all its associated cards.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteSet}>
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </>
-          )}
-          {/* Show "Add to My Sets" button if it's a public set and not owned by the current user */}
-          {studySet.is_public && !isOwner && (
-            <Button onClick={handleAddToMySets} className="flex items-center">
-              <Plus className="mr-2 h-4 w-4" /> Add to My Sets
-            </Button>
-          )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {isOwner && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to={`/sets/${setId}/edit`} className="flex items-center">
+                      <Pencil className="mr-2 h-4 w-4" /> Edit Set
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <AlertDialog>
+                      <AlertDialogTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                        <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleResetProgress}>
+                            Reset Progress
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <AlertDialog>
+                      <AlertDialogTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete Set
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your
+                            "{studySet.title}" study set and all its associated cards.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDeleteSet}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </DropdownMenuItem>
+                </>
+              )}
+              {studySet.is_public && !isOwner && (
+                <DropdownMenuItem onClick={handleAddToMySets} className="flex items-center">
+                  <Plus className="mr-2 h-4 w-4" /> Add to My Sets
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -423,7 +430,6 @@ const StudySetDetail = () => {
         <p className="text-muted-foreground mb-6">{studySet.description}</p>
       )}
 
-      {/* Study Progress Summary */}
       <StudyProgressSummary
         totalCards={studySet.cards.length}
         masteredCardsCount={studySet.mastered_cards_count}
@@ -439,17 +445,13 @@ const StudySetDetail = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {studySet.cards.map((card) => (
-            <NotebookCard // Changed to NotebookCard
+            <NotebookCard
               key={card.id} 
               className={cn(
                 "hover:shadow-md transition-shadow",
-                // Priority: Flagged (user explicit mark)
                 card.is_flagged && "border-yellow-500 border-2",
-                // Next priority: Mastered
                 card.status === 'mastered' && "border-green-500 border-2",
-                // Next priority: Marked 'Again' (repetition_level 0, and due now, AND has previous progress)
                 card.status === 'learning' && card.has_progress && card.repetition_level === 0 && isPast(new Date(card.next_review_at)) && "border-red-500 border-2",
-                // Next priority: Marked 'Hard' (repetition_level 0, but next_review_at is in the future, AND has previous progress)
                 card.status === 'learning' && card.has_progress && card.repetition_level === 0 && card.next_review_at && !isPast(new Date(card.next_review_at)) && "border-orange-500 border-2"
               )}
             >
@@ -462,7 +464,7 @@ const StudySetDetail = () => {
                         variant="ghost"
                         size="icon"
                         onClick={(e) => {
-                          e.preventDefault(); // Prevent navigating to set detail
+                          e.preventDefault();
                           handleToggleFlag(card.id, card.is_flagged || false);
                         }}
                         className="h-8 w-8"
