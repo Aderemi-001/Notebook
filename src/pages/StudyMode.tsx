@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
+import { Progress } from "@/components/ui/progress"; // Import the Progress component
 
 interface CardItem {
   id: string;
@@ -143,6 +144,9 @@ const StudyMode = () => {
   });
 
   const currentCard = cards?.[currentCardIndex];
+  const totalCards = cards?.length || 0;
+  const progressPercentage = totalCards > 0 ? ((currentCardIndex + (studyFinished ? 1 : 0)) / totalCards) * 100 : 0;
+
 
   const handleFlipCard = () => {
     setShowDefinition(!showDefinition);
@@ -269,6 +273,16 @@ const StudyMode = () => {
           </Link>
         </Button>
       </div>
+
+      {/* Progress Bar */}
+      {!studyFinished && totalCards > 0 && (
+        <div className="w-full max-w-md mb-6">
+          <Progress value={progressPercentage} className="h-2" />
+          <p className="text-sm text-muted-foreground text-right mt-1">
+            {currentCardIndex + 1} / {totalCards}
+          </p>
+        </div>
+      )}
 
       {studyFinished ? (
         <Card className="w-full max-w-md p-8 text-center">
