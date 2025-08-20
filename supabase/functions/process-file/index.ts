@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { PDFDocument } from "https://deno.land/x/pdf_reader@v0.1.0/mod.ts"; // Import PDFDocument
+import { PDFDocument } from "https://deno.land/x/pdf_reader@v0.1.1/mod.ts"; // Updated PDFDocument import
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
