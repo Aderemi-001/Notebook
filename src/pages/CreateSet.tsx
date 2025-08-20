@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { Trash2, Loader2, Brain, ArrowLeft, Save } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom"; // Import useLocation
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,6 +67,7 @@ const CreateSet = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation(); // Use useLocation hook
   const queryClient = useQueryClient();
 
   const { data: userGroups, isLoading: isLoadingGroups, isError: isErrorGroups, error: errorGroups } = useQuery<StudySetGroup[], Error>({
@@ -80,7 +81,7 @@ const CreateSet = () => {
       title: "",
       description: "",
       is_public: false,
-      group_id: null, // Default to no group
+      group_id: (location.state as { groupId?: string })?.groupId || null, // Set default from state
       cards: [{ term: "", definition: "" }],
     },
   });
@@ -265,7 +266,7 @@ const CreateSet = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) {
+          if (existsSync) {
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase

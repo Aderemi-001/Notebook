@@ -57,7 +57,7 @@ const fetchGroupDetails = async (groupId: string): Promise<StudySetGroup> => {
 };
 
 const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } = { user: null } } = await supabase.auth.getUser(); // Ensure user is destructured safely
   if (!user) {
     throw new Error("User not authenticated.");
   }
@@ -242,7 +242,7 @@ const GroupDetail: React.FC = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/create" className="flex items-center">
+              <Link to="/create" state={{ groupId: groupId }} className="flex items-center">
                 <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
               </Link>
             </DropdownMenuItem>
@@ -274,7 +274,7 @@ const GroupDetail: React.FC = () => {
           </p>
           {!searchTerm && (
             <Button asChild className="mt-4">
-              <Link to="/create">
+              <Link to="/create" state={{ groupId: groupId }}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
               </Link>
             </Button>
