@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, PlayCircle } from 'lucide-react'; // Import PlayCircle icon
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -106,11 +106,20 @@ const StudySetDetail = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">{studySet.title}</h1>
-        <Button asChild variant="outline">
-          <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sets
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sets
+            </Link>
+          </Button>
+          {studySet.cards.length > 0 && (
+            <Button asChild>
+              <Link to={`/sets/${setId}/study`}>
+                <PlayCircle className="mr-2 h-4 w-4" /> Start Study
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       {studySet.description && (
