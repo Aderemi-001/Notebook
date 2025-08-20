@@ -161,7 +161,8 @@ const Profile = () => {
               />
               <Button type="submit">Save Changes</Button>
             </form>
-          </CardContent>
+          </Form>
+        </CardContent>
       </Card>
     </div>
   );
