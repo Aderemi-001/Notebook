@@ -27,6 +27,7 @@ import {
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import StudyProgressSummary from '@/components/StudyProgressSummary'; // Import the new component
+import { isPast } from 'date-fns'; // Import isPast
 
 interface StudySet {
   id: string;
@@ -44,6 +45,7 @@ interface CardItem {
   status?: 'learning' | 'mastered';
   is_flagged?: boolean; // Added is_flagged
   next_review_at?: string; // Added for due card calculation
+  repetition_level?: number; // Added repetition_level
 }
 
 const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
@@ -68,7 +70,8 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
         user_progress!user_progress_card_id_fkey!left(
           status,
           user_id,
-          next_review_at
+          next_review_at,
+          repetition_level
         )
       )
     `)
@@ -110,6 +113,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
       status: cardStatus,
       is_flagged: card.is_flagged,
       next_review_at: nextReviewAt,
+      repetition_level: progress?.repetition_level ?? 0,
     };
   });
 
@@ -361,8 +365,15 @@ const StudySetDetail = () => {
               key={card.id} 
               className={cn(
                 "hover:shadow-md transition-shadow",
+                // Priority: Flagged (user explicit mark)
+                card.is_flagged && "border-yellow-500 border-2",
+                // Next priority: Due now (marked 'Again' or 'Hard' and review date is past/today)
+                card.status === 'learning' && card.next_review_at && isPast(new Date(card.next_review_at)) && "border-red-500 border-2",
+                // Next priority: Mastered
                 card.status === 'mastered' && "border-green-500 border-2",
-                card.is_flagged && "border-yellow-500 border-2" // Highlight flagged cards
+                // Next priority: Marked 'Hard' (repetition_level 0, but next_review_at is in the future, e.g., 1 day from now)
+                // This condition should only apply if not already caught by 'due now' or 'mastered'
+                card.status === 'learning' && card.repetition_level === 0 && card.next_review_at && !isPast(new Date(card.next_review_at)) && "border-orange-500 border-2"
               )}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
