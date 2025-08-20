@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe, Plus, MoreVertical } from 'lucide-react';
+import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe, Plus, MoreVertical, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -58,6 +58,12 @@ interface CardItem {
   next_review_at?: string;
   repetition_level?: number;
   has_progress?: boolean;
+}
+
+interface LinkedNote {
+  id: string;
+  title: string;
+  updated_at: string;
 }
 
 const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
@@ -135,6 +141,26 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
   return { ...data, cards: processedCards, mastered_cards_count: masteredCount, due_cards_count: dueCount } as StudySet;
 };
 
+const fetchLinkedNotes = async (setId: string): Promise<LinkedNote[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
+
+  const { data, error } = await supabase
+    .from('notes')
+    .select('id, title, updated_at')
+    .eq('study_set_id', setId)
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.error("Error fetching linked notes:", error);
+    throw new Error("Failed to fetch linked notes.");
+  }
+  return data || [];
+};
+
 const StudySetDetail = () => {
   const { setId } = useParams<{ setId: string }>();
   const navigate = useNavigate();
@@ -146,6 +172,12 @@ const StudySetDetail = () => {
   const { data: studySet, isLoading, isError, error } = useQuery<StudySet, Error>({
     queryKey: ['studySet', setId],
     queryFn: () => fetchStudySetDetails(setId!),
+    enabled: !!setId,
+  });
+
+  const { data: linkedNotes, isLoading: isLoadingLinkedNotes, isError: isErrorLinkedNotes, error: errorLinkedNotes } = useQuery<LinkedNote[], Error>({
+    queryKey: ['linkedNotes', setId],
+    queryFn: () => fetchLinkedNotes(setId!),
     enabled: !!setId,
   });
 
@@ -174,6 +206,7 @@ const StudySetDetail = () => {
       dismissToast(toastId);
       showSuccess("Study set deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
+      queryClient.invalidateQueries({ queryKey: ['linkedNotes', setId] }); // Invalidate linked notes
       navigate('/');
     } catch (error: any) {
       dismissToast(toastId);
@@ -301,7 +334,7 @@ const StudySetDetail = () => {
     );
   }
 
-  if (isLoading || isLoadingPreferences) {
+  if (isLoading || isLoadingPreferences || isLoadingLinkedNotes) {
     return (
       <div className="container mx-auto py-10">
         <Skeleton className="h-8 w-1/2 mb-8" />
@@ -491,12 +524,59 @@ const StudySetDetail = () => {
                       {card.is_flagged ? "Unflag card" : "Flag card"}
                     </TooltipContent>
                   </Tooltip>
-                </TooltipProvider> {/* Corrected closing tag */}
-              </CardHeader> {/* Corrected closing tag */}
+                </TooltipProvider>
+              </CardHeader>
               <CardContent>
                 <CardDescription>{card.definition}</CardDescription>
               </CardContent>
             </NotebookCard>
+          ))}
+        </div>
+      )}
+
+      <h2 className="text-2xl font-semibold mb-4 mt-8">Linked Notes ({linkedNotes?.length || 0})</h2>
+      {isLoadingLinkedNotes ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(2)].map((_, i) => (
+            <NotebookCard key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2 mt-2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-1/4" />
+              </CardContent>
+            </NotebookCard>
+          ))}
+        </div>
+      ) : (linkedNotes?.length === 0 || !linkedNotes) ? (
+        <div className="text-center py-10 border-2 border-dashed rounded-lg">
+          <p className="text-muted-foreground">No notes linked to this study set yet.</p>
+          <Button asChild className="mt-4">
+            <Link to="/create-note" className="flex items-center">
+              <Plus className="mr-2 h-4 w-4" /> Create New Note
+            </Link>
+          </Button>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {linkedNotes.map((note) => (
+            <Link to={`/notes/${note.id}/edit`} key={note.id}>
+              <NotebookCard className="hover:shadow-md transition-shadow h-full">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold">{note.title}</CardTitle>
+                  <CardDescription className="text-sm text-muted-foreground">
+                    Last updated: {format(new Date(note.updated_at), 'PPP')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <FileText className="mr-2 h-4 w-4" />
+                    <span>View Note</span>
+                  </div>
+                </CardContent>
+              </NotebookCard>
+            </Link>
           ))}
         </div>
       )}

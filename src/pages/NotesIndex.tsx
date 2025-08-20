@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, PlusCircle, FileText, History, Menu, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, PlusCircle, FileText, History, Menu, Trash2, Pencil, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,6 +36,8 @@ interface Note {
   content: any; // JSONB content from TipTap
   created_at: string;
   updated_at: string;
+  study_set_id: string | null;
+  study_sets: { title: string } | null; // To fetch linked study set title
 }
 
 const fetchUserNotes = async (): Promise<Note[]> => {
@@ -46,7 +48,15 @@ const fetchUserNotes = async (): Promise<Note[]> => {
 
   const { data, error } = await supabase
     .from('notes')
-    .select('*')
+    .select(`
+      id,
+      title,
+      content,
+      created_at,
+      updated_at,
+      study_set_id,
+      study_sets (title)
+    `)
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false });
 
@@ -55,6 +65,35 @@ const fetchUserNotes = async (): Promise<Note[]> => {
     throw new Error("Failed to fetch your notes.");
   }
   return data || [];
+};
+
+// Function to convert TipTap JSON content to plain text preview
+const getPlainTextPreview = (content: any, maxLength: number = 150): string => {
+  if (!content) return '';
+  try {
+    // If content is already a string (e.g., from AI summary), use it directly
+    if (typeof content === 'string') {
+      return content.length > maxLength ? content.substring(0, maxLength) + '...' : content;
+    }
+    // Assuming TipTap content is a JSON object with a 'content' array
+    if (content.type === 'doc' && Array.isArray(content.content)) {
+      let text = '';
+      for (const node of content.content) {
+        if (node.type === 'paragraph' && Array.isArray(node.content)) {
+          for (const item of node.content) {
+            if (item.type === 'text' && item.text) {
+              text += item.text + ' ';
+            }
+          }
+        }
+        if (text.length >= maxLength) break;
+      }
+      return text.trim().length > maxLength ? text.trim().substring(0, maxLength) + '...' : text.trim();
+    }
+  } catch (e) {
+    console.error("Error parsing note content for preview:", e);
+  }
+  return '';
 };
 
 const NotesIndex: React.FC = () => {
@@ -68,7 +107,9 @@ const NotesIndex: React.FC = () => {
   });
 
   const filteredNotes = notes?.filter(note =>
-    note.title.toLowerCase().includes(searchTerm.toLowerCase())
+    note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    getPlainTextPreview(note.content, 500).toLowerCase().includes(searchTerm.toLowerCase()) || // Search in content preview
+    (note.study_sets?.title && note.study_sets.title.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleDeleteNote = async (noteId: string) => {
@@ -84,6 +125,8 @@ const NotesIndex: React.FC = () => {
       dismissToast(toastId);
       showSuccess("Note deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ['userNotes'] });
+      // Also invalidate any study sets that might have been linked to this note
+      queryClient.invalidateQueries({ queryKey: ['studySet'] });
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message || "Failed to delete note.");
@@ -154,7 +197,7 @@ const NotesIndex: React.FC = () => {
       <div className="mb-6">
         <Input
           type="text"
-          placeholder="Search notes by title..."
+          placeholder="Search notes by title or content..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full"
@@ -181,9 +224,19 @@ const NotesIndex: React.FC = () => {
             <NotebookCard key={note.id} className="h-full flex flex-col">
               <CardHeader className="flex-grow">
                 <CardTitle className="text-lg font-semibold">{note.title}</CardTitle>
-                <CardDescription className="text-sm text-muted-foreground">
+                {note.study_sets?.title && (
+                  <CardDescription className="flex items-center text-sm text-muted-foreground mt-1">
+                    <BookOpen className="mr-1 h-3 w-3" /> Linked to: {note.study_sets.title}
+                  </CardDescription>
+                )}
+                <CardDescription className="text-sm text-muted-foreground mt-1">
                   Last updated: {format(new Date(note.updated_at), 'PPP')}
                 </CardDescription>
+                {note.content && (
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
+                    {getPlainTextPreview(note.content)}
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="flex justify-end gap-2 pt-0">
                 <Link to={`/notes/${note.id}/edit`}>
