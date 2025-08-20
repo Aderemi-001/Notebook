@@ -21,7 +21,7 @@ import CreateNote from "@/pages/CreateNote";
 import EditNote from "@/pages/EditNote";
 import Statistics from "@/pages/Statistics";
 import DailyReview from "@/pages/DailyReview";
-import Tutorial from "@/pages/Tutorial"; // Import the Tutorial component
+import Welcome from "@/pages/Welcome"; // Import the new Welcome component
 import AuthLayout from "@/layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
@@ -224,12 +224,12 @@ const AppContent: React.FC = () => {
                 </AuthLayout>
               }
             />
-            {/* Tutorial Route */}
+            {/* Welcome Tutorial Route */}
             <Route
-              path="/tutorial"
+              path="/welcome"
               element={
                 <AuthLayout>
-                  <Tutorial />
+                  <Welcome />
                 </AuthLayout>
               }
             />

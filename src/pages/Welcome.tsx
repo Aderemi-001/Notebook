@@ -1,7 +1,10 @@
 import React from 'react';
-import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { NotebookCard } from '@/components/NotebookCard';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { NotebookCard, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/NotebookCard';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Lightbulb, BookOpen, Brain, NotebookText, Globe, User, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -29,11 +32,36 @@ const TutorialStep: React.FC<TutorialStepProps> = ({ title, description, icon, c
   </NotebookCard>
 );
 
-interface TutorialStepsCarouselProps {
-  onCompleteTutorial: () => void;
-}
+const Welcome: React.FC = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-const TutorialSteps: React.FC<TutorialStepsCarouselProps> = ({ onCompleteTutorial }) => {
+  const handleCompleteTutorial = async () => {
+    const toastId = showLoading("Marking tutorial as complete...");
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("User not authenticated.");
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ has_completed_tutorial: true })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      dismissToast(toastId);
+      showSuccess("Tutorial completed! Welcome aboard.");
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] }); // Invalidate profile to reflect change
+      navigate('/'); // Redirect to home page
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message || "Failed to mark tutorial as complete.");
+      console.error("Complete tutorial error:", err);
+    }
+  };
+
   const steps = [
     {
       title: "Welcome to My Notebook!",
@@ -116,28 +144,38 @@ const TutorialSteps: React.FC<TutorialStepsCarouselProps> = ({ onCompleteTutoria
   ];
 
   return (
-    <Carousel className="w-full max-w-2xl mx-auto">
-      <CarouselContent>
-        {steps.map((step, index) => (
-          <CarouselItem key={index} className="p-4">
-            <TutorialStep
-              title={step.title}
-              description={step.description}
-              icon={step.icon}
-              className="min-h-[400px]"
-            />
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-      <CarouselPrevious />
-      <CarouselNext />
-      <div className="flex justify-center mt-6">
-        <Button onClick={onCompleteTutorial} className="w-full max-w-xs">
-          Start Learning!
-        </Button>
+    <div className="container mx-auto py-10">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Welcome to My Notebook!</h1>
       </div>
-    </Carousel>
+
+      <p className="text-muted-foreground mb-6 text-center">
+        Use the arrows to navigate through this quick introduction.
+      </p>
+
+      <Carousel className="w-full max-w-2xl mx-auto">
+        <CarouselContent>
+          {steps.map((step, index) => (
+            <CarouselItem key={index} className="p-4">
+              <TutorialStep
+                title={step.title}
+                description={step.description}
+                icon={step.icon}
+                className="min-h-[400px]"
+              />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
+        <div className="flex justify-center mt-6">
+          <Button onClick={handleCompleteTutorial} className="w-full max-w-xs">
+            Start Learning!
+          </Button>
+        </div>
+      </Carousel>
+    </div>
   );
 };
 
-export default TutorialSteps;
+export default Welcome;
