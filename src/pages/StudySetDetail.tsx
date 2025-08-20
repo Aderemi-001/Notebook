@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"; // Keep these imports for sub-components
 import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
-import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw } from 'lucide-react';
+import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff } from 'lucide-react'; // Added Flag, FlagOff
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,6 +34,7 @@ interface CardItem {
   term: string;
   definition: string;
   status?: 'learning' | 'mastered';
+  is_flagged?: boolean; // Added is_flagged
 }
 
 const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
@@ -52,6 +53,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
         id,
         term,
         definition,
+        is_flagged, // Select is_flagged
         user_progress!left(
           status,
           user_id
@@ -83,6 +85,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
       term: card.term,
       definition: card.definition,
       status: cardStatus,
+      is_flagged: card.is_flagged, // Include is_flagged
     };
   });
 
@@ -162,6 +165,26 @@ const StudySetDetail = () => {
       dismissToast(toastId);
       showError(error.message || "Failed to reset progress.");
       console.error("Reset progress error:", error);
+    }
+  };
+
+  const handleToggleFlag = async (cardId: string, currentFlagStatus: boolean) => {
+    const toastId = showLoading(currentFlagStatus ? "Unflagging card..." : "Flagging card...");
+    try {
+      const { error } = await supabase
+        .from('cards')
+        .update({ is_flagged: !currentFlagStatus })
+        .eq('id', cardId);
+
+      if (error) throw error;
+
+      dismissToast(toastId);
+      showSuccess(currentFlagStatus ? "Card unflagged!" : "Card flagged!");
+      queryClient.invalidateQueries({ queryKey: ['studySet', setId] }); // Invalidate to refetch updated flag status
+    } catch (error: any) {
+      dismissToast(toastId);
+      showError(error.message || "Failed to update flag status.");
+      console.error("Flag toggle error:", error);
     }
   };
 
@@ -313,11 +336,27 @@ const StudySetDetail = () => {
               key={card.id} 
               className={cn(
                 "hover:shadow-md transition-shadow",
-                card.status === 'mastered' && "border-green-500 border-2"
+                card.status === 'mastered' && "border-green-500 border-2",
+                card.is_flagged && "border-yellow-500 border-2" // Highlight flagged cards
               )}
             >
-              <CardHeader>
-                <CardTitle>{card.term}</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-lg font-semibold">{card.term}</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent navigating to set detail
+                    handleToggleFlag(card.id, card.is_flagged || false);
+                  }}
+                  className="h-8 w-8"
+                >
+                  {card.is_flagged ? (
+                    <Flag className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  ) : (
+                    <FlagOff className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
               </CardHeader>
               <CardContent>
                 <CardDescription>{card.definition}</CardDescription>
