@@ -6,7 +6,7 @@ import { NotebookCard } from "@/components/NotebookCard";
 import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe, Plus, MoreVertical, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } import '@/components/ui/skeleton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -487,55 +487,57 @@ const StudySetDetail = () => {
           <p className="text-muted-foreground">No cards in this set yet.</p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {studySet.cards.map((card) => {
-            const cardNextReviewDate = card.next_review_at ? new Date(card.next_review_at) : null;
-            const isCardDue = cardNextReviewDate && isValid(cardNextReviewDate) && isPast(cardNextReviewDate);
+        <div className="overflow-x-auto scrollbar-hide pb-4"> {/* Added overflow-x-auto and scrollbar-hide */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 min-w-max"> {/* Added min-w-max */}
+            {studySet.cards.map((card) => {
+              const cardNextReviewDate = card.next_review_at ? new Date(card.next_review_at) : null;
+              const isCardDue = cardNextReviewDate && isValid(cardNextReviewDate) && isPast(cardNextReviewDate);
 
-            return (
-              <NotebookCard
-                key={card.id} 
-                className={cn(
-                  "hover:shadow-md transition-shadow",
-                  card.is_flagged && "border-yellow-500 border-2",
-                  card.status === 'mastered' && "border-green-500 border-2",
-                  card.status === 'learning' && card.has_progress && card.repetition_level === 0 && isCardDue && "border-red-500 border-2",
-                  card.status === 'learning' && card.has_progress && card.repetition_level === 0 && cardNextReviewDate && isValid(cardNextReviewDate) && !isCardDue && "border-orange-500 border-2"
-                )}
-              >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg font-semibold">{card.term}</CardTitle>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleToggleFlag(card.id, card.is_flagged || false);
-                          }}
-                          className="h-8 w-8"
-                        >
-                          {card.is_flagged ? (
-                            <Flag className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                          ) : (
-                            <FlagOff className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {card.is_flagged ? "Unflag card" : "Flag card"}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{card.definition}</CardDescription>
-                </CardContent>
-              </NotebookCard>
-            );
-          })}
+              return (
+                <NotebookCard
+                  key={card.id} 
+                  className={cn(
+                    "hover:shadow-md transition-shadow",
+                    card.is_flagged && "border-yellow-500 border-2",
+                    card.status === 'mastered' && "border-green-500 border-2",
+                    card.status === 'learning' && card.has_progress && card.repetition_level === 0 && isCardDue && "border-red-500 border-2",
+                    card.status === 'learning' && card.has_progress && card.repetition_level === 0 && cardNextReviewDate && isValid(cardNextReviewDate) && !isCardDue && "border-orange-500 border-2"
+                  )}
+                >
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-lg font-semibold">{card.term}</CardTitle>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleToggleFlag(card.id, card.is_flagged || false);
+                            }}
+                            className="h-8 w-8"
+                          >
+                            {card.is_flagged ? (
+                              <Flag className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                            ) : (
+                              <FlagOff className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {card.is_flagged ? "Unflag card" : "Flag card"}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>{card.definition}</CardDescription>
+                  </CardContent>
+                </NotebookCard>
+              );
+            })}
+          </div>
         </div>
       )}
 
