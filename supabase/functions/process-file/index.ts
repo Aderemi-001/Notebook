@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import OpenAI from "https://deno.land/x/openai@v4.24.1/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,51 +7,34 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
-  console.log(`[${new Date().toISOString()}] Function invoked with method: ${req.method}`);
+// Initialize OpenAI client using the secret API key
+const openai = new OpenAI({
+  apiKey: Deno.env.get("OPENAI_API_KEY"),
+});
 
+serve(async (req) => {
   if (req.method === "OPTIONS") {
-    console.log("Handling OPTIONS preflight request.");
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    console.log("Attempting to parse FormData.");
     const formData = await req.formData();
-    console.log("FormData parsed successfully.");
-
     const file = formData.get("file") as File;
 
     if (!file) {
-      console.error("Error: No file found in FormData.");
       return new Response(JSON.stringify({ error: "No file provided." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
-    console.log(`File received: ${file.name}, type: ${file.type}, size: ${file.size} bytes.`);
-
-    // Temporarily disable PDF processing to isolate the issue.
-    if (file.type === "application/pdf") {
-      console.error("Error: PDF processing is temporarily disabled for diagnostics.");
-      return new Response(JSON.stringify({ error: "PDF processing is currently disabled for testing. Please try a .txt file." }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-      });
-    }
-
     let content = "";
-    console.log("Reading file content as ArrayBuffer.");
     const fileBuffer = await file.arrayBuffer();
-    console.log("File read into ArrayBuffer successfully.");
 
+    // For now, we'll stick to simple text files that we know work
     if (file.type.startsWith("text/") || file.name.endsWith('.md') || file.name.endsWith('.csv')) {
-        console.log("Decoding file content as text.");
         content = new TextDecoder().decode(fileBuffer);
-        console.log("File decoded successfully.");
     } else {
-        console.error(`Unsupported file type: ${file.type}`);
         return new Response(JSON.stringify({ error: `Unsupported file type: ${file.type}. Please use .txt, .csv, or .md.` }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400,
@@ -58,22 +42,53 @@ serve(async (req) => {
     }
 
     if (!content.trim()) {
-        console.error("Error: Extracted content is empty.");
         return new Response(JSON.stringify({ error: "Could not extract any text from the file." }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400,
         });
     }
 
-    const snippet = content.substring(0, 400);
-    console.log("Diagnostic successful. Returning content snippet.");
-    return new Response(JSON.stringify({ diagnostic_success: true, content_snippet: snippet }), {
+    // --- AI Processing is now re-enabled ---
+    const prompt = `
+      You are an expert at creating flashcard study sets.
+      Based on the following text, generate a list of key terms and their definitions.
+      The output should be a valid JSON object with a single key "cards", which is an array of objects.
+      Each object in the array should have two properties: "term" and "definition".
+      Do not include any explanations or introductory text outside of the JSON object.
+
+      Example format:
+      {
+        "cards": [
+          { "term": "Example Term 1", "definition": "This is the definition for term 1." },
+          { "term": "Example Term 2", "definition": "This is the definition for term 2." }
+        ]
+      }
+
+      Here is the text:
+      ---
+      ${content}
+      ---
+    `;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+    });
+
+    const result = completion.choices[0].message.content;
+
+    if (!result) {
+      throw new Error("AI failed to generate a response.");
+    }
+
+    return new Response(result, {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 
   } catch (error) {
-    console.error("Critical error in function execution:", error);
+    console.error("Error in function execution:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

@@ -97,7 +97,7 @@ const CreateSet = () => {
       return;
     }
 
-    const toastId = showLoading("Running diagnostic: Reading file on server...");
+    const toastId = showLoading("AI is generating your flashcards...");
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -108,7 +108,6 @@ const CreateSet = () => {
       const formData = new FormData();
       formData.append("file", file);
 
-      // Using fetch directly for more control over headers
       const response = await fetch(
         `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/process-file`,
         {
@@ -129,14 +128,6 @@ const CreateSet = () => {
         throw new Error(data?.error || "Failed to process file.");
       }
       
-      // Handle diagnostic response
-      if (data.diagnostic_success) {
-        showSuccess("Diagnostic passed! File was read successfully on the server.");
-        console.log("Content Snippet:", data.content_snippet);
-        return;
-      }
-
-      // Original logic for handling cards
       const newCards = data.cards;
 
       if (!newCards || newCards.length === 0) {
@@ -264,7 +255,7 @@ const CreateSet = () => {
               ))}
                {form.formState.errors.cards && !form.formState.errors.cards.root && (
                 <p className="text-sm font-medium text-destructive">
-                  {form.formState.errors.cards.message}
+                  {form.form-state.errors.cards.message}
                 </p>
               )}
               <Button
