@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,26 +8,91 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useUserPreferences } from '@/hooks/use-user-preferences';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Settings: React.FC = () => {
-  // State for existing settings
-  const [defaultFlashcardSide, setDefaultFlashcardSide] = useState<'term' | 'definition'>('term');
-  const [confirmDeletion, setConfirmDeletion] = useState<boolean>(true);
+  const { preferences, isLoading, isError, error, updatePreferences } = useUserPreferences();
 
-  // State for new settings
-  const [defaultNumExamQuestions, setDefaultNumExamQuestions] = useState<number>(10);
-  const [defaultExamQuestionTypes, setDefaultExamQuestionTypes] = useState<string[]>(['multiple_choice', 'short_answer']);
-  const [dailyCardsGoal, setDailyCardsGoal] = useState<number>(20);
-  const [enableReviewReminders, setEnableReviewReminders] = useState<boolean>(true);
+  // Initialize local state with fetched preferences or defaults
+  const [defaultFlashcardSide, setDefaultFlashcardSide] = React.useState<'term' | 'definition'>('term');
+  const [confirmDeletion, setConfirmDeletion] = React.useState<boolean>(true);
+  const [defaultNumExamQuestions, setDefaultNumExamQuestions] = React.useState<number>(10);
+  const [defaultExamQuestionTypes, setDefaultExamQuestionTypes] = React.useState<string[]>(['multiple_choice', 'short_answer']);
+  const [dailyCardsGoal, setDailyCardsGoal] = React.useState<number>(20);
+  const [enableReviewReminders, setEnableReviewReminders] = React.useState<boolean>(true);
+
+  useEffect(() => {
+    if (preferences) {
+      setDefaultFlashcardSide(preferences.default_flashcard_side);
+      setConfirmDeletion(preferences.confirm_deletion);
+      setDefaultNumExamQuestions(preferences.default_num_exam_questions);
+      setDefaultExamQuestionTypes(preferences.default_exam_question_types || []);
+      setDailyCardsGoal(preferences.daily_cards_goal);
+      setEnableReviewReminders(preferences.enable_review_reminders);
+    }
+  }, [preferences]);
+
+  const handleFlashcardSideChange = (value: 'term' | 'definition') => {
+    setDefaultFlashcardSide(value);
+    updatePreferences({ default_flashcard_side: value });
+  };
+
+  const handleConfirmDeletionChange = (checked: boolean) => {
+    setConfirmDeletion(checked);
+    updatePreferences({ confirm_deletion: checked });
+  };
+
+  const handleNumQuestionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0;
+    setDefaultNumExamQuestions(value);
+    updatePreferences({ default_num_exam_questions: value });
+  };
 
   const handleQuestionTypeChange = (type: string, checked: boolean) => {
-    setDefaultExamQuestionTypes(prev =>
-      checked ? [...prev, type] : prev.filter(t => t !== type)
-    );
+    const newTypes = checked
+      ? [...defaultExamQuestionTypes, type]
+      : defaultExamQuestionTypes.filter(t => t !== type);
+    setDefaultExamQuestionTypes(newTypes);
+    updatePreferences({ default_exam_question_types: newTypes });
   };
+
+  const handleDailyCardsGoalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0;
+    setDailyCardsGoal(value);
+    updatePreferences({ daily_cards_goal: value });
+  };
+
+  const handleEnableReviewRemindersChange = (checked: boolean) => {
+    setEnableReviewReminders(checked);
+    updatePreferences({ enable_review_reminders: checked });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-10">
+        <Skeleton className="h-8 w-1/3 mb-8" />
+        <div className="space-y-6">
+          <NotebookCard><Skeleton className="h-32 w-full" /></NotebookCard>
+          <NotebookCard><Skeleton className="h-32 w-full" /></NotebookCard>
+          <NotebookCard><Skeleton className="h-48 w-full" /></NotebookCard>
+          <NotebookCard><Skeleton className="h-24 w-full" /></NotebookCard>
+          <NotebookCard><Skeleton className="h-24 w-full" /></NotebookCard>
+          <NotebookCard><Skeleton className="h-24 w-full" /></NotebookCard>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto py-10 text-center text-red-500">
+        Error loading settings: {error?.message || "Unknown error"}
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-10">
@@ -43,7 +108,7 @@ const Settings: React.FC = () => {
       </div>
 
       <p className="text-muted-foreground mb-6">
-        Adjust your application preferences here.
+        Adjust your application preferences here. Changes are saved automatically.
       </p>
 
       <NotebookCard className="mb-6">
@@ -67,7 +132,7 @@ const Settings: React.FC = () => {
             <CardDescription className="mb-2">Choose which side of the flashcard appears first during study sessions.</CardDescription>
             <RadioGroup
               value={defaultFlashcardSide}
-              onValueChange={(value: 'term' | 'definition') => setDefaultFlashcardSide(value)}
+              onValueChange={handleFlashcardSideChange}
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
@@ -96,7 +161,7 @@ const Settings: React.FC = () => {
               type="number"
               min="1"
               value={defaultNumExamQuestions}
-              onChange={(e) => setDefaultNumExamQuestions(parseInt(e.target.value) || 0)}
+              onChange={handleNumQuestionsChange}
               placeholder="e.g., 10"
             />
           </div>
@@ -145,7 +210,7 @@ const Settings: React.FC = () => {
               type="number"
               min="1"
               value={dailyCardsGoal}
-              onChange={(e) => setDailyCardsGoal(parseInt(e.target.value) || 0)}
+              onChange={handleDailyCardsGoalChange}
               placeholder="e.g., 20"
             />
           </div>
@@ -167,7 +232,7 @@ const Settings: React.FC = () => {
             </div>
             <Switch
               checked={enableReviewReminders}
-              onCheckedChange={setEnableReviewReminders}
+              onCheckedChange={handleEnableReviewRemindersChange}
               id="enable-reminders"
             />
           </div>
@@ -189,7 +254,7 @@ const Settings: React.FC = () => {
             </div>
             <Switch
               checked={confirmDeletion}
-              onCheckedChange={setConfirmDeletion}
+              onCheckedChange={handleConfirmDeletionChange}
               id="confirm-deletion"
             />
           </div>
