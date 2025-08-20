@@ -3,7 +3,7 @@ import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
-import { TextStyle } from '@tiptap/extension-text-style';
+import { TextStyle } from '@tiptap/extension-text-style'; // Corrected import
 import { Color } from '@tiptap/extension-color';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
@@ -263,38 +263,35 @@ const MenuBar: React.FC<{ editor: Editor | null }> = ({ editor }) => {
 };
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ initialContent, onContentChange, placeholder, editable = true }) => {
-  // Memoize extensions to ensure stable reference
-  const extensions = React.useMemo(() => [
-    StarterKit.configure({
-      history: false, // Disable default history to use History extension
-    }),
-    Highlight,
-    TextAlign.configure({
-      types: ['heading', 'paragraph'],
-    }),
-    TextStyle,
-    Color,
-    Link.configure({
-      openOnClick: false,
-      autolink: true,
-      HTMLAttributes: {
-        class: 'text-blue-600 underline hover:text-blue-800',
-      },
-    }),
-    Image.configure({
-      inline: true,
-      allowBase64: true, // For pasting images directly
-    }),
-    Underline,
-    Placeholder.configure({
-      placeholder: placeholder || 'Start writing your note...',
-    }),
-    History, // Enable history for undo/redo
-  ], [placeholder]); // placeholder is a dependency because it's used in Placeholder.configure
-
   const editor = useEditor({
-    extensions: extensions, // Use the memoized extensions
-    content: initialContent ? JSON.parse(initialContent) : '', // Use initialContent for initial render
+    extensions: [
+      StarterKit.configure({
+        history: false, // Disable default history to use History extension
+      }),
+      Highlight,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      TextStyle,
+      Color,
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        HTMLAttributes: {
+          class: 'text-blue-600 underline hover:text-blue-800',
+        },
+      }),
+      Image.configure({
+        inline: true,
+        allowBase64: true, // For pasting images directly
+      }),
+      Underline,
+      Placeholder.configure({
+        placeholder: placeholder || 'Start writing your note...',
+      }),
+      History, // Enable history for undo/redo
+    ],
+    content: initialContent ? JSON.parse(initialContent) : '',
     onUpdate: ({ editor }) => {
       onContentChange(JSON.stringify(editor.getJSON()));
     },
@@ -310,7 +307,17 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ initialContent, onConte
     editable: editable,
   });
 
-  // Removed the useEffect that was causing redundant content synchronization
+  // Effect to update editor content when initialContent prop changes
+  useEffect(() => {
+    if (editor && initialContent !== undefined) {
+      const currentContent = JSON.stringify(editor.getJSON());
+      const newContent = initialContent;
+
+      if (newContent !== currentContent) {
+        editor.commands.setContent(newContent ? JSON.parse(newContent) : '', false);
+      }
+    }
+  }, [editor, initialContent]);
 
   return (
     <div className="w-full">
