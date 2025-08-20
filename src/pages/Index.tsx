@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { PlusCircle, BookOpen } from "lucide-react";
+import { PlusCircle, BookOpen, User } from "lucide-react"; // Import User icon
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -57,11 +57,18 @@ const Index = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">My Study Sets</h1>
-        <Button asChild>
-          <Link to="/create">
-            <PlusCircle className="mr-2 h-4 w-4" /> Create Set
-          </Link>
-        </Button>
+        <div className="flex gap-2"> {/* Group buttons */}
+          <Button asChild>
+            <Link to="/create">
+              <PlusCircle className="mr-2 h-4 w-4" /> Create Set
+            </Link>
+          </Button>
+          <Button asChild variant="outline"> {/* New Profile button */}
+            <Link to="/profile">
+              <User className="mr-2 h-4 w-4" /> Profile
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (

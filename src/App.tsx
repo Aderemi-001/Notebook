@@ -5,7 +5,8 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import StudySetDetail from "./pages/StudySetDetail";
 import StudyMode from "./pages/StudyMode";
-import EditSet from "./pages/EditSet"; // Import the new EditSet component
+import EditSet from "./pages/EditSet";
+import Profile from "./pages/Profile"; // Import the new Profile component
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -50,10 +51,18 @@ function App() {
             }
           />
           <Route
-            path="/sets/:setId/edit" // New route for editing a study set
+            path="/sets/:setId/edit"
             element={
               <AuthLayout>
                 <EditSet />
+              </AuthLayout>
+            }
+          />
+          <Route
+            path="/profile" // New route for the Profile page
+            element={
+              <AuthLayout>
+                <Profile />
               </AuthLayout>
             }
           />
