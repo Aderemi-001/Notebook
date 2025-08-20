@@ -343,13 +343,13 @@ const StudyMode = () => {
             {showDefinition && (
               <>
                 <Button onClick={() => handleNextCard(0)} variant="destructive" className="w-full sm:w-auto">
-                  Again (0)
+                  Again
                 </Button>
                 <Button onClick={() => handleNextCard(1)} variant="secondary" className="w-full sm:w-auto">
-                  Hard (1)
+                  Hard
                 </Button>
                 <Button onClick={() => handleNextCard(2)} className="bg-green-500 hover:bg-green-600 w-full sm:w-auto">
-                  Good (2)
+                  Good
                 </Button>
               </>
             )}
