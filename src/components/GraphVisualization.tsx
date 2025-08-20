@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import ForceGraph2D from '@react-force-graph/force-graph';
 import { cn } from '@/lib/utils';
 
 interface Concept {
@@ -22,28 +23,25 @@ interface GraphVisualizationProps {
   onSelectConcept: (concept: Concept | null) => void;
 }
 
-const NODE_RADIUS = 40; // Radius for concept nodes
-const CONTAINER_PADDING = 50; // Padding inside the SVG container
-
 const GraphVisualization: React.FC<GraphVisualizationProps> = ({
   concepts,
   relationships,
   selectedConcept,
   onSelectConcept,
 }) => {
-  const svgRef = useRef<SVGSVGElement>(null);
+  const graphRef = useRef<any>(); // Ref for the ForceGraph instance
+  const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Update dimensions on mount and resize
   useEffect(() => {
     const updateDimensions = () => {
-      if (svgRef.current) {
-        const parent = svgRef.current.parentElement;
-        if (parent) {
-          setDimensions({
-            width: parent.clientWidth,
-            height: parent.clientHeight,
-          });
-        }
+      if (containerRef.current) {
+        setDimensions({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight,
+        });
       }
     };
 
@@ -52,115 +50,136 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  const conceptPositions = new Map<string, { x: number; y: number }>();
-  const numConcepts = concepts.length;
+  // Prepare data for react-force-graph
+  useEffect(() => {
+    const nodes = concepts.map(c => ({
+      id: c.id,
+      name: c.name,
+      description: c.description,
+      fx: selectedConcept?.id === c.id ? 0 : undefined, // Fix selected node at center
+      fy: selectedConcept?.id === c.id ? 0 : undefined,
+    }));
 
-  if (numConcepts > 0 && dimensions.width > 0 && dimensions.height > 0) {
-    const centerX = dimensions.width / 2;
-    const centerY = dimensions.height / 2;
-    const radius = Math.min(centerX, centerY) - NODE_RADIUS - CONTAINER_PADDING;
+    const links = relationships.map(r => ({
+      id: r.id,
+      source: r.source_concept_id,
+      target: r.target_concept_id,
+      type: r.type,
+      strength: r.strength,
+    }));
 
-    concepts.forEach((concept, i) => {
-      const angle = (i / numConcepts) * 2 * Math.PI;
-      const x = centerX + radius * Math.cos(angle);
-      const y = centerY + radius * Math.sin(angle);
-      conceptPositions.set(concept.id, { x, y });
-    });
-  }
+    setGraphData({ nodes, links });
 
-  const getLineCoordinates = (sourceId: string, targetId: string) => {
-    const sourcePos = conceptPositions.get(sourceId);
-    const targetPos = conceptPositions.get(targetId);
+    // Center the selected node if it exists
+    if (selectedConcept && graphRef.current) {
+      graphRef.current.centerAndZoom(400, 1000, selectedConcept.id);
+    }
+  }, [concepts, relationships, selectedConcept]);
 
-    if (!sourcePos || !targetPos) return null;
+  // Node drawing function
+  const nodeCanvasObject = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const label = node.name;
+    const fontSize = 12 / globalScale;
+    ctx.font = `${fontSize}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-    // Calculate vector from source to target
-    const dx = targetPos.x - sourcePos.x;
-    const dy = targetPos.y - sourcePos.y;
-    const angle = Math.atan2(dy, dx);
+    const isSelected = selectedConcept?.id === node.id;
+    const isRelated = selectedConcept && relationships.some(rel =>
+      (rel.source_concept_id === selectedConcept.id && rel.target_concept_id === node.id) ||
+      (rel.target_concept_id === selectedConcept.id && rel.source_concept_id === node.id)
+    );
+    const isDimmed = selectedConcept && !isSelected && !isRelated;
 
-    // Adjust start/end points to be on the circle's edge
-    const startX = sourcePos.x + NODE_RADIUS * Math.cos(angle);
-    const startY = sourcePos.y + NODE_RADIUS * Math.sin(angle);
-    const endX = targetPos.x - NODE_RADIUS * Math.cos(angle);
-    const endY = targetPos.y - NODE_RADIUS * Math.sin(angle);
+    // Node background
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, 10, 0, 2 * Math.PI, false);
+    ctx.fillStyle = isSelected ? 'hsl(217.2 91.2% 59.8%)' : (isDimmed ? 'rgba(100, 100, 100, 0.3)' : 'hsl(222.2 47.4% 11.2%)'); // Primary blue for selected, muted for dimmed, default primary
+    ctx.fill();
 
-    return { x1: startX, y1: startY, x2: endX, y2: endY };
-  };
+    // Node border
+    if (isSelected) {
+      ctx.strokeStyle = 'hsl(217.2 91.2% 59.8%)'; // Primary blue
+      ctx.lineWidth = 2 / globalScale;
+      ctx.stroke();
+    }
 
-  const conceptMap = new Map(concepts.map(c => [c.id, c]));
+    // Node text
+    ctx.fillStyle = isSelected ? 'hsl(210 40% 98%)' : (isDimmed ? 'rgba(255, 255, 255, 0.5)' : 'hsl(210 40% 98%)'); // White for selected, muted for dimmed, default white
+    ctx.fillText(label, node.x, node.y + 15 / globalScale); // Position text below circle
+
+  }, [selectedConcept, relationships]);
+
+  // Link drawing function
+  const linkCanvasObject = useCallback((link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const start = link.source;
+    const end = link.target;
+
+    // ignore if link is not visible
+    if (!start || !end || !start.x || !start.y || !end.x || !end.y) return;
+
+    const isSelectedLink = selectedConcept && (
+      (link.source.id === selectedConcept.id && link.target.id !== selectedConcept.id) ||
+      (link.target.id === selectedConcept.id && link.source.id !== selectedConcept.id)
+    );
+    const isDimmed = selectedConcept && !isSelectedLink;
+
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.strokeStyle = isSelectedLink ? 'hsl(217.2 91.2% 59.8%)' : (isDimmed ? 'rgba(100, 100, 100, 0.2)' : 'hsl(214.3 31.8% 91.4%)'); // Primary blue for selected, muted for dimmed, default border color
+    ctx.lineWidth = (link.strength * 2 + 0.5) / globalScale; // Thicker for stronger relationships
+    ctx.stroke();
+
+    // Draw arrow
+    const arrowLength = 6;
+    const arrowWidth = 4;
+    const angle = Math.atan2(end.y - start.y, end.x - start.x);
+
+    ctx.beginPath();
+    ctx.moveTo(end.x, end.y);
+    ctx.lineTo(end.x - arrowLength * Math.cos(angle - Math.PI / 6), end.y - arrowLength * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(end.x - arrowLength * Math.cos(angle + Math.PI / 6), end.y - arrowLength * Math.sin(angle + Math.PI / 6));
+    ctx.fillStyle = isSelectedLink ? 'hsl(217.2 91.2% 59.8%)' : (isDimmed ? 'rgba(100, 100, 100, 0.2)' : 'hsl(214.3 31.8% 91.4%)');
+    ctx.fill();
+
+  }, [selectedConcept]);
+
+  const handleNodeClick = useCallback((node: any) => {
+    onSelectConcept(node);
+  }, [onSelectConcept]);
+
+  const handleBackgroundClick = useCallback(() => {
+    onSelectConcept(null);
+  }, [onSelectConcept]);
 
   return (
-    <div className="relative w-full h-full min-h-[400px] flex items-center justify-center">
-      <svg ref={svgRef} className="absolute inset-0 w-full h-full">
-        <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" className="fill-current text-gray-400" />
-          </marker>
-        </defs>
-        {relationships.map((rel) => {
-          const coords = getLineCoordinates(rel.source_concept_id, rel.target_concept_id);
-          if (!coords) return null;
-
-          const isRelatedToSelected = selectedConcept &&
-            (rel.source_concept_id === selectedConcept.id || rel.target_concept_id === selectedConcept.id);
-
-          return (
-            <line
-              key={rel.id}
-              x1={coords.x1}
-              y1={coords.y1}
-              x2={coords.x2}
-              y2={coords.y2}
-              strokeWidth={rel.strength * 3 + 1} // Thicker for stronger relationships
-              className={cn(
-                "transition-all duration-300",
-                isRelatedToSelected ? "stroke-blue-500 opacity-100" : "stroke-gray-400 opacity-30",
-                rel.type === 'is_prerequisite_for' && 'stroke-red-500', // Example: specific color for type
-                rel.type === 'explains' && 'stroke-green-500'
-              )}
-              markerEnd="url(#arrowhead)"
-            />
-          );
-        })}
-      </svg>
-
-      {concepts.map((concept) => {
-        const pos = conceptPositions.get(concept.id);
-        if (!pos) return null;
-
-        const isSelected = selectedConcept?.id === concept.id;
-        const isRelated = selectedConcept && (
-          relationships.some(rel =>
-            (rel.source_concept_id === selectedConcept.id && rel.target_concept_id === concept.id) ||
-            (rel.target_concept_id === selectedConcept.id && rel.source_concept_id === concept.id)
-          )
-        );
-
-        return (
-          <div
-            key={concept.id}
-            className={cn(
-              "absolute flex items-center justify-center rounded-full text-center cursor-pointer",
-              "bg-primary text-primary-foreground shadow-md transition-all duration-300",
-              "hover:scale-105",
-              isSelected ? "ring-4 ring-blue-500 scale-110" : "",
-              selectedConcept && !isSelected && !isRelated ? "opacity-30" : "opacity-100"
-            )}
-            style={{
-              left: pos.x - NODE_RADIUS,
-              top: pos.y - NODE_RADIUS,
-              width: NODE_RADIUS * 2,
-              height: NODE_RADIUS * 2,
-            }}
-            onClick={() => onSelectConcept(concept)}
-          >
-            <span className="text-xs font-semibold p-1 leading-tight">
-              {concept.name}
-            </span>
-          </div>
-        );
-      })}
+    <div ref={containerRef} className="relative w-full h-full min-h-[400px] flex items-center justify-center">
+      {dimensions.width > 0 && dimensions.height > 0 && (
+        <ForceGraph2D
+          ref={graphRef}
+          graphData={graphData}
+          width={dimensions.width}
+          height={dimensions.height}
+          nodeLabel="name"
+          nodeCanvasObject={nodeCanvasObject}
+          linkCanvasObject={linkCanvasObject}
+          onNodeClick={handleNodeClick}
+          onBackgroundClick={handleBackgroundClick}
+          enableNodeDrag={true} // Allow dragging nodes
+          d3AlphaDecay={0.02} // Slower decay for more stable layout
+          d3VelocityDecay={0.4} // Slower velocity decay
+          linkDirectionalArrowLength={0} // Arrows drawn manually in linkCanvasObject
+          linkDirectionalArrowRelPos={1}
+          linkCurvature={0.25} // Add some curvature to links
+          linkLineDash={[2, 2]} // Dashed lines for links
+          linkWidth="strength" // Use strength for link width
+          linkAutoColorBy="type" // Color links by type
+          backgroundColor="transparent" // Use parent background
+          cooldownTicks={100} // Run simulation for a fixed number of ticks
+          cooldownTime={10000} // Or for a fixed time
+        />
+      )}
     </div>
   );
 };

@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw } from 'lucide-react'; // Added RefreshCw icon
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast'; // Import toast utilities
+import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
-import GraphVisualization from '@/components/GraphVisualization'; // Import the new graph component
-import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
+import GraphVisualization from '@/components/GraphVisualization';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Concept {
   id: string;
@@ -178,7 +178,7 @@ const CognitiveConstellation: React.FC = () => {
           </Button>
           <Button onClick={handleRefreshConstellation} variant="outline" className="flex items-center">
             <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
-            </Button>
+          </Button>
         </div>
       </div>
 
@@ -192,7 +192,7 @@ const CognitiveConstellation: React.FC = () => {
             <CardHeader>
               <CardTitle>Your Concepts Graph</CardTitle>
             </CardHeader>
-            <CardContent className="h-[calc(100%-80px)]"> {/* Adjust height to fit within card */}
+            <CardContent className="h-[calc(100%-80px)]">
               <GraphVisualization
                 concepts={concepts}
                 relationships={relationships}
