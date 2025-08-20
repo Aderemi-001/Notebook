@@ -18,6 +18,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"; // Import Tooltip components
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import StudyProgressSummary from '@/components/StudyProgressSummary'; // Import the new component
@@ -361,21 +367,30 @@ const StudySetDetail = () => {
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-semibold">{card.term}</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={(e) => {
-                    e.preventDefault(); // Prevent navigating to set detail
-                    handleToggleFlag(card.id, card.is_flagged || false);
-                  }}
-                  className="h-8 w-8"
-                >
-                  {card.is_flagged ? (
-                    <Flag className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                  ) : (
-                    <FlagOff className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.preventDefault(); // Prevent navigating to set detail
+                          handleToggleFlag(card.id, card.is_flagged || false);
+                        }}
+                        className="h-8 w-8"
+                      >
+                        {card.is_flagged ? (
+                          <Flag className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        ) : (
+                          <FlagOff className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {card.is_flagged ? "Unflag card" : "Flag card"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </CardHeader>
               <CardContent>
                 <CardDescription>{card.definition}</CardDescription>
