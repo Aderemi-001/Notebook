@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import FlippableCard from "@/components/FlippableCard"; // Import the new FlippableCard
+import FlippableCard from "@/components/FlippableCard";
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 interface CardItem {
   id: string;
@@ -128,6 +129,7 @@ const StudyMode = () => {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showDefinition, setShowDefinition] = useState(false);
   const [studyFinished, setStudyFinished] = useState(false);
+  const [cardAnimation, setCardAnimation] = useState<'in' | 'out' | null>(null);
   const queryClient = useQueryClient();
 
   const { data: cards, isLoading, isError, error, refetch } = useQuery<CardItem[], Error>({
@@ -140,12 +142,11 @@ const StudyMode = () => {
   const totalCards = cards?.length || 0;
   const progressPercentage = totalCards > 0 ? ((currentCardIndex + (studyFinished ? 1 : 0)) / totalCards) * 100 : 0;
 
-
   const handleFlipCard = () => {
     setShowDefinition(!showDefinition);
   };
 
-  const updateCardProgress = async (cardId: string, quality: 0 | 1 | 2 | 3 | 4 | 5) => {
+  const updateCardProgress = useCallback(async (cardId: string, quality: 0 | 1 | 2 | 3 | 4 | 5) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -187,7 +188,7 @@ const StudyMode = () => {
       showError(`Failed to update card progress: ${err.message}`);
       console.error("Error updating card progress:", err);
     }
-  };
+  }, [queryClient, setId]);
 
   const handleNextCard = (quality: 0 | 1 | 2 | 3 | 4 | 5) => {
     if (currentCard) {
@@ -195,19 +196,40 @@ const StudyMode = () => {
     }
 
     if (currentCardIndex < (cards?.length || 0) - 1) {
-      setCurrentCardIndex(prevIndex => prevIndex + 1);
-      setShowDefinition(false);
+      setCardAnimation('out');
+      setTimeout(() => {
+        setCurrentCardIndex(prevIndex => prevIndex + 1);
+        setShowDefinition(false);
+        setCardAnimation('in');
+      }, 500);
     } else {
-      setStudyFinished(true);
+      setCardAnimation('out');
+      setTimeout(() => {
+        setStudyFinished(true);
+        setCardAnimation(null);
+      }, 500);
     }
   };
 
   const handleRestartStudy = () => {
-    setCurrentCardIndex(0);
-    setShowDefinition(false);
-    setStudyFinished(false);
-    refetch();
+    setCardAnimation('out');
+    setTimeout(() => {
+      setCurrentCardIndex(0);
+      setShowDefinition(false);
+      setStudyFinished(false);
+      refetch();
+      setCardAnimation('in');
+    }, 500);
   };
+
+  useEffect(() => {
+    setCardAnimation('in');
+    const timer = setTimeout(() => {
+      setCardAnimation(null);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [currentCardIndex]);
+
 
   if (!setId) {
     return (
@@ -279,7 +301,7 @@ const StudyMode = () => {
       {studyFinished ? (
         <div className="w-full max-w-md">
           <FlippableCard
-            isFlipped={false} // Not flipping when study is finished
+            isFlipped={false}
             frontContent={
               <>
                 <CardTitle className="mb-4">Study Session Complete!</CardTitle>
@@ -291,41 +313,48 @@ const StudyMode = () => {
                 </CardContent>
               </>
             }
-            backContent={<></>} // No back content needed here
+            backContent={<></>}
             className="h-64"
           />
         </div>
       ) : (
         <>
-          <FlippableCard
-            isFlipped={showDefinition}
-            onClick={handleFlipCard}
-            className="w-full max-w-md h-64"
-            frontContent={
-              <>
-                <CardHeader>
-                  <CardTitle className="text-2xl">Term</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow flex items-center justify-center">
-                  <p className="text-xl font-medium">
-                    {currentCard?.term}
-                  </p>
-                </CardContent>
-              </>
-            }
-            backContent={
-              <>
-                <CardHeader>
-                  <CardTitle className="text-2xl">Definition</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow flex items-center justify-center">
-                  <p className="text-xl font-medium">
-                    {currentCard?.definition}
-                  </p>
-                </CardContent>
-              </>
-            }
-          />
+          <div className={cn(
+            "w-full max-w-md h-64 relative",
+            cardAnimation === 'out' && 'animate-slide-out-left absolute',
+            cardAnimation === 'in' && 'animate-slide-in-right'
+          )}>
+            <FlippableCard
+              key={currentCard?.id || 'study-card'}
+              isFlipped={showDefinition}
+              onClick={handleFlipCard}
+              className="w-full h-full"
+              frontContent={
+                <>
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Term</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-grow flex items-center justify-center">
+                    <p className="text-xl font-medium">
+                      {currentCard?.term}
+                    </p>
+                  </CardContent>
+                </>
+              }
+              backContent={
+                <>
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Definition</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-grow flex items-center justify-center">
+                    <p className="text-xl font-medium">
+                      {currentCard?.definition}
+                    </p>
+                  </CardContent>
+                </>
+              }
+            />
+          </div>
 
           <div className="mt-8 flex gap-4">
             <Button onClick={handleFlipCard} variant="outline">
