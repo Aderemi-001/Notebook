@@ -355,7 +355,7 @@ const StudyMode = () => {
                 <Button onClick={() => handleNextCard(0)} variant="destructive" className="w-full sm:w-auto">
                   Again
                 </Button>
-                <Button onClick={() => handleNextCard(1)} variant="secondary" className="w-full sm:w-auto">
+                <Button onClick={() => handleNextCard(1)} className="bg-orange-500 hover:bg-orange-600 text-white w-full sm:w-auto">
                   Hard
                 </Button>
                 <Button onClick={() => handleNextCard(2)} className="bg-green-500 hover:bg-green-600 w-full sm:w-auto">
