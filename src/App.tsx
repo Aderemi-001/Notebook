@@ -10,7 +10,8 @@ import Profile from "./pages/Profile";
 import CognitiveConstellation from "./pages/CognitiveConstellation";
 import ExplorePublicSets from "./pages/ExplorePublicSets";
 import GenerateExam from "./pages/GenerateExam";
-import TakeExam from "./pages/TakeExam"; // Import the new TakeExam page
+import TakeExam from "./pages/TakeExam";
+import PastExams from "./pages/PastExams"; // Import the new PastExams page
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -97,10 +98,18 @@ function App() {
               }
             />
             <Route
-              path="/exams/:examId" // New route for TakeExam
+              path="/exams/:examId"
               element={
                 <AuthLayout>
                   <TakeExam />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/past-exams" {/* New route for PastExams */}
+              element={
+                <AuthLayout>
+                  <PastExams />
                 </AuthLayout>
               }
             />

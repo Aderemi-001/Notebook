@@ -36,7 +36,7 @@ interface ExamResponse {
   user_answer: string;
   is_correct: boolean;
   score: number;
-  ai_feedback?: string; // Added for AI grading feedback
+  ai_feedback?: string;
 }
 
 const fetchExamDetails = async (examId: string): Promise<ExamDetails> => {
@@ -74,6 +74,26 @@ const fetchExamDetails = async (examId: string): Promise<ExamDetails> => {
   return data as ExamDetails;
 };
 
+const fetchExamResponses = async (examId: string): Promise<ExamResponse[] | null> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
+
+  const { data, error } = await supabase
+    .from('exam_responses')
+    .select('question_id, user_answer, is_correct, score, ai_feedback')
+    .eq('exam_id', examId)
+    .eq('user_id', user.id);
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+    console.error("Error fetching exam responses:", error);
+    throw new Error("Failed to fetch exam responses.");
+  }
+
+  return data || null;
+};
+
 const TakeExam: React.FC = () => {
   const { examId } = useParams<{ examId: string }>();
   const navigate = useNavigate();
@@ -91,10 +111,33 @@ const TakeExam: React.FC = () => {
     enabled: !!examId,
   });
 
+  const { data: pastResponses, isLoading: isLoadingResponses, isError: isErrorResponses, error: errorResponses } = useQuery<ExamResponse[] | null, Error>({
+    queryKey: ['examResponses', examId],
+    queryFn: () => fetchExamResponses(examId!),
+    enabled: !!examId,
+  });
+
   const questions = exam?.generated_questions || [];
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
   const progressPercentage = totalQuestions > 0 ? ((currentQuestionIndex + (examCompleted ? 1 : 0)) / totalQuestions) * 100 : 0;
+
+  useEffect(() => {
+    if (pastResponses && pastResponses.length > 0) {
+      setExamCompleted(true);
+      setExamResults(pastResponses);
+      const initialAnswers: Record<string, string> = {};
+      pastResponses.forEach(res => {
+        initialAnswers[res.question_id] = res.user_answer;
+      });
+      setUserAnswers(initialAnswers);
+    } else {
+      setExamCompleted(false);
+      setExamResults(null);
+      setUserAnswers({});
+      setCurrentQuestionIndex(0);
+    }
+  }, [pastResponses]);
 
   const handleAnswerChange = (questionId: string, answer: string) => {
     setUserAnswers(prev => ({ ...prev, [questionId]: answer }));
@@ -140,7 +183,7 @@ const TakeExam: React.FC = () => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabase.auth.getSession().then(s => s.data.session?.access_token)}`, // Get current session token
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`, // Get current session token
               'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
             },
             body: JSON.stringify({ userAnswer, correctAnswer, questionType }),
@@ -154,9 +197,7 @@ const TakeExam: React.FC = () => {
           // Fallback to simple comparison if AI grading fails
           const simpleIsCorrect = userAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
           responsesToInsert.push({
-            exam_id: examId!,
             question_id: question.id,
-            user_id: user.id,
             user_answer: userAnswer,
             is_correct: simpleIsCorrect,
             score: simpleIsCorrect ? 1 : 0,
@@ -164,9 +205,7 @@ const TakeExam: React.FC = () => {
           });
         } else {
           responsesToInsert.push({
-            exam_id: examId!,
             question_id: question.id,
-            user_id: user.id,
             user_answer: userAnswer,
             is_correct: gradeData.is_correct,
             score: gradeData.score,
@@ -181,7 +220,7 @@ const TakeExam: React.FC = () => {
 
       const { error: insertResponsesError } = await supabase
         .from('exam_responses')
-        .insert(responsesToInsert);
+        .insert(responsesToInsert.map(res => ({ ...res, exam_id: examId!, user_id: user.id }))); // Add exam_id and user_id here
 
       if (insertResponsesError) throw insertResponsesError;
 
@@ -190,6 +229,7 @@ const TakeExam: React.FC = () => {
       dismissToast(toastId);
       showSuccess(`Exam completed! You got ${correctCount} out of ${totalQuestions} correct.`);
       queryClient.invalidateQueries({ queryKey: ['examResults', examId] });
+      queryClient.invalidateQueries({ queryKey: ['pastExams'] }); // Invalidate past exams to update score
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message || "Failed to submit exam.");
@@ -199,12 +239,36 @@ const TakeExam: React.FC = () => {
     }
   };
 
-  const handleRetakeExam = () => {
-    setCurrentQuestionIndex(0);
-    setUserAnswers({});
-    setExamCompleted(false);
-    setExamResults(null);
-    refetch(); // Re-fetch questions in case they were updated
+  const handleRetakeExam = async () => {
+    const toastId = showLoading("Preparing for retake...");
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated.");
+      }
+
+      // Delete existing responses for this exam and user
+      const { error: deleteError } = await supabase
+        .from('exam_responses')
+        .delete()
+        .eq('exam_id', examId!)
+        .eq('user_id', user.id);
+
+      if (deleteError) throw deleteError;
+
+      dismissToast(toastId);
+      showSuccess("Previous responses cleared. Starting retake!");
+      setCurrentQuestionIndex(0);
+      setUserAnswers({});
+      setExamCompleted(false);
+      setExamResults(null);
+      queryClient.invalidateQueries({ queryKey: ['examResponses', examId] }); // Invalidate to ensure fresh start
+      queryClient.invalidateQueries({ queryKey: ['pastExams'] }); // Invalidate past exams to update score
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message || "Failed to prepare for retake.");
+      console.error("Retake error:", err);
+    }
   };
 
   if (!examId) {
@@ -215,7 +279,7 @@ const TakeExam: React.FC = () => {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingResponses) {
     return (
       <div className="container mx-auto py-10 flex flex-col items-center">
         <Skeleton className="h-10 w-3/4 mb-8" />
@@ -228,10 +292,10 @@ const TakeExam: React.FC = () => {
     );
   }
 
-  if (isError) {
+  if (isError || isErrorResponses) {
     return (
       <div className="container mx-auto py-10 text-center text-red-500">
-        Error loading exam: {error?.message || "Unknown error"}
+        Error loading exam: {error?.message || errorResponses?.message || "Unknown error"}
       </div>
     );
   }
