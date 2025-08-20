@@ -53,7 +53,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
         id,
         term,
         definition,
-        is_flagged, // Select is_flagged
+        is_flagged,
         user_progress!left(
           status,
           user_id
