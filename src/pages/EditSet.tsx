@@ -12,13 +12,13 @@ import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast
 import React, { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton component
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   cards: z.array(z.object({
-    id: z.string().optional(), // Card ID is optional for new cards
+    id: z.string().optional(),
     term: z.string().min(1, "Term is required"),
     definition: z.string().min(1, "Definition is required"),
   })).min(1, "You must have at least one card."),
@@ -111,7 +111,6 @@ const EditSet = () => {
         throw new Error("You must be logged in to edit a set.");
       }
 
-      // Update study_sets table
       const { error: updateSetError } = await supabase
         .from('study_sets')
         .update({
@@ -122,11 +121,9 @@ const EditSet = () => {
 
       if (updateSetError) throw updateSetError;
 
-      // Separate existing cards from new cards
       const existingCards = values.cards.filter(card => card.id);
       const newCards = values.cards.filter(card => !card.id);
 
-      // Get current card IDs from the database to identify deleted ones
       const { data: currentDbCards, error: fetchCardsError } = await supabase
         .from('cards')
         .select('id')
@@ -137,7 +134,6 @@ const EditSet = () => {
       const currentDbCardIds = new Set(currentDbCards.map(card => card.id));
       const formCardIds = new Set(existingCards.map(card => card.id));
 
-      // Identify cards to delete
       const cardsToDelete = Array.from(currentDbCardIds).filter(dbId => !formCardIds.has(dbId));
 
       if (cardsToDelete.length > 0) {
@@ -148,7 +144,6 @@ const EditSet = () => {
         if (deleteCardsError) throw deleteCardsError;
       }
 
-      // Update existing cards
       for (const card of existingCards) {
         const { error: updateCardError } = await supabase
           .from('cards')
@@ -157,7 +152,6 @@ const EditSet = () => {
         if (updateCardError) throw updateCardError;
       }
 
-      // Insert new cards
       if (newCards.length > 0) {
         const cardsToInsert = newCards.map(card => ({
           set_id: setId,
@@ -172,8 +166,8 @@ const EditSet = () => {
 
       dismissToast(toastId);
       showSuccess("Study set updated successfully!");
-      queryClient.invalidateQueries({ queryKey: ['studySet', setId] }); // Invalidate detail view
-      queryClient.invalidateQueries({ queryKey: ['studySets'] }); // Invalidate list view
+      queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
+      queryClient.invalidateQueries({ queryKey: ['studySets'] });
       navigate(`/sets/${setId}`);
 
     } catch (error: any) {

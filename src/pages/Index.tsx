@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { PlusCircle, BookOpen, User } from "lucide-react"; // Import User icon
+import { PlusCircle, BookOpen, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import React from "react"; // Import React for React.Fragment
+import React from "react";
 
 interface StudySet {
   id: string;
@@ -18,12 +18,9 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    // If no user, return empty array or throw an error depending on desired behavior
-    // For now, returning empty array as AuthLayout should handle redirection
     return [];
   }
 
-  // We use an RPC call to a custom function to count cards efficiently
   const { data, error } = await supabase
     .rpc('get_study_sets_with_card_count');
 
@@ -41,9 +38,6 @@ const Index = () => {
     queryFn: fetchStudySets,
   });
 
-  // Invalidate query when component mounts to ensure fresh data after navigation
-  // This is a simple way to ensure data is fresh when returning to the page
-  // More sophisticated invalidation can be done from CreateSet page after successful creation
   queryClient.invalidateQueries({ queryKey: ['studySets'] });
 
   if (isError) {
@@ -58,7 +52,7 @@ const Index = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">My Study Sets</h1>
-        <div className="flex gap-2"> {/* Group buttons */}
+        <div className="flex gap-2">
           <Button asChild>
             <Link to="/create" className="flex items-center">
               <React.Fragment>
@@ -66,7 +60,7 @@ const Index = () => {
               </React.Fragment>
             </Link>
           </Button>
-          <Button asChild variant="outline"> {/* New Profile button */}
+          <Button asChild variant="outline">
             <Link to="/profile" className="flex items-center">
               <React.Fragment>
                 <User className="mr-2 h-4 w-4" /> Profile
@@ -100,8 +94,8 @@ const Index = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {studySets.map((set) => (
-            <Link to={`/sets/${set.id}`} key={set.id}> {/* Make the card clickable */}
-              <Card className="hover:shadow-md transition-shadow h-full"> {/* Ensure card takes full height */}
+            <Link to={`/sets/${set.id}`} key={set.id}>
+              <Card className="hover:shadow-md transition-shadow h-full">
                 <CardHeader>
                   <CardTitle>{set.title}</CardTitle>
                   {set.description && (

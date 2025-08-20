@@ -24,7 +24,7 @@ interface StudySet {
   title: string;
   description: string | null;
   cards: CardItem[];
-  mastered_cards_count?: number; // Add this for progress tracking
+  mastered_cards_count?: number;
 }
 
 interface CardItem {
@@ -57,7 +57,6 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
     throw new Error("Study set not found.");
   }
 
-  // Fetch mastered card count for the current user
   const { data: { user } } = await supabase.auth.getUser();
   let masteredCount = 0;
   if (user) {
@@ -66,7 +65,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
       .select('id', { count: 'exact' })
       .eq('user_id', user.id)
       .eq('status', 'mastered')
-      .in('card_id', data.cards.map(card => card.id)); // Only count for cards in this set
+      .in('card_id', data.cards.map(card => card.id));
 
     if (countError) {
       console.error("Error fetching mastered card count:", countError);
@@ -86,7 +85,7 @@ const StudySetDetail = () => {
   const { data: studySet, isLoading, isError, error } = useQuery<StudySet, Error>({
     queryKey: ['studySet', setId],
     queryFn: () => fetchStudySetDetails(setId!),
-    enabled: !!setId, // Only run query if setId is available
+    enabled: !!setId,
   });
 
   const handleDeleteSet = async () => {
@@ -103,8 +102,8 @@ const StudySetDetail = () => {
 
       dismissToast(toastId);
       showSuccess("Study set deleted successfully!");
-      queryClient.invalidateQueries({ queryKey: ['studySets'] }); // Invalidate the list of study sets
-      navigate('/'); // Redirect to home page after deletion
+      queryClient.invalidateQueries({ queryKey: ['studySets'] });
+      navigate('/');
     } catch (error: any) {
       dismissToast(toastId);
       showError(error.message || "Failed to delete study set.");

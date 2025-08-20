@@ -19,7 +19,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
     .from('cards')
     .select('id, term, definition')
     .eq('set_id', setId)
-    .order('created_at', { ascending: true }); // Order for consistent study flow
+    .order('created_at', { ascending: true });
 
   if (error) {
     console.error("Error fetching cards for study set:", error);
@@ -76,7 +76,7 @@ const StudyMode = () => {
 
     if (currentCardIndex < (cards?.length || 0) - 1) {
       setCurrentCardIndex(prevIndex => prevIndex + 1);
-      setShowDefinition(false); // Reset to show term for next card
+      setShowDefinition(false);
     } else {
       setStudyFinished(true);
     }
@@ -86,7 +86,7 @@ const StudyMode = () => {
     setCurrentCardIndex(0);
     setShowDefinition(false);
     setStudyFinished(false);
-    refetch(); // Re-fetch cards to ensure latest state if needed, or just reset UI
+    refetch();
   };
 
   if (!setId) {

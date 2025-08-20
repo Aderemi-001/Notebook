@@ -41,7 +41,7 @@ const fetchUserProfile = async (): Promise<UserProfile | null> => {
     .eq('id', user.id)
     .single();
 
-  if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+  if (error && error.code !== 'PGRST116') {
     throw error;
   }
 
@@ -161,8 +161,7 @@ const Profile = () => {
               />
               <Button type="submit">Save Changes</Button>
             </form>
-          </Form>
-        </CardContent>
+          </CardContent>
       </Card>
     </div>
   );
