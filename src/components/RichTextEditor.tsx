@@ -4,8 +4,9 @@ import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
-import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface RichTextEditorProps {
   content: string;
@@ -13,6 +14,13 @@ interface RichTextEditorProps {
   editable?: boolean;
   className?: string;
 }
+
+const HIGHLIGHT_COLORS = [
+  { name: 'Yellow', hex: '#facc15', dataColor: 'yellow' },
+  { name: 'Green', hex: '#4ade80', dataColor: 'green' },
+  { name: 'Blue', hex: '#60a5fa', dataColor: 'blue' },
+  { name: 'Red', hex: '#ef4444', dataColor: 'red' },
+];
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className }) => {
   const editor = useEditor({
@@ -57,9 +65,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       }),
       Highlight.configure({
         multicolor: true,
-        HTMLAttributes: {
-          class: 'bg-yellow-200 dark:bg-yellow-700 rounded px-1 py-0.5',
-        },
+        // HTMLAttributes are removed here as styling is handled by globals.css based on data-color
       }),
     ],
     content: content,
@@ -122,15 +128,56 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           >
             <Code className="h-4 w-4" />
           </Toggle>
-          <Toggle
-            size="sm"
-            pressed={editor.isActive('highlight')}
-            onPressedChange={() => editor.chain().focus().toggleHighlight().run()}
-            disabled={!editor.can().chain().focus().toggleHighlight().run()}
-            aria-label="Toggle highlight"
-          >
-            <Highlighter className="h-4 w-4" />
-          </Toggle>
+          
+          {/* Highlight color options */}
+          <div className="flex items-center gap-1 border-l pl-2 ml-2">
+            <span className="text-sm text-muted-foreground mr-1">Highlight:</span>
+            {HIGHLIGHT_COLORS.map((colorOption) => (
+              <TooltipProvider key={colorOption.dataColor}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Toggle
+                      size="sm"
+                      pressed={editor.isActive('highlight', { color: colorOption.hex })}
+                      onPressedChange={() => editor.chain().focus().toggleHighlight({ color: colorOption.hex }).run()}
+                      disabled={!editor.can().chain().focus().toggleHighlight({ color: colorOption.hex }).run()}
+                      aria-label={`Highlight ${colorOption.name}`}
+                      className="relative"
+                    >
+                      <Highlighter className="h-4 w-4" />
+                      <div
+                        className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-foreground/20"
+                        style={{ backgroundColor: colorOption.hex }}
+                      ></div>
+                    </Toggle>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {colorOption.name} Highlight
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
+            {/* Option to remove highlight */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Toggle
+                    size="sm"
+                    onPressedChange={() => editor.chain().focus().unsetHighlight().run()}
+                    disabled={!editor.can().chain().focus().unsetHighlight().run()}
+                    aria-label="Remove Highlight"
+                  >
+                    <Highlighter className="h-4 w-4 text-gray-500" />
+                    <X className="absolute top-0 right-0 h-3 w-3 text-red-500" />
+                  </Toggle>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Remove Highlight
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
           <Toggle
             size="sm"
             pressed={editor.isActive('bulletList')}

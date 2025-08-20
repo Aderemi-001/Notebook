@@ -118,6 +118,20 @@
       hsl(220 10% 18%) 26px
     );
   }
+
+  /* Tiptap Highlight Colors */
+  mark[data-color="#facc15"] { /* Yellow */
+    @apply bg-yellow-200 dark:bg-yellow-700;
+  }
+  mark[data-color="#4ade80"] { /* Green */
+    @apply bg-green-200 dark:bg-green-700;
+  }
+  mark[data-color="#60a5fa"] { /* Blue */
+    @apply bg-blue-200 dark:bg-blue-700;
+  }
+  mark[data-color="#ef4444"] { /* Red */
+    @apply bg-red-200 dark:bg-red-700;
+  }
 }
 
 .login-page-scribble-bg {
