@@ -22,7 +22,8 @@ import React from "react";
 function App() {
   return (
     // <QueryClientProvider client={queryClient}> // Temporarily removed
-    <div> {/* Replaced with a simple div */}
+    <div>
+      {/* Replaced with a simple div */}
       <BrowserRouter>
         <React.Fragment>
           <Routes>
@@ -120,7 +121,7 @@ function App() {
           <Toaster richColors />
         </React.Fragment>
       </BrowserRouter>
-    </div> {/* Replaced with a simple div */}
+    </div>
     // </QueryClientProvider> // Temporarily removed
   );
 }
