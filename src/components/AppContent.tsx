@@ -20,7 +20,8 @@ import NotesIndex from "@/pages/NotesIndex";
 import CreateNote from "@/pages/CreateNote";
 import EditNote from "@/pages/EditNote";
 import Statistics from "@/pages/Statistics";
-import DailyReview from "@/pages/DailyReview"; // Import the new DailyReview component
+import DailyReview from "@/pages/DailyReview";
+import Tutorial from "@/pages/Tutorial"; // Import the Tutorial component
 import AuthLayout from "@/layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
@@ -220,6 +221,15 @@ const AppContent: React.FC = () => {
               element={
                 <AuthLayout>
                   <DailyReview />
+                </AuthLayout>
+              }
+            />
+            {/* Tutorial Route */}
+            <Route
+              path="/tutorial"
+              element={
+                <AuthLayout>
+                  <Tutorial />
                 </AuthLayout>
               }
             />
