@@ -12,6 +12,7 @@ import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast
 import React, { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton component
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
