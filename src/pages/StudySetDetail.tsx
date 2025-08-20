@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useUserPreferences } from '@/hooks/use-user-preferences'; // Import the hook
 
 interface StudySet {
   id: string;
@@ -140,6 +141,7 @@ const StudySetDetail = () => {
   const queryClient = useQueryClient();
 
   const [isOwner, setIsOwner] = useState(false);
+  const { preferences, isLoading: isLoadingPreferences } = useUserPreferences(); // Use preferences hook
 
   const { data: studySet, isLoading, isError, error } = useQuery<StudySet, Error>({
     queryKey: ['studySet', setId],
@@ -299,7 +301,7 @@ const StudySetDetail = () => {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingPreferences) {
     return (
       <div className="container mx-auto py-10">
         <Skeleton className="h-8 w-1/2 mb-8" />
@@ -397,7 +399,7 @@ const StudySetDetail = () => {
                     </AlertDialog>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
+                  {preferences?.confirm_deletion ? (
                     <AlertDialog>
                       <AlertDialogTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
                         <Trash2 className="mr-2 h-4 w-4" /> Delete Set
@@ -418,7 +420,11 @@ const StudySetDetail = () => {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                  </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={handleDeleteSet} className="flex items-center text-destructive">
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete Set
+                    </DropdownMenuItem>
+                  )}
                 </>
               )}
               {studySet.is_public && !isOwner && (
@@ -485,8 +491,7 @@ const StudySetDetail = () => {
                       {card.is_flagged ? "Unflag card" : "Flag card"}
                     </TooltipContent>
                   </Tooltip>
-                </TooltipProvider>
-              </CardHeader>
+                </CardHeader>
               <CardContent>
                 <CardDescription>{card.definition}</CardDescription>
               </CardContent>

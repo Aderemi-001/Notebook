@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useUserPreferences } from '@/hooks/use-user-preferences'; // Import the hook
 
 interface CardItem {
   id: string;
@@ -132,6 +133,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
 
 const StudyMode = () => {
   const { setId } = useParams<{ setId: string }>();
+  const { preferences, isLoading: isLoadingPreferences } = useUserPreferences(); // Use preferences hook
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showDefinition, setShowDefinition] = useState(false);
   const [studyFinished, setStudyFinished] = useState(false);
@@ -142,6 +144,13 @@ const StudyMode = () => {
     queryFn: () => fetchCardsForStudySet(setId!),
     enabled: !!setId,
   });
+
+  // Set initial showDefinition based on preferences once loaded
+  useEffect(() => {
+    if (!isLoadingPreferences && preferences) {
+      setShowDefinition(preferences.default_flashcard_side === 'definition');
+    }
+  }, [isLoadingPreferences, preferences]);
 
   const currentCard = cards?.[currentCardIndex];
   const totalCards = cards?.length || 0;
@@ -212,7 +221,7 @@ const StudyMode = () => {
 
     if (currentCardIndex < (cards?.length || 0) - 1) {
       setCurrentCardIndex(prevIndex => prevIndex + 1);
-      setShowDefinition(false);
+      setShowDefinition(preferences?.default_flashcard_side === 'definition'); // Reset to default side
     } else {
       setStudyFinished(true);
     }
@@ -220,7 +229,7 @@ const StudyMode = () => {
 
   const handleRestartStudy = () => {
     setCurrentCardIndex(0);
-    setShowDefinition(false);
+    setShowDefinition(preferences?.default_flashcard_side === 'definition'); // Reset to default side
     setStudyFinished(false);
     refetch();
   };
@@ -233,7 +242,7 @@ const StudyMode = () => {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingPreferences) {
     return (
       <div className="container mx-auto py-10 flex flex-col items-center">
         <Skeleton className="h-10 w-3/4 mb-8" />
