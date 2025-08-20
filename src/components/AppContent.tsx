@@ -21,6 +21,10 @@ import CreateNote from "@/pages/CreateNote";
 import EditNote from "@/pages/EditNote";
 import Statistics from "@/pages/Statistics";
 import DailyReview from "@/pages/DailyReview";
+import CreateGroup from "@/pages/CreateGroup"; // New import
+import GroupsIndex from "@/pages/GroupsIndex"; // New import
+import EditGroup from "@/pages/EditGroup"; // New import
+import GroupDetail from "@/pages/GroupDetail"; // New import
 import AuthLayout from "@/layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
@@ -129,7 +133,6 @@ const AppContent: React.FC = () => {
                 </AuthLayout>
               }
             />
-            {/* Removed SearchCards route */}
             <Route
               path="/generate-exam"
               element={
@@ -180,7 +183,7 @@ const AppContent: React.FC = () => {
             />
             <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} />
             <Route path="/login" element={<Login />} />
-            {/* New Notes Routes */}
+            {/* Notes Routes */}
             <Route
               path="/notes"
               element={
@@ -220,6 +223,39 @@ const AppContent: React.FC = () => {
               element={
                 <AuthLayout>
                   <DailyReview />
+                </AuthLayout>
+              }
+            />
+            {/* New Group Routes */}
+            <Route
+              path="/groups"
+              element={
+                <AuthLayout>
+                  <GroupsIndex />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/groups/create"
+              element={
+                <AuthLayout>
+                  <CreateGroup />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/groups/:groupId"
+              element={
+                <AuthLayout>
+                  <GroupDetail />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/groups/:groupId/edit"
+              element={
+                <AuthLayout>
+                  <EditGroup />
                 </AuthLayout>
               }
             />
