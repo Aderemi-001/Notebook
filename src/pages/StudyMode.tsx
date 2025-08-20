@@ -91,7 +91,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
 
   if (error) {
     console.error("Error fetching cards for study set:", error);
-    throw new Error("Failed to fetch cards."); // This is the source of the generic error message
+    throw error; // Throw the actual Supabase error
   }
 
   if (!data) {
