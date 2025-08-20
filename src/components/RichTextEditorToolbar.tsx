@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Editor } from '@tiptap/react';
 import { Toggle } from '@/components/ui/toggle';
 import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // Import Popover components
 
 interface RichTextEditorToolbarProps {
   editor: Editor | null;
@@ -17,8 +18,6 @@ const HIGHLIGHT_COLORS = [
 ];
 
 const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor }) => {
-  const [showHighlightColors, setShowHighlightColors] = useState(false);
-
   if (!editor) {
     return null;
   }
@@ -62,29 +61,28 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
         <Code className="h-4 w-4" />
       </Toggle>
       
-      {/* Main Highlighter Toggle */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Toggle
-              size="sm"
-              pressed={showHighlightColors}
-              onPressedChange={() => setShowHighlightColors(!showHighlightColors)}
-              aria-label="Toggle highlight colors"
-            >
-              <Highlighter className="h-4 w-4" />
-            </Toggle>
-          </TooltipTrigger>
-          <TooltipContent>
-            Toggle Highlight Colors
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
-      {/* Highlight color options - conditionally rendered */}
-      {showHighlightColors && (
-        <div className="flex items-center gap-2 border-l pl-2 ml-2">
-          <span className="text-sm text-muted-foreground mr-2 h-8 flex items-center">Highlight:</span>
+      {/* Highlight color options using Popover */}
+      <Popover>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <Toggle
+                  size="sm"
+                  pressed={editor.isActive('highlight')}
+                  aria-label="Toggle highlight colors"
+                >
+                  <Highlighter className="h-4 w-4" />
+                </Toggle>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+              Highlight Text
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <PopoverContent className="w-auto p-2 flex flex-wrap gap-1">
+          <span className="text-sm text-muted-foreground mr-1 h-8 flex items-center">Highlight:</span>
           {HIGHLIGHT_COLORS.map((colorOption) => (
             <TooltipProvider key={colorOption.dataColor}>
               <Tooltip>
@@ -129,8 +127,8 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
 
       <Toggle
         size="sm"
