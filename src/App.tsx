@@ -13,7 +13,8 @@ import TakeExam from "./pages/TakeExam";
 import PastExams from "./pages/PastExams";
 import ExplorePublicSets from "./pages/ExplorePublicSets";
 import SearchCards from "./pages/SearchCards";
-import GenerateEssayQuestions from "./pages/GenerateEssayQuestions"; // Import the new page
+import GenerateEssayQuestions from "./pages/GenerateEssayQuestions";
+import PastEssayQuestions from "./pages/PastEssayQuestions"; // Import the new page
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -109,10 +110,18 @@ function App() {
                 }
               />
               <Route
-                path="/generate-essay-questions" // New route added here
+                path="/generate-essay-questions"
                 element={
                   <AuthLayout>
                     <GenerateEssayQuestions />
+                  </AuthLayout>
+                }
+              />
+              <Route
+                path="/past-essay-questions" {/* New route added here */}
+                element={
+                  <AuthLayout>
+                    <PastEssayQuestions />
                   </AuthLayout>
                 }
               />
