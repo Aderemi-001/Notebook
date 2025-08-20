@@ -27,7 +27,7 @@ import {
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import StudyProgressSummary from '@/components/StudyProgressSummary';
-import { isPast, isValid } from 'date-fns'; // Import isValid
+import { isPast, isValid, format } from 'date-fns'; // Added format
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
