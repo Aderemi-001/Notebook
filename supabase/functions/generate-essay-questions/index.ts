@@ -83,6 +83,7 @@ serve(async (req) => {
 
     let combinedContent = "";
     let combinedConceptNames = concepts.map(c => c.name).join(', ');
+    let uniqueStudySetIds = new Set<string>(); // Declared here, outside the conditional block
 
     // Add concept descriptions to content
     concepts.forEach(c => {
@@ -103,7 +104,6 @@ serve(async (req) => {
         throw new Error(`Failed to fetch cards with sets: ${fetchCardsError.message}`);
       }
 
-      const uniqueStudySetIds = new Set<string>();
       cardsWithSets?.forEach(card => {
         combinedContent += `Term: ${card.term}\nDefinition: ${card.definition}\n\n`;
         if (card.study_sets?.id) {
