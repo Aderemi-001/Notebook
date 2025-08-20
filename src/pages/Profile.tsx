@@ -130,8 +130,8 @@ const Profile = () => {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">User Profile</h1>
         <Button asChild variant="outline">
-          <Link to="/">
-            <span><ArrowLeft className="mr-2 h-4 w-4" /> Back to Home</span>
+          <Link to="/" className="flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
           </Link>
         </Button>
       </div>

@@ -240,8 +240,8 @@ const EditSet = () => {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Edit Study Set</h1>
         <Button asChild variant="outline">
-          <Link to={`/sets/${setId}`}>
-            <span><ArrowLeft className="mr-2 h-4 w-4" /> Back to Set</span>
+          <Link to={`/sets/${setId}`} className="flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set
           </Link>
         </Button>
       </div>
@@ -328,7 +328,7 @@ const EditSet = () => {
                   </Button>
                 </div>
               ))}
-              {form.formState.errors.cards && !form.formState.errors.cards.root && (
+               {form.formState.errors.cards && !form.formState.errors.cards.root && (
                 <p className="text-sm font-medium text-destructive">
                   {form.formState.errors.cards.message}
                 </p>

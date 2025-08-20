@@ -123,8 +123,8 @@ const StudyMode = () => {
       <div className="container mx-auto py-10 text-center">
         <p className="text-muted-foreground">This study set has no cards yet.</p>
         <Button asChild className="mt-4">
-          <Link to={`/sets/${setId}`}>
-            <span><ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details</span>
+          <Link to={`/sets/${setId}`} className="flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details
           </Link>
         </Button>
       </div>
@@ -136,8 +136,8 @@ const StudyMode = () => {
       <div className="w-full flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Study Mode</h1>
         <Button asChild variant="outline">
-          <Link to={`/sets/${setId}`}>
-            <span><ArrowLeft className="mr-2 h-4 w-4" /> Back to Set</span>
+          <Link to={`/sets/${setId}`} className="flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set
           </Link>
         </Button>
       </div>
