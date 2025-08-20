@@ -157,6 +157,7 @@ const StudySetDetail = () => {
       queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
       queryClient.invalidateQueries({ queryKey: ['studyCards', setId] });
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
+      window.location.reload(); // Refresh the page
     } catch (error: any) {
       dismissToast(toastId);
       showError(error.message || "Failed to reset progress.");
