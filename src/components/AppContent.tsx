@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } => "react-router-dom";
 import Index from "@/pages/Index";
 import CreateSet from "@/pages/CreateSet";
 import Login from "@/pages/Login";
@@ -21,10 +21,12 @@ import CreateNote from "@/pages/CreateNote";
 import EditNote from "@/pages/EditNote";
 import Statistics from "@/pages/Statistics";
 import DailyReview from "@/pages/DailyReview";
-import CreateGroup from "@/pages/CreateGroup"; // New import
-import GroupsIndex from "@/pages/GroupsIndex"; // New import
-import EditGroup from "@/pages/EditGroup"; // New import
-import GroupDetail from "@/pages/GroupDetail"; // New import
+import CreateGroup from "@/pages/CreateGroup";
+import GroupsIndex from "@/pages/GroupsIndex";
+import EditGroup from "@/pages/EditGroup";
+import GroupDetail from "@/pages/GroupDetail";
+import CollaborationSpacesIndex from "@/pages/CollaborationSpacesIndex"; // New import
+import CreateCollaborationSpace from "@/pages/CreateCollaborationSpace"; // New import
 import AuthLayout from "@/layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
@@ -226,7 +228,7 @@ const AppContent: React.FC = () => {
                 </AuthLayout>
               }
             />
-            {/* New Group Routes */}
+            {/* Group Routes */}
             <Route
               path="/groups"
               element={
@@ -256,6 +258,33 @@ const AppContent: React.FC = () => {
               element={
                 <AuthLayout>
                   <EditGroup />
+                </AuthLayout>
+              }
+            />
+            {/* Collaboration Routes */}
+            <Route
+              path="/collaboration"
+              element={
+                <AuthLayout>
+                  <CollaborationSpacesIndex />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/collaboration/create"
+              element={
+                <AuthLayout>
+                  <CreateCollaborationSpace />
+                </AuthLayout>
+              }
+            />
+            {/* Placeholder for CollaborationSpaceDetail */}
+            <Route
+              path="/collaboration/:spaceId"
+              element={
+                <AuthLayout>
+                  {/* This component will be created in a future step */}
+                  <div>Collaboration Space Detail Page (Coming Soon!)</div>
                 </AuthLayout>
               }
             />
