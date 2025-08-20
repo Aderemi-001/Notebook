@@ -39,10 +39,11 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
 
   // Now, for each study set, fetch its card IDs and then the earliest review date and due count
   const setsWithReviewData = await Promise.all(studySets.map(async (set) => {
-    // Fetch all cards for the current set
+    // Fetch cards specifically for the current set
     const { data: cardsData, error: cardsError } = await supabase
       .from('cards')
-      .select('id');
+      .select('id')
+      .eq('set_id', set.id); // Corrected: Filter cards by set_id
 
     if (cardsError) {
       console.error(`Error fetching cards for set ${set.id}:`, cardsError);
@@ -55,12 +56,12 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
     let dueCardsCount = 0;
 
     if (cardIds.length > 0) {
-      // Fetch user progress for all cards in this set for the current user
+      // Fetch user progress for these specific cards for the current user
       const { data: progressData, error: progressError } = await supabase
         .from('user_progress')
         .select('card_id, next_review_at, status')
         .eq('user_id', user.id)
-        .in('card_id', cardIds);
+        .in('card_id', cardIds); // This `cardIds` array now correctly contains only IDs for the current set.
 
       if (progressError && progressError.code !== 'PGRST116') {
         console.error(`Error fetching progress for set ${set.id}:`, progressError);
@@ -70,11 +71,11 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
 
       let tempEarliestReviewAt: Date | null = null;
 
-      for (const cardId of cardIds) {
+      for (const cardId of cardIds) { // Iterating over card IDs specific to the current set
         const progress = progressMap.get(cardId);
         
         if (!progress) {
-          // New card, considered due
+          // New card for this set, considered due
           dueCardsCount++;
           if (!tempEarliestReviewAt || now < tempEarliestReviewAt) {
             tempEarliestReviewAt = now;
