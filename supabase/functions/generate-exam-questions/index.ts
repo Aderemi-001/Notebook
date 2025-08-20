@@ -48,30 +48,48 @@ serve(async (req) => {
       });
     }
 
-    // Fetch the source_text from the specified study set
+    // Fetch the study set details, including source_text and cards
     const { data: studySet, error: fetchSetError } = await supabase
       .from('study_sets')
-      .select('source_text, title')
+      .select('source_text, title, cards(term, definition)')
       .eq('id', studySetId)
       .eq('user_id', user.id) // Ensure user owns the set
       .single();
 
     if (fetchSetError) {
-      console.error("Error fetching study set source text:", fetchSetError);
+      console.error("Error fetching study set details:", fetchSetError);
       return new Response(JSON.stringify({ error: `Failed to fetch study set: ${fetchSetError.message}` }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
       });
     }
 
-    if (!studySet || !studySet.source_text) {
-      return new Response(JSON.stringify({ error: "Study set not found or has no source text for question generation." }), {
+    if (!studySet) {
+      return new Response(JSON.stringify({ error: "Study set not found." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 404,
       });
     }
 
-    const content = studySet.source_text;
+    let contentToProcess = "";
+    if (studySet.source_text) {
+      contentToProcess = studySet.source_text;
+    } else if (studySet.cards && studySet.cards.length > 0) {
+      // If no source_text, compile content from cards
+      contentToProcess = studySet.cards.map(card => `Term: ${card.term}\nDefinition: ${card.definition}`).join('\n\n');
+      if (!contentToProcess.trim()) {
+        return new Response(JSON.stringify({ error: "Study set has no source text and no valid cards to generate questions from." }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+    } else {
+      return new Response(JSON.stringify({ error: "Study set has no source text or cards for question generation." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
     const setTitle = studySet.title;
 
     const prompt = `
@@ -116,7 +134,7 @@ serve(async (req) => {
 
       Here is the text:
       ---
-      ${content}
+      ${contentToProcess}
       ---
     `;
 

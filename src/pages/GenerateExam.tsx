@@ -41,19 +41,18 @@ const fetchUserStudySets = async (): Promise<StudySet[]> => {
     throw new Error("User not authenticated.");
   }
 
-  // Fetch study sets that belong to the user AND have source_text
+  // Fetch all study sets that belong to the user
   const { data, error } = await supabase
     .from('study_sets')
     .select('id, title, description, cards(id)') // Select cards to get count
-    .eq('user_id', user.id)
-    .not('source_text', 'is', null); // Filter for sets with source text
+    .eq('user_id', user.id);
 
   if (error) {
     console.error("Error fetching user study sets:", error);
     throw new Error("Failed to fetch your study sets.");
   }
 
-  // Manually calculate cards_count as the RPC is not used here
+  // Manually calculate cards_count
   const processedSets = data?.map(set => ({
     id: set.id,
     title: set.title,
@@ -188,7 +187,7 @@ const GenerateExam: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 {userStudySets?.length === 0 ? (
-                  <SelectItem disabled value="no-sets">No study sets available with source text</SelectItem>
+                  <SelectItem disabled value="no-sets">No study sets available</SelectItem>
                 ) : (
                   userStudySets?.map(set => (
                     <SelectItem key={set.id} value={set.id}>
