@@ -5,8 +5,9 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import React from "react";
+import React, { useState, useEffect } from "react"; // Import useState and useEffect
 import { formatDistanceToNowStrict, isPast } from 'date-fns';
+import { Input } from "@/components/ui/input"; // Import Input component
 
 interface StudySet {
   id: string;
@@ -110,6 +111,8 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
 
 const Index = () => {
   const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState(""); // State for search term
+
   const { data: studySets, isLoading, isError, error } = useQuery<StudySet[], Error>({
     queryKey: ['studySets'],
     queryFn: fetchStudySets,
@@ -119,6 +122,11 @@ const Index = () => {
   React.useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['studySets'] });
   }, [queryClient]);
+
+  const filteredStudySets = studySets?.filter(set =>
+    set.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (set.description && set.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   if (isError) {
     return (
@@ -150,6 +158,16 @@ const Index = () => {
         </div>
       </div>
 
+      <div className="mb-6">
+        <Input
+          type="text"
+          placeholder="Search study sets by title or description..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full"
+        />
+      </div>
+
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
@@ -164,16 +182,16 @@ const Index = () => {
             </Card>
           ))}
         </div>
-      ) : (studySets?.length === 0 || !studySets) ? (
+      ) : (filteredStudySets?.length === 0 || !filteredStudySets) ? (
         <div className="text-center py-20 border-2 border-dashed rounded-lg">
-          <h2 className="text-xl font-semibold">No study sets yet!</h2>
+          <h2 className="text-xl font-semibold">No study sets found!</h2>
           <p className="text-muted-foreground mt-2">
-            Click "Create Set" to get started.
+            {searchTerm ? "Try a different search term or " : ""}Click "Create Set" to get started.
           </p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {studySets.map((set) => (
+          {filteredStudySets.map((set) => (
             <Link to={`/sets/${set.id}`} key={set.id}>
               <Card className="hover:shadow-md transition-shadow h-full">
                 <CardHeader>
