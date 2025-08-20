@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { getDocument } from "https://esm.sh/pdfjs-dist@4.0.269/build/pdf.mjs"; // Using pdfjs-dist via esm.sh
+// Removed pdfjs-dist import as PDF parsing is currently unsupported
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,22 +38,11 @@ serve(async (req) => {
     const fileBuffer = await file.arrayBuffer();
 
     if (file.type === "application/pdf") {
-      try {
-        const pdfData = new Uint8Array(fileBuffer);
-        const loadingTask = getDocument({ data: pdfData });
-        const pdf = await loadingTask.promise;
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          content += textContent.items.map(item => item.str).join(' ') + '\n';
-        }
-      } catch (pdfError) {
-        console.error("Error parsing PDF:", pdfError);
-        return new Response(JSON.stringify({ error: "Failed to parse PDF file. It might be corrupted or unsupported." }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        });
-      }
+      // Explicitly mark PDF as unsupported for now
+      return new Response(JSON.stringify({ error: "PDF file processing is currently unsupported due to technical limitations in the serverless environment. Please upload text-based files (e.g., .txt, .md, .csv) or copy-paste content directly." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
     } else if (file.type.startsWith("text/") || 
                file.name.endsWith('.md') || 
                file.name.endsWith('.csv') ||
