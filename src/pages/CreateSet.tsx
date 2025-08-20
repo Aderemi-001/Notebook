@@ -220,7 +220,7 @@ const CreateSet = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) { // Corrected: Check if existingConcept is truthy
+          if (existsSync) { // Corrected: Check if existingConcept is truthy
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase

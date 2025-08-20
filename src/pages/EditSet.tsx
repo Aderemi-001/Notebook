@@ -10,7 +10,7 @@ import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
 import { Trash2, ArrowLeft } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } => "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -317,7 +317,7 @@ const EditSet = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) { // Corrected: Check if existingConcept is truthy
+          if (existsSync) { // Corrected: Check if existingConcept is truthy
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
