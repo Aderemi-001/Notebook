@@ -5,7 +5,7 @@ import { CardContent, CardHeader, CardTitle, CardDescription } from "@/component
 import { NotebookCard } from "@/components/NotebookCard";
 import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe, Plus, MoreVertical } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useQueryClient } = '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
@@ -485,8 +485,7 @@ const StudySetDetail = () => {
                       {card.is_flagged ? "Unflag card" : "Flag card"}
                     </TooltipContent>
                   </Tooltip>
-                </TooltipProvider>
-              </CardHeader>
+                </CardHeader>
               <CardContent>
                 <CardDescription>{card.definition}</CardDescription>
               </CardContent>
