@@ -59,13 +59,13 @@ const Index = () => {
         <h1 className="text-3xl font-bold">My Study Sets</h1>
         <div className="flex gap-2"> {/* Group buttons */}
           <Button asChild>
-            <Link to="/create">
-              <span><PlusCircle className="mr-2 h-4 w-4" /> Create Set</span>
+            <Link to="/create" className="flex items-center">
+              <PlusCircle className="mr-2 h-4 w-4" /> Create Set
             </Link>
           </Button>
           <Button asChild variant="outline"> {/* New Profile button */}
-            <Link to="/profile">
-              <span><User className="mr-2 h-4 w-4" /> Profile</span>
+            <Link to="/profile" className="flex items-center">
+              <User className="mr-2 h-4 w-4" /> Profile
             </Link>
           </Button>
         </div>
