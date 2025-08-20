@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, LayoutDashboard, BookOpen, CheckCircle2, AlertCircle, LibraryBig, Menu } from 'lucide-react';
+import { ArrowLeft, BarChart2, BookOpen, CheckCircle2, AlertCircle, LibraryBig, Menu } from 'lucide-react'; // Changed LayoutDashboard to BarChart2
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,17 +39,17 @@ const fetchStudyStatistics = async (): Promise<StudyStatistics> => {
   return data as StudyStatistics;
 };
 
-const Dashboard: React.FC = () => {
+const Statistics: React.FC = () => { // Renamed component to Statistics
   const { data: stats, isLoading, isError, error } = useQuery<StudyStatistics, Error>({
     queryKey: ['studyStatistics'],
     queryFn: fetchStudyStatistics,
   });
 
   if (isError) {
-    showError(error?.message || "Failed to load dashboard data.");
+    showError(error?.message || "Failed to load statistics data.");
     return (
       <div className="container mx-auto py-10 text-center text-red-500">
-        Error loading dashboard: {error?.message || "Unknown error"}
+        Error loading statistics: {error?.message || "Unknown error"}
       </div>
     );
   }
@@ -58,7 +58,7 @@ const Dashboard: React.FC = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold flex items-center">
-          <LayoutDashboard className="mr-3 h-7 w-7" /> Dashboard
+          <BarChart2 className="mr-3 h-7 w-7" /> Statistics {/* Changed icon and text */}
         </h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -157,4 +157,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default Statistics;

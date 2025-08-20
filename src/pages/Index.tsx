@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut, NotebookText, LayoutDashboard } from "lucide-react";
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut, NotebookText, BarChart2 } from "lucide-react"; // Changed LayoutDashboard to BarChart2
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -236,10 +236,10 @@ const Index = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {/* Dashboard */}
+            {/* Statistics */}
             <DropdownMenuItem asChild>
               <Link to="/dashboard" className="flex items-center">
-                <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                <BarChart2 className="mr-2 h-4 w-4" /> Statistics {/* Changed icon and text */}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
