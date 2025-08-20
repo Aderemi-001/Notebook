@@ -23,12 +23,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         },
         bulletList: {
           HTMLAttributes: {
-            class: 'list-disc list-inside',
+            class: 'list-disc', // Removed list-inside
           },
         },
         orderedList: {
           HTMLAttributes: {
-            class: 'list-decimal list-inside',
+            class: 'list-decimal', // Removed list-inside
           },
         },
         codeBlock: {
