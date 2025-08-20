@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-// Use a specific version of pdfjs-dist known to work well in Deno environments
-import { getDocument } from "https://npm.jspm.io/pdfjs-dist@3.11.174/build/pdf.mjs";
+// Switched to esm.sh for better Deno compatibility
+import { getDocument } from "https://esm.sh/pdfjs-dist@3.11.174";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,7 +10,8 @@ const corsHeaders = {
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
 async function extractTextFromPdf(fileBuffer: ArrayBuffer): Promise<string> {
-    const pdf = await getDocument(fileBuffer).promise;
+    // The type assertion is needed because the esm.sh module typing is generic
+    const pdf = await getDocument({ data: fileBuffer } as any).promise;
     let text = "";
     for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
