@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface VisibleStudySet {
+interface PublicStudySet {
   id: string;
   title: string;
   description: string | null;
@@ -24,46 +24,37 @@ interface VisibleStudySet {
   user_id: string;
   is_public: boolean;
   display_name: string | null;
-  is_owner: boolean;
 }
 
-const searchVisibleStudySets = async (searchTerm: string): Promise<VisibleStudySet[]> => {
-  // If search term is empty, fetch all visible sets (similar to previous behavior)
-  // Otherwise, use the new RPC for searching
-  if (!searchTerm.trim()) {
-    const { data, error } = await supabase
-      .rpc('get_all_visible_study_sets_with_card_count'); // Re-using the existing RPC for no search term
+const fetchPublicStudySets = async (): Promise<PublicStudySet[]> => {
+  const { data, error } = await supabase
+    .rpc('get_public_study_sets_with_card_count');
 
-    if (error) {
-      console.error("Error fetching all visible study sets:", error);
-      throw new Error("Failed to fetch study sets.");
-    }
-    return data || [];
-  } else {
-    const { data, error } = await supabase
-      .rpc('search_visible_study_sets', { search_query: searchTerm });
-
-    if (error) {
-      console.error("Error searching visible study sets:", error);
-      throw new Error("Failed to search study sets.");
-    }
-    return data || [];
+  if (error) {
+    console.error("Error fetching public study sets:", error);
+    throw new Error("Failed to fetch public study sets.");
   }
+  return data || [];
 };
 
-const SearchSets: React.FC = () => {
+const ExplorePublicSets: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: foundStudySets, isLoading, isError, error } = useQuery<VisibleStudySet[], Error>({
-    queryKey: ['searchAllVisibleStudySets', searchTerm],
-    queryFn: () => searchVisibleStudySets(searchTerm),
-    keepPreviousData: true, // Keep previous data while fetching new results
+  const { data: publicStudySets, isLoading, isError, error } = useQuery<PublicStudySet[], Error>({
+    queryKey: ['publicStudySets'],
+    queryFn: fetchPublicStudySets,
   });
+
+  const filteredPublicSets = publicStudySets?.filter(set =>
+    set.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (set.description && set.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (set.display_name && set.display_name.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   if (isError) {
     return (
       <div className="container mx-auto py-10 text-center text-red-500">
-        Error loading study sets: {error?.message || "Unknown error"}
+        Error loading public study sets: {error?.message || "Unknown error"}
       </div>
     );
   }
@@ -71,7 +62,7 @@ const SearchSets: React.FC = () => {
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Search All Study Sets</h1>
+        <h1 className="text-3xl font-bold">Explore Public Sets</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">
@@ -89,13 +80,13 @@ const SearchSets: React.FC = () => {
       </div>
 
       <p className="text-muted-foreground mb-6">
-        Search across all your private sets and public sets shared by others, including card content.
+        Discover and add public study sets created by other users.
       </p>
 
       <div className="mb-6">
         <Input
           type="text"
-          placeholder="Search by title, description, creator, or card content..."
+          placeholder="Search public sets by title, description, or creator..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full"
@@ -116,23 +107,22 @@ const SearchSets: React.FC = () => {
             </NotebookCard>
           ))}
         </div>
-      ) : (foundStudySets?.length === 0 || !foundStudySets) ? (
+      ) : (filteredPublicSets?.length === 0 || !filteredPublicSets) ? (
         <div className="text-center py-20 border-2 border-dashed rounded-lg">
-          <h2 className="text-xl font-semibold">No study sets found!</h2>
+          <h2 className="text-xl font-semibold">No public study sets found!</h2>
           <p className="text-muted-foreground mt-2">
-            {searchTerm ? "Try a different search term." : "Start by creating your own sets or exploring public ones."}
+            {searchTerm ? "Try a different search term." : "There are no public sets available yet."}
           </p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {foundStudySets.map((set) => (
+          {filteredPublicSets.map((set) => (
             <Link to={`/sets/${set.id}`} key={set.id}>
               <NotebookCard className="hover:shadow-md transition-shadow h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-lg font-semibold">{set.title}</CardTitle>
-                  <Badge variant={set.is_public ? "default" : "secondary"} className="flex items-center gap-1">
-                    {set.is_public ? <Globe className="h-3 w-3" /> : <User className="h-3 w-3" />}
-                    {set.is_public ? "Public" : "Private"}
+                  <Badge variant="default" className="flex items-center gap-1">
+                    <Globe className="h-3 w-3" /> Public
                   </Badge>
                 </CardHeader>
                 <CardContent>
@@ -145,8 +135,8 @@ const SearchSets: React.FC = () => {
                   </div>
                   {set.display_name && (
                     <div className="flex items-center text-sm text-muted-foreground mt-2">
-                      <span className="mr-2">Created by:</span>
-                      <span className="font-medium">{set.display_name} {set.is_owner && "(You)"}</span>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Created by: {set.display_name}</span>
                     </div>
                   )}
                 </CardContent>
@@ -159,4 +149,4 @@ const SearchSets: React.FC = () => {
   );
 };
 
-export default SearchSets;
+export default ExplorePublicSets;

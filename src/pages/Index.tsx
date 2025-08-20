@@ -167,11 +167,11 @@ const Index = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/search" className="flex items-center">
-                <Search className="mr-2 h-4 w-4" /> Search All Sets
+              <Link to="/explore-public-sets" className="flex items-center"> {/* Re-add this link */}
+                <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
               </Link>
             </DropdownMenuItem>
-            {/* Removed Explore Public Sets link */}
+            {/* Removed Search All Sets link */}
             <DropdownMenuItem asChild>
               <Link to="/generate-exam" className="flex items-center">
                 <Brain className="mr-2 h-4 w-4" /> Generate Exam
