@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } => "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "@/pages/Index";
 import CreateSet from "@/pages/CreateSet";
 import Login from "@/pages/Login";
@@ -25,8 +25,8 @@ import CreateGroup from "@/pages/CreateGroup";
 import GroupsIndex from "@/pages/GroupsIndex";
 import EditGroup from "@/pages/EditGroup";
 import GroupDetail from "@/pages/GroupDetail";
-import CollaborationSpacesIndex from "@/pages/CollaborationSpacesIndex"; // New import
-import CreateCollaborationSpace from "@/pages/CreateCollaborationSpace"; // New import
+import CollaborationSpacesIndex from "@/pages/CollaborationSpacesIndex";
+import CreateCollaborationSpace from "@/pages/CreateCollaborationSpace";
 import AuthLayout from "@/layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
