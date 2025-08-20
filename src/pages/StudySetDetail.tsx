@@ -491,7 +491,8 @@ const StudySetDetail = () => {
                       {card.is_flagged ? "Unflag card" : "Flag card"}
                     </TooltipContent>
                   </Tooltip>
-                </CardHeader>
+                </TooltipProvider> {/* Corrected closing tag */}
+              </CardHeader> {/* Corrected closing tag */}
               <CardContent>
                 <CardDescription>{card.definition}</CardDescription>
               </CardContent>
