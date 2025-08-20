@@ -7,7 +7,6 @@ import { NotebookCard } from "@/components/NotebookCard";
 import { ArrowLeft, Save, Trash2, Loader2, MoreVertical } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import RichTextEditor from '@/components/RichTextEditor';
 import {
