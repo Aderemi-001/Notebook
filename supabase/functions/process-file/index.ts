@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { PDFDocument } from "https://deno.land/x/pdf_reader@v0.1.0/mod.ts"; // Import PDFDocument
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,20 +37,33 @@ serve(async (req) => {
     let content = "";
     const fileBuffer = await file.arrayBuffer();
 
-    // Check for common text-based file types
-    if (file.type.startsWith("text/") || 
-        file.name.endsWith('.md') || 
-        file.name.endsWith('.csv') ||
-        file.name.endsWith('.json') ||
-        file.name.endsWith('.xml') ||
-        file.name.endsWith('.html') ||
-        file.name.endsWith('.js') ||
-        file.name.endsWith('.ts') ||
-        file.name.endsWith('.css')
+    if (file.type === "application/pdf") {
+      try {
+        const pdfDoc = await PDFDocument.load(fileBuffer);
+        for (const page of pdfDoc.getPages()) {
+          const textContent = await page.getTextContent();
+          content += textContent.items.map(item => item.str).join(' ') + '\n';
+        }
+      } catch (pdfError) {
+        console.error("Error parsing PDF:", pdfError);
+        return new Response(JSON.stringify({ error: "Failed to parse PDF file. It might be corrupted or unsupported." }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+    } else if (file.type.startsWith("text/") || 
+               file.name.endsWith('.md') || 
+               file.name.endsWith('.csv') ||
+               file.name.endsWith('.json') ||
+               file.name.endsWith('.xml') ||
+               file.name.endsWith('.html') ||
+               file.name.endsWith('.js') ||
+               file.name.endsWith('.ts') ||
+               file.name.endsWith('.css')
     ) {
         content = new TextDecoder().decode(fileBuffer);
     } else {
-        return new Response(JSON.stringify({ error: `Unsupported file type: ${file.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, or .css.` }), {
+        return new Response(JSON.stringify({ error: `Unsupported file type: ${file.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.` }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400,
         });

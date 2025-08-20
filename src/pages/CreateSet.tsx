@@ -198,7 +198,7 @@ const CreateSet = () => {
             <CardContent className="flex flex-col sm:flex-row items-center gap-4">
               <Input 
                 type="file" 
-                accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css" 
+                accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf" 
                 onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
                 className="w-full sm:w-auto flex-grow"
               />
