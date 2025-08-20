@@ -8,6 +8,7 @@ import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
 import GraphVisualization from '@/components/GraphVisualization'; // Import the new graph component
+import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
 
 interface Concept {
   id: string;
@@ -177,7 +178,7 @@ const CognitiveConstellation: React.FC = () => {
           </Button>
           <Button onClick={handleRefreshConstellation} variant="outline" className="flex items-center">
             <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
-          </Button>
+            </Button>
         </div>
       </div>
 
