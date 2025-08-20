@@ -277,11 +277,11 @@ const Index = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
             <NotebookCard key={i}>
-              <CardHeader>
+              <CardHeader className="pl-10">
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="pl-10">
                 <Skeleton className="h-4 w-1/4" />
               </CardContent>
             </NotebookCard>
@@ -299,14 +299,14 @@ const Index = () => {
           {filteredStudySets.map((set) => (
             <Link to={`/sets/${set.id}`} key={set.id}>
               <NotebookCard className="hover:shadow-md transition-shadow h-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pl-10">
                   <CardTitle className="text-lg font-semibold">{set.title}</CardTitle>
                   <Badge variant={set.is_public ? "default" : "secondary"} className="flex items-center gap-1">
                     <Globe className="h-3 w-3" />
                     {set.is_public ? "Public" : "Private"}
                   </Badge>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pl-10">
                   {set.description && (
                     <CardDescription>{set.description}</CardDescription>
                   )}

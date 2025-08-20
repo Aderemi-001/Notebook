@@ -96,44 +96,44 @@ const Dashboard: React.FC = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <NotebookCard>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pl-10">
               <CardTitle className="text-sm font-medium">Total Study Sets</CardTitle>
               <LibraryBig className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="pl-10">
               <div className="text-2xl font-bold">{stats?.total_study_sets ?? 0}</div>
               <p className="text-xs text-muted-foreground">Sets created by you</p>
             </CardContent>
           </NotebookCard>
 
           <NotebookCard>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pl-10">
               <CardTitle className="text-sm font-medium">Total Cards</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="pl-10">
               <div className="text-2xl font-bold">{stats?.total_cards ?? 0}</div>
               <p className="text-xs text-muted-foreground">Across all your sets</p>
             </CardContent>
           </NotebookCard>
 
           <NotebookCard>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pl-10">
               <CardTitle className="text-sm font-medium">Mastered Cards</CardTitle>
               <CheckCircle2 className="h-4 w-4 text-green-600" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="pl-10">
               <div className="text-2xl font-bold">{stats?.total_mastered_cards ?? 0}</div>
               <p className="text-xs text-muted-foreground">Cards you've mastered</p>
             </CardContent>
           </NotebookCard>
 
           <NotebookCard>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pl-10">
               <CardTitle className="text-sm font-medium">Cards Due</CardTitle>
               <AlertCircle className="h-4 w-4 text-red-500" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="pl-10">
               <div className="text-2xl font-bold">{stats?.total_due_cards ?? 0}</div>
               <p className="text-xs text-muted-foreground">Ready for review</p>
             </CardContent>
@@ -143,11 +143,11 @@ const Dashboard: React.FC = () => {
 
       {/* Placeholder for future charts/graphs */}
       <NotebookCard className="mt-6">
-        <CardHeader>
+        <CardHeader className="pl-10">
           <CardTitle>Study Activity (Coming Soon!)</CardTitle>
           <CardDescription>Visualizations of your daily and weekly study habits.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pl-10">
           <div className="h-48 flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-md">
             Charts and graphs will appear here.
           </div>
