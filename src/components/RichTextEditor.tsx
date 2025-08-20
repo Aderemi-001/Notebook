@@ -294,7 +294,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ initialContent, onConte
 
   const editor = useEditor({
     extensions: extensions, // Use the memoized extensions
-    content: initialContent ? JSON.parse(initialContent) : '',
+    content: initialContent ? JSON.parse(initialContent) : '', // Use initialContent for initial render
     onUpdate: ({ editor }) => {
       onContentChange(JSON.stringify(editor.getJSON()));
     },
@@ -310,17 +310,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ initialContent, onConte
     editable: editable,
   });
 
-  // Effect to update editor content when initialContent prop changes
-  useEffect(() => {
-    if (editor && initialContent !== undefined) {
-      const currentContent = JSON.stringify(editor.getJSON());
-      const newContent = initialContent;
-
-      if (newContent !== currentContent) {
-        editor.commands.setContent(newContent ? JSON.parse(newContent) : '', false);
-      }
-    }
-  }, [editor, initialContent]);
+  // Removed the useEffect that was causing redundant content synchronization
 
   return (
     <div className="w-full">

@@ -257,6 +257,7 @@ const NoteDetail: React.FC = () => {
             className="text-2xl font-bold py-6"
           />
           <RichTextEditor
+            key={noteId} {/* Add key prop here */}
             initialContent={noteContent}
             onContentChange={setNoteContent}
             placeholder="Start writing your amazing note here..."
