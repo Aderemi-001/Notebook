@@ -14,7 +14,7 @@ const NotebookCard = React.forwardRef<HTMLDivElement, NotebookCardProps>(
         "relative overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300",
         "border border-gray-200 rounded-md", // More defined border
         "before:content-[''] before:absolute before:left-4 before:top-0 before:bottom-0 before:w-px before:bg-red-400", // Red margin line - RESTORED
-        "pl-6", // Add padding to the left for the holes and margin line
+        // Removed "pl-6" from here to prevent double padding
         className
       )}
       {...props}
@@ -25,7 +25,7 @@ const NotebookCard = React.forwardRef<HTMLDivElement, NotebookCardProps>(
           <div key={i} className="w-2 h-2 bg-gray-300 rounded-full mx-auto"></div>
         ))}
       </div>
-      {children} {/* Children will now inherit the pl-6 from the parent Card */}
+      {children} {/* Children will now rely on their own padding or parent's padding */}
     </Card>
   )
 );
