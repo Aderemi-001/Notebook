@@ -14,14 +14,14 @@ import TakeExam from "./pages/TakeExam";
 import PastExams from "./pages/PastExams";
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"; // Re-enabled
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 
-const queryClient = new QueryClient(); // Re-enabled
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}> {/* Re-enabled */}
+    <QueryClientProvider client={queryClient}>
       <div>
         <BrowserRouter>
           <React.Fragment>
@@ -121,7 +121,8 @@ function App() {
           </React.Fragment>
         </BrowserRouter>
       </div>
-    </QueryClientProvider> {/* Re-enabled */}
+      {/* Re-enabled */}
+    </QueryClientProvider>
   );
 }
 
