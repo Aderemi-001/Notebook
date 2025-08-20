@@ -1,11 +1,23 @@
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, PlayCircle } from 'lucide-react'; // Import PlayCircle icon
+import { ArrowLeft, PlayCircle, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 
 interface StudySet {
   id: string;
@@ -48,12 +60,37 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
 
 const StudySetDetail = () => {
   const { setId } = useParams<{ setId: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: studySet, isLoading, isError, error } = useQuery<StudySet, Error>({
     queryKey: ['studySet', setId],
     queryFn: () => fetchStudySetDetails(setId!),
     enabled: !!setId, // Only run query if setId is available
   });
+
+  const handleDeleteSet = async () => {
+    if (!setId) return;
+
+    const toastId = showLoading("Deleting study set...");
+    try {
+      const { error } = await supabase
+        .from('study_sets')
+        .delete()
+        .eq('id', setId);
+
+      if (error) throw error;
+
+      dismissToast(toastId);
+      showSuccess("Study set deleted successfully!");
+      queryClient.invalidateQueries({ queryKey: ['studySets'] }); // Invalidate the list of study sets
+      navigate('/'); // Redirect to home page after deletion
+    } catch (error: any) {
+      dismissToast(toastId);
+      showError(error.message || "Failed to delete study set.");
+      console.error("Delete error:", error);
+    }
+  };
 
   if (!setId) {
     return (
@@ -119,6 +156,33 @@ const StudySetDetail = () => {
               </Link>
             </Button>
           )}
+          <Button asChild variant="secondary">
+            <Link to={`/sets/${setId}/edit`}>
+              <Pencil className="mr-2 h-4 w-4" /> Edit Set
+            </Link>
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                <Trash2 className="mr-2 h-4 w-4" /> Delete Set
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your
+                  "{studySet.title}" study set and all its associated cards.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteSet}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
