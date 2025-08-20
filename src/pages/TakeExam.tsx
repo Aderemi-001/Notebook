@@ -36,6 +36,7 @@ interface ExamResponse {
   user_answer: string;
   is_correct: boolean;
   score: number;
+  ai_feedback?: string; // Added for AI grading feedback
 }
 
 const fetchExamDetails = async (examId: string): Promise<ExamDetails> => {
@@ -119,8 +120,8 @@ const TakeExam: React.FC = () => {
     const toastId = showLoading("Submitting exam and calculating results...");
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
         throw new Error("User not authenticated.");
       }
 
@@ -128,27 +129,52 @@ const TakeExam: React.FC = () => {
       let correctCount = 0;
 
       for (const question of questions) {
-        const userAnswer = userAnswers[question.id]?.trim().toLowerCase() || '';
-        const correctAnswer = question.answer_text.trim().toLowerCase();
-        let isCorrect = false;
-        let score = 0;
+        const userAnswer = userAnswers[question.id] || '';
+        const correctAnswer = question.answer_text;
+        const questionType = question.question_type;
 
-        if (question.question_type === 'multiple_choice' || question.question_type === 'short_answer' || question.question_type === 'true_false') {
-          isCorrect = (userAnswer === correctAnswer);
-          score = isCorrect ? 1 : 0;
+        // Call the AI grading function for each question
+        const gradeResponse = await fetch(
+          `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/grade-exam-response`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabase.auth.getSession().then(s => s.data.session?.access_token)}`, // Get current session token
+              'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+            },
+            body: JSON.stringify({ userAnswer, correctAnswer, questionType }),
+          }
+        );
+
+        const gradeData = await gradeResponse.json();
+
+        if (!gradeResponse.ok || gradeData.error) {
+          console.error(`Error grading question ${question.id}:`, gradeData.error);
+          // Fallback to simple comparison if AI grading fails
+          const simpleIsCorrect = userAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+          responsesToInsert.push({
+            exam_id: examId!,
+            question_id: question.id,
+            user_id: user.id,
+            user_answer: userAnswer,
+            is_correct: simpleIsCorrect,
+            score: simpleIsCorrect ? 1 : 0,
+            ai_feedback: gradeData.error ? `AI grading failed: ${gradeData.error}` : "AI grading failed, used simple comparison.",
+          });
+        } else {
+          responsesToInsert.push({
+            exam_id: examId!,
+            question_id: question.id,
+            user_id: user.id,
+            user_answer: userAnswer,
+            is_correct: gradeData.is_correct,
+            score: gradeData.score,
+            ai_feedback: gradeData.ai_feedback,
+          });
         }
-        // Add more complex scoring logic for short_answer if needed later
 
-        responsesToInsert.push({
-          exam_id: examId!,
-          question_id: question.id,
-          user_id: user.id,
-          user_answer: userAnswers[question.id] || '', // Store original user input
-          is_correct: isCorrect,
-          score: score,
-        });
-
-        if (isCorrect) {
+        if (responsesToInsert[responsesToInsert.length - 1].is_correct) {
           correctCount++;
         }
       }
@@ -291,6 +317,9 @@ const TakeExam: React.FC = () => {
                       <CheckCircle2 className="mr-2 h-4 w-4" />
                       <span className="font-medium">Correct Answer: {q.answer_text}</span>
                     </div>
+                    {result?.ai_feedback && (
+                      <p className="text-sm text-muted-foreground mt-2">AI Feedback: {result.ai_feedback}</p>
+                    )}
                   </div>
                 );
               })}
