@@ -328,24 +328,33 @@ const StudyMode = () => {
             }
           />
 
-          <div className="mt-8 flex gap-4">
-            <Button onClick={handleFlipCard} variant="outline">
-              Flip Card
-            </Button>
+          <div className="mt-8 flex flex-wrap justify-center gap-2">
+            {!showDefinition && (
+              <Button onClick={handleFlipCard} variant="outline" className="w-full sm:w-auto">
+                Flip Card
+              </Button>
+            )}
             {showDefinition && (
               <>
-                <Button onClick={() => handleNextCard(5)} className="bg-green-500 hover:bg-green-600">
-                  Mastered
+                <Button onClick={() => handleNextCard(0)} variant="destructive" className="w-full sm:w-auto">
+                  Again (0)
                 </Button>
-                <Button onClick={() => handleNextCard(1)} variant="destructive">
-                  Difficult
+                <Button onClick={() => handleNextCard(1)} variant="destructive" className="w-full sm:w-auto">
+                  Hard (1)
+                </Button>
+                <Button onClick={() => handleNextCard(2)} variant="secondary" className="w-full sm:w-auto">
+                  Medium (2)
+                </Button>
+                <Button onClick={() => handleNextCard(3)} variant="default" className="w-full sm:w-auto">
+                  Good (3)
+                </Button>
+                <Button onClick={() => handleNextCard(4)} className="bg-green-500 hover:bg-green-600 w-full sm:w-auto">
+                  Easy (4)
+                </Button>
+                <Button onClick={() => handleNextCard(5)} className="bg-green-700 hover:bg-green-800 text-white w-full sm:w-auto">
+                  Perfect (5)
                 </Button>
               </>
-            )}
-            {!showDefinition && (
-              <Button onClick={() => handleNextCard(0)}>
-                Next Card
-              </Button>
             )}
           </div>
           <p className="mt-4 text-sm text-muted-foreground">

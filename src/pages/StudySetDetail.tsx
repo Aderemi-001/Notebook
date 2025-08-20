@@ -20,13 +20,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { cn } from "@/lib/utils";
+import StudyProgressSummary from '@/components/StudyProgressSummary'; // Import the new component
 
 interface StudySet {
   id: string;
   title: string;
   description: string | null;
   cards: CardItem[];
-  mastered_cards_count?: number;
+  mastered_cards_count: number; // Ensure this is always a number
+  due_cards_count: number; // Add due_cards_count
 }
 
 interface CardItem {
@@ -35,6 +37,7 @@ interface CardItem {
   definition: string;
   status?: 'learning' | 'mastered';
   is_flagged?: boolean; // Added is_flagged
+  next_review_at?: string; // Added for due card calculation
 }
 
 const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
@@ -42,6 +45,8 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
   if (!user) {
     throw new Error("User not authenticated.");
   }
+
+  const now = new Date();
 
   const { data, error } = await supabase
     .from('study_sets')
@@ -56,7 +61,8 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
         is_flagged,
         user_progress!user_progress_card_id_fkey!left(
           status,
-          user_id
+          user_id,
+          next_review_at
         )
       )
     `)
@@ -72,12 +78,23 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
   }
 
   let masteredCount = 0;
+  let dueCount = 0;
   const processedCards: CardItem[] = data.cards.map(card => {
     const progress = card.user_progress?.[0];
     const cardStatus = (progress && progress.user_id === user.id) ? progress.status : 'learning';
-    
+    const nextReviewAt = (progress && progress.user_id === user.id) ? progress.next_review_at : now.toISOString(); // Default to now for new cards
+
     if (cardStatus === 'mastered') {
       masteredCount++;
+    }
+
+    // Check if card is due for review
+    const cardNextReviewDate = new Date(nextReviewAt);
+    const isNewCardForCurrentUser = !progress || progress.user_id !== user.id;
+    const isDueForReview = cardNextReviewDate <= now;
+
+    if (isNewCardForCurrentUser || (progress && progress.user_id === user.id && isDueForReview && cardStatus === 'learning')) {
+      dueCount++;
     }
 
     return {
@@ -85,11 +102,12 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
       term: card.term,
       definition: card.definition,
       status: cardStatus,
-      is_flagged: card.is_flagged, // Include is_flagged
+      is_flagged: card.is_flagged,
+      next_review_at: nextReviewAt,
     };
   });
 
-  return { ...data, cards: processedCards, mastered_cards_count: masteredCount } as StudySet;
+  return { ...data, cards: processedCards, mastered_cards_count: masteredCount, due_cards_count: dueCount } as StudySet;
 };
 
 const StudySetDetail = () => {
@@ -317,14 +335,15 @@ const StudySetDetail = () => {
         <p className="text-muted-foreground mb-6">{studySet.description}</p>
       )}
 
-      <h2 className="text-2xl font-semibold mb-4">Cards ({studySet.cards.length})</h2>
-      {studySet.cards.length > 0 && studySet.mastered_cards_count !== undefined && (
-        <div className="flex items-center text-lg text-muted-foreground mb-4">
-          <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
-          <span>{studySet.mastered_cards_count} of {studySet.cards.length} cards mastered</span>
-        </div>
-      )}
+      {/* Study Progress Summary */}
+      <StudyProgressSummary
+        totalCards={studySet.cards.length}
+        masteredCardsCount={studySet.mastered_cards_count}
+        dueCardsCount={studySet.due_cards_count}
+      />
 
+      <h2 className="text-2xl font-semibold mb-4">Cards ({studySet.cards.length})</h2>
+      
       {studySet.cards.length === 0 ? (
         <div className="text-center py-10 border-2 border-dashed rounded-lg">
           <p className="text-muted-foreground">No cards in this set yet.</p>
