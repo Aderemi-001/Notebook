@@ -11,17 +11,18 @@ import CognitiveConstellation from "./pages/CognitiveConstellation";
 import ExplorePublicSets from "./pages/ExplorePublicSets";
 import GenerateExam from "./pages/GenerateExam";
 import TakeExam from "./pages/TakeExam";
-import PastExams from "./pages/PastExams"; // Import the new PastExams page
+import PastExams from "./pages/PastExams";
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// import { QueryClient, QueryClientProvider } from "@tanstack/react-query"; // Temporarily commented out
 import React from "react";
 
-const queryClient = new QueryClient();
+// const queryClient = new QueryClient(); // Temporarily commented out
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    // <QueryClientProvider client={queryClient}> // Temporarily removed
+    <div> {/* Replaced with a simple div */}
       <BrowserRouter>
         <React.Fragment>
           <Routes>
@@ -106,7 +107,7 @@ function App() {
               }
             />
             <Route
-              path="/past-exams" {/* New route for PastExams */}
+              path="/past-exams"
               element={
                 <AuthLayout>
                   <PastExams />
@@ -119,7 +120,8 @@ function App() {
           <Toaster richColors />
         </React.Fragment>
       </BrowserRouter>
-    </QueryClientProvider>
+    </div> {/* Replaced with a simple div */}
+    // </QueryClientProvider> // Temporarily removed
   );
 }
 
