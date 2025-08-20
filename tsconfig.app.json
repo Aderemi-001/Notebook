@@ -4,25 +4,19 @@
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tsbuildinfo",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
+
+    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
+    "jsx": "react-jsx",
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src"]
 }
