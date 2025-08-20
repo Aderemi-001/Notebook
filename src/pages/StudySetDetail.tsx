@@ -5,7 +5,7 @@ import { CardContent, CardHeader, CardTitle, CardDescription } from "@/component
 import { NotebookCard } from "@/components/NotebookCard";
 import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe, Plus, MoreVertical } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } = '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
@@ -28,7 +28,7 @@ import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast
 import { cn } from "@/lib/utils";
 import StudyProgressSummary from '@/components/StudyProgressSummary';
 import { isPast } from 'date-fns';
-import { Badge } from "@/components/ui/badge";
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -144,6 +144,18 @@ const StudySetDetail = () => {
     queryFn: () => fetchStudySetDetails(setId!),
     enabled: !!setId,
   });
+
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    const checkOwner = async () => {
+      if (studySet?.user_id) {
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsOwner(user?.id === studySet.user_id);
+      }
+    };
+    checkOwner();
+  }, [studySet?.user_id]); // Re-run when studySet.user_id changes
 
   const handleDeleteSet = async () => {
     if (!setId) return;
@@ -325,16 +337,6 @@ const StudySetDetail = () => {
       </div>
     );
   }
-
-  const [isOwner, setIsOwner] = useState(false);
-
-  useEffect(() => {
-    const checkOwner = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsOwner(user?.id === studySet.user_id);
-    };
-    checkOwner();
-  }, [studySet.user_id]); // Re-run when studySet.user_id changes
 
   return (
     <div className="container mx-auto py-10">
