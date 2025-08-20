@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, History, Menu, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, History, Menu, FileText, CheckCircle2, Brain } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -158,6 +158,13 @@ const PastEssayQuestions: React.FC = () => {
                     </ul>
                   </>
                 )}
+                <div className="mt-4">
+                  <Link to={`/essay-practice/${question.id}`}>
+                    <Button variant="outline" className="w-full">
+                      <Brain className="mr-2 h-4 w-4" /> Practice Essay
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </NotebookCard>
           ))}

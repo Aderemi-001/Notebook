@@ -15,7 +15,8 @@ import ExplorePublicSets from "./pages/ExplorePublicSets";
 import SearchCards from "./pages/SearchCards";
 import GenerateEssayQuestions from "./pages/GenerateEssayQuestions";
 import PastEssayQuestions from "./pages/PastEssayQuestions";
-import Settings from "./pages/Settings"; // Import the new Settings page
+import EssayPractice from "./pages/EssayPractice"; // Import the new EssayPractice page
+import Settings from "./pages/Settings";
 import AuthLayout from "./layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -127,6 +128,14 @@ function App() {
                 }
               />
               <Route
+                path="/essay-practice/:questionId" // New route for essay practice
+                element={
+                  <AuthLayout>
+                    <EssayPractice />
+                  </AuthLayout>
+                }
+              />
+              <Route
                 path="/exams/:examId"
                 element={
                   <AuthLayout>
@@ -142,7 +151,7 @@ function App() {
                   </AuthLayout>
                 }
               />
-              <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} /> {/* New Settings Route */}
+              <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} />
               <Route path="/login" element={<Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
