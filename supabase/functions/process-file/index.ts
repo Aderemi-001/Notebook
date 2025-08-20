@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-// Removed pdfjs-dist import as PDF parsing is currently unsupported
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,48 +23,13 @@ serve(async (req) => {
   const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File;
+    const { content } = await req.json(); // Expect content directly in JSON body
 
-    if (!file) {
-      return new Response(JSON.stringify({ error: "No file provided." }), {
+    if (!content || typeof content !== 'string' || !content.trim()) {
+      return new Response(JSON.stringify({ error: "No text content provided in the request body." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
-    }
-
-    let content = "";
-    const fileBuffer = await file.arrayBuffer();
-
-    if (file.type === "application/pdf") {
-      // Explicitly mark PDF as unsupported for now
-      return new Response(JSON.stringify({ error: "PDF file processing is currently unsupported due to technical limitations in the serverless environment. Please upload text-based files (e.g., .txt, .md, .csv) or copy-paste content directly." }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      });
-    } else if (file.type.startsWith("text/") || 
-               file.name.endsWith('.md') || 
-               file.name.endsWith('.csv') ||
-               file.name.endsWith('.json') ||
-               file.name.endsWith('.xml') ||
-               file.name.endsWith('.html') ||
-               file.name.endsWith('.js') ||
-               file.name.endsWith('.ts') ||
-               file.name.endsWith('.css')
-    ) {
-        content = new TextDecoder().decode(fileBuffer);
-    } else {
-        return new Response(JSON.stringify({ error: `Unsupported file type: ${file.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.` }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 400,
-        });
-    }
-
-    if (!content.trim()) {
-        return new Response(JSON.stringify({ error: "Could not extract any text from the file." }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 400,
-        });
     }
 
     const prompt = `

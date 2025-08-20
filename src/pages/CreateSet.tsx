@@ -11,7 +11,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query"; // Import useQueryClient
+import { useQueryClient } from "@tanstack/react-query";
+import * as pdfjsLib from 'pdfjs-dist/build/pdf'; // Import pdfjs-dist for client-side PDF parsing
+
+// Set the worker source for pdfjs-dist
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -25,7 +29,7 @@ const formSchema = z.object({
 const CreateSet = () => {
   const [file, setFile] = React.useState<File | null>(null);
   const navigate = useNavigate();
-  const queryClient = useQueryClient(); // Initialize useQueryClient
+  const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -79,7 +83,7 @@ const CreateSet = () => {
 
       dismissToast(toastId);
       showSuccess("Set created successfully!");
-      queryClient.invalidateQueries({ queryKey: ['studySets'] }); // Invalidate the query to re-fetch data on Index page
+      queryClient.invalidateQueries({ queryKey: ['studySets'] });
       navigate('/');
 
     } catch (error: any) {
@@ -101,25 +105,65 @@ const CreateSet = () => {
     }
 
     const toastId = showLoading("AI is generating your flashcards...");
+    let fileContent = "";
 
     try {
+      if (file.type === "application/pdf") {
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+        await new Promise<void>((resolve, reject) => {
+          reader.onload = async (e) => {
+            try {
+              const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
+              const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+              const pdf = await loadingTask.promise;
+              for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                fileContent += textContent.items.map((item: any) => item.str).join(' ') + '\n';
+              }
+              resolve();
+            } catch (pdfError) {
+              console.error("Error parsing PDF:", pdfError);
+              reject(new Error("Failed to parse PDF file. It might be corrupted or unsupported."));
+            }
+          };
+          reader.onerror = (err) => reject(err);
+        });
+      } else if (file.type.startsWith("text/") || 
+                 file.name.endsWith('.md') || 
+                 file.name.endsWith('.csv') ||
+                 file.name.endsWith('.json') ||
+                 file.name.endsWith('.xml') ||
+                 file.name.endsWith('.html') ||
+                 file.name.endsWith('.js') ||
+                 file.name.endsWith('.ts') ||
+                 file.name.endsWith('.css')
+      ) {
+          fileContent = await file.text();
+      } else {
+          throw new Error(`Unsupported file type: ${file.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.`);
+      }
+
+      if (!fileContent.trim()) {
+          throw new Error("Could not extract any text from the file.");
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error("You must be logged in to import a file.");
       }
-
-      const formData = new FormData();
-      formData.append("file", file);
 
       const response = await fetch(
         `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/process-file`,
         {
           method: 'POST',
           headers: {
+            'Content-Type': 'application/json', // Send as JSON
             'Authorization': `Bearer ${session.access_token}`,
             'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1b3NkbWVjbGR6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
           },
-          body: formData,
+          body: JSON.stringify({ content: fileContent }), // Send extracted content
         }
       );
       
