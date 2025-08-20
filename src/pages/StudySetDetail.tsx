@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"; // Keep these imports for sub-components
 import { NotebookCard } from "@/components/NotebookCard"; // Import NotebookCard
-import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe } from 'lucide-react'; // Added Flag, FlagOff, Globe
+import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe, Plus } from 'lucide-react'; // Added Flag, FlagOff, Globe, Plus
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,6 +35,7 @@ interface StudySet {
   title: string;
   description: string | null;
   is_public: boolean; // Added is_public
+  user_id: string; // Add user_id to check ownership
   cards: CardItem[];
   mastered_cards_count: number; // Ensure this is always a number
   due_cards_count: number; // Add due_cards_count
@@ -66,6 +67,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
       title,
       description,
       is_public,
+      user_id,
       cards (
         id,
         term,
@@ -222,6 +224,57 @@ const StudySetDetail = () => {
     }
   };
 
+  const handleAddToMySets = async () => {
+    if (!studySet) return;
+
+    const toastId = showLoading(`Adding "${studySet.title}" to your sets...`);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated. Please log in to add sets.");
+      }
+
+      // 1. Create a new study set for the current user
+      const { data: newSet, error: newSetError } = await supabase
+        .from('study_sets')
+        .insert({
+          title: `Copy of ${studySet.title}`,
+          description: studySet.description ? `(Copied) ${studySet.description}` : '(Copied from a public set)',
+          user_id: user.id,
+          is_public: false, // Copies are always private by default
+        })
+        .select('id')
+        .single();
+
+      if (newSetError) throw newSetError;
+      if (!newSet) throw new Error("Failed to create new study set.");
+
+      // 2. Copy all cards from the original set to the new set
+      const cardsToInsert = studySet.cards.map(card => ({
+        set_id: newSet.id,
+        term: card.term,
+        definition: card.definition,
+        is_flagged: false, // Reset flag status for copied cards
+      }));
+
+      if (cardsToInsert.length > 0) {
+        const { error: cardsInsertError } = await supabase
+          .from('cards')
+          .insert(cardsToInsert);
+        if (cardsInsertError) throw cardsInsertError;
+      }
+
+      dismissToast(toastId);
+      showSuccess(`"${studySet.title}" added to your sets!`);
+      queryClient.invalidateQueries({ queryKey: ['studySets'] }); // Invalidate user's study sets list
+      navigate(`/sets/${newSet.id}`); // Navigate to the new copied set
+    } catch (error: any) {
+      dismissToast(toastId);
+      showError(error.message || "Failed to add set to your collection.");
+      console.error("Add to my sets error:", error);
+    }
+  };
+
   if (!setId) {
     return (
       <div className="container mx-auto py-10 text-center text-red-500">
@@ -269,6 +322,8 @@ const StudySetDetail = () => {
     );
   }
 
+  const isOwner = supabase.auth.getUser().then(({ data: { user } }) => user?.id === studySet.user_id);
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
@@ -296,60 +351,71 @@ const StudySetDetail = () => {
               </Link>
             </Button>
           )}
-          <Button asChild variant="secondary">
-            <Link to={`/sets/${setId}/edit`} className="flex items-center">
-              <React.Fragment>
-                <Pencil className="mr-2 h-4 w-4" /> Edit Set
-              </React.Fragment>
-            </Link>
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" className="flex items-center">
-                <React.Fragment>
-                  <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
-                </React.Fragment>
+          {/* Show Edit/Delete/Reset buttons only if the current user is the owner */}
+          {isOwner && (
+            <>
+              <Button asChild variant="secondary">
+                <Link to={`/sets/${setId}/edit`} className="flex items-center">
+                  <React.Fragment>
+                    <Pencil className="mr-2 h-4 w-4" /> Edit Set
+                  </React.Fragment>
+                </Link>
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleResetProgress}>
-                  Reset Progress
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="flex items-center">
-                <React.Fragment>
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete Set
-                </React.Fragment>
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete your
-                  "{studySet.title}" study set and all its associated cards.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteSet}>
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center">
+                    <React.Fragment>
+                      <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
+                    </React.Fragment>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResetProgress}>
+                      Reset Progress
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="flex items-center">
+                    <React.Fragment>
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete Set
+                    </React.Fragment>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete your
+                      "{studySet.title}" study set and all its associated cards.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteSet}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
+          {/* Show "Add to My Sets" button if it's a public set and not owned by the current user */}
+          {studySet.is_public && !isOwner && (
+            <Button onClick={handleAddToMySets} className="flex items-center">
+              <Plus className="mr-2 h-4 w-4" /> Add to My Sets
+            </Button>
+          )}
         </div>
       </div>
 
