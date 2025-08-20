@@ -112,7 +112,7 @@
 .login-page-scribble-bg {
   background-color: hsl(var(--background)); /* Ensure background color is set */
   background-image: 
-    url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M-1 1 l2 -2 M0 10 l10 -10 M9 11 l2 -2' stroke='%23d0d0d0' stroke-width='0.5' opacity='0.2'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M-1 1 l2 -2 M0 10 l10 -10 M9 11 l2 -2' stroke='%23a0a0a0' stroke-width='0.5' opacity='0.5'/%3E%3C/svg%3E"),
     repeating-linear-gradient(
       to bottom,
       transparent,
