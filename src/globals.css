@@ -80,6 +80,8 @@
     --input: 217.2 15% 25%;
     --ring: 217.2 91.2% 59.8%; /* Primary blue */
 
+    --radius: 0.5rem;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -134,6 +136,11 @@
   }
   mark[data-color="#a855f7"] { /* Purple */
     @apply bg-purple-200 dark:bg-purple-700;
+  }
+
+  /* Ensure prose content wraps long words */
+  .prose {
+    overflow-wrap: break-word;
   }
 }
 
