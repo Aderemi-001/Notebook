@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form"; // Import useFieldArray
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -51,9 +51,11 @@ const EditSet = () => {
     },
   });
 
-  // Destructure append from useFieldArray directly from form.control
-  const { append, replace } = form.control._fields.cards._f;
-
+  // Correctly use useFieldArray hook
+  const { append, replace } = useFieldArray({
+    control: form.control,
+    name: "cards",
+  });
 
   useEffect(() => {
     if (studySet) {
