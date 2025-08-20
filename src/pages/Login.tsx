@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 
