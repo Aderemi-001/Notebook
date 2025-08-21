@@ -32,15 +32,25 @@ import * as React from "react";
 import { useDueCardsCount } from "@/hooks/use-due-cards-count";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { toast } from "sonner";
+import { format } from 'date-fns'; // Import date-fns for date formatting
 
 const AppContent: React.FC = () => {
   const { data: dueCardsCount, isLoading: isLoadingDueCards } = useDueCardsCount();
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
-  const [reminderShown, setReminderShown] = React.useState(false);
+  // Use localStorage to persist the last date the reminder was shown
+  const [lastReminderShownDate, setLastReminderShownDate] = React.useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('lastDailyReviewReminderDate');
+    }
+    return null;
+  });
 
   React.useEffect(() => {
     if (!isLoadingDueCards && !isLoadingPreferences && preferences && dueCardsCount !== undefined) {
-      if (preferences.enable_review_reminders && dueCardsCount > 0 && !reminderShown) {
+      const today = format(new Date(), 'yyyy-MM-dd'); // Normalize today's date
+
+      // Check if reminders are enabled, there are due cards, and the reminder hasn't been shown today
+      if (preferences.enable_review_reminders && dueCardsCount > 0 && lastReminderShownDate !== today) {
         toast.info(
           `You have ${dueCardsCount} cards due for review!`,
           {
@@ -48,22 +58,33 @@ const AppContent: React.FC = () => {
             action: {
               label: "Study Now",
               onClick: () => {
-                window.location.href = "/"; // Navigate to the main page where due cards are visible
+                window.location.href = "/daily-review"; // Navigate to the daily review page
+                // Mark reminder as shown for today after user clicks "Study Now"
+                localStorage.setItem('lastDailyReviewReminderDate', today);
+                setLastReminderShownDate(today);
               },
             },
             duration: 10000, // Show for 10 seconds
-            onDismiss: () => setReminderShown(true), // Mark as shown when dismissed
-            onAutoClose: () => setReminderShown(true), // Mark as shown when auto-closed
+            onDismiss: () => {
+              // Mark reminder as shown for today if dismissed manually or auto-closed
+              localStorage.setItem('lastDailyReviewReminderDate', today);
+              setLastReminderShownDate(today);
+            },
+            onAutoClose: () => {
+              // Mark reminder as shown for today if dismissed manually or auto-closed
+              localStorage.setItem('lastDailyReviewReminderDate', today);
+              setLastReminderShownDate(today);
+            },
           }
         );
-        // Set reminderShown to true immediately to prevent multiple toasts on first load
-        setReminderShown(true);
-      } else if (dueCardsCount === 0) {
-        // Reset reminderShown if no cards are due, so it can show again later if cards become due
-        setReminderShown(false);
+      } else if (dueCardsCount === 0 && lastReminderShownDate !== null) {
+        // If no cards are due, clear the reminder date so it can show again if cards become due later
+        // or on a new day. This handles cases where user finishes all cards.
+        localStorage.removeItem('lastDailyReviewReminderDate');
+        setLastReminderShownDate(null);
       }
     }
-  }, [dueCardsCount, isLoadingDueCards, preferences, isLoadingPreferences, reminderShown]);
+  }, [dueCardsCount, isLoadingDueCards, preferences, isLoadingPreferences, lastReminderShownDate]);
 
   return (
     <>
