@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
-import TaskList from '@tiptap/extension-task-list';
+import TaskList from '@tiptap/extension-list-item'; // Corrected import for TaskList base
 import TaskItem from '@tiptap/extension-task-item';
 import Image from '@tiptap/extension-image'; // Import Image extension
 import { cn } from '@/lib/utils';
@@ -34,11 +34,27 @@ const ZOOM_STEP = 0.1;
 const BASE_LINE_WIDTH = 3; // Base line width for drawing
 const BASE_ERASER_SIZE = 15; // Default eraser size
 
+// Utility to generate SVG for custom cursor
+const generateEraserCursor = (size: number) => {
+  const radius = size / 2;
+  const svg = `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${radius}" cy="${radius}" r="${radius - 0.5}" stroke="black" stroke-width="1" fill="none" />
+    </svg>
+  `;
+  // Encode SVG for URL
+  const encodedSvg = encodeURIComponent(svg)
+    .replace(/'/g, '%27')
+    .replace(/"/g, '%22');
+  return `url("data:image/svg+xml;utf8,${encodedSvg}") ${radius} ${radius}, none`;
+};
+
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, labelId }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#000000'); // Default to black
   const [isErasing, setIsErasing] = useState(false); // New state for eraser mode
   const [eraserSize, setEraserSize] = useState(BASE_ERASER_SIZE); // New state for eraser size
+  const [customCursorStyle, setCustomCursorStyle] = useState('crosshair'); // State for custom cursor
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -188,6 +204,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     }
   }, [isDrawingMode, drawingColor, isErasing, eraserSize, clearCanvas]);
 
+  // Effect for updating custom cursor style
+  useEffect(() => {
+    if (isDrawingMode && isErasing) {
+      setCustomCursorStyle(generateEraserCursor(eraserSize));
+    } else if (isDrawingMode) {
+      setCustomCursorStyle('crosshair'); // Default drawing cursor
+    } else {
+      setCustomCursorStyle('auto'); // Default cursor for text editing mode
+    }
+  }, [isDrawingMode, isErasing, eraserSize]);
 
   // Drawing functions
   const getCoordinates = (event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -362,7 +388,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         <canvas
           ref={canvasRef}
           className={cn(
-            "absolute top-0 left-0 bg-white dark:bg-gray-900 cursor-crosshair",
+            "absolute top-0 left-0 bg-white dark:bg-gray-900",
             isDrawingMode ? "z-20 pointer-events-auto" : "z-0 pointer-events-none" // Bring to front and make interactive when drawing
           )}
           onMouseDown={startDrawing}
@@ -378,6 +404,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
             touchAction: 'none',
             width: '100%', // Ensure canvas fills its container at 1x zoom
             height: '100%', // Ensure canvas fills its container at 1x zoom
+            cursor: customCursorStyle, // Apply custom cursor here
           }}
         />
       </div>
