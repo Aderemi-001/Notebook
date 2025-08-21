@@ -36,7 +36,7 @@ interface CollaborationSpace {
   description: string | null;
   created_at: string;
   created_by_user_id: string;
-  profiles: { display_name: string | null } | null; // To show creator's name
+  creator_profile: { display_name: string | null } | null; // Changed from 'profiles' to 'creator_profile'
   space_members: { role: string }[]; // To check user's role in the space
 }
 
@@ -53,7 +53,7 @@ const fetchCollaborationSpaces = async (userId: string): Promise<CollaborationSp
       description,
       created_at,
       created_by_user_id,
-      profiles(display_name) // Re-added profiles join
+      created_by_user_id!profiles(display_name) // Explicitly specify the foreign key
     `)
     .order('name', { ascending: true });
 
@@ -62,9 +62,9 @@ const fetchCollaborationSpaces = async (userId: string): Promise<CollaborationSp
     throw new Error(`Failed to fetch your collaboration spaces: ${error.message}`);
   }
   
-  // space_members is not joined here, so it will always be an empty array for now
   return data?.map(space => ({
     ...space,
+    creator_profile: space.created_by_user_id as any, // Map the aliased data
     space_members: [], 
   })) || [];
 };
@@ -92,7 +92,7 @@ const CollaborationSpacesIndex: React.FC = () => {
   const filteredSpaces = spaces?.filter(space =>
     space.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (space.description && space.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (space.profiles?.display_name && space.profiles.display_name.toLowerCase().includes(searchTerm.toLowerCase()))
+    (space.creator_profile?.display_name && space.creator_profile.display_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleDeleteSpace = async (spaceId: string, spaceName: string) => {
@@ -226,7 +226,7 @@ const CollaborationSpacesIndex: React.FC = () => {
                     <Users className="mr-2 h-5 w-5 text-primary" /> {space.name}
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground mt-1">
-                    Created by: {space.profiles?.display_name || 'Unknown User'} on {format(new Date(space.created_at), 'PPP')}
+                    Created by: {space.creator_profile?.display_name || 'Unknown User'} on {format(new Date(space.created_at), 'PPP')}
                   </CardDescription>
                   {space.description && (
                     <p className="text-sm text-muted-foreground mt-2 line-clamp-3">

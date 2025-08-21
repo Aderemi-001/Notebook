@@ -55,7 +55,7 @@ interface CollaborationSpace {
   description: string | null;
   created_at: string;
   created_by_user_id: string;
-  profiles: { display_name: string | null } | null; // Creator's profile
+  creator_profile: { display_name: string | null } | null; // Updated interface
   space_members: {
     user_id: string;
     role: string;
@@ -82,8 +82,8 @@ const fetchSpaceDetails = async (spaceId: string): Promise<CollaborationSpace> =
       description,
       created_at,
       created_by_user_id,
-      profiles(display_name), // Re-added profiles join
-      space_members( // Re-added space_members join
+      created_by_user_id!profiles(display_name), // Explicitly specify the foreign key
+      space_members( 
         user_id,
         role,
         profiles(display_name)
@@ -99,7 +99,11 @@ const fetchSpaceDetails = async (spaceId: string): Promise<CollaborationSpace> =
   if (!data) {
     throw new Error("Collaboration space not found.");
   }
-  return data as CollaborationSpace;
+  // Map the data to the new interface structure
+  return {
+    ...data,
+    creator_profile: data.created_by_user_id as any, // Map the aliased data
+  } as CollaborationSpace;
 };
 
 const fetchUsersForSearch = async (searchTerm: string): Promise<UserProfile[]> => {
@@ -512,7 +516,7 @@ const CollaborationSpaceDetail: React.FC = () => {
               </AlertDialog>
             ) : isOwner && (
               <DropdownMenuItem onClick={() => handleDeleteSpace(space.id, space.name)} className="flex items-center text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" /> Delete Space
+                <Trash2 className="h-4 w-4" /> Delete Space
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -529,7 +533,7 @@ const CollaborationSpaceDetail: React.FC = () => {
         <CardContent className="pl-10 space-y-2">
           <div className="flex items-center text-sm text-muted-foreground">
             <User className="mr-2 h-4 w-4" />
-            <span>Created by: {space.profiles?.display_name || 'Unknown User'}</span>
+            <span>Created by: {space.creator_profile?.display_name || 'Unknown User'}</span>
           </div>
           <div className="flex items-center text-sm text-muted-foreground">
             <KeyRound className="mr-2 h-4 w-4" />
