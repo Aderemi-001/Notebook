@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe, Plus, MoreVertical, FileText } from 'lucide-react';
+import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe, Plus, MoreVertical, FileText, Folder } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -44,6 +44,8 @@ interface StudySet {
   description: string | null;
   is_public: boolean;
   user_id: string;
+  group_id: string | null; // Added group_id
+  study_set_groups: { name: string } | null; // Added study_set_groups for group name
   cards: CardItem[];
   mastered_cards_count: number;
   due_cards_count: number;
@@ -82,6 +84,8 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
       description,
       is_public,
       user_id,
+      group_id,
+      study_set_groups (name),
       cards (
         id,
         term,
@@ -207,6 +211,7 @@ const StudySetDetail = () => {
       showSuccess("Study set deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
       queryClient.invalidateQueries({ queryKey: ['linkedNotes', setId] });
+      queryClient.invalidateQueries({ queryKey: ['studySetGroups'] }); // Invalidate groups to update set counts
       navigate('/');
     } catch (error: any) {
       dismissToast(toastId);
@@ -382,6 +387,14 @@ const StudySetDetail = () => {
             <Globe className="h-3 w-3" />
             {studySet.is_public ? "Public" : "Private"}
           </Badge>
+          {studySet.group_id && studySet.study_set_groups?.name && (
+            <Link to={`/groups/${studySet.group_id}`}>
+              <Badge variant="outline" className="flex items-center gap-1 cursor-pointer hover:bg-accent">
+                <Folder className="h-3 w-3" />
+                {studySet.study_set_groups.name}
+              </Badge>
+            </Link>
+          )}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
