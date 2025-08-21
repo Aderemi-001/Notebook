@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/extension-starter-kit';
+import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
@@ -200,7 +200,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       clientY = touch.clientY;
     } else { // It's a mouse event
       clientX = event.nativeEvent.clientX;
-      clientY = event.nativeEvent.clientY; // Corrected: use nativeEvent.clientY
+      clientY = event.nativeEvent.clientY;
     }
 
     // Calculate offsetX and offsetY relative to the canvas
@@ -231,7 +231,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       clientY = touch.clientY;
     } else { // It's a mouse event
       clientX = event.nativeEvent.clientX;
-      clientY = event.nativeEvent.clientY; // Corrected: use nativeEvent.clientY
+      clientY = event.nativeEvent.clientY;
     }
 
     // Calculate offsetX and offsetY relative to the canvas
