@@ -85,7 +85,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   }
 
   return (
-    <div className=""> {/* Removed border rounded-md from here */}
+    <div className="w-full"> {/* Added w-full here */}
       {editable && (
         <RichTextEditorToolbar editor={editor} />
       )}
