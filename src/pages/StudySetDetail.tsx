@@ -65,7 +65,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
         term,
         definition,
         is_flagged,
-        user_progress(
+        user_progress!user_progress_card_id_fkey(
           status,
           user_id,
           next_review_at,

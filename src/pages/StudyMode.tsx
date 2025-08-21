@@ -85,7 +85,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
       id,
       term,
       definition,
-      user_progress(
+      user_progress!user_progress_card_id_fkey(
         repetition_level,
         ease_factor,
         next_review_at,
