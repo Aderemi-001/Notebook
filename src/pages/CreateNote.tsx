@@ -171,7 +171,7 @@ const CreateNote: React.FC = () => {
           <CardTitle>Note Details</CardTitle>
           <CardDescription>Give your note a title and start writing.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 pl-10">
+        <CardContent className="space-y-4"> {/* Removed pl-10 */}
           <div>
             <Label htmlFor="note-title">Title</Label>
             <Input

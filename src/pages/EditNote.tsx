@@ -242,7 +242,7 @@ const EditNote: React.FC = () => {
           <CardTitle>Note Details</CardTitle>
           <CardDescription>Edit your note's title and content.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 pl-10">
+        <CardContent className="space-y-4"> {/* Removed pl-10 */}
           <div>
             <Label htmlFor="note-title">Title</Label>
             <Input
