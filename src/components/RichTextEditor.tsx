@@ -110,9 +110,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         class: cn(
           'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4 border rounded-md',
           'user-select-text touch-action-auto',
-          (!editable || isDrawingMode) && 'bg-muted/50 cursor-not-allowed', // Apply disabled styles
-          isDrawingMode && 'pointer-events-none', // Add this line to allow events to pass through
-          isDrawingMode && 'relative z-0', // Add relative and z-0 to push it behind the canvas (z-10)
+          !editable && 'bg-muted/50 cursor-not-allowed', // Apply disabled styles when not editable
           className
         ),
         'aria-labelledby': labelId || '', // Use aria-labelledby for accessibility, provide empty string if undefined
@@ -342,7 +340,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           zoomStep={ZOOM_STEP}
         />
       )}
-      <div className="relative border rounded-md overflow-auto" style={{ height: '300px' }}> {/* Added overflow-auto and fixed height */}
+      <div className="relative border rounded-md overflow-auto" style={{ height: '300px' }}>
         {isDrawingMode && editable ? (
           <canvas
             ref={canvasRef}
@@ -362,8 +360,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
               height: '100%', // Ensure canvas fills its container at 1x zoom
             }}
           />
-        ) : null}
-        <EditorContent editor={editor} />
+        ) : (
+          <EditorContent editor={editor} />
+        )}
       </div>
 
       <AlertDialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
