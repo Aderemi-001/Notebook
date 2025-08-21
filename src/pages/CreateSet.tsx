@@ -51,7 +51,9 @@ const CreateSet = () => {
     },
   });
 
-  const { append } = useFieldArray({
+  // The 'append' function here is not used directly in this component,
+  // as FlashcardEditor manages its own field array operations.
+  useFieldArray({
     control: form.control,
     name: "cards",
   });
