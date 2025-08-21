@@ -14,6 +14,10 @@ interface RichTextEditorToolbarProps {
   setIsDrawingMode: (mode: boolean) => void;
   drawingColor: string;
   setDrawingColor: (color: string) => void;
+  isErasing: boolean; // New prop
+  setIsErasing: (erasing: boolean) => void; // New prop
+  eraserSize: number; // New prop
+  setEraserSize: (size: number) => void; // New prop
   clearCanvas: () => void;
   insertDrawing: () => void;
   analyzeDrawing: () => void;
@@ -30,6 +34,10 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
   setIsDrawingMode,
   drawingColor,
   setDrawingColor,
+  isErasing,
+  setIsErasing,
+  eraserSize,
+  setEraserSize,
   clearCanvas,
   insertDrawing,
   analyzeDrawing,
@@ -51,6 +59,10 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
         <DrawingControls
           drawingColor={drawingColor}
           setDrawingColor={setDrawingColor}
+          isErasing={isErasing}
+          setIsErasing={setIsErasing}
+          eraserSize={eraserSize}
+          setEraserSize={setEraserSize}
           clearCanvas={clearCanvas}
           insertDrawing={insertDrawing}
           analyzeDrawing={analyzeDrawing}

@@ -3,11 +3,16 @@ import { Toggle } from '@/components/ui/toggle';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Slider } from '@/components/ui/slider'; // Import Slider
 import { Palette, Eraser, CheckCircle2, Brain, ZoomIn, ZoomOut } from 'lucide-react';
 
 interface DrawingControlsProps {
   drawingColor: string;
   setDrawingColor: (color: string) => void;
+  isErasing: boolean;
+  setIsErasing: (erasing: boolean) => void;
+  eraserSize: number;
+  setEraserSize: (size: number) => void;
   clearCanvas: () => void;
   insertDrawing: () => void;
   analyzeDrawing: () => void;
@@ -24,12 +29,16 @@ const DRAWING_COLORS = [
   { name: 'Blue', hex: '#3b82f6' },
   { name: 'Green', hex: '#22c55e' },
   { name: 'Yellow', hex: '#eab308' },
-  { name: 'White', hex: '#ffffff' }, // For eraser effect on light background
+  // Removed 'White' as it's no longer needed for erasing
 ];
 
 const DrawingControls: React.FC<DrawingControlsProps> = ({
   drawingColor,
   setDrawingColor,
+  isErasing,
+  setIsErasing,
+  eraserSize,
+  setEraserSize,
   clearCanvas,
   insertDrawing,
   analyzeDrawing,
@@ -58,6 +67,7 @@ const DrawingControls: React.FC<DrawingControlsProps> = ({
                 size="sm"
                 aria-label="Select drawing color"
                 className="px-2 relative"
+                pressed={!isErasing} // Indicate if drawing is active
               >
                 <Palette className="h-4 w-4" />
                 <div
@@ -76,8 +86,11 @@ const DrawingControls: React.FC<DrawingControlsProps> = ({
                 <TooltipTrigger asChild>
                   <Toggle
                     size="sm"
-                    pressed={drawingColor === colorOption.hex}
-                    onPressedChange={() => setDrawingColor(colorOption.hex)}
+                    pressed={drawingColor === colorOption.hex && !isErasing}
+                    onPressedChange={() => {
+                      setDrawingColor(colorOption.hex);
+                      setIsErasing(false); // Turn off eraser when selecting a color
+                    }}
                     aria-label={`Set drawing color to ${colorOption.name}`}
                     className="relative"
                   >
@@ -93,6 +106,49 @@ const DrawingControls: React.FC<DrawingControlsProps> = ({
               </Tooltip>
             </TooltipProvider>
           ))}
+        </PopoverContent>
+      </Popover>
+
+      {/* Eraser Toggle and Size */}
+      <Popover>
+        <TooltipProvider>
+          <Tooltip>
+            <PopoverTrigger asChild>
+              <Toggle
+                size="sm"
+                pressed={isErasing}
+                aria-label="Toggle eraser"
+                className="px-2"
+              >
+                <Eraser className="h-4 w-4" />
+              </Toggle>
+            </PopoverTrigger>
+          </Tooltip>
+        </TooltipProvider>
+        <PopoverContent className="w-auto p-2 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Eraser Size:</span>
+            <span className="text-sm font-medium">{eraserSize}px</span>
+          </div>
+          <Slider
+            min={5}
+            max={50}
+            step={1}
+            value={[eraserSize]}
+            onValueChange={(val) => {
+              setEraserSize(val[0]);
+              setIsErasing(true); // Ensure eraser is active when adjusting size
+            }}
+            className="w-[150px]"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsErasing(true)}
+            className="w-full"
+          >
+            Activate Eraser
+          </Button>
         </PopoverContent>
       </Popover>
 

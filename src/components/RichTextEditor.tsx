@@ -32,10 +32,14 @@ const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2.0;
 const ZOOM_STEP = 0.1;
 const BASE_LINE_WIDTH = 3; // Base line width for drawing
+const BASE_ERASER_SIZE = 15; // Default eraser size
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, labelId }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#000000'); // Default to black
+  const [isErasing, setIsErasing] = useState(false); // New state for eraser mode
+  const [eraserSize, setEraserSize] = useState(BASE_ERASER_SIZE); // New state for eraser size
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -176,12 +180,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   useEffect(() => {
     if (ctxRef.current) {
       ctxRef.current.strokeStyle = drawingColor;
-      ctxRef.current.lineWidth = BASE_LINE_WIDTH;
+      ctxRef.current.lineWidth = isErasing ? eraserSize : BASE_LINE_WIDTH;
+      ctxRef.current.globalCompositeOperation = isErasing ? 'destination-out' : 'source-over';
     }
     if (isDrawingMode) {
       clearCanvas(); // Clear canvas when entering drawing mode
     }
-  }, [isDrawingMode, drawingColor, clearCanvas]);
+  }, [isDrawingMode, drawingColor, isErasing, eraserSize, clearCanvas]);
 
 
   // Drawing functions
@@ -329,6 +334,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           setIsDrawingMode={setIsDrawingMode}
           drawingColor={drawingColor}
           setDrawingColor={setDrawingColor}
+          isErasing={isErasing} // Pass new state
+          setIsErasing={setIsErasing} // Pass new state setter
+          eraserSize={eraserSize} // Pass new state
+          setEraserSize={setEraserSize} // Pass new state setter
           clearCanvas={clearCanvas}
           insertDrawing={insertDrawing}
           analyzeDrawing={analyzeDrawing}
