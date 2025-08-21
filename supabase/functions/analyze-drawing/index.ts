@@ -57,10 +57,17 @@ serve(async (req) => {
     };
 
     const prompt = `
+      You are an expert at transcribing handwritten content from images.
       Analyze the content of this image, which is a drawing on a white background with black lines.
-      1.  **Transcribe any handwritten text or numbers accurately.** If it's a single character or number, identify it.
-      2.  **Describe any simple diagrams, sketches, or shapes.**
-      Provide a concise, plain text output of your observations, without any introductory or concluding remarks. Prioritize accurate transcription of text and numbers.
+
+      **Primary Goal:** Accurately transcribe any handwritten text (letters, words) or numbers.
+      If the image contains a clear single character or number, output *only* that character or number.
+      If there are multiple distinct characters/numbers, transcribe them all.
+
+      **Secondary Goal (only if no clear text/numbers are present):** Describe any simple diagrams, sketches, or abstract shapes.
+
+      Provide a concise, plain text output of your observations, without any introductory or concluding remarks.
+      Prioritize accurate transcription of text and numbers above all else.
     `;
 
     const geminiResponse = await fetch(GEMINI_API_URL, {
