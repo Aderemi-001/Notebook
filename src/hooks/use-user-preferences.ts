@@ -15,8 +15,11 @@ export interface UserPreferences {
 const fetchUserPreferences = async (): Promise<UserPreferences | null> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
+    console.log("No authenticated user found for preferences.");
     return null;
   }
+
+  console.log("Attempting to fetch user preferences for user ID:", user.id);
 
   const { data, error } = await supabase
     .from('user_preferences')
@@ -24,10 +27,16 @@ const fetchUserPreferences = async (): Promise<UserPreferences | null> => {
     .eq('user_id', user.id)
     .single();
 
-  if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
-    throw error;
+  if (error) {
+    console.error("Error fetching user preferences:", error);
+    if (error.code === 'PGRST116') { // PGRST116 means no rows found
+      console.warn("No user preferences found for this user (PGRST116). A default will be inserted on first update.");
+      return null;
+    }
+    throw error; // Re-throw other errors, including 406
   }
 
+  console.log("Successfully fetched user preferences:", data);
   return data as UserPreferences | null;
 };
 
@@ -36,6 +45,8 @@ const updateUserPreferences = async (preferences: Partial<UserPreferences>): Pro
   if (!user) {
     throw new Error("User not authenticated.");
   }
+
+  console.log("Attempting to update user preferences for user ID:", user.id, "with data:", preferences);
 
   const { data, error } = await supabase
     .from('user_preferences')
@@ -47,8 +58,10 @@ const updateUserPreferences = async (preferences: Partial<UserPreferences>): Pro
     .single();
 
   if (error) {
+    console.error("Error updating user preferences:", error);
     throw error;
   }
+  console.log("Successfully updated user preferences:", data);
   return data as UserPreferences;
 };
 
