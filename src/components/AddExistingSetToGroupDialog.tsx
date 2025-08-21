@@ -16,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Loader2, PlusCircle, Search } from 'lucide-react';
-import { Skeleton } => '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 interface StudySet {
