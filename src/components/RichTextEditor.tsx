@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
+import StarterKit from '@tiptap/extension-starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
@@ -176,7 +176,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   useEffect(() => {
     if (ctxRef.current) {
       ctxRef.current.strokeStyle = drawingColor;
-      ctxRef.current.lineWidth = BASE_LINE_WIDTH; // Removed zoomLevel division
+      ctxRef.current.lineWidth = BASE_LINE_WIDTH;
     }
     if (isDrawingMode) {
       clearCanvas(); // Clear canvas when entering drawing mode
@@ -187,8 +187,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   // Drawing functions
   const startDrawing = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!ctxRef.current || !canvasRef.current) return;
+    event.preventDefault(); // Prevent default touch/mouse behavior
     
-    const canvas = canvas.current;
+    const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     let clientX: number;
     let clientY: number;
@@ -199,7 +200,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       clientY = touch.clientY;
     } else { // It's a mouse event
       clientX = event.nativeEvent.clientX;
-      clientY = event.nativeEvent.clientY;
+      clientY = event.nativeEvent.clientY; // Corrected: use nativeEvent.clientY
     }
 
     // Calculate offsetX and offsetY relative to the canvas
@@ -217,6 +218,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
   const draw = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !ctxRef.current || !canvasRef.current) return;
+    event.preventDefault(); // Prevent default touch/mouse behavior
     
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -229,7 +231,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       clientY = touch.clientY;
     } else { // It's a mouse event
       clientX = event.nativeEvent.clientX;
-      clientY = event.nativeEvent.clientY;
+      clientY = event.nativeEvent.clientY; // Corrected: use nativeEvent.clientY
     }
 
     // Calculate offsetX and offsetY relative to the canvas
