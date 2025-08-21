@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut, NotebookText, BarChart2, CalendarCheck, Folder } from "lucide-react"; // Removed Users icon
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut, NotebookText, BarChart2, CalendarCheck, Folder, Users } from "lucide-react"; // Added Users icon
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -263,7 +263,11 @@ const Index = () => {
                 <Folder className="mr-2 h-4 w-4" /> My Groups
               </Link>
             </DropdownMenuItem>
-            {/* Removed Collaboration Spaces Link */}
+            <DropdownMenuItem asChild>
+              <Link to="/collaborations" className="flex items-center"> {/* Added Collaborations Link */}
+                <Users className="mr-2 h-4 w-4" /> Collaborations
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/create" className="flex items-center">
                 <PlusCircle className="mr-2 h-4 w-4" /> Create Set

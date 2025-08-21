@@ -25,6 +25,7 @@ import CreateGroup from "@/pages/CreateGroup";
 import GroupsIndex from "@/pages/GroupsIndex";
 import EditGroup from "@/pages/EditGroup";
 import GroupDetail from "@/pages/GroupDetail";
+import Collaborations from "@/pages/Collaborations"; // Import Collaborations
 import AuthLayout from "@/layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
@@ -256,6 +257,15 @@ const AppContent: React.FC = () => {
               element={
                 <AuthLayout>
                   <EditGroup />
+                </AuthLayout>
+              }
+            />
+            {/* Collaborations Route */}
+            <Route
+              path="/collaborations"
+              element={
+                <AuthLayout>
+                  <Collaborations />
                 </AuthLayout>
               }
             />
