@@ -28,11 +28,11 @@ const fetchUserPreferences = async (): Promise<UserPreferences | null> => {
     .single();
 
   if (error) {
-    console.error("Error fetching user preferences:", error);
     if (error.code === 'PGRST116') { // PGRST116 means no rows found
       console.warn("No user preferences found for this user (PGRST116). A default will be inserted on first update.");
       return null;
     }
+    console.error("Error fetching user preferences:", error); // Only log for other, unexpected errors
     throw error; // Re-throw other errors, including 406
   }
 
