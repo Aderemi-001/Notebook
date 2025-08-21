@@ -16,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Loader2, PlusCircle, Search } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } => '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 interface StudySet {
@@ -96,11 +96,19 @@ const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = 
         throw new Error("User not authenticated.");
       }
 
-      const updates = Array.from(selectedSetIds).map(setId => ({
-        id: setId,
-        group_id: groupId,
-        user_id: user.id, // Explicitly include user_id
-      }));
+      const updates = Array.from(selectedSetIds).map(setId => {
+        const selectedSet = allUserSets?.find(set => set.id === setId);
+        if (!selectedSet) {
+          throw new Error(`Selected set with ID ${setId} not found in fetched data.`);
+        }
+        return {
+          id: selectedSet.id,
+          title: selectedSet.title, // Include existing title
+          description: selectedSet.description, // Include existing description
+          group_id: groupId,
+          user_id: user.id,
+        };
+      });
 
       const { error: updateError } = await supabase
         .from('study_sets')
