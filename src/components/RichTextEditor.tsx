@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
-import TaskList from '@tiptap/extension-list-item'; // Corrected import for TaskList base
+import TaskList from '@tiptap/extension-task-list'; // Corrected import for TaskList base
 import TaskItem from '@tiptap/extension-task-item';
 import Image from '@tiptap/extension-image'; // Import Image extension
 import { cn } from '@/lib/utils';
