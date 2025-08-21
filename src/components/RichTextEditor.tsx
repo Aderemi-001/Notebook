@@ -85,7 +85,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   }
 
   return (
-    <div className="border rounded-md">
+    <div className=""> {/* Removed border rounded-md from here */}
       {editable && (
         <RichTextEditorToolbar editor={editor} />
       )}
