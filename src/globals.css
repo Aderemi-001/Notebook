@@ -163,44 +163,44 @@
     --sidebar-ring: 200 70% 40%;
   }
 
-  /* Default Dark Palette */
+  /* Default Dark Palette (New Scheme) */
   .dark.palette-default-dark {
-    --background: 240 10% 3.9%; /* Very dark charcoal/near black */
-    --foreground: 210 40% 98%; /* Lighter foreground for readability */
+    --background: 220 20% 10%; /* Deep desaturated blue-grey */
+    --foreground: 210 40% 95%; /* Light, slightly warm white */
 
-    --card: 240 10% 8%; /* Slightly lighter than background for cards */
-    --card-foreground: 210 40% 98%;
+    --card: 220 20% 15%; /* Slightly lighter card background */
+    --card-foreground: 210 40% 95%;
 
-    --popover: 240 10% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 20% 15%;
+    --popover-foreground: 210 40% 95%;
 
-    --primary: 217.2 91.2% 59.8%; /* Vibrant blue */
-    --primary-foreground: 210 40% 98%; /* White */
+    --primary: 210 70% 50%; /* A clear, medium blue for primary actions */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 15%; /* Darker grey for secondary elements */
-    --secondary-foreground: 210 20% 80%;
+    --secondary: 220 15% 25%; /* A darker grey for secondary elements */
+    --secondary-foreground: 210 20% 75%;
 
-    --muted: 240 5% 15%;
-    --muted-foreground: 215 20% 80%; /* Much lighter muted text */
+    --muted: 220 15% 25%;
+    --muted-foreground: 215 10% 65%; /* Readable muted text */
 
-    --accent: 240 5% 15%;
-    --accent-foreground: 210 20% 80%;
+    --accent: 220 15% 25%;
+    --accent-foreground: 210 20% 75%;
 
-    --destructive: 0 84.2% 60.2%; /* Red */
+    --destructive: 0 84.2% 60.2%; /* Red (kept) */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 240 5% 35%; /* Lighter border for better visibility */
-    --input: 240 5% 20%; /* Slightly lighter input background */
-    --ring: 217.2 91.2% 59.8%; /* Primary blue */
+    --border: 220 15% 35%; /* Clearer border for elements */
+    --input: 220 15% 20%; /* Slightly lighter input background */
+    --ring: 210 70% 50%; /* Primary blue */
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 210 40% 95%;
+    --sidebar-primary: 210 70% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 220 15% 25%;
+    --sidebar-accent-foreground: 210 20% 75%;
+    --sidebar-border: 220 15% 35%;
+    --sidebar-ring: 210 70% 50%;
   }
 
   /* Dark Palette 1 (Deep Forest) */
