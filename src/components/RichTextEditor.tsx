@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
-import TaskList from '@tiptap/extension-task-list'; // Corrected import for TaskList base
+import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
-import Image from '@tiptap/extension-image'; // Import Image extension
+import Image from '@tiptap/extension-image';
 import { cn } from '@/lib/utils';
 import RichTextEditorToolbar from './RichTextEditorToolbar';
 import {
@@ -18,23 +18,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
-import { supabase } from '@/integrations/supabase/client'; // Added this import
+import { supabase } from '@/integrations/supabase/client';
 
 interface RichTextEditorProps {
   content: string;
   onContentChange: (content: string) => void;
   editable?: boolean;
   className?: string;
-  labelId?: string; // New prop for aria-labelledby
+  labelId?: string;
 }
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2.0;
 const ZOOM_STEP = 0.1;
-const BASE_LINE_WIDTH = 3; // Base line width for drawing
-const BASE_ERASER_SIZE = 15; // Default eraser size
+const BASE_LINE_WIDTH = 3;
+const BASE_ERASER_SIZE = 15;
 
-// Utility to generate SVG for custom cursor
 const generateEraserCursor = (size: number) => {
   const radius = size / 2;
   const svg = `
@@ -42,14 +41,12 @@ const generateEraserCursor = (size: number) => {
       <circle cx="${radius}" cy="${radius}" r="${radius - 0.5}" stroke="black" stroke-width="1" fill="none" />
     </svg>
   `;
-  // Encode SVG for URL
   const encodedSvg = encodeURIComponent(svg)
     .replace(/'/g, '%27')
     .replace(/"/g, '%22');
   return `url("data:image/svg+xml;utf8,${encodedSvg}") ${radius} ${radius}, none`;
 };
 
-// Utility to generate SVG for pen cursor
 const generatePenCursor = () => {
   const svg = `
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
@@ -60,22 +57,21 @@ const generatePenCursor = () => {
   const encodedSvg = encodeURIComponent(svg)
     .replace(/'/g, '%27')
     .replace(/"/g, '%22');
-  return `url("data:image/svg+xml;utf8,${encodedSvg}") 0 24, auto`; // Adjust hotspot for pen tip
+  return `url("data:image/svg+xml;utf8,${encodedSvg}") 0 24, auto`;
 };
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, labelId }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
-  const [drawingColor, setDrawingColor] = useState('#000000'); // Default to black
-  const [isErasing, setIsErasing] = useState(false); // New state for eraser mode
-  const [eraserSize, setEraserSize] = useState(BASE_ERASER_SIZE); // New state for eraser size
-  const [customCursorStyle, setCustomCursorStyle] = useState('crosshair'); // State for custom cursor
+  const [drawingColor, setDrawingColor] = useState('#000000');
+  const [isErasing, setIsErasing] = useState(false);
+  const [eraserSize, setEraserSize] = useState(BASE_ERASER_SIZE);
+  const [customCursorStyle, setCustomCursorStyle] = useState('crosshair');
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1); // New zoom state
+  const [zoomLevel, setZoomLevel] = useState(1);
 
-  // State for the replace confirmation dialog
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
   const [textToReplace, setTextToReplace] = useState('');
 
@@ -129,25 +125,25 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           class: 'flex items-baseline gap-2',
         },
       }),
-      Image.configure({ // Configure Image extension
+      Image.configure({
         inline: true,
-        allowBase64: true, // Allow base64 images
+        allowBase64: true,
       }),
     ],
     content: content,
     onUpdate: ({ editor }) => {
       onContentChange(editor.getHTML());
     },
-    editable: editable && !isDrawingMode, // Disable Tiptap editing when in drawing mode
+    editable: editable && !isDrawingMode,
     editorProps: {
       attributes: {
         class: cn(
-          'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4', // Removed border here, as parent div has it
+          'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4',
           'user-select-text touch-action-auto',
-          !editable && 'bg-muted/50 cursor-not-allowed', // Apply disabled styles when not editable
+          !editable && 'bg-muted/50 cursor-not-allowed',
           className
         ),
-        'aria-labelledby': labelId || '', // Use aria-labelledby for accessibility, provide empty string if undefined
+        'aria-labelledby': labelId || '',
       },
     },
   });
@@ -157,13 +153,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       const canvas = canvasRef.current;
       const ctx = ctxRef.current;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Fill with white after clearing to ensure white background in toDataURL
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
   }, []);
 
-  // Effect for initializing canvas context and handling resizes
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -175,7 +169,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     ctx.lineJoin = 'round';
     ctxRef.current = ctx;
 
-    // Initial setup
     const parentDiv = canvas.parentElement;
     if (parentDiv) {
       canvas.width = parentDiv.clientWidth;
@@ -188,12 +181,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       for (let entry of entries) {
         if (entry.target === canvas) {
           const { width, height } = entry.contentRect;
-          // Only update if dimensions actually changed to avoid infinite loops
           if (canvas.width !== width || canvas.height !== height) {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); // Save current drawing
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             canvas.width = width;
             canvas.height = height;
-            ctx.putImageData(imageData, 0, 0); // Restore drawing
+            ctx.putImageData(imageData, 0, 0);
           }
         }
       }
@@ -204,32 +196,35 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     return () => {
       resizeObserver.unobserve(canvas);
     };
-  }, []); // Empty dependency array: runs once on mount
+  }, []);
 
-  // Effect for updating drawing styles
+  // New effect to clear canvas when exiting drawing mode
+  useEffect(() => {
+    if (!isDrawingMode) {
+      clearCanvas();
+    }
+  }, [isDrawingMode, clearCanvas]);
+
   useEffect(() => {
     if (ctxRef.current) {
       ctxRef.current.strokeStyle = drawingColor;
       ctxRef.current.lineWidth = isErasing ? eraserSize : BASE_LINE_WIDTH;
       ctxRef.current.globalCompositeOperation = isErasing ? 'destination-out' : 'source-over';
     }
-    // Removed clearCanvas() call from here
   }, [isDrawingMode, drawingColor, isErasing, eraserSize]);
 
-  // Effect for updating custom cursor style
   useEffect(() => {
     if (isDrawingMode) {
       if (isErasing) {
         setCustomCursorStyle(generateEraserCursor(eraserSize));
       } else {
-        setCustomCursorStyle(generatePenCursor()); // Use pen cursor for drawing
+        setCustomCursorStyle(generatePenCursor());
       }
     } else {
-      setCustomCursorStyle('auto'); // Default cursor for text editing mode
+      setCustomCursorStyle('auto');
     }
   }, [isDrawingMode, isErasing, eraserSize]);
 
-  // Drawing functions
   const getCoordinates = (event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -238,20 +233,18 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     let clientX: number;
     let clientY: number;
 
-    if ('touches' in event.nativeEvent) { // It's a touch event
+    if ('touches' in event.nativeEvent) {
       const touch = event.nativeEvent.touches[0];
       clientX = touch.clientX;
       clientY = touch.clientY;
-    } else { // It's a mouse event
+    } else {
       clientX = event.nativeEvent.clientX;
       clientY = event.nativeEvent.clientY;
     }
 
-    // Calculate offsetX and offsetY relative to the canvas
     const offsetX = clientX - rect.left;
     const offsetY = clientY - rect.top;
 
-    // Adjust coordinates for zoom level
     const scaledOffsetX = offsetX / zoomLevel;
     const scaledOffsetY = offsetY / zoomLevel;
 
@@ -262,7 +255,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     if (!ctxRef.current || !canvasRef.current) {
       return;
     }
-    event.preventDefault(); // Prevent default touch/mouse behavior
+    event.preventDefault();
     
     const { x, y } = getCoordinates(event);
     ctxRef.current.beginPath();
@@ -272,7 +265,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
   const draw = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !ctxRef.current || !canvasRef.current) return;
-    event.preventDefault(); // Prevent default touch/mouse behavior
+    event.preventDefault();
     
     const { x, y } = getCoordinates(event);
     ctxRef.current.lineTo(x, y);
@@ -289,18 +282,17 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     if (editor && canvasRef.current) {
       const dataUrl = canvasRef.current.toDataURL('image/png');
       editor.chain().focus().setImage({ src: dataUrl }).run();
-      clearCanvas(); // Clear canvas after inserting
-      setIsDrawingMode(false); // Exit drawing mode
+      clearCanvas();
+      setIsDrawingMode(false);
     }
   }, [editor, clearCanvas]);
 
   const analyzeDrawing = useCallback(async () => {
     if (canvasRef.current) {
       const dataUrl = canvasRef.current.toDataURL('image/png');
-      const base64Data = dataUrl.split(',')[1]; // Get only the base64 part
-      const mimeType = 'image/png'; // Assuming PNG from canvas
+      const base64Data = dataUrl.split(',')[1];
+      const mimeType = 'image/png';
 
-      // Show loading toast
       const toastId = showLoading("AI is analyzing your drawing...");
 
       try {
@@ -340,14 +332,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         showError(err.message || "An unexpected error occurred during drawing analysis.");
         console.error("AI drawing analysis error:", err);
       } finally {
-        dismissToast(toastId); // Dismiss the loading toast
+        dismissToast(toastId);
       }
     }
   }, [editor]);
 
   const handleConfirmReplace = useCallback(() => {
     if (editor && textToReplace) {
-      // Insert the new text as a new paragraph at the end of the document
       editor.chain().focus().insertContentAt(editor.state.doc.content.size, '<p>' + textToReplace + '</p>').run();
       showSuccess("AI transcription added to note content!");
     }
@@ -374,10 +365,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           setIsDrawingMode={setIsDrawingMode}
           drawingColor={drawingColor}
           setDrawingColor={setDrawingColor}
-          isErasing={isErasing} // Pass new state
-          setIsErasing={setIsErasing} // Pass new state setter
-          eraserSize={eraserSize} // Pass new state
-          setEraserSize={setEraserSize} // Pass new state setter
+          isErasing={isErasing}
+          setIsErasing={setIsErasing}
+          eraserSize={eraserSize}
+          setEraserSize={setEraserSize}
           clearCanvas={clearCanvas}
           insertDrawing={insertDrawing}
           analyzeDrawing={analyzeDrawing}
@@ -388,22 +379,20 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           zoomStep={ZOOM_STEP}
         />
       )}
-      <div className="relative border rounded-md overflow-hidden" style={{ height: '300px' }}> {/* Changed overflow-auto to overflow-hidden */}
-        {/* Editor Content Layer */}
+      <div className="relative border rounded-md overflow-hidden" style={{ height: '300px' }}>
         <div className={cn(
-          "absolute inset-0", // Cover the whole area
-          isDrawingMode ? "pointer-events-none z-0 opacity-50" : "z-10 opacity-100", // Control visibility and interaction
+          "absolute inset-0",
+          isDrawingMode ? "pointer-events-none z-0 opacity-50" : "z-10 opacity-100",
           "transition-opacity duration-300"
         )}>
           <EditorContent editor={editor} />
         </div>
 
-        {/* Canvas Drawing Layer */}
         <canvas
           ref={canvasRef}
           className={cn(
             "absolute top-0 left-0 bg-white dark:bg-gray-900",
-            isDrawingMode ? "z-20 pointer-events-auto" : "z-0 pointer-events-none" // Bring to front and make interactive when drawing
+            isDrawingMode ? "z-20 pointer-events-auto" : "z-0 pointer-events-none"
           )}
           onMouseDown={startDrawing}
           onMouseMove={draw}
@@ -416,9 +405,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
             transform: `scale(${zoomLevel})`, 
             transformOrigin: 'top left',
             touchAction: 'none',
-            width: '100%', // Ensure canvas fills its container at 1x zoom
-            height: '100%', // Ensure canvas fills its container at 1x zoom
-            cursor: customCursorStyle, // Apply custom cursor here
+            width: '100%',
+            height: '100%',
+            cursor: customCursorStyle,
           }}
         />
       </div>
