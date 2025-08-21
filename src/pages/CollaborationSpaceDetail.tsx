@@ -82,8 +82,8 @@ const fetchSpaceDetails = async (spaceId: string): Promise<CollaborationSpace> =
       description,
       created_at,
       created_by_user_id,
-      profiles(display_name),
-      space_members(
+      profiles(display_name), // Re-added profiles join
+      space_members( // Re-added space_members join
         user_id,
         role,
         profiles(display_name)
@@ -144,7 +144,7 @@ const CollaborationSpaceDetail: React.FC = () => {
   const { data: space, isLoading, isError, error } = useQuery<CollaborationSpace, Error>({
     queryKey: ['collaborationSpace', spaceId],
     queryFn: () => fetchSpaceDetails(spaceId!),
-    enabled: !!spaceId && currentUserId !== null, // Only enable when spaceId and currentUserId are known
+    enabled: !!spaceId && currentUserId !== null,
     onSuccess: (data) => {
       if (currentUserId) {
         setIsOwner(data.created_by_user_id === currentUserId);
@@ -174,7 +174,7 @@ const CollaborationSpaceDetail: React.FC = () => {
       dismissToast(toastId);
       showSuccess(`${memberDisplayName} removed successfully!`);
       queryClient.invalidateQueries({ queryKey: ['collaborationSpace', spaceId] });
-      queryClient.invalidateQueries({ queryKey: ['collaborationSpaces'] }); // To update index page
+      queryClient.invalidateQueries({ queryKey: ['collaborationSpaces'] });
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message || "Failed to remove member.");
@@ -222,7 +222,7 @@ const CollaborationSpaceDetail: React.FC = () => {
       const { error } = await supabase
         .from('space_members')
         .insert(membersToInsert)
-        .select(); // Select to get the inserted data, though not strictly needed here
+        .select();
 
       if (error) throw error;
 
@@ -238,6 +238,41 @@ const CollaborationSpaceDetail: React.FC = () => {
       console.error("Add members error:", err);
     } finally {
       setIsAddingMembers(false);
+    }
+  };
+
+  const handleDeleteSpace = async (spaceId: string, spaceName: string) => {
+    const toastId = showLoading(`Deleting collaboration space "${spaceName}"...`);
+    try {
+      if (!currentUserId) {
+        throw new Error("User not authenticated.");
+      }
+
+      const { data: spaceData, error: fetchSpaceError } = await supabase
+        .from('collaboration_spaces')
+        .select('created_by_user_id')
+        .eq('id', spaceId)
+        .single();
+
+      if (fetchSpaceError || !spaceData || spaceData.created_by_user_id !== currentUserId) {
+        throw new Error("You do not have permission to delete this space.");
+      }
+
+      const { error } = await supabase
+        .from('collaboration_spaces')
+        .delete()
+        .eq('id', spaceId);
+
+      if (error) throw error;
+
+      dismissToast(toastId);
+      showSuccess(`Collaboration space "${spaceName}" deleted successfully!`);
+      queryClient.invalidateQueries({ queryKey: ['collaborationSpaces'] });
+      navigate('/collaboration'); // Redirect after deletion
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message || "Failed to delete collaboration space.");
+      console.error("Delete space error:", err);
     }
   };
 
@@ -259,12 +294,24 @@ const CollaborationSpaceDetail: React.FC = () => {
       dismissToast(toastId);
       showSuccess(`Successfully left "${space?.name}".`);
       queryClient.invalidateQueries({ queryKey: ['collaborationSpaces'] });
-      navigate('/collaboration'); // Redirect to collaboration index
+      navigate('/collaboration');
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message || "Failed to leave space.");
       console.error("Leave space error:", err);
     }
+  };
+
+  const handleCheckboxChange = (userId: string, checked: boolean) => {
+    setSelectedUsersToAdd(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(userId);
+      } else {
+        newSet.delete(userId);
+      }
+      return newSet;
+    });
   };
 
   if (!spaceId || currentUserId === null) {
@@ -417,7 +464,7 @@ const CollaborationSpaceDetail: React.FC = () => {
               </Dialog>
             )}
             <DropdownMenuSeparator />
-            {!isOwner && ( // Only show leave option if not the owner
+            {!isOwner && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center cursor-pointer text-destructive">
@@ -514,7 +561,7 @@ const CollaborationSpaceDetail: React.FC = () => {
                 <span className="text-sm text-muted-foreground">{member.role.charAt(0).toUpperCase() + member.role.slice(1)}</span>
               </CardHeader>
               <CardContent className="flex justify-end gap-2 pt-0">
-                {canManageMembers && member.user_id !== currentUserId && ( // Can't manage self
+                {canManageMembers && member.user_id !== currentUserId && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
@@ -562,7 +609,6 @@ const CollaborationSpaceDetail: React.FC = () => {
         </div>
       )}
 
-      {/* Placeholder for Shared Study Sets */}
       <h2 className="text-2xl font-semibold mb-4 mt-8">Shared Study Sets (Coming Soon!)</h2>
       <NotebookCard>
         <CardContent className="pl-10">
@@ -572,7 +618,6 @@ const CollaborationSpaceDetail: React.FC = () => {
         </CardContent>
       </NotebookCard>
 
-      {/* Placeholder for Shared Notes */}
       <h2 className="text-2xl font-semibold mb-4 mt-8">Shared Notes (Coming Soon!)</h2>
       <NotebookCard>
         <CardContent className="pl-10">

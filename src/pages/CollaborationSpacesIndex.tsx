@@ -41,7 +41,6 @@ interface CollaborationSpace {
 }
 
 const fetchCollaborationSpaces = async (userId: string): Promise<CollaborationSpace[]> => {
-  // We already check for user in the useQuery enabled option, but good to keep here too
   if (!userId) {
     throw new Error("User not authenticated for fetching spaces.");
   }
@@ -53,7 +52,8 @@ const fetchCollaborationSpaces = async (userId: string): Promise<CollaborationSp
       name,
       description,
       created_at,
-      created_by_user_id
+      created_by_user_id,
+      profiles(display_name) // Re-added profiles join
     `)
     .order('name', { ascending: true });
 
@@ -62,11 +62,10 @@ const fetchCollaborationSpaces = async (userId: string): Promise<CollaborationSp
     throw new Error(`Failed to fetch your collaboration spaces: ${error.message}`);
   }
   
-  // Since profiles and space_members are not joined, manually add placeholder data
+  // space_members is not joined here, so it will always be an empty array for now
   return data?.map(space => ({
     ...space,
-    profiles: null, // Placeholder
-    space_members: [], // Placeholder
+    space_members: [], 
   })) || [];
 };
 
@@ -86,14 +85,13 @@ const CollaborationSpacesIndex: React.FC = () => {
 
   const { data: spaces, isLoading, isError, error } = useQuery<CollaborationSpace[], Error>({
     queryKey: ['collaborationSpaces'],
-    queryFn: () => fetchCollaborationSpaces(currentUserId!), // Pass currentUserId to the fetcher
-    enabled: !!currentUserId, // Only run query when currentUserId is available
+    queryFn: () => fetchCollaborationSpaces(currentUserId!),
+    enabled: !!currentUserId,
   });
 
   const filteredSpaces = spaces?.filter(space =>
     space.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (space.description && space.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    // Cannot filter by profiles.display_name if not fetched
     (space.profiles?.display_name && space.profiles.display_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -104,7 +102,6 @@ const CollaborationSpacesIndex: React.FC = () => {
         throw new Error("User not authenticated.");
       }
 
-      // Check if the current user is the creator of the space
       const { data: spaceData, error: fetchSpaceError } = await supabase
         .from('collaboration_spaces')
         .select('created_by_user_id')
@@ -125,7 +122,6 @@ const CollaborationSpacesIndex: React.FC = () => {
       dismissToast(toastId);
       showSuccess(`Collaboration space "${spaceName}" deleted successfully!`);
       queryClient.invalidateQueries({ queryKey: ['collaborationSpaces'] });
-      // Potentially invalidate queries for linked study sets/notes if they become unlinked
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message || "Failed to delete collaboration space.");
@@ -133,7 +129,7 @@ const CollaborationSpacesIndex: React.FC = () => {
     }
   };
 
-  if (isLoading || isLoadingPreferences || currentUserId === null) { // Wait for currentUserId to be set
+  if (isLoading || isLoadingPreferences || currentUserId === null) {
     return (
       <div className="container mx-auto py-10">
         <Skeleton className="h-8 w-1/2 mb-8" />
@@ -221,8 +217,7 @@ const CollaborationSpacesIndex: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredSpaces.map((space) => {
             const isCreator = space.created_by_user_id === currentUserId;
-            // currentUserSpaceRole is not available with simplified query, so it will be undefined
-            const currentUserSpaceRole = undefined; 
+            const currentUserSpaceRole = undefined; // Still undefined as space_members is not joined here
 
             return (
               <NotebookCard key={space.id} className="h-full flex flex-col">
@@ -231,8 +226,7 @@ const CollaborationSpacesIndex: React.FC = () => {
                     <Users className="mr-2 h-5 w-5 text-primary" /> {space.name}
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground mt-1">
-                    {/* Cannot display creator's name if profiles not joined */}
-                    Created on {format(new Date(space.created_at), 'PPP')}
+                    Created by: {space.profiles?.display_name || 'Unknown User'} on {format(new Date(space.created_at), 'PPP')}
                   </CardDescription>
                   {space.description && (
                     <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
@@ -241,7 +235,6 @@ const CollaborationSpacesIndex: React.FC = () => {
                   )}
                 </CardHeader>
                 <CardContent className="flex justify-end gap-2 pt-0">
-                  {/* Display user's role if they are a member */}
                   {currentUserSpaceRole && (
                     <span className="text-sm text-muted-foreground self-center mr-2">
                       Your Role: {currentUserSpaceRole.charAt(0).toUpperCase() + currentUserSpaceRole.slice(1)}
@@ -252,7 +245,6 @@ const CollaborationSpacesIndex: React.FC = () => {
                       View Space
                     </Button>
                   </Link>
-                  {/* Only creator can delete for now */}
                   {isCreator && preferences?.confirm_deletion ? (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
