@@ -49,6 +49,20 @@ const generateEraserCursor = (size: number) => {
   return `url("data:image/svg+xml;utf8,${encodedSvg}") ${radius} ${radius}, none`;
 };
 
+// Utility to generate SVG for pen cursor
+const generatePenCursor = () => {
+  const svg = `
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+      <path d="m15 5 4 4"/>
+    </svg>
+  `;
+  const encodedSvg = encodeURIComponent(svg)
+    .replace(/'/g, '%27')
+    .replace(/"/g, '%22');
+  return `url("data:image/svg+xml;utf8,${encodedSvg}") 0 24, auto`; // Adjust hotspot for pen tip
+};
+
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, labelId }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#000000'); // Default to black
@@ -204,10 +218,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
   // Effect for updating custom cursor style
   useEffect(() => {
-    if (isDrawingMode && isErasing) {
-      setCustomCursorStyle(generateEraserCursor(eraserSize));
-    } else if (isDrawingMode) {
-      setCustomCursorStyle('crosshair'); // Default drawing cursor
+    if (isDrawingMode) {
+      if (isErasing) {
+        setCustomCursorStyle(generateEraserCursor(eraserSize));
+      } else {
+        setCustomCursorStyle(generatePenCursor()); // Use pen cursor for drawing
+      }
     } else {
       setCustomCursorStyle('auto'); // Default cursor for text editing mode
     }
