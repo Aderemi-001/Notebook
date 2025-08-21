@@ -11,7 +11,8 @@ export default defineConfig(() => ({
   plugins: [
     dyadComponentTagger(), 
     react({
-      jsxRuntime: 'automatic' // Explicitly set JSX runtime
+      jsxRuntime: 'automatic', // Explicitly set JSX runtime
+      include: '**/*.{ts,tsx,js,jsx}', // Explicitly include TS/TSX files for SWC
     })
   ],
   resolve: {
