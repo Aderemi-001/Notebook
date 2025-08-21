@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, CalendarCheck } from "lucide-react";
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, CalendarCheck, FileText, History } from "lucide-react"; // Re-added FileText and History
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -276,6 +276,19 @@ const Index = () => {
             <DropdownMenuItem asChild>
               <Link to="/constellation" className="flex items-center">
                 <Network className="mr-2 h-4 w-4" /> Cognitive Constellation
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+
+            {/* History & Review */}
+            <DropdownMenuItem asChild>
+              <Link to="/past-exams" className="flex items-center">
+                <History className="mr-2 h-4 w-4" /> Past Exams
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/past-essay-questions" className="flex items-center">
+                <FileText className="mr-2 h-4 w-4" /> Past Essay Questions
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
