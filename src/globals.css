@@ -166,13 +166,13 @@
   /* Default Dark Palette */
   .dark.palette-default-dark {
     --background: 240 10% 3.9%; /* Very dark charcoal/near black */
-    --foreground: 210 20% 98%; /* Near white, soft */
+    --foreground: 210 40% 98%; /* Lighter foreground for readability */
 
     --card: 240 10% 8%; /* Slightly lighter than background for cards */
-    --card-foreground: 210 20% 98%;
+    --card-foreground: 210 40% 98%;
 
     --popover: 240 10% 8%;
-    --popover-foreground: 210 20% 98%;
+    --popover-foreground: 210 40% 98%;
 
     --primary: 217.2 91.2% 59.8%; /* Vibrant blue */
     --primary-foreground: 210 40% 98%; /* White */
@@ -181,7 +181,7 @@
     --secondary-foreground: 210 20% 80%;
 
     --muted: 240 5% 15%;
-    --muted-foreground: 215 10% 60%; /* Softer grey for muted text */
+    --muted-foreground: 215 20% 80%; /* Much lighter muted text */
 
     --accent: 240 5% 15%;
     --accent-foreground: 210 20% 80%;
@@ -189,8 +189,8 @@
     --destructive: 0 84.2% 60.2%; /* Red */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 240 5% 25%; /* Subtle dark grey border */
-    --input: 240 5% 25%;
+    --border: 240 5% 35%; /* Lighter border for better visibility */
+    --input: 240 5% 20%; /* Slightly lighter input background */
     --ring: 217.2 91.2% 59.8%; /* Primary blue */
 
     --sidebar-background: 240 5.9% 10%;
