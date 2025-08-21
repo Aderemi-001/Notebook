@@ -25,7 +25,7 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
       description,
       source_text,
       is_public,
-      group_id, // Fetch group_id
+      group_id,
       cards (
         id,
         term,
@@ -38,12 +38,11 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
 
   if (error) {
     console.error("Error fetching study set for edit:", error);
-    // Make the error message more specific by including the Supabase error message
     throw new Error(`Failed to fetch study set for editing: ${error.message}`);
   }
   if (!data) {
     // If data is null, it means either not found or not owned by user
-    throw new Error("Study set not found or you do not have permission to edit it.");
+    throw new new Error("Study set not found or you do not have permission to edit it.");
   }
   return data as StudySetData;
 };
