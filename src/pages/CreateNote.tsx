@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Editor, JSONContent } from '@tiptap/react'; // Import Editor and JSONContent
 
 interface StudySet {
   id: string;
@@ -46,13 +47,15 @@ const CreateNote: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [title, setTitle] = useState<string>('');
-  const [content, setContent] = useState<string>('');
+  const [content, setContent] = useState<JSONContent | string>(''); // Changed type to JSONContent | string
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [selectedStudySetId, setSelectedStudySetId] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
+
+  const editorRef = useRef<Editor | null>(null); // Ref to store editor instance
 
   const { data: userStudySets, isLoading: isLoadingSets, isError: isErrorSets, error: errorSets } = useQuery<StudySet[], Error>({
     queryKey: ['userStudySetsForNotes'],
@@ -87,9 +90,9 @@ const CreateNote: React.FC = () => {
         .insert({
           user_id: currentUser.id,
           title: title.trim(),
-          content: content,
+          content: content, // This will now be JSONContent
           study_set_id: selectedStudySetId,
-          extracted_content_ai: null, // No longer directly saving extracted content from drawing here
+          extracted_content_ai: null,
         })
         .select()
         .single();
@@ -111,7 +114,14 @@ const CreateNote: React.FC = () => {
   };
 
   const handleSummarizeWithAI = async () => {
-    if (!content.trim()) {
+    const editorInstance = editorRef.current;
+    if (!editorInstance) {
+      showError("Editor not ready. Please try again.");
+      return;
+    }
+    const noteContentText = editorInstance.getText(); // Get plain text from editor
+
+    if (!noteContentText.trim()) {
       showError("Please write some content in the note before summarizing.");
       return;
     }
@@ -134,7 +144,7 @@ const CreateNote: React.FC = () => {
             'Authorization': `Bearer ${session.access_token}`,
             'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
           },
-          body: JSON.stringify({ noteContent: content }),
+          body: JSON.stringify({ noteContent: noteContentText }), // Pass plain text
         }
       );
 
@@ -184,19 +194,19 @@ const CreateNote: React.FC = () => {
             />
           </div>
           <div>
-            <Label id="note-content-label">Content</Label> {/* Updated label with id */}
+            <Label id="note-content-label">Content</Label>
             <RichTextEditor
-              labelId="note-content-label" // Pass the labelId here
+              labelId="note-content-label"
               content={content}
               onContentChange={setContent}
               editable={!isSaving}
+              onEditorReady={(instance) => (editorRef.current = instance)} // Pass editor instance
             />
           </div>
-          {/* Summarize button moved here */}
           <div className="flex justify-end">
             <Button
               onClick={handleSummarizeWithAI}
-              disabled={isSummarizing || !content.trim()}
+              disabled={isSummarizing || !editorRef.current?.getText().trim()} // Check content from editor ref
               variant="outline"
             >
               {isSummarizing ? (
@@ -213,8 +223,6 @@ const CreateNote: React.FC = () => {
         </CardContent>
       </NotebookCard>
 
-      {/* Removed AI Extracted Content Card */}
-
       {aiSummary && (
         <NotebookCard className="mb-6">
           <CardHeader>
@@ -228,9 +236,11 @@ const CreateNote: React.FC = () => {
               size="sm"
               className="mt-4"
               onClick={() => {
-                setContent(prev => prev + "\n\n---\n\n**AI Summary:**\n" + aiSummary);
-                setAiSummary(null); // Clear summary after adding to content
-                showSuccess("Summary added to note content!");
+                if (editorRef.current) {
+                  editorRef.current.chain().focus().insertContentAt(editorRef.current.state.doc.content.size, '<p>---</p><p><b>AI Summary:</b></p><p>' + aiSummary + '</p>').run();
+                  setAiSummary(null); // Clear summary after adding to content
+                  showSuccess("Summary added to note content!");
+                }
               }}
             >
               Add to Note Content
@@ -250,7 +260,7 @@ const CreateNote: React.FC = () => {
               <SelectValue placeholder="Select a study set (optional)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="null">No linked set</SelectItem> {/* Option to clear selection */}
+              <SelectItem value="null">No linked set</SelectItem>
               {isLoadingSets ? (
                 <SelectItem disabled value="loading">Loading study sets...</SelectItem>
               ) : userStudySets?.length === 0 ? (
@@ -268,7 +278,6 @@ const CreateNote: React.FC = () => {
         </CardContent>
       </NotebookCard>
 
-      {/* Save button moved to the very end of the page */}
       <div className="flex justify-end mt-8">
         <Button onClick={handleSaveNote} disabled={isSaving || !title.trim() || isLoadingUser}>
           {isSaving ? (

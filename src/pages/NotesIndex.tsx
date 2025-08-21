@@ -29,16 +29,23 @@ import {
 } from "@/components/ui/alert-dialog";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
+import { JSONContent } from '@tiptap/react'; // Import JSONContent
+import { generateHTML } from '@tiptap/html'; // Import generateHTML
+import StarterKit from '@tiptap/starter-kit'; // Import StarterKit
+import Highlight from '@tiptap/extension-highlight'; // Import Highlight
+import TaskList from '@tiptap/extension-task-list'; // Import TaskList
+import TaskItem from '@tiptap/extension-task-item'; // Import TaskItem
+import Image from '@tiptap/extension-image'; // Import Image
 
 interface Note {
   id: string;
   title: string;
-  content: string; // Changed to string as it's stored as HTML
-  extracted_content_ai: string | null; // New field
+  content: JSONContent; // Changed type to JSONContent
+  extracted_content_ai: string | null;
   created_at: string;
   updated_at: string;
   study_set_id: string | null;
-  study_sets: { title: string }[] | null; // Changed to array
+  study_sets: { title: string }[] | null;
 }
 
 const fetchUserNotes = async (): Promise<Note[]> => {
@@ -69,12 +76,20 @@ const fetchUserNotes = async (): Promise<Note[]> => {
   return data || [];
 };
 
-// Function to convert HTML content to plain text preview
-const getPlainTextPreview = (htmlContent: string, maxLength: number = 150): string => {
-  if (!htmlContent) return '';
+// Function to convert JSON content to plain text preview
+const getPlainTextPreview = (jsonContent: JSONContent, maxLength: number = 150): string => {
+  if (!jsonContent) return '';
   try {
+    // Generate HTML from JSON content using the same extensions as the editor
+    const html = generateHTML(jsonContent, [
+      StarterKit,
+      Highlight,
+      TaskList,
+      TaskItem,
+      Image,
+    ]);
     const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const doc = parser.parseFromString(html, 'text/html');
     const text = doc.body.textContent || '';
     return text.trim().length > maxLength ? text.trim().substring(0, maxLength) + '...' : text.trim();
   } catch (e) {

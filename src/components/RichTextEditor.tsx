@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, Editor, JSONContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
@@ -21,11 +21,12 @@ import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast
 import { supabase } from '@/integrations/supabase/client';
 
 interface RichTextEditorProps {
-  content: string;
-  onContentChange: (content: string) => void;
+  content: JSONContent | string; // Can be JSONContent or initial HTML string
+  onContentChange: (content: JSONContent) => void; // Now expects JSONContent
   editable?: boolean;
   className?: string;
   labelId?: string;
+  onEditorReady?: (editor: Editor) => void; // New prop to expose editor instance
 }
 
 const MIN_ZOOM = 0.5;
@@ -60,7 +61,7 @@ const generatePenCursor = () => {
   return `url("data:image/svg+xml;utf8,${encodedSvg}") 0 24, auto`;
 };
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, labelId }) => {
+const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, labelId, onEditorReady }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#000000');
   const [isErasing, setIsErasing] = useState(false);
@@ -130,9 +131,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         allowBase64: true,
       }),
     ],
-    content: content,
+    content: content, // This will now correctly handle JSONContent or initial HTML string
     onUpdate: ({ editor }) => {
-      onContentChange(editor.getHTML());
+      onContentChange(editor.getJSON()); // Pass JSON content
     },
     editable: editable && !isDrawingMode,
     editorProps: {
@@ -204,6 +205,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       clearCanvas();
     }
   }, [isDrawingMode, clearCanvas]);
+
+  // Effect to expose editor instance
+  useEffect(() => {
+    if (editor && onEditorReady) {
+      onEditorReady(editor);
+    }
+  }, [editor, onEditorReady]);
 
   useEffect(() => {
     if (ctxRef.current) {
