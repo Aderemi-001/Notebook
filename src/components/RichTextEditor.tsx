@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { showSuccess, showError } from '@/utils/toast';
+import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 import { supabase } from '@/integrations/supabase/client'; // Added this import
 
 interface RichTextEditorProps {
@@ -183,7 +183,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
 
   // Drawing functions
-  const startDrawing = useCallback(({ nativeEvent }: React.MouseEvent | React.TouchEvent) => {
+  const startDrawing = useCallback(({ nativeEvent }: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!ctxRef.current) return;
     const { offsetX, offsetY } = 'touches' in nativeEvent ? getTouchPos(nativeEvent, canvasRef.current!) : nativeEvent;
     
@@ -196,7 +196,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     setIsDrawing(true);
   }, [zoomLevel]);
 
-  const draw = useCallback(({ nativeEvent }: React.MouseEvent | React.TouchEvent) => {
+  const draw = useCallback(({ nativeEvent }: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !ctxRef.current) return;
     const { offsetX, offsetY } = 'touches' in nativeEvent ? getTouchPos(nativeEvent, canvasRef.current!) : nativeEvent;
 
@@ -230,7 +230,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       const mimeType = 'image/png'; // Assuming PNG from canvas
 
       // Show loading toast
-      const toastId = showSuccess("AI is analyzing your drawing...");
+      const toastId = showLoading("AI is analyzing your drawing...");
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -252,7 +252,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         );
 
         const result = await response.json();
-        showSuccess("Drawing analyzed successfully!");
+        
 
         if (!response.ok || result.error) {
           throw new Error(result?.error || "Failed to analyze drawing.");
@@ -268,6 +268,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       } catch (err: any) {
         showError(err.message || "An unexpected error occurred during drawing analysis.");
         console.error("AI drawing analysis error:", err);
+      } finally {
+        dismissToast(toastId); // Dismiss the loading toast
       }
     }
   }, [editor]);
@@ -289,7 +291,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   }, []);
 
   // Helper to get touch position relative to canvas
-  const getTouchPos = (e: React.TouchEvent, canvas: HTMLCanvasElement) => {
+  const getTouchPos = (e: React.TouchEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
     return {

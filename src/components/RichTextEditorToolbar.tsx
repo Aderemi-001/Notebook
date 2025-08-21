@@ -22,7 +22,7 @@ interface RichTextEditorToolbarProps {
   insertDrawing: () => void;
   analyzeDrawing: () => void;
   zoomLevel: number;
-  setZoomLevel: (level: number) => void;
+  setZoomLevel: (level: number | ((prev: number) => number)) => void;
   minZoom: number;
   maxZoom: number;
   zoomStep: number;
@@ -65,11 +65,11 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
   }
 
   const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + zoomStep, maxZoom));
+    setZoomLevel((prev: number) => Math.min(prev + zoomStep, maxZoom));
   };
 
   const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - zoomStep, minZoom));
+    setZoomLevel((prev: number) => Math.max(prev - zoomStep, minZoom));
   };
 
   return (
@@ -117,32 +117,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
                 </TooltipTrigger>
                 <TooltipContent>Select Drawing Color</TooltipContent>
               </Tooltip>
-            </TooltipProvider>
-            <PopoverContent className="w-auto p-2 flex flex-wrap gap-1">
-              <span className="text-sm text-muted-foreground mr-1 h-8 flex items-center">Color:</span>
-              {DRAWING_COLORS.map((colorOption) => (
-                <TooltipProvider key={colorOption.hex}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Toggle
-                        size="sm"
-                        pressed={drawingColor === colorOption.hex}
-                        onPressedChange={() => setDrawingColor(colorOption.hex)}
-                        aria-label={`Set color to ${colorOption.name}`}
-                        className="relative"
-                      >
-                        <div
-                          className="w-4 h-4 rounded-full border border-foreground/20"
-                          style={{ backgroundColor: colorOption.hex }}
-                        ></div>
-                      </Toggle>
-                    </TooltipTrigger>
-                    <TooltipContent>{colorOption.name}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ))}
-            </PopoverContent>
-          </Popover>
+            </Popover>
 
           {/* Clear Canvas */}
           <TooltipProvider>
