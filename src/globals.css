@@ -52,32 +52,32 @@
   }
 
   .dark {
-    --background: 220 15% 10%; /* Deep, soft dark blue/grey */
-    --foreground: 210 20% 90%; /* Light, readable grey */
+    --background: 240 10% 3.9%; /* Very dark charcoal/near black */
+    --foreground: 210 20% 98%; /* Near white, soft */
 
-    --card: 220 15% 15%; /* Slightly lighter than background for depth */
-    --card-foreground: 210 20% 90%;
+    --card: 240 10% 8%; /* Slightly lighter than background for cards */
+    --card-foreground: 210 20% 98%;
 
-    --popover: 220 15% 15%;
-    --popover-foreground: 210 20% 90%;
+    --popover: 240 10% 8%;
+    --popover-foreground: 210 20% 98%;
 
-    --primary: 217.2 91.2% 59.8%; /* Vibrant blue */
+    --primary: 217.2 91.2% 59.8%; /* Vibrant blue (kept) */
     --primary-foreground: 210 40% 98%; /* White */
 
-    --secondary: 217.2 20% 20%; /* Darker, more distinct grey */
+    --secondary: 240 5% 15%; /* Darker grey for secondary elements */
     --secondary-foreground: 210 20% 80%;
 
-    --muted: 217.2 20% 20%;
-    --muted-foreground: 215 10% 60%; /* Softer, lighter grey for muted text */
+    --muted: 240 5% 15%;
+    --muted-foreground: 215 10% 60%; /* Softer grey for muted text */
 
-    --accent: 217.2 20% 20%;
+    --accent: 240 5% 15%;
     --accent-foreground: 210 20% 80%;
 
-    --destructive: 0 84.2% 60.2%; /* Red */
+    --destructive: 0 84.2% 60.2%; /* Red (kept) */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 15% 25%; /* Subtle, visible border */
-    --input: 217.2 15% 25%;
+    --border: 240 5% 25%; /* Subtle dark grey border */
+    --input: 240 5% 25%;
     --ring: 217.2 91.2% 59.8%; /* Primary blue */
 
     --radius: 0.5rem;
@@ -116,8 +116,8 @@
       to bottom,
       transparent,
       transparent 24px,
-      hsl(220 10% 18%) 25px,
-      hsl(220 10% 18%) 26px
+      hsl(240 10% 12%) 25px, /* Updated dark mode line color */
+      hsl(240 10% 12%) 26px
     );
   }
 
@@ -191,12 +191,12 @@
 
 .dark .login-page-scribble-bg {
   background-image: 
-    url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M-1 1 l2 -2 M0 10 l10 -10 M9 11 l2 -2' stroke='%23303030' stroke-width='0.8' opacity='0.7'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M-1 1 l2 -2 M0 10 l10 -10 M9 11 l2 -2' stroke='%231a1a1a' stroke-width='0.8' opacity='0.7'/%3E%3C/svg%3E"), /* Updated dark mode scribble color */
     repeating-linear-gradient(
       to bottom,
       transparent,
       transparent 24px,
-      hsl(220 10% 18%) 25px,
-      hsl(220 10% 18%) 26px
+      hsl(240 10% 12%) 25px, /* Updated dark mode line color */
+      hsl(240 10% 12%) 26px
     );
 }
