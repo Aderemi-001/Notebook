@@ -226,8 +226,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
   const handleConfirmReplace = useCallback(() => {
     if (editor && textToReplace) {
-      editor.chain().focus().setContent(textToReplace).run();
-      showSuccess("Note content updated with AI transcription!");
+      // Insert the new text as a new paragraph at the end of the document
+      editor.chain().focus().insertContentAt(editor.state.doc.content.size, '<p>' + textToReplace + '</p>').run();
+      showSuccess("AI transcription added to note content!");
     }
     setShowReplaceDialog(false);
     setTextToReplace('');
@@ -288,19 +289,19 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       <AlertDialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Replace Note Content?</AlertDialogTitle>
+            <AlertDialogTitle>Insert Transcribed Text?</AlertDialogTitle>
             <AlertDialogDescription>
               The AI has transcribed your drawing:
               <blockquote className="mt-4 border-l-4 pl-4 italic text-muted-foreground">
                 "{textToReplace}"
               </blockquote>
-              Do you want to replace the current content of your note with this text?
-              This action cannot be undone.
+              Do you want to insert this text at the end of your note?
+              This action will add the transcribed text without removing existing content.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelReplace}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmReplace}>Replace</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmReplace}>Insert</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
