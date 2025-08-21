@@ -61,6 +61,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       TaskList, // Add TaskList extension
       TaskItem.configure({ // Configure TaskItem
         nested: true,
+        HTMLAttributes: {
+          class: 'flex items-start gap-2', // Apply flexbox for alignment
+        },
       }),
     ],
     content: content,
