@@ -236,7 +236,7 @@ const StudyMode = () => {
 
   if (!setId) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         No study set ID provided.
       </div>
     );
@@ -244,7 +244,7 @@ const StudyMode = () => {
 
   if (isLoading || isLoadingPreferences) {
     return (
-      <div className="container mx-auto py-10 flex flex-col items-center">
+      <div className="container mx-auto py-10 flex flex-col items-center animate-fade-in">
         <Skeleton className="h-10 w-3/4 mb-8" />
         <Skeleton className="h-64 w-full max-w-md rounded-lg" />
         <div className="flex gap-4 mt-8">
@@ -257,7 +257,7 @@ const StudyMode = () => {
 
   if (isError) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         Error loading cards: {error?.message || "Unknown error"}
       </div>
     );
@@ -265,7 +265,7 @@ const StudyMode = () => {
 
   if (!cards || cards.length === 0) {
     return (
-      <div className="text-center py-10 border-2 border-dashed rounded-lg">
+      <div className="text-center py-10 border-2 border-dashed rounded-lg animate-fade-in">
         <p className="text-muted-foreground">This study set has no cards due for review, or no cards at all.</p>
         <Button asChild className="mt-4">
           <Link to={`/sets/${setId}`} className="flex items-center">
@@ -279,7 +279,7 @@ const StudyMode = () => {
   }
 
   return (
-    <div className="container mx-auto py-10 flex flex-col items-center">
+    <div className="container mx-auto py-10 flex flex-col items-center animate-fade-in">
       <div className="w-full flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Study Mode</h1>
         <Button asChild variant="outline">

@@ -177,7 +177,7 @@ const EditSet = () => {
 
   if (!setId) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         No study set ID provided for editing.
       </div>
     );
@@ -185,7 +185,7 @@ const EditSet = () => {
 
   if (isLoading || isLoadingUser || isLoadingGroups) {
     return (
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
         <Skeleton className="h-6 w-1/3 mb-4" />
         <Skeleton className="h-4 w-full mb-6" />
@@ -208,7 +208,7 @@ const EditSet = () => {
 
   if (isError) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         Error loading study set for editing: {error?.message || "Unknown error"}
       </div>
     );
@@ -216,14 +216,14 @@ const EditSet = () => {
 
   if (!studySet) {
     return (
-      <div className="container mx-auto py-10 text-center">
+      <div className="container mx-auto py-10 text-center animate-fade-in">
         Study set not found.
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Edit Study Set</h1>
         <Button asChild variant="outline">

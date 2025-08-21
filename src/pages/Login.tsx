@@ -93,7 +93,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 login-page-scribble-bg">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 login-page-scribble-bg animate-fade-in">
       <div className="max-w-md w-full space-y-8">
         <NotebookCard className="p-8">
           <CardHeader className="text-center">

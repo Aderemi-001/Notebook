@@ -170,7 +170,7 @@ const GroupDetail: React.FC = () => {
 
   if (!groupId) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         No group ID provided.
       </div>
     );
@@ -178,7 +178,7 @@ const GroupDetail: React.FC = () => {
 
   if (isLoadingGroup || isLoadingSets) {
     return (
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
         <Skeleton className="h-6 w-1/3 mb-4" />
         <Skeleton className="h-4 w-full mb-6" />
@@ -201,7 +201,7 @@ const GroupDetail: React.FC = () => {
 
   if (isErrorGroup) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         Error loading group details: {errorGroup?.message || "Unknown error"}
       </div>
     );
@@ -209,7 +209,7 @@ const GroupDetail: React.FC = () => {
 
   if (isErrorSets) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         Error loading study sets in group: {errorSets?.message || "Unknown error"}
       </div>
     );
@@ -217,14 +217,14 @@ const GroupDetail: React.FC = () => {
 
   if (!group) {
     return (
-      <div className="container mx-auto py-10 text-center">
+      <div className="container mx-auto py-10 text-center animate-fade-in">
         Group not found.
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold flex items-center">
           <Folder className="mr-3 h-7 w-7 text-primary" /> {group.name}

@@ -129,7 +129,7 @@ const GenerateEssayQuestions: React.FC = () => {
 
   if (isLoadingConcepts) {
     return (
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
         <Skeleton className="h-64 w-full rounded-lg" />
       </div>
@@ -138,14 +138,14 @@ const GenerateEssayQuestions: React.FC = () => {
 
   if (isErrorConcepts) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         Error loading concepts: {errorConcepts?.message || "Unknown error"}
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Generate Essay Questions</h1>
         <DropdownMenu>
@@ -157,7 +157,7 @@ const GenerateEssayQuestions: React.FC = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
               <Link to="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Study Sets
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

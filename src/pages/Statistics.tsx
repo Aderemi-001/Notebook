@@ -174,7 +174,7 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
   if (isErrorStats) {
     showError(errorStats?.message || "Failed to load statistics data.");
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         Error loading statistics: {errorStats?.message || "Unknown error"}
       </div>
     );
@@ -183,14 +183,14 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
   if (isErrorStudyDays) {
     showError(errorStudyDays?.message || "Failed to load study days data.");
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         Error loading study days: {errorStudyDays?.message || "Unknown error"}
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold flex items-center">
           <BarChart2 className="mr-3 h-7 w-7" /> Statistics
@@ -338,7 +338,8 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
           </CardContent>
         </NotebookCard>
       </div>
-    );
+    </div>
+  );
   };
   
   export default Statistics;

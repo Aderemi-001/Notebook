@@ -195,7 +195,7 @@ const EssayPractice: React.FC = () => {
 
   if (!questionId) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         No essay question ID provided.
       </div>
     );
@@ -203,7 +203,7 @@ const EssayPractice: React.FC = () => {
 
   if (isLoadingQuestion || isLoadingResponses) {
     return (
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto py-10 animate-fade-in">
         <Skeleton className="h-8 w-3/4 mb-8" />
         <Skeleton className="h-48 w-full rounded-lg mb-6" />
         <Skeleton className="h-64 w-full rounded-lg" />
@@ -213,7 +213,7 @@ const EssayPractice: React.FC = () => {
 
   if (isErrorQuestion) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         Error loading essay question: {errorQuestion?.message || "Unknown error"}
       </div>
     );
@@ -221,14 +221,14 @@ const EssayPractice: React.FC = () => {
 
   if (!question) {
     return (
-      <div className="container mx-auto py-10 text-center">
+      <div className="container mx-auto py-10 text-center animate-fade-in">
         Essay question not found.
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Practice Essay</h1>
         <Button asChild variant="outline">

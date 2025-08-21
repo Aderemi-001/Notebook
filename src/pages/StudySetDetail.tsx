@@ -307,7 +307,7 @@ const StudySetDetail = () => {
 
   if (!setId) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         No study set ID provided.
       </div>
     );
@@ -315,7 +315,7 @@ const StudySetDetail = () => {
 
   if (isLoading || isLoadingPreferences || isLoadingLinkedNotes) {
     return (
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
         <Skeleton className="h-6 w-1/3 mb-4" />
         <Skeleton className="h-4 w-full mb-6" />
@@ -330,7 +330,7 @@ const StudySetDetail = () => {
 
   if (isError) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         Error loading study set: {error?.message || "Unknown error"}
       </div>
     );
@@ -338,14 +338,14 @@ const StudySetDetail = () => {
 
   if (!studySet) {
     return (
-      <div className="container mx-auto py-10 text-center">
+      <div className="container mx-auto py-10 text-center animate-fade-in">
         Study set not found.
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 animate-fade-in">
       <StudySetHeader
         studySet={studySet}
         isOwner={isOwner}

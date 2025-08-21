@@ -167,7 +167,7 @@ const CreateNote: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Create New Note</h1>
         <Button asChild variant="outline">

@@ -205,7 +205,7 @@ const EditNote: React.FC = () => {
 
   if (!noteId) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         No note ID provided for editing.
       </div>
     );
@@ -213,7 +213,7 @@ const EditNote: React.FC = () => {
 
   if (isLoading || isLoadingSets) {
     return (
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
         <Skeleton className="h-10 w-full mb-6" />
         <Skeleton className="h-64 w-full rounded-lg" />
@@ -223,7 +223,7 @@ const EditNote: React.FC = () => {
 
   if (isError) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         Error loading note: {error?.message || "Unknown error"}
       </div>
     );
@@ -231,14 +231,14 @@ const EditNote: React.FC = () => {
 
   if (!note) {
     return (
-      <div className="container mx-auto py-10 text-center">
+      <div className="container mx-auto py-10 text-center animate-fade-in">
         Note not found.
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Edit Note</h1>
         <Button asChild variant="outline">
