@@ -7,41 +7,17 @@ const fetchDueCardsCount = async (): Promise<number> => {
     return 0; // No user, no due cards
   }
 
-  const now = new Date();
+  // Use the existing RPC function to get daily review cards
+  const { data: dailyReviewCards, error: rpcError } = await supabase
+    .rpc('get_daily_review_cards', { p_user_id: user.id });
 
-  // Fetch all cards belonging to the user's study sets
-  const { data: userCards, error: cardsError } = await supabase
-    .from('cards')
-    .select(`
-      id,
-      set_id,
-      study_sets(user_id),
-      user_progress(
-        status,
-        next_review_at,
-        user_id
-      )
-    `)
-    .eq('study_sets.user_id', user.id); // Filter by user's own study sets
-
-  if (cardsError) {
-    console.error("Error fetching user cards for due count:", cardsError);
-    throw new Error("Failed to fetch cards for due count.");
+  if (rpcError) {
+    console.error("Error fetching daily review cards for due count:", rpcError);
+    throw new Error("Failed to fetch due cards count.");
   }
 
-  let dueCount = 0;
-  userCards?.forEach((card: any) => { // Explicitly type card as any to access user_progress
-    const progress = card.user_progress?.[0];
-    const hasProgressForCurrentUser = !!progress && progress.user_id === user.id;
-    const cardStatus = hasProgressForCurrentUser ? progress.status : 'learning';
-    const nextReviewAt = hasProgressForCurrentUser ? new Date(progress.next_review_at) : now; // New cards are considered due now
-
-    if (cardStatus === 'learning' && nextReviewAt <= now) {
-      dueCount++;
-    }
-  });
-
-  return dueCount;
+  // The RPC returns the cards that are due, so we just need to count them
+  return dailyReviewCards?.length || 0;
 };
 
 export const useDueCardsCount = () => {
