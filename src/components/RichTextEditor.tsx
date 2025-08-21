@@ -95,6 +95,17 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     },
   });
 
+  const clearCanvas = useCallback(() => {
+    if (canvasRef.current && ctxRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = ctxRef.current;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Fill with white after clearing to ensure white background in toDataURL
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }, []);
+
   // Initialize canvas context and clear when entering drawing mode
   useEffect(() => {
     if (isDrawingMode && canvasRef.current) {
@@ -111,11 +122,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         canvas.width = rect.width;
         canvas.height = rect.height;
 
-        // Clear canvas when entering drawing mode to ensure a fresh start
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Clear and fill with white when entering drawing mode
+        clearCanvas(); // Use the updated clearCanvas
       }
     }
-  }, [isDrawingMode]);
+  }, [isDrawingMode, clearCanvas]);
 
   // Drawing functions
   const startDrawing = useCallback(({ nativeEvent }: React.MouseEvent | React.TouchEvent) => {
@@ -140,12 +151,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     setIsDrawing(false);
   }, []);
 
-  const clearCanvas = useCallback(() => {
-    if (canvasRef.current && ctxRef.current) {
-      ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    }
-  }, []);
-
   const insertDrawing = useCallback(() => {
     if (editor && canvasRef.current) {
       const dataUrl = canvasRef.current.toDataURL('image/png');
@@ -161,11 +166,17 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       // Extract base64 string and mime type
       const [mimeTypePart, base64Data] = dataUrl.split(',');
       const mimeType = mimeTypePart.split(':')[1].split(';')[0];
+
+      console.log("Client-side dataUrl length:", dataUrl.length);
+      console.log("Client-side base64Data length:", base64Data.length);
+      console.log("Client-side mimeType:", mimeType);
+      console.log("Client-side dataUrl (truncated):", dataUrl.substring(0, 100) + "..."); // Add truncated log
+
       onDrawingAnalyzed(base64Data); // Pass base64 data to parent for AI analysis
       // Optionally clear canvas after analysis if user is expected to draw something new
       // clearCanvas(); // Consider adding this if the workflow implies a new drawing after analysis
     }
-  }, [onDrawingAnalyzed]); // Corrected typo here
+  }, [onDrawingAnalyzed]);
 
   // Helper to get touch position relative to canvas
   const getTouchPos = (e: React.TouchEvent, canvas: HTMLCanvasElement) => {
