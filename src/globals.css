@@ -73,5 +73,17 @@
 
   body {
     @apply bg-background text-foreground;
+    /* Notebook paper background */
+    background-color: hsl(30, 100%, 98%); /* Light cream background */
+    background-image: linear-gradient(to bottom, hsl(0, 0%, 90%) 1px, transparent 1px); /* Light gray lines */
+    background-size: 100% 24px; /* Adjust 24px for line spacing */
+    background-repeat: repeat-y;
+  }
+
+  .dark body {
+    background-color: hsl(220, 10%, 15%); /* Dark gray background */
+    background-image: linear-gradient(to bottom, hsl(220, 10%, 25%) 1px, transparent 1px); /* Slightly lighter dark gray lines */
   }
 }
+
+/* Removed the old .login-page-scribble-bg as it's no longer needed */
