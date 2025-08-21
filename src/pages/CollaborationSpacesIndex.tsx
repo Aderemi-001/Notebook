@@ -47,6 +47,7 @@ const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
   }
 
   // Fetch spaces where the current user is a member, and also fetch creator's display name
+  // RLS policy "Users can view collaboration spaces they are members of" already filters by user.id
   const { data, error } = await supabase
     .from('collaboration_spaces')
     .select(`
@@ -58,7 +59,6 @@ const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
       profiles(display_name),
       space_members(role)
     `)
-    .filter('space_members.user_id', 'eq', user.id) // Filter by current user's membership
     .order('name', { ascending: true });
 
   if (error) {
