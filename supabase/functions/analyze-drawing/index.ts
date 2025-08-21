@@ -48,10 +48,6 @@ serve(async (req) => {
       });
     }
 
-    // --- DEBUGGING LINE ADDED HERE ---
-    console.log(`Received base64Image length: ${base64Image.length}, mimeType: ${mimeType}`);
-    // --- END DEBUGGING LINE ---
-
     // Prepare the image for Gemini API
     const imagePart = {
       inlineData: {
@@ -61,10 +57,10 @@ serve(async (req) => {
     };
 
     const prompt = `
-      Describe the content of this image. It is a drawing on a white background with black lines.
-      Focus on any handwritten text, transcribing it accurately.
-      Also describe any diagrams, sketches, or simple shapes you see.
-      Provide a concise, plain text output of your observations, without any introductory or concluding remarks.
+      Analyze the content of this image, which is a drawing on a white background with black lines.
+      1.  **Transcribe any handwritten text or numbers accurately.** If it's a single character or number, identify it.
+      2.  **Describe any simple diagrams, sketches, or shapes.**
+      Provide a concise, plain text output of your observations, without any introductory or concluding remarks. Prioritize accurate transcription of text and numbers.
     `;
 
     const geminiResponse = await fetch(GEMINI_API_URL, {
