@@ -95,7 +95,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     },
   });
 
-  // Initialize canvas context
+  // Initialize canvas context and clear when entering drawing mode
   useEffect(() => {
     if (isDrawingMode && canvasRef.current) {
       const canvas = canvasRef.current;
@@ -110,6 +110,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         const rect = canvas.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
+
+        // Clear canvas when entering drawing mode to ensure a fresh start
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     }
   }, [isDrawingMode]);
@@ -159,8 +162,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       const [mimeTypePart, base64Data] = dataUrl.split(',');
       const mimeType = mimeTypePart.split(':')[1].split(';')[0];
       onDrawingAnalyzed(base64Data); // Pass base64 data to parent for AI analysis
+      // Optionally clear canvas after analysis if user is expected to draw something new
+      // clearCanvas(); // Consider adding this if the workflow implies a new drawing after analysis
     }
-  }, [onDrawingAnalyzed]);
+  }, [onDrawingAnalyyzed]);
 
   // Helper to get touch position relative to canvas
   const getTouchPos = (e: React.TouchEvent, canvas: HTMLCanvasElement) => {
