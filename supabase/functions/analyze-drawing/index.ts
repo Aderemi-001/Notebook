@@ -57,10 +57,13 @@ serve(async (req) => {
     };
 
     const prompt = `
-      Analyze the provided image. If it contains handwritten text, transcribe it accurately.
-      If it contains diagrams, flowcharts, or other structured visual information, describe them clearly and concisely.
+      Analyze the provided image, which is a drawing on a white background with black lines.
+      If it contains any handwritten text, transcribe it accurately.
+      If it contains any diagrams, sketches, or other visual information (even simple lines or shapes), describe them clearly and concisely.
+      Prioritize transcribing text if present.
       Combine all extracted text and descriptions into a single, coherent plain text output.
       Do not include any introductory or concluding remarks, just the extracted content.
+      If you genuinely find no discernible text or visual information, respond with "No discernible text or visual information found in the drawing."
     `;
 
     const geminiResponse = await fetch(GEMINI_API_URL, {
@@ -85,10 +88,10 @@ serve(async (req) => {
     }
 
     const geminiData = await geminiResponse.json();
-    const extractedContent = geminiData.candidates[0].content.parts[0].text;
+    let extractedContent = geminiData.candidates[0].content.parts[0].text;
 
-    if (!extractedContent) {
-      throw new Error("AI failed to extract content from the drawing.");
+    if (!extractedContent || extractedContent.trim() === "No discernible text or visual information found in the drawing.") {
+      extractedContent = "No discernible text or visual information was extracted from the drawing. Please ensure your drawing is clear and distinct.";
     }
 
     return new Response(JSON.stringify({ extracted_content: extractedContent }), {
