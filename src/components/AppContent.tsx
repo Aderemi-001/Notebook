@@ -67,7 +67,7 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_relativeSplatPath: true }}>
         <React.Fragment>
           <Routes>
             <Route
