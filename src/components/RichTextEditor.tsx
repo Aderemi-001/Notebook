@@ -192,17 +192,15 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     };
   }, []); // Empty dependency array: runs once on mount
 
-  // Effect for updating drawing styles and clearing canvas on mode change
+  // Effect for updating drawing styles
   useEffect(() => {
     if (ctxRef.current) {
       ctxRef.current.strokeStyle = drawingColor;
       ctxRef.current.lineWidth = isErasing ? eraserSize : BASE_LINE_WIDTH;
       ctxRef.current.globalCompositeOperation = isErasing ? 'destination-out' : 'source-over';
     }
-    if (isDrawingMode) {
-      clearCanvas(); // Clear canvas when entering drawing mode
-    }
-  }, [isDrawingMode, drawingColor, isErasing, eraserSize, clearCanvas]);
+    // Removed clearCanvas() call from here
+  }, [isDrawingMode, drawingColor, isErasing, eraserSize]);
 
   // Effect for updating custom cursor style
   useEffect(() => {

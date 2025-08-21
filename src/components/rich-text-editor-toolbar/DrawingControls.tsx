@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from '@/components/ui/slider'; // Import Slider
-import { Palette, Eraser, CheckCircle2, Brain, ZoomIn, ZoomOut } from 'lucide-react';
+import { Palette, Eraser, CheckCircle2, Brain, ZoomIn, ZoomOut, Trash2 } from 'lucide-react'; // Import Trash2
 
 interface DrawingControlsProps {
   drawingColor: string;
@@ -29,7 +29,6 @@ const DRAWING_COLORS = [
   { name: 'Blue', hex: '#3b82f6' },
   { name: 'Green', hex: '#22c55e' },
   { name: 'Yellow', hex: '#eab308' },
-  // Removed 'White' as it's no longer needed for erasing
 ];
 
 const DrawingControls: React.FC<DrawingControlsProps> = ({
@@ -153,7 +152,22 @@ const DrawingControls: React.FC<DrawingControlsProps> = ({
       </Popover>
 
       {/* Clear Canvas */}
-      {/* Removed the redundant Clear Canvas button */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="sm"
+              onClick={clearCanvas}
+              aria-label="Clear canvas"
+              className="px-2"
+              variant="ghost"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Clear Canvas</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       {/* Insert Drawing */}
       <TooltipProvider>
