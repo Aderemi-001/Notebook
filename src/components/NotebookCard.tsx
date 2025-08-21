@@ -13,9 +13,7 @@ const NotebookCard = React.forwardRef<HTMLDivElement, NotebookCardProps>(
       className={cn(
         "relative shadow-lg hover:shadow-xl transition-shadow duration-300",
         "border border-gray-200 rounded-md",
-        "before:content-[''] before:absolute before:left-4 before:top-0 before:bottom-0 before:w-px before:bg-red-400", // Red margin line
-        "pl-10", // Add default left padding here
-        className
+        className // Apply external className here
       )}
       {...props}
     >
@@ -25,7 +23,13 @@ const NotebookCard = React.forwardRef<HTMLDivElement, NotebookCardProps>(
           <div key={i} className="w-2 h-2 bg-gray-300 rounded-full mx-auto"></div>
         ))}
       </div>
-      {children}
+      {/* Red margin line */}
+      <div className="absolute left-4 top-0 bottom-0 w-px bg-red-400"></div>
+      
+      {/* Content wrapper with padding */}
+      <div className="pl-10"> {/* This div now applies the left padding to all children */}
+        {children}
+      </div>
     </Card>
   )
 );
