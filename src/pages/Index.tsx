@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, CalendarCheck } from "lucide-react"; // Removed History, FileText, SettingsIcon, LogOut, NotebookText, BarChart2, Folder, Users
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, CalendarCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
