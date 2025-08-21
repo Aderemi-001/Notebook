@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
-import { Loader2, PlusCircle } from 'lucide-react'; // Removed Search
+import { Loader2, PlusCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 

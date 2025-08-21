@@ -1,42 +1,16 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Flag, FlagOff, Globe, Plus, MoreVertical, FileText, Folder } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import { cn } from "@/lib/utils";
+import React, { useState, useEffect } from "react";
+
+// Import new modular components
+import StudySetHeader from '@/components/StudySetHeader';
 import StudyProgressSummary from '@/components/StudyProgressSummary';
-import { isPast, isValid, format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import StudySetCardsList from '@/components/StudySetCardsList';
+import StudySetLinkedNotes from '@/components/StudySetLinkedNotes';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
-import React, { useState, useEffect } from "react"; // Explicitly import React and hooks
 
 interface StudySet {
   id: string;
@@ -45,7 +19,7 @@ interface StudySet {
   is_public: boolean;
   user_id: string;
   group_id: string | null;
-  study_set_groups: { name: string }[] | null; // Changed to array
+  study_set_groups: { name: string }[] | null;
   cards: CardItem[];
   mastered_cards_count: number;
   due_cards_count: number;

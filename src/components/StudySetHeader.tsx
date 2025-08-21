@@ -92,59 +92,62 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
                   <Pencil className="mr-2 h-4 w-4" /> Edit Set
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <AlertDialog>
-                  <AlertDialogTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem className="flex items-center w-full text-left px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
                     <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResetProgress}>
+                      Reset Progress
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
+          {isOwner && (
+            <>
+              <DropdownMenuSeparator />
+              {preferences?.confirm_deletion ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem className="flex items-center w-full text-left px-2 py-1.5 text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete Set
+                    </DropdownMenuItem>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
+                        This action cannot be undone. This will permanently delete your
+                        "{studySet.title}" study set and all its associated cards.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleResetProgress}>
-                        Reset Progress
+                      <AlertDialogAction onClick={handleDeleteSet}>
+                        Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <DropdownMenuItem onClick={handleDeleteSet} className="flex items-center text-destructive">
+                  <Trash2 className="h-4 w-4" /> Delete Set
                 </DropdownMenuItem>
-              </>
-            )}
-            {isOwner && (
-              <>
-                <DropdownMenuSeparator />
-                {preferences?.confirm_deletion ? (
-                  <AlertDialog>
-                    <AlertDialogTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete Set
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete your
-                          "{studySet.title}" study set and all its associated cards.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteSet}>
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                ) : (
-                  <DropdownMenuItem onClick={handleDeleteSet} className="flex items-center text-destructive">
-                    <Trash2 className="h-4 w-4" /> Delete Set
-                  </DropdownMenuItem>
-                )}
-              </>
-            )}
+              )}
+            </>
+          )}
           {studySet.is_public && !isOwner && (
             <DropdownMenuItem onClick={handleAddToMySets} className="flex items-center">
               <Plus className="mr-2 h-4 w-4" /> Add to My Sets

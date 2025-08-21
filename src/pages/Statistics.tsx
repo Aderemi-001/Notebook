@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
@@ -14,8 +14,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar } from "@/components/ui/calendar"; // Import Calendar
-import { isSameDay, subDays, addDays } from 'date-fns'; // Import date-fns utilities
+import { Calendar } from "@/components/ui/calendar";
+import { isSameDay, subDays, addDays } from 'date-fns';
 
 interface StudyStatistics {
   total_cards: number;

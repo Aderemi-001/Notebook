@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import React, { useEffect } from 'react'; // Explicitly import useEffect
+import { useEffect } from 'react'; // Explicitly import useEffect
 
 const profileSchema = z.object({
   display_name: z.string().min(1, 'Display name is required').max(50, 'Display name cannot exceed 50 characters'),

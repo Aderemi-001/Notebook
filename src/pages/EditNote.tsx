@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom'; // Removed useNavigate
+import { Link, useParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -77,7 +77,6 @@ const fetchUserStudySets = async (): Promise<StudySet[]> => {
 
 const EditNote: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
-  // const navigate = useNavigate(); // Removed unused navigate
   const queryClient = useQueryClient();
 
   const [title, setTitle] = useState<string>('');

@@ -76,7 +76,7 @@ const fetchStudySetGroups = async (): Promise<StudySetGroup[]> => {
       is_public,
       group_id,
       cards(id, term, definition)
-    `)
+    `) // Fetch term and definition
     .eq('user_id', user.id);
 
   if (setsError) {
