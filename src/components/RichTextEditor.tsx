@@ -7,21 +7,35 @@ import TaskItem from '@tiptap/extension-task-item';
 import Image from '@tiptap/extension-image'; // Import Image extension
 import { cn } from '@/lib/utils';
 import RichTextEditorToolbar from './RichTextEditorToolbar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { showSuccess, showError } from '@/utils/toast';
 
 interface RichTextEditorProps {
   content: string;
   onContentChange: (content: string) => void;
   editable?: boolean;
   className?: string;
-  onDrawingAnalyzed?: (extractedText: string) => void; // New prop for AI analysis callback
 }
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, onDrawingAnalyzed }) => {
+const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#000000'); // Default to black
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+
+  // State for the replace confirmation dialog
+  const [showReplaceDialog, setShowReplaceDialog] = useState(false);
+  const [textToReplace, setTextToReplace] = useState('');
 
   const editor = useEditor({
     extensions: [
@@ -160,23 +174,69 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     }
   }, [editor, clearCanvas]);
 
-  const analyzeDrawing = useCallback(() => {
-    if (canvasRef.current && onDrawingAnalyzed) {
+  const analyzeDrawing = useCallback(async () => {
+    if (canvasRef.current) {
       const dataUrl = canvasRef.current.toDataURL('image/png');
-      // Extract base64 string and mime type
-      const [mimeTypePart, base64Data] = dataUrl.split(',');
-      const mimeType = mimeTypePart.split(':')[1].split(';')[0];
+      const base64Data = dataUrl.split(',')[1]; // Get only the base64 part
+      const mimeType = 'image/png'; // Assuming PNG from canvas
 
-      console.log("Client-side dataUrl length:", dataUrl.length);
-      console.log("Client-side base64Data length:", base64Data.length);
-      console.log("Client-side mimeType:", mimeType);
-      console.log("Client-side dataUrl (truncated):", dataUrl.substring(0, 100) + "..."); // Add truncated log
+      // Show loading toast
+      const toastId = showSuccess("AI is analyzing your drawing...");
 
-      onDrawingAnalyzed(base64Data); // Pass base64 data to parent for AI analysis
-      // Optionally clear canvas after analysis if user is expected to draw something new
-      // clearCanvas(); // Consider adding this if the workflow implies a new drawing after analysis
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error("Session not found. Please log in again.");
+        }
+
+        const response = await fetch(
+          `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/analyze-drawing`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+              'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+            },
+            body: JSON.stringify({ base64Image: base64Data, mimeType }),
+          }
+        );
+
+        const result = await response.json();
+        showSuccess("Drawing analyzed successfully!");
+
+        if (!response.ok || result.error) {
+          throw new Error(result?.error || "Failed to analyze drawing.");
+        }
+
+        if (result.extracted_content && result.extracted_content.trim() !== "") {
+          setTextToReplace(result.extracted_content);
+          setShowReplaceDialog(true);
+        } else {
+          showError("AI could not extract meaningful content from the drawing.");
+        }
+        
+      } catch (err: any) {
+        showError(err.message || "An unexpected error occurred during drawing analysis.");
+        console.error("AI drawing analysis error:", err);
+      }
     }
-  }, [onDrawingAnalyzed]);
+  }, [editor]);
+
+  const handleConfirmReplace = useCallback(() => {
+    if (editor && textToReplace) {
+      editor.chain().focus().setContent(textToReplace).run();
+      showSuccess("Note content updated with AI transcription!");
+    }
+    setShowReplaceDialog(false);
+    setTextToReplace('');
+  }, [editor, textToReplace]);
+
+  const handleCancelReplace = useCallback(() => {
+    setShowReplaceDialog(false);
+    setTextToReplace('');
+    showSuccess("AI transcription not applied.");
+  }, []);
 
   // Helper to get touch position relative to canvas
   const getTouchPos = (e: React.TouchEvent, canvas: HTMLCanvasElement) => {
@@ -203,7 +263,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           setDrawingColor={setDrawingColor}
           clearCanvas={clearCanvas}
           insertDrawing={insertDrawing}
-          analyzeDrawing={analyzeDrawing} // Pass the new function
+          analyzeDrawing={analyzeDrawing}
         />
       )}
       <div className="relative border rounded-md">
@@ -223,6 +283,26 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         ) : null}
         <EditorContent editor={editor} />
       </div>
+
+      <AlertDialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Replace Note Content?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The AI has transcribed your drawing:
+              <blockquote className="mt-4 border-l-4 pl-4 italic text-muted-foreground">
+                "{textToReplace}"
+              </blockquote>
+              Do you want to replace the current content of your note with this text?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelReplace}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmReplace}>Replace</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
