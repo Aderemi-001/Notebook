@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,7 +10,6 @@ import { NotebookCard } from "@/components/NotebookCard";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,13 +27,14 @@ import {
 import { useStudySetData } from "@/hooks/use-study-set-data";
 import { useFileImport } from "@/hooks/use-file-import";
 import FlashcardEditor from "@/components/FlashcardEditor";
-import { useStudySetGroups } from "@/hooks/use-study-set-groups"; // Import the new hook
+import { useStudySetGroups } from "@/hooks/use-study-set-groups";
+import StudySetFormFields from "@/components/StudySetFormFields";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   is_public: z.boolean().default(false),
-  group_id: z.string().nullable().optional(), // New field for group_id
+  group_id: z.string().nullable().optional(),
   cards: z.array(z.object({
     id: z.string().optional(),
     term: z.string().min(1, "Term is required"),
@@ -51,7 +52,7 @@ const EditSet = () => {
   const { data: studySet, isLoading, isError, error } = useStudySetData(setId);
   const { file, setFile, sourceTextContent, setSourceTextContent, handleFileImport, currentUser, isLoadingUser } = useFileImport();
 
-  const { data: userGroups, isLoading: isLoadingGroups, isError: isErrorGroups, error: errorGroups } = useStudySetGroups(); // Use the new hook
+  const { data: userGroups, isLoading: isLoadingGroups, isError: isErrorGroups, error: errorGroups } = useStudySetGroups();
 
   const form = useForm<EditSetFormValues>({
     resolver: zodResolver(formSchema),
@@ -59,7 +60,7 @@ const EditSet = () => {
       title: "",
       description: "",
       is_public: false,
-      group_id: null, // Default to no group
+      group_id: null,
       cards: [{ term: "", definition: "" }],
     },
   });
@@ -75,7 +76,7 @@ const EditSet = () => {
         title: studySet.title,
         description: studySet.description || "",
         is_public: studySet.is_public,
-        group_id: studySet.group_id, // Set the existing group_id
+        group_id: studySet.group_id,
         cards: studySet.cards.map(card => ({
           id: card.id,
           term: card.term,
@@ -106,7 +107,7 @@ const EditSet = () => {
           description: values.description,
           source_text: sourceTextContent,
           is_public: values.is_public,
-          group_id: values.group_id, // Update the group_id
+          group_id: values.group_id,
         })
         .eq('id', setId);
 
@@ -159,7 +160,7 @@ const EditSet = () => {
       showSuccess("Study set updated successfully!");
       queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
-      queryClient.invalidateQueries({ queryKey: ['studySetsInGroup'] }); // Invalidate group-specific sets
+      queryClient.invalidateQueries({ queryKey: ['studySetsInGroup'] });
       navigate(`/sets/${setId}`);
 
     } catch (error: any) {
@@ -251,16 +252,16 @@ const EditSet = () => {
               <CardTitle>Import from file with AI</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row items-center gap-4">
-              <Input 
-                type="file" 
-                accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf" 
+              <Input
+                type="file"
+                accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf"
                 onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
                 className="w-full sm:w-auto flex-grow"
               />
-              <Button 
-                type="button" 
-                onClick={handleImportAndAppendCards} 
-                disabled={!file || isLoadingUser || !currentUser} 
+              <Button
+                type="button"
+                onClick={handleImportAndAppendCards}
+                disabled={!file || isLoadingUser || !currentUser}
                 className="w-full sm:w-auto"
               >
                 {isLoadingUser ? "Loading user..." : "Import with AI"}
