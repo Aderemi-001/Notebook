@@ -3,18 +3,17 @@
 @tailwind utilities;
 
 @layer base {
-  /* Default Light Palette */
-  .palette-default-light {
-    --background: 36 100% 99%; /* Very light cream/paper color */
+  :root {
+    --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
-    --card: 36 100% 99%; /* Match card background to paper */
+    --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%; /* Dark Blue */
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -33,297 +32,38 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --radius: 0.5rem;
   }
 
-  /* Light Palette 1 (Soft Green/Nature) */
-  .palette-1-light {
-    --background: 80 60% 98%; /* Very light green */
-    --foreground: 200 10% 15%;
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 80 60% 98%;
-    --card-foreground: 200 10% 15%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 200 10% 15%;
-
-    --primary: 140 40% 30%; /* Forest Green */
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 140 20% 90%;
-    --secondary-foreground: 140 40% 30%;
-
-    --muted: 140 20% 90%;
-    --muted-foreground: 140 10% 50%;
-
-    --accent: 140 20% 90%;
-    --accent-foreground: 140 40% 30%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 140 20% 80%;
-    --input: 140 20% 80%;
-    --ring: 140 40% 30%;
-
-    --sidebar-background: 140 20% 95%;
-    --sidebar-foreground: 200 10% 15%;
-    --sidebar-primary: 140 40% 30%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 140 20% 90%;
-    --sidebar-accent-foreground: 140 40% 30%;
-    --sidebar-border: 140 20% 80%;
-    --sidebar-ring: 140 40% 30%;
-  }
-
-  /* Light Palette 2 (Warm Sepia) */
-  .palette-2-light {
-    --background: 40 100% 97%; /* Warm off-white */
-    --foreground: 20 20% 15%;
-
-    --card: 40 100% 97%;
-    --card-foreground: 20 20% 15%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 20 20% 15%;
-
-    --primary: 10 70% 45%; /* Terracotta */
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 30 40% 90%;
-    --secondary-foreground: 10 70% 45%;
-
-    --muted: 30 40% 90%;
-    --muted-foreground: 30 10% 50%;
-
-    --accent: 30 40% 90%;
-    --accent-foreground: 10 70% 45%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 30 40% 80%;
-    --input: 30 40% 80%;
-    --ring: 10 70% 45%;
-
-    --sidebar-background: 30 40% 95%;
-    --sidebar-foreground: 20 20% 15%;
-    --sidebar-primary: 10 70% 45%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 40% 90%;
-    --sidebar-accent-foreground: 10 70% 45%;
-    --sidebar-border: 30 40% 80%;
-    --sidebar-ring: 10 70% 45%;
-  }
-
-  /* Light Palette 3 (Cool Grey) */
-  .palette-3-light {
-    --background: 220 10% 98%; /* Light grey */
-    --foreground: 220 10% 15%;
-
-    --card: 220 10% 98%;
-    --card-foreground: 220 10% 15%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 10% 15%;
-
-    --primary: 200 70% 40%; /* Cool Blue */
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 220 10% 90%;
-    --secondary-foreground: 200 70% 40%;
-
-    --muted: 220 10% 90%;
-    --muted-foreground: 220 10% 50%;
-
-    --accent: 220 10% 90%;
-    --accent-foreground: 200 70% 40%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 220 10% 80%;
-    --input: 220 10% 80%;
-    --ring: 200 70% 40%;
-
-    --sidebar-background: 220 10% 95%;
-    --sidebar-foreground: 220 10% 15%;
-    --sidebar-primary: 200 70% 40%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 10% 90%;
-    --sidebar-accent-foreground: 200 70% 40%;
-    --sidebar-border: 220 10% 80%;
-    --sidebar-ring: 200 70% 40%;
-  }
-
-  /* Default Dark Palette (Blue-Grey with Blue-Green Primary) */
-  .dark.palette-default-dark {
-    --background: 240 20% 8%; /* Deep dark blue-purple */
-    --foreground: 210 40% 98%; /* Very light off-white for readability */
-
-    --card: 240 20% 12%; /* Slightly lighter card background */
+    --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 240 20% 12%;
+    --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 180 70% 40%; /* Vibrant Blue-Green */
-    --primary-foreground: 0 0% 100%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 240 15% 20%; /* Darker grey for secondary elements */
-    --secondary-foreground: 210 40% 80%; /* Lighter secondary text */
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 240 15% 20%;
-    --muted-foreground: 215.4 16.3% 65%; /* Much lighter muted text */
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 240 15% 20%;
-    --accent-foreground: 210 40% 80%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%; /* Red (kept) */
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 240 15% 30%; /* Clearer border for elements */
-    --input: 240 15% 20%; /* Slightly lighter input background */
-    --ring: 180 70% 40%; /* Primary blue-green */
-
-    --sidebar-background: 240 20% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 180 70% 40%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 15% 20%;
-    --sidebar-accent-foreground: 210 40% 80%;
-    --sidebar-border: 240 15% 30%;
-    --sidebar-ring: 180 70% 40%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
-
-  /* Dark Palette 1 (Deep Earthy Brown/Orange) */
-  .dark.palette-1-dark {
-    --background: 30 20% 10%; /* Deep dark brown */
-    --foreground: 30 20% 90%; /* Light brown-grey for readability */
-
-    --card: 30 20% 15%;
-    --card-foreground: 30 20% 90%;
-
-    --popover: 30 20% 15%;
-    --popover-foreground: 30 20% 90%;
-
-    --primary: 30 70% 50%; /* Warm Orange */
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 30 10% 20%;
-    --secondary-foreground: 30 20% 70%;
-
-    --muted: 30 10% 20%;
-    --muted-foreground: 30 10% 60%; /* Lighter muted text */
-
-    --accent: 30 10% 20%;
-    --accent-foreground: 30 20% 70%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 30 10% 35%; /* Clearer border */
-    --input: 30 10% 25%; /* Lighter input background */
-    --ring: 30 70% 50%;
-
-    --sidebar-background: 30 20% 10%;
-    --sidebar-foreground: 30 20% 90%;
-    --sidebar-primary: 30 70% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 10% 20%;
-    --sidebar-accent-foreground: 30 20% 70%;
-    --sidebar-border: 30 10% 35%;
-    --sidebar-ring: 30 70% 50%;
-  }
-
-  /* Dark Palette 2 (Cool Deep Purple) */
-  .dark.palette-2-dark {
-    --background: 270 30% 8%; /* Deep purple */
-    --foreground: 270 10% 90%; /* Light purple-grey for readability */
-
-    --card: 270 30% 12%;
-    --card-foreground: 270 10% 90%;
-
-    --popover: 270 30% 12%;
-    --popover-foreground: 270 10% 90%;
-
-    --primary: 270 70% 50%; /* Medium Purple */
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 270 20% 20%;
-    --secondary-foreground: 270 10% 70%;
-
-    --muted: 270 20% 20%;
-    --muted-foreground: 270 10% 60%; /* Lighter muted text */
-
-    --accent: 270 20% 20%;
-    --accent-foreground: 270 10% 70%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 270 20% 35%; /* Clearer border */
-    --input: 270 20% 25%; /* Lighter input background */
-    --ring: 270 70% 50%;
-
-    --sidebar-background: 270 30% 8%;
-    --sidebar-foreground: 270 10% 90%;
-    --sidebar-primary: 270 70% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 270 20% 20%;
-    --sidebar-accent-foreground: 270 10% 70%;
-    --sidebar-border: 270 20% 35%;
-    --sidebar-ring: 270 70% 50%;
-  }
-
-  /* Dark Palette 3 (Vibrant Dark Teal) */
-  .dark.palette-3-dark {
-    --background: 180 30% 8%; /* Deep teal */
-    --foreground: 180 10% 90%; /* Light teal-grey for readability */
-
-    --card: 180 30% 12%;
-    --card-foreground: 180 10% 90%;
-
-    --popover: 180 30% 12%;
-    --popover-foreground: 180 10% 90%;
-
-    --primary: 180 70% 50%; /* Medium Teal */
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 180 20% 20%;
-    --secondary-foreground: 180 10% 70%;
-
-    --muted: 180 20% 20%;
-    --muted-foreground: 180 10% 60%; /* Lighter muted text */
-
-    --accent: 180 20% 20%;
-    --accent-foreground: 180 10% 70%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 180 20% 35%; /* Clearer border */
-    --input: 180 20% 25%; /* Lighter input background */
-    --ring: 180 70% 50%;
-
-    --sidebar-background: 180 30% 8%;
-    --sidebar-foreground: 180 10% 90%;
-    --sidebar-primary: 180 70% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 180 20% 20%;
-    --sidebar-accent-foreground: 180 10% 70%;
-    --sidebar-border: 180 20% 35%;
-    --sidebar-ring: 180 70% 50%;
-  }
-
-  --radius: 0.5rem;
 }
 
 @layer base {
@@ -332,91 +72,6 @@
   }
 
   body {
-    @apply bg-background text-foreground overflow-y-scroll scrollbar-hide;
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent,
-      transparent 24px,
-      hsl(var(--muted)) 25px, /* Use muted color for lines */
-      hsl(var(--muted)) 26px
-    );
-    background-size: 100% 26px;
+    @apply bg-background text-foreground;
   }
-
-  .dark body {
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent,
-      transparent 24px,
-      hsl(var(--muted)) 25px, /* Use muted color for lines in dark mode */
-      hsl(var(--muted)) 26px
-    );
-  }
-
-  /* Tiptap Highlight Colors */
-  mark[data-color="#facc15"] { /* Yellow */
-    @apply bg-yellow-200 dark:bg-yellow-700;
-  }
-  mark[data-color="#4ade80"] { /* Green */
-    @apply bg-green-200 dark:bg-green-700;
-  }
-  mark[data-color="#60a5fa"] { /* Blue */
-    @apply bg-blue-200 dark:bg-blue-700;
-  }
-  mark[data-color="#ef4444"] { /* Red */
-    @apply bg-red-200 dark:bg-red-700;
-  }
-  mark[data-color="#a855f7"] { /* Purple */
-    @apply bg-purple-200 dark:bg-purple-700;
-  }
-
-  /* Ensure prose content wraps long words */
-  .prose {
-    overflow-wrap: break-word;
-  }
-
-  /* Tiptap TaskList Styling */
-  ul[data-type="taskList"] {
-    @apply list-none p-0;
-  }
-
-  ul[data-type="taskList"] li {
-    @apply flex items-start gap-2 py-1;
-  }
-
-  ul[data-type="taskList"] li > label {
-    @apply flex-shrink-0 mt-1;
-  }
-
-  ul[data-type="taskList"] li > div {
-    @apply flex-grow;
-  }
-
-  ul[data-type="taskList"] li.checked > div {
-    @apply text-muted-foreground line-through;
-  }
-
-  /* Custom checkbox styling for TaskList */
-  ul[data-type="taskList"] input[type="checkbox"] {
-    @apply h-4 w-4 rounded border border-primary text-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
-  }
-
-  ul[data-type="taskList"] input[type="checkbox"]:checked {
-    @apply bg-primary text-primary-foreground;
-  }
-}
-
-.login-page-scribble-bg {
-  background-color: hsl(var(--background));
-  background-image: 
-    url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M-1 1 l2 -2 M0 10 l10 -10 M9 11 l2 -2' stroke='hsl(var(--muted))' stroke-width='0.8' opacity='0.7'/%3E%3C/svg%3E"),
-    repeating-linear-gradient(
-      to bottom,
-      transparent,
-      transparent 24px,
-      hsl(var(--muted)) 25px,
-      hsl(var(--muted)) 26px
-    );
-  background-size: 10px 10px, 100% 26px;
-  background-repeat: repeat, repeat;
 }
