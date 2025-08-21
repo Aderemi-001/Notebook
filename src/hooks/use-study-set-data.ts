@@ -12,6 +12,11 @@ interface StudySetData {
 }
 
 const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
+
   const { data, error } = await supabase
     .from('study_sets')
     .select(`
@@ -28,6 +33,7 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
       )
     `)
     .eq('id', setId)
+    .eq('user_id', user.id) // Explicitly filter by user_id
     .single();
 
   if (error) {
@@ -35,7 +41,8 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
     throw new Error("Failed to fetch study set for editing.");
   }
   if (!data) {
-    throw new Error("Study set not found.");
+    // If data is null, it means either not found or not owned by user
+    throw new Error("Study set not found or you do not have permission to edit it.");
   }
   return data as StudySetData;
 };
