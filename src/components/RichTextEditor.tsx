@@ -176,19 +176,19 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   useEffect(() => {
     if (ctxRef.current) {
       ctxRef.current.strokeStyle = drawingColor;
-      ctxRef.current.lineWidth = BASE_LINE_WIDTH / zoomLevel; // Adjust line width based on zoom
+      ctxRef.current.lineWidth = BASE_LINE_WIDTH; // Removed zoomLevel division
     }
     if (isDrawingMode) {
       clearCanvas(); // Clear canvas when entering drawing mode
     }
-  }, [isDrawingMode, drawingColor, zoomLevel, clearCanvas]);
+  }, [isDrawingMode, drawingColor, clearCanvas]);
 
 
   // Drawing functions
   const startDrawing = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!ctxRef.current || !canvasRef.current) return;
     
-    const canvas = canvasRef.current;
+    const canvas = canvas.current;
     const rect = canvas.getBoundingClientRect();
     let clientX: number;
     let clientY: number;
@@ -252,7 +252,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
   const insertDrawing = useCallback(() => {
     if (editor && canvasRef.current) {
-      const dataUrl = canvas.current.toDataURL('image/png');
+      const dataUrl = canvasRef.current.toDataURL('image/png');
       editor.chain().focus().setImage({ src: dataUrl }).run();
       clearCanvas(); // Clear canvas after inserting
       setIsDrawingMode(false); // Exit drawing mode
