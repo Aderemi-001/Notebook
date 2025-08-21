@@ -23,7 +23,7 @@ interface EssayQuestionSummary {
   suggested_points: string[] | null;
   created_at: string;
   study_set_id: string | null;
-  study_sets: { title: string } | null;
+  study_sets: { title: string } | null; // To fetch linked study set title
 }
 
 const fetchPastEssayQuestions = async (): Promise<EssayQuestionSummary[]> => {

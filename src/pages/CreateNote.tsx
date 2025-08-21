@@ -167,7 +167,7 @@ const CreateNote: React.FC = () => {
       </div>
 
       <NotebookCard className="mb-6">
-        <CardHeader> {/* Removed pl-10 */}
+        <CardHeader>
           <CardTitle>Note Details</CardTitle>
           <CardDescription>Give your note a title and start writing.</CardDescription>
         </CardHeader>
@@ -213,11 +213,11 @@ const CreateNote: React.FC = () => {
 
       {aiSummary && (
         <NotebookCard className="mb-6">
-          <CardHeader> {/* Removed pl-10 */}
+          <CardHeader>
             <CardTitle>AI Summary</CardTitle>
             <CardDescription>Key takeaways from your note.</CardDescription>
           </CardHeader>
-          <CardContent> {/* Removed pl-10 */}
+          <CardContent>
             <p className="whitespace-pre-wrap text-muted-foreground">{aiSummary}</p>
             <Button
               variant="outline"
@@ -236,11 +236,11 @@ const CreateNote: React.FC = () => {
       )}
 
       <NotebookCard className="mb-6">
-        <CardHeader> {/* Removed pl-10 */}
+        <CardHeader>
           <CardTitle>Link to Study Set</CardTitle>
           <CardDescription>Associate this note with a study set.</CardDescription>
         </CardHeader>
-        <CardContent> {/* Removed pl-10 */}
+        <CardContent>
           <Select onValueChange={setSelectedStudySetId} value={selectedStudySetId || ""}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a study set (optional)" />

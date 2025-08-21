@@ -219,10 +219,10 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <NotebookCard key={i}>
-              <CardHeader> {/* Removed pl-10 */}
+              <CardHeader>
                 <Skeleton className="h-6 w-1/2" />
               </CardHeader>
-              <CardContent> {/* Removed pl-10 */}
+              <CardContent>
                 <Skeleton className="h-8 w-1/3" />
               </CardContent>
             </NotebookCard>
@@ -231,44 +231,44 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <NotebookCard>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"> {/* Removed pl-10 */}
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Study Sets</CardTitle>
               <LibraryBig className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent> {/* Removed pl-10 */}
+            <CardContent>
               <div className="text-2xl font-bold">{stats?.total_study_sets ?? 0}</div>
               <p className="text-xs text-muted-foreground">Sets created by you</p>
             </CardContent>
           </NotebookCard>
 
           <NotebookCard>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"> {/* Removed pl-10 */}
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Cards</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent> {/* Removed pl-10 */}
+            <CardContent>
               <div className="text-2xl font-bold">{stats?.total_cards ?? 0}</div>
               <p className="text-xs text-muted-foreground">Across all your sets</p>
             </CardContent>
           </NotebookCard>
 
           <NotebookCard>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"> {/* Removed pl-10 */}
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Mastered Cards</CardTitle>
               <CheckCircle2 className="h-4 w-4 text-green-600" />
             </CardHeader>
-            <CardContent> {/* Removed pl-10 */}
+            <CardContent>
               <div className="text-2xl font-bold">{stats?.total_mastered_cards ?? 0}</div>
               <p className="text-xs text-muted-foreground">Cards you've mastered</p>
             </CardContent>
           </NotebookCard>
 
           <NotebookCard>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"> {/* Removed pl-10 */}
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Cards Due</CardTitle>
               <AlertCircle className="h-4 w-4 text-red-500" />
             </CardHeader>
-            <CardContent> {/* Removed pl-10 */}
+            <CardContent>
               <div className="text-2xl font-bold">{stats?.total_due_cards ?? 0}</div>
               <p className="text-xs text-muted-foreground">Ready for review</p>
             </CardContent>
@@ -278,11 +278,11 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
 
       <div className="grid gap-4 md:grid-cols-2 mt-6">
         <NotebookCard>
-          <CardHeader> {/* Removed pl-10 */}
+          <CardHeader>
             <CardTitle>Study Streak</CardTitle>
             <CardDescription>Your current and longest study streaks.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4"> {/* Removed pl-10 */}
+          <CardContent className="space-y-4">
             {isLoadingStudyDays ? (
               <div className="space-y-2">
                 <Skeleton className="h-6 w-2/3" />
@@ -304,11 +304,11 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
         </NotebookCard>
 
         <NotebookCard>
-          <CardHeader> {/* Removed pl-10 */}
+          <CardHeader>
             <CardTitle>Study Calendar</CardTitle>
             <CardDescription>Days you've studied at least one flashcard. Click on an unstudied day to start reviewing!</CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center"> {/* Removed pl-10 */}
+          <CardContent className="flex justify-center">
             {isLoadingStudyDays ? (
               <Skeleton className="h-[300px] w-full max-w-sm rounded-md" />
             ) : (
@@ -327,11 +327,11 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
 
       {/* Placeholder for future charts/graphs */}
       <NotebookCard className="mt-6">
-        <CardHeader> {/* Removed pl-10 */}
+        <CardHeader>
           <CardTitle>Study Activity (Coming Soon!)</CardTitle>
           <CardDescription>Visualizations of your daily and weekly study habits.</CardDescription>
         </CardHeader>
-        <CardContent> {/* Removed pl-10 */}
+        <CardContent>
           <div className="h-48 flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-md">
             Charts and graphs will appear here.
           </div>

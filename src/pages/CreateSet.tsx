@@ -25,30 +25,9 @@ import {
 } from "@/components/ui/select";
 import StudySetFormFields from "@/components/StudySetFormFields";
 import FlashcardEditor from "@/components/FlashcardEditor";
+import { useStudySetGroups } from "@/hooks/use-study-set-groups"; // Import the new hook
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-
-interface StudySetGroup {
-  id: string;
-  name: string;
-}
-
-const fetchUserStudySetGroups = async (): Promise<StudySetGroup[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return [];
-  }
-  const { data, error } = await supabase
-    .from('study_set_groups')
-    .select('id, name')
-    .eq('user_id', user.id)
-    .order('name', { ascending: true });
-  if (error) {
-    console.error("Error fetching study set groups:", error);
-    throw new Error("Failed to fetch your study set groups.");
-  }
-  return data || [];
-};
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -70,10 +49,7 @@ const CreateSet = () => {
   const location = useLocation(); // Use useLocation hook
   const queryClient = useQueryClient();
 
-  const { data: userGroups, isLoading: isLoadingGroups, isError: isErrorGroups, error: errorGroups } = useQuery<StudySetGroup[], Error>({
-    queryKey: ['userStudySetGroups'],
-    queryFn: fetchUserStudySetGroups,
-  });
+  const { data: userGroups, isLoading: isLoadingGroups, isError: isErrorGroups, error: errorGroups } = useStudySetGroups(); // Use the new hook
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -266,7 +242,7 @@ const CreateSet = () => {
           }
 
           let conceptId: string;
-          if (existsSync) {
+          if (existingConcept) { // Corrected variable name from existsSync to existingConcept
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
@@ -330,102 +306,13 @@ const CreateSet = () => {
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
-          <NotebookCard>
-            <CardContent className="pt-6"> {/* Removed pl-10 */}
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Biology Chapter 1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="mt-4">
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="A brief description of your study set." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="mt-4">
-                <FormField
-                  control={form.control}
-                  name="group_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Group (Optional)</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(value === "null" ? null : value)} value={field.value || "null"}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a group" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="null">No Group</SelectItem>
-                          {isLoadingGroups ? (
-                            <SelectItem disabled value="loading">Loading groups...</SelectItem>
-                          ) : userGroups?.length === 0 ? (
-                            <SelectItem disabled value="no-groups">No groups available</SelectItem>
-                          ) : (
-                            userGroups?.map(group => (
-                              <SelectItem key={group.id} value={group.id}>
-                                {group.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Organize this study set into a group.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="mt-4 flex items-center space-x-2">
-                <FormField
-                  control={form.control}
-                  name="is_public"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Make Public</FormLabel>
-                        <FormDescription>
-                          Allow other users to view and study this set.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </NotebookCard>
+          <StudySetFormFields form={form} userGroups={userGroups} isLoadingGroups={isLoadingGroups} isErrorGroups={isErrorGroups} errorGroups={errorGroups} />
 
           <NotebookCard>
-            <CardHeader> {/* Removed pl-10 */}
+            <CardHeader>
               <CardTitle>Import from file with AI</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row items-center gap-4"> {/* Removed pl-10 */}
+            <CardContent className="flex flex-col sm:flex-row items-center gap-4">
               <Input 
                 type="file" 
                 accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf" 
