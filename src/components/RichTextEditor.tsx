@@ -113,7 +113,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           (!editable || isDrawingMode) && 'bg-muted/50 cursor-not-allowed', // Apply disabled styles
           className
         ),
-        'aria-labelledby': labelId, // Use aria-labelledby for accessibility
+        'aria-labelledby': labelId || '', // Use aria-labelledby for accessibility, provide empty string if undefined
       },
     },
   });
@@ -254,7 +254,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
   const insertDrawing = useCallback(() => {
     if (editor && canvasRef.current) {
-      const dataUrl = canvas.current.toDataURL('image/png');
+      const dataUrl = canvasRef.current.toDataURL('image/png'); // Corrected: used canvasRef.current
       editor.chain().focus().setImage({ src: dataUrl }).run();
       clearCanvas(); // Clear canvas after inserting
       setIsDrawingMode(false); // Exit drawing mode
