@@ -6,7 +6,7 @@ import { CardHeader, CardTitle, CardDescription, CardContent } from "@/component
 import { NotebookCard } from "@/components/NotebookCard";
 import { ArrowLeft, PlusCircle, Users, Menu, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } => '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import {
@@ -54,8 +54,8 @@ const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
       description,
       created_at,
       created_by_user_id,
-      profiles(display_name),
-      space_members!left(user_id, role)
+      profiles(display_name) // Re-introducing profiles join
+      // space_members!left(user_id, role) // Keep this commented out for now
     `)
     .order('name', { ascending: true });
 
@@ -67,7 +67,7 @@ const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
   // Filter space_members to only include the current user's role for the index page
   return data?.map(space => ({
     ...space,
-    space_members: space.space_members.filter(member => member.user_id === user.id),
+    space_members: [], // Still empty for now
   })) || [];
 };
 
@@ -220,8 +220,8 @@ const CollaborationSpacesIndex: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredSpaces.map((space) => {
             const isCreator = space.created_by_user_id === currentUserId;
-            // Get the current user's role in this specific space
-            const currentUserSpaceRole = space.space_members.find(member => member.user_id === currentUserId)?.role;
+            // currentUserSpaceRole is not available with simplified query, so it will be undefined
+            const currentUserSpaceRole = undefined; 
 
             return (
               <NotebookCard key={space.id} className="h-full flex flex-col">
