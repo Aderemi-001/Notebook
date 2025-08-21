@@ -164,11 +164,11 @@ const EditGroup: React.FC = () => {
       </div>
 
       <NotebookCard className="mb-6">
-        <CardHeader> {/* Removed pl-10 */}
+        <CardHeader>
           <CardTitle>Group Details</CardTitle>
           <CardDescription>Update the name and description of your study set group.</CardDescription>
         </CardHeader>
-        <CardContent> {/* Removed pl-10 */}
+        <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
