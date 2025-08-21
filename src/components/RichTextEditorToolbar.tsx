@@ -1,6 +1,6 @@
-"use client";
+"use client"; // This directive marks the component for client-side rendering
 
-import React from 'react';
+import React from 'react'; // Explicitly import React for JSX parsing, though automatic runtime is used.
 import { Editor } from '@tiptap/react';
 import { Toggle } from '@/components/ui/toggle';
 import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo, X, ListTodo, MoreHorizontal } from 'lucide-react';
