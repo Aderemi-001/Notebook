@@ -51,8 +51,8 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen overflow-hidden">
-      <div className="flex-grow overflow-y-auto">
+    <div className="flex flex-col min-h-screen">
+      <div className="flex-grow overflow-y-auto pb-20">
         {children}
       </div>
     </div>
