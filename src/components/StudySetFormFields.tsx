@@ -5,8 +5,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescripti
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Import CardHeader and CardTitle
-import { NotebookCard } from '@/components/NotebookCard';
+import { CardContent, CardHeader, CardTitle, CardDescription, NotebookCard } from '@/components/NotebookCard'; // Import CardDescription from NotebookCard
 import {
   Select,
   SelectContent,
