@@ -331,7 +331,7 @@ const CreateSet = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
           <NotebookCard>
-            <CardContent className="pt-6 pl-10">
+            <CardContent className="pt-6"> {/* Removed pl-10 */}
               <FormField
                 control={form.control}
                 name="title"
@@ -422,10 +422,10 @@ const CreateSet = () => {
           </NotebookCard>
 
           <NotebookCard>
-            <CardHeader className="pl-10">
+            <CardHeader> {/* Removed pl-10 */}
               <CardTitle>Import from file with AI</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row items-center gap-4 pl-10">
+            <CardContent className="flex flex-col sm:flex-row items-center gap-4"> {/* Removed pl-10 */}
               <Input 
                 type="file" 
                 accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf" 

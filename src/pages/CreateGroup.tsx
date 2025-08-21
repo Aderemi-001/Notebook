@@ -87,11 +87,11 @@ const CreateGroup: React.FC = () => {
       </div>
 
       <NotebookCard className="mb-6">
-        <CardHeader className="pl-10">
+        <CardHeader> {/* Removed pl-10 */}
           <CardTitle>Group Details</CardTitle>
           <CardDescription>Give your new study set group a name and an optional description.</CardDescription>
         </CardHeader>
-        <CardContent className="pl-10">
+        <CardContent> {/* Removed pl-10 */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField

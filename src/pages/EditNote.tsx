@@ -238,11 +238,11 @@ const EditNote: React.FC = () => {
       </div>
 
       <NotebookCard className="mb-6">
-        <CardHeader className="pl-10">
+        <CardHeader> {/* Removed pl-10 */}
           <CardTitle>Note Details</CardTitle>
           <CardDescription>Edit your note's title and content.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4"> {/* Removed pl-10 */}
+        <CardContent className="space-y-4">
           <div>
             <Label htmlFor="note-title">Title</Label>
             <Input
@@ -284,11 +284,11 @@ const EditNote: React.FC = () => {
 
       {aiSummary && (
         <NotebookCard className="mb-6">
-          <CardHeader className="pl-10">
+          <CardHeader> {/* Removed pl-10 */}
             <CardTitle>AI Summary</CardTitle>
             <CardDescription>Key takeaways from your note.</CardDescription>
           </CardHeader>
-          <CardContent className="pl-10">
+          <CardContent> {/* Removed pl-10 */}
             <p className="whitespace-pre-wrap text-muted-foreground">{aiSummary}</p>
             <Button
               variant="outline"
@@ -307,11 +307,11 @@ const EditNote: React.FC = () => {
       )}
 
       <NotebookCard className="mb-6">
-        <CardHeader className="pl-10">
+        <CardHeader> {/* Removed pl-10 */}
           <CardTitle>Link to Study Set</CardTitle>
           <CardDescription>Associate this note with a study set.</CardDescription>
         </CardHeader>
-        <CardContent className="pl-10">
+        <CardContent> {/* Removed pl-10 */}
           <Select onValueChange={(value) => setSelectedStudySetId(value === "null" ? null : value)} value={selectedStudySetId || "null"}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a study set (optional)" />

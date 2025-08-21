@@ -14,7 +14,7 @@ const NotebookCard = React.forwardRef<HTMLDivElement, NotebookCardProps>(
         "relative shadow-lg hover:shadow-xl transition-shadow duration-300",
         "border border-gray-200 rounded-md",
         "before:content-[''] before:absolute before:left-4 before:top-0 before:bottom-0 before:w-px before:bg-red-400", // Red margin line
-        // Removed "pl-10" from here
+        "pl-10", // Add default left padding here
         className
       )}
       {...props}
