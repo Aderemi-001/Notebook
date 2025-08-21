@@ -1,4 +1,3 @@
-import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowLeft, LogOut, Menu, Settings as SettingsIcon, BarChart2 } from 'lucide-react'; // Removed History, FileText, NotebookText, Folder, Users
+import { ArrowLeft, LogOut, Menu, Settings as SettingsIcon, BarChart2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,

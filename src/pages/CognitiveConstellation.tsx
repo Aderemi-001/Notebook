@@ -1,4 +1,3 @@
-import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw, Menu } from 'lucide-react';
@@ -6,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
 import {
   DropdownMenu,
@@ -15,6 +14,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useState } from 'react';
 
 interface Concept {
   id: string;

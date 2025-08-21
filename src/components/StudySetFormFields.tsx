@@ -1,11 +1,10 @@
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { z } from 'zod';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { CardContent, CardHeader, CardTitle, CardDescription, NotebookCard } from '@/components/NotebookCard'; // Import CardDescription from NotebookCard
+import { CardContent, CardHeader, CardTitle, CardDescription, NotebookCard } from '@/components/NotebookCard';
 import {
   Select,
   SelectContent,
@@ -13,17 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StudySetGroup } from '@/hooks/use-study-set-groups'; // Import StudySetGroup interface
+import { StudySetGroup } from '@/hooks/use-study-set-groups';
 
 interface StudySetFormFieldsProps {
   form: UseFormReturn<any>; // Use any for now, or define a more specific schema type
   userGroups: StudySetGroup[] | undefined;
   isLoadingGroups: boolean;
-  isErrorGroups: boolean;
-  errorGroups: Error | null;
 }
 
-const StudySetFormFields: React.FC<StudySetFormFieldsProps> = ({ form, userGroups, isLoadingGroups, isErrorGroups, errorGroups }) => {
+const StudySetFormFields: React.FC<StudySetFormFieldsProps> = ({ form, userGroups, isLoadingGroups }) => {
   return (
     <NotebookCard>
       <CardHeader>

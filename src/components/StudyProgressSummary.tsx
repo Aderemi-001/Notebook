@@ -3,7 +3,6 @@ import { Progress } from "@/components/ui/progress";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { CheckCircle2, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface StudyProgressSummaryProps {
   totalCards: number;

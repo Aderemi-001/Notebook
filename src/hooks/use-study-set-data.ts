@@ -6,7 +6,7 @@ interface StudySetData {
   title: string;
   description: string | null;
   is_public: boolean;
-  group_id: string | null; // Added group_id
+  group_id: string | null;
   cards: { id: string; term: string; definition: string }[];
   source_text: string | null;
 }
@@ -33,7 +33,7 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
       )
     `)
     .eq('id', setId)
-    .eq('user_id', user.id) // Explicitly filter by user_id
+    .eq('user_id', user.id)
     .single();
 
   if (error) {
@@ -42,7 +42,7 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
   }
   if (!data) {
     // If data is null, it means either not found or not owned by user
-    throw new new Error("Study set not found or you do not have permission to edit it.");
+    throw new Error("Study set not found or you do not have permission to edit it.");
   }
   return data as StudySetData;
 };

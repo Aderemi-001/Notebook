@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, Brain, Loader2, CheckCircle2, Menu, Network } from 'lucide-react'; // Added Network icon
+import { ArrowLeft, Brain, Loader2, CheckCircle2, Menu, Network } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -79,7 +79,7 @@ const GenerateEssayQuestions: React.FC = () => {
     }
 
     setIsGenerating(true);
-    setGeneratedQuestions(null); // Clear previous questions
+    setGeneratedQuestions(null);
     const toastId = showLoading("Generating essay questions...");
 
     try {
@@ -98,7 +98,7 @@ const GenerateEssayQuestions: React.FC = () => {
             'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
           },
           body: JSON.stringify({
-            conceptIds: selectedConceptIds, // Pass concept IDs
+            conceptIds: selectedConceptIds,
             numQuestions: numQuestions,
           }),
         }
@@ -124,8 +124,6 @@ const GenerateEssayQuestions: React.FC = () => {
   };
 
   const handleConceptSelectionChange = (value: string) => {
-    // For simplicity, let's allow only single selection for now.
-    // If multi-select is desired, a different UI component (e.g., multi-select dropdown or checkboxes) would be needed.
     setSelectedConceptIds([value]);
   };
 
@@ -244,7 +242,7 @@ const GenerateEssayQuestions: React.FC = () => {
                   <>
                     <Separator className="my-3" />
                     <h3 className="text-md font-medium mb-2 flex items-center">
-                      <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" /> Suggested Points:
+                      <CheckCircle2 className="mr-2 h-4 w-4" /> Suggested Points:
                     </h3>
                     <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
                       {q.suggested_points.map((point, pointIndex) => (

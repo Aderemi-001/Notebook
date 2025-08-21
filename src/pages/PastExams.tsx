@@ -22,7 +22,7 @@ interface ExamSummary {
   description: string | null;
   created_at: string;
   study_set_id: string;
-  study_sets: { title: string } | null; // To get the study set title
+  study_sets: { title: string }[] | null; // Changed to array
   total_questions: number;
   correct_responses: number;
 }
@@ -53,9 +53,9 @@ const fetchPastExams = async (): Promise<ExamSummary[]> => {
     throw new Error("Failed to fetch your past exams.");
   }
 
-  const processedExams: ExamSummary[] = exams?.map(exam => {
+  const processedExams: ExamSummary[] = exams?.map((exam: any) => { // Explicitly type 'exam'
     const totalQuestions = exam.generated_questions?.length || 0;
-    const correctResponses = exam.exam_responses?.filter(res => res.is_correct).length || 0;
+    const correctResponses = exam.exam_responses?.filter((res: any) => res.is_correct).length || 0; // Explicitly type 'res'
 
     return {
       id: exam.id,
@@ -97,8 +97,8 @@ const PastExams: React.FC = () => {
 
   const filteredExams = pastExams?.filter(exam =>
     exam.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (exam.description && formatExamDescription(exam.description).toLowerCase().includes(searchTerm.toLowerCase())) || // Search formatted description
-    (exam.study_sets?.title && exam.study_sets.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    (exam.description && formatExamDescription(exam.description).toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (exam.study_sets?.[0]?.title && exam.study_sets[0].title.toLowerCase().includes(searchTerm.toLowerCase())) // Access first element
   );
 
   if (isError) {
@@ -176,10 +176,10 @@ const PastExams: React.FC = () => {
                   )}
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {exam.study_sets?.title && (
+                  {exam.study_sets?.[0]?.title && ( // Access first element
                     <div className="flex items-center text-sm text-muted-foreground">
                       <BookOpen className="mr-2 h-4 w-4" />
-                      <span>From Set: {exam.study_sets.title}</span>
+                      <span>From Set: {exam.study_sets[0].title}</span>
                     </div>
                   )}
                   <div className="flex items-center text-sm text-muted-foreground">

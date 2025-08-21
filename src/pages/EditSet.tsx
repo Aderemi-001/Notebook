@@ -4,24 +4,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 // Import new modular components and hooks
 import { useStudySetData } from "@/hooks/use-study-set-data";
@@ -245,7 +236,7 @@ const EditSet = () => {
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
-          <StudySetFormFields form={form} userGroups={userGroups} isLoadingGroups={isLoadingGroups} isErrorGroups={isErrorGroups} errorGroups={errorGroups} />
+          <StudySetFormFields form={form} userGroups={userGroups} isLoadingGroups={isLoadingGroups} />
 
           <NotebookCard>
             <CardHeader>

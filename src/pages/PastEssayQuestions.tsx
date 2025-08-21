@@ -23,7 +23,7 @@ interface EssayQuestionSummary {
   suggested_points: string[] | null;
   created_at: string;
   study_set_id: string | null;
-  study_sets: { title: string } | null; // To fetch linked study set title
+  study_sets: { title: string }[] | null; // Changed to array
 }
 
 const fetchPastEssayQuestions = async (): Promise<EssayQuestionSummary[]> => {
@@ -63,7 +63,7 @@ const PastEssayQuestions: React.FC = () => {
 
   const filteredQuestions = pastEssayQuestions?.filter(q =>
     q.question_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (q.study_sets?.title && q.study_sets.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    (q.study_sets?.[0]?.title && q.study_sets[0].title.toLowerCase().includes(searchTerm.toLowerCase())) // Access first element
   );
 
   if (isError) {
@@ -136,8 +136,8 @@ const PastEssayQuestions: React.FC = () => {
             <NotebookCard key={question.id} className="h-full">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold">{question.question_text}</CardTitle>
-                {question.study_sets?.title && (
-                  <CardDescription>From Set: {question.study_sets.title}</CardDescription>
+                {question.study_sets?.[0]?.title && ( // Access first element
+                  <CardDescription>From Set: {question.study_sets[0].title}</CardDescription>
                 )}
               </CardHeader>
               <CardContent className="space-y-2">

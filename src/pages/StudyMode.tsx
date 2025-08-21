@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
 import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
-import { useUserPreferences } from '@/hooks/use-user-preferences'; // Import the hook
+import { useUserPreferences } from '@/hooks/use-user-preferences';
 
 interface CardItem {
   id: string;
@@ -86,7 +84,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
       id,
       term,
       definition,
-      user_progress!user_progress_card_id_fkey!left(
+      user_progress(
         repetition_level,
         ease_factor,
         next_review_at,
@@ -98,7 +96,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
 
   if (error) {
     console.error("Error fetching cards for study set:", error);
-    throw error; // Throw the actual Supabase error
+    throw error;
   }
 
   if (!data) {
@@ -106,7 +104,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
   }
 
   const dueCards = data
-    .map(card => {
+    .map((card: any) => { // Explicitly type 'card'
       const progress = card.user_progress?.[0];
       return {
         id: card.id,
@@ -133,7 +131,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
 
 const StudyMode = () => {
   const { setId } = useParams<{ setId: string }>();
-  const { preferences, isLoading: isLoadingPreferences } = useUserPreferences(); // Use preferences hook
+  const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showDefinition, setShowDefinition] = useState(false);
   const [studyFinished, setStudyFinished] = useState(false);
@@ -208,7 +206,7 @@ const StudyMode = () => {
       showSuccess(successMessage);
 
       queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
-      queryClient.invalidateQueries({ queryKey: ['studyDays'] }); // Invalidate studyDays query
+      queryClient.invalidateQueries({ queryKey: ['studyDays'] });
     } catch (err: any) {
       showError(`Failed to update card progress: ${err.message}`);
       console.error("Error updating card progress:", err);
@@ -222,7 +220,7 @@ const StudyMode = () => {
 
     if (currentCardIndex < (cards?.length || 0) - 1) {
       setCurrentCardIndex(prevIndex => prevIndex + 1);
-      setShowDefinition(preferences?.default_flashcard_side === 'definition'); // Reset to default side
+      setShowDefinition(preferences?.default_flashcard_side === 'definition');
     } else {
       setStudyFinished(true);
     }
@@ -230,7 +228,7 @@ const StudyMode = () => {
 
   const handleRestartStudy = () => {
     setCurrentCardIndex(0);
-    setShowDefinition(preferences?.default_flashcard_side === 'definition'); // Reset to default side
+    setShowDefinition(preferences?.default_flashcard_side === 'definition');
     setStudyFinished(false);
     refetch();
   };

@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, PlayCircle, Pencil, Trash2, CheckCircle2, RotateCcw, Flag, FlagOff, Globe, Plus, MoreVertical, FileText, Folder } from 'lucide-react';
+import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Flag, FlagOff, Globe, Plus, MoreVertical, FileText, Folder } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -44,8 +43,8 @@ interface StudySet {
   description: string | null;
   is_public: boolean;
   user_id: string;
-  group_id: string | null; // Added group_id
-  study_set_groups: { name: string } | null; // Added study_set_groups for group name
+  group_id: string | null;
+  study_set_groups: { name: string } | null;
   cards: CardItem[];
   mastered_cards_count: number;
   due_cards_count: number;
@@ -91,7 +90,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
         term,
         definition,
         is_flagged,
-        user_progress!user_progress_card_id_fkey!left(
+        user_progress(
           status,
           user_id,
           next_review_at,
@@ -112,7 +111,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
 
   let masteredCount = 0;
   let dueCount = 0;
-  const processedCards: CardItem[] = data.cards.map(card => {
+  const processedCards: CardItem[] = data.cards.map((card: any) => { // Explicitly type 'card'
     const progress = card.user_progress?.[0];
     const hasProgress = !!progress && progress.user_id === user.id;
     const cardStatus = hasProgress ? progress.status : 'learning';
@@ -179,7 +178,7 @@ const StudySetDetail = () => {
     enabled: !!setId,
   });
 
-  const { data: linkedNotes, isLoading: isLoadingLinkedNotes, isError: isErrorLinkedNotes, error: errorLinkedNotes } = useQuery<LinkedNote[], Error>({
+  const { data: linkedNotes, isLoading: isLoadingLinkedNotes } = useQuery<LinkedNote[], Error>({
     queryKey: ['linkedNotes', setId],
     queryFn: () => fetchLinkedNotes(setId!),
     enabled: !!setId,
@@ -211,7 +210,7 @@ const StudySetDetail = () => {
       showSuccess("Study set deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
       queryClient.invalidateQueries({ queryKey: ['linkedNotes', setId] });
-      queryClient.invalidateQueries({ queryKey: ['studySetGroups'] }); // Invalidate groups to update set counts
+      queryClient.invalidateQueries({ queryKey: ['studySetGroups'] });
       navigate('/');
     } catch (error: any) {
       dismissToast(toastId);

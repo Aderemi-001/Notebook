@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, Brain, Loader2, CheckCircle2, XCircle, PlayCircle } from 'lucide-react';
+import { ArrowLeft, Brain, Loader2, PlayCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -68,7 +68,7 @@ const GenerateExam: React.FC = () => {
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState<string[]>(['multiple_choice', 'short_answer', 'true_false']);
   const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[] | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedExamId, setGeneratedExamId] = useState<string | null>(null); // New state for exam ID
+  const [generatedExamId, setGeneratedExamId] = useState<string | null>(null);
 
   const { data: userStudySets, isLoading: isLoadingSets, isError: isErrorSets, error: errorSets } = useQuery<StudySet[], Error>({
     queryKey: ['userStudySetsForExam'],
@@ -90,8 +90,8 @@ const GenerateExam: React.FC = () => {
     }
 
     setIsGenerating(true);
-    setGeneratedQuestions(null); // Clear previous questions
-    setGeneratedExamId(null); // Clear previous exam ID
+    setGeneratedQuestions(null);
+    setGeneratedExamId(null);
     const toastId = showLoading("Generating exam questions...");
 
     try {
@@ -125,7 +125,7 @@ const GenerateExam: React.FC = () => {
       }
 
       setGeneratedQuestions(result.questions);
-      setGeneratedExamId(result.exam_id); // Store the new exam ID
+      setGeneratedExamId(result.exam_id);
       showSuccess("Questions generated successfully!");
       queryClient.invalidateQueries({ queryKey: ['generatedQuestions'] });
     } catch (err: any) {
@@ -292,7 +292,6 @@ const GenerateExam: React.FC = () => {
                 )}
                 <Separator className="my-3" />
                 <div className="flex items-center text-green-600">
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
                   <span className="font-medium">Answer: {q.answer_text}</span>
                 </div>
               </div>

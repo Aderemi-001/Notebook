@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Menu, Brain, CalendarCheck, FileText, History, LogOut, NotebookText, Folder, Users } from "lucide-react"; // Added NotebookText, Folder, Users
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Menu, Brain, CalendarCheck, FileText, History, LogOut, NotebookText, Folder, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,7 +56,7 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
 
   const studySets = rawStudySets || [];
 
-  const setsWithReviewData = await Promise.all(studySets.map(async (set) => {
+  const setsWithReviewData = await Promise.all(studySets.map(async (set: any) => { // Explicitly type 'set'
     const { data: cardsData, error: cardsError } = await supabase
       .from('cards')
       .select('id')

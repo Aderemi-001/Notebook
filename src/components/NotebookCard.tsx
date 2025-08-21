@@ -1,8 +1,8 @@
 import React from "react";
-import { Card, CardProps, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-interface NotebookCardProps extends CardProps {
+interface NotebookCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 

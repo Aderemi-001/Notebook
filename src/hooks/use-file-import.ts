@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import * as pdfjsLib from 'pdfjs-dist';
@@ -200,7 +200,7 @@ export const useFileImport = () => {
     file,
     setFile,
     sourceTextContent,
-    setSourceTextContent, // Allow external components to set this if needed
+    setSourceTextContent,
     handleFileImport,
     currentUser,
     isLoadingUser,

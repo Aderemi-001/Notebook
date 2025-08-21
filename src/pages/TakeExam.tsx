@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
@@ -105,13 +104,13 @@ const TakeExam: React.FC = () => {
   const [examResults, setExamResults] = useState<ExamResponse[] | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: exam, isLoading, isError, error, refetch } = useQuery<ExamDetails, Error>({
+  const { data: exam, isLoading, isError, error } = useQuery<ExamDetails, Error>({
     queryKey: ['exam', examId],
     queryFn: () => fetchExamDetails(examId!),
     enabled: !!examId,
   });
 
-  const { data: pastResponses, isLoading: isLoadingResponses, isError: isErrorResponses, error: errorResponses } = useQuery<ExamResponse[] | null, Error>({
+  const { data: pastResponses, isLoading: isLoadingResponses } = useQuery<ExamResponse[] | null, Error>({
     queryKey: ['examResponses', examId],
     queryFn: () => fetchExamResponses(examId!),
     enabled: !!examId,
@@ -183,7 +182,7 @@ const TakeExam: React.FC = () => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`, // Get current session token
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
               'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
             },
             body: JSON.stringify({ userAnswer, correctAnswer, questionType }),
@@ -220,16 +219,16 @@ const TakeExam: React.FC = () => {
 
       const { error: insertResponsesError } = await supabase
         .from('exam_responses')
-        .insert(responsesToInsert.map(res => ({ ...res, exam_id: examId!, user_id: user.id }))); // Add exam_id and user_id here
+        .insert(responsesToInsert.map(res => ({ ...res, exam_id: examId!, user_id: user.id })));
 
       if (insertResponsesError) throw insertResponsesError;
 
       setExamCompleted(true);
-      setExamResults(responsesToInsert); // Store results for display
+      setExamResults(responsesToInsert);
       dismissToast(toastId);
       showSuccess(`Exam completed! You got ${correctCount} out of ${totalQuestions} correct.`);
       queryClient.invalidateQueries({ queryKey: ['examResults', examId] });
-      queryClient.invalidateQueries({ queryKey: ['pastExams'] }); // Invalidate past exams to update score
+      queryClient.invalidateQueries({ queryKey: ['pastExams'] });
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message || "Failed to submit exam.");
@@ -262,8 +261,8 @@ const TakeExam: React.FC = () => {
       setUserAnswers({});
       setExamCompleted(false);
       setExamResults(null);
-      queryClient.invalidateQueries({ queryKey: ['examResponses', examId] }); // Invalidate to ensure fresh start
-      queryClient.invalidateQueries({ queryKey: ['pastExams'] }); // Invalidate past exams to update score
+      queryClient.invalidateQueries({ queryKey: ['examResponses', examId] });
+      queryClient.invalidateQueries({ queryKey: ['pastExams'] });
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message || "Failed to prepare for retake.");
@@ -292,10 +291,10 @@ const TakeExam: React.FC = () => {
     );
   }
 
-  if (isError || isErrorResponses) {
+  if (isError) {
     return (
       <div className="container mx-auto py-10 text-center text-red-500">
-        Error loading exam: {error?.message || errorResponses?.message || "Unknown error"}
+        Error loading exam: {error?.message || "Unknown error"}
       </div>
     );
   }

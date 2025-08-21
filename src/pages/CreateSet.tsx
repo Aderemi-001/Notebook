@@ -3,29 +3,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { Trash2, Loader2, Brain, ArrowLeft, Save } from "lucide-react";
-import { Link, useNavigate, useLocation } from "react-router-dom"; // Import useLocation
+import { Brain, ArrowLeft } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import * as pdfjsLib from 'pdfjs-dist';
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import StudySetFormFields from "@/components/StudySetFormFields";
 import FlashcardEditor from "@/components/FlashcardEditor";
-import { useStudySetGroups } from "@/hooks/use-study-set-groups"; // Import the new hook
+import { useStudySetGroups } from "@/hooks/use-study-set-groups";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
@@ -33,7 +23,7 @@ const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   is_public: z.boolean().default(false),
-  group_id: z.string().nullable().optional(), // New field for group_id
+  group_id: z.string().nullable().optional(),
   cards: z.array(z.object({
     term: z.string().min(1, "Term is required"),
     definition: z.string().min(1, "Definition is required"),
@@ -46,10 +36,10 @@ const CreateSet = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation(); // Use useLocation hook
+  const location = useLocation();
   const queryClient = useQueryClient();
 
-  const { data: userGroups, isLoading: isLoadingGroups, isError: isErrorGroups, error: errorGroups } = useStudySetGroups(); // Use the new hook
+  const { data: userGroups, isLoading: isLoadingGroups, isError: isErrorGroups, error: errorGroups } = useStudySetGroups();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,7 +47,7 @@ const CreateSet = () => {
       title: "",
       description: "",
       is_public: false,
-      group_id: (location.state as { groupId?: string })?.groupId || null, // Set default from state
+      group_id: (location.state as { groupId?: string })?.groupId || null,
       cards: [{ term: "", definition: "" }],
     },
   });
@@ -92,7 +82,7 @@ const CreateSet = () => {
           user_id: currentUser.id,
           source_text: sourceTextContent,
           is_public: values.is_public,
-          group_id: values.group_id, // Save the group_id
+          group_id: values.group_id,
         })
         .select()
         .single();
@@ -114,7 +104,7 @@ const CreateSet = () => {
       dismissToast(toastId);
       showSuccess("Set created successfully!");
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
-      queryClient.invalidateQueries({ queryKey: ['studySetsInGroup'] }); // Invalidate group-specific sets
+      queryClient.invalidateQueries({ queryKey: ['studySetsInGroup'] });
       navigate('/');
 
     } catch (error: any) {
@@ -242,7 +232,7 @@ const CreateSet = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) { // Corrected variable name from existsSync to existingConcept
+          if (existsSync) { // Corrected variable name from existsSync to existingConcept
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
