@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { showSuccess, showError } from '@/utils/toast';
+import { supabase } from '@/integrations/supabase/client'; // Added this import
 
 interface RichTextEditorProps {
   content: string;
