@@ -134,8 +134,9 @@ const CreateGroup: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </NotebookCard>
+          </Form>
+        </CardContent>
+      </NotebookCard>
     </div>
   );
 };

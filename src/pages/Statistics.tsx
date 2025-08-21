@@ -340,6 +340,6 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
       </div>
     </div>
   );
-  };
+};
   
-  export default Statistics;
+export default Statistics;
