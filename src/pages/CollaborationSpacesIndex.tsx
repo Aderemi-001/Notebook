@@ -54,8 +54,6 @@ const fetchCollaborationSpaces = async (userId: string): Promise<CollaborationSp
       description,
       created_at,
       created_by_user_id
-      // Removed profiles(display_name) join for debugging
-      // Removed space_members join for debugging
     `)
     .order('name', { ascending: true });
 
