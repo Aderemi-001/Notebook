@@ -62,7 +62,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       TaskItem.configure({ // Configure TaskItem
         nested: true,
         HTMLAttributes: {
-          class: 'flex items-start gap-2', // Apply flexbox for alignment
+          class: 'flex items-baseline gap-2', // Changed items-start to items-baseline for better alignment
         },
       }),
     ],
@@ -74,8 +74,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     editorProps: {
       attributes: {
         class: cn(
-          'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4 border rounded-md', // Changed p-6 back to p-4
-          'user-select-text touch-action-auto', // Add these classes for improved mobile selection
+          'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4 border rounded-md',
+          'user-select-text touch-action-auto',
           !editable && 'bg-muted/50 cursor-not-allowed',
           className
         ),
