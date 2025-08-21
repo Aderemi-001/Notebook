@@ -53,6 +53,7 @@ const CreateNote: React.FC = () => {
   const [selectedStudySetId, setSelectedStudySetId] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isEditorDrawingMode, setIsEditorDrawingMode] = useState(false); // New state
 
   const { data: userStudySets, isLoading: isLoadingSets, isError: isErrorSets, error: errorSets } = useQuery<StudySet[], Error>({
     queryKey: ['userStudySetsForNotes'],
@@ -156,9 +157,6 @@ const CreateNote: React.FC = () => {
     }
   };
 
-  // onDrawingAnalyzed prop is no longer needed here as RichTextEditor handles it internally
-  // const handleDrawingAnalyzed = async (base64Image: string) => { ... };
-
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
@@ -193,14 +191,14 @@ const CreateNote: React.FC = () => {
               content={content}
               onContentChange={setContent}
               editable={!isSaving}
-              // onDrawingAnalyzed is no longer passed here
+              onDrawingModeChange={setIsEditorDrawingMode} // Pass the setter
             />
           </div>
           {/* Summarize button moved here */}
           <div className="flex justify-end">
             <Button
               onClick={handleSummarizeWithAI}
-              disabled={isSummarizing || !content.trim()}
+              disabled={isSummarizing || !content.trim() || isEditorDrawingMode} // Disable when in drawing mode
               variant="outline"
             >
               {isSummarizing ? (
