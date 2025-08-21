@@ -46,7 +46,6 @@ const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
     throw new Error("User not authenticated.");
   }
 
-  // Temporarily simplify the select to only fetch collaboration_spaces data
   const { data, error } = await supabase
     .from('collaboration_spaces')
     .select(`
@@ -54,7 +53,9 @@ const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
       name,
       description,
       created_at,
-      created_by_user_id
+      created_by_user_id,
+      profiles(display_name),
+      space_members!left(user_id, role)
     `)
     .order('name', { ascending: true });
 
@@ -62,11 +63,11 @@ const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
     console.error("Error fetching collaboration spaces:", error);
     throw new Error("Failed to fetch your collaboration spaces.");
   }
-  // For now, return data with empty profiles and space_members to match interface
+  
+  // Filter space_members to only include the current user's role for the index page
   return data?.map(space => ({
     ...space,
-    profiles: null, // Will be fetched separately or handled differently
-    space_members: [], // Will be fetched separately or handled differently
+    space_members: space.space_members.filter(member => member.user_id === user.id),
   })) || [];
 };
 
@@ -219,8 +220,8 @@ const CollaborationSpacesIndex: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredSpaces.map((space) => {
             const isCreator = space.created_by_user_id === currentUserId;
-            // userRole is not available with simplified query, default to 'member' for display
-            const userRole = 'member'; 
+            // Get the current user's role in this specific space
+            const currentUserSpaceRole = space.space_members.find(member => member.user_id === currentUserId)?.role;
 
             return (
               <NotebookCard key={space.id} className="h-full flex flex-col">
@@ -238,7 +239,12 @@ const CollaborationSpacesIndex: React.FC = () => {
                   )}
                 </CardHeader>
                 <CardContent className="flex justify-end gap-2 pt-0">
-                  {/* Link to space detail page (to be created later) */}
+                  {/* Display user's role if they are a member */}
+                  {currentUserSpaceRole && (
+                    <span className="text-sm text-muted-foreground self-center mr-2">
+                      Your Role: {currentUserSpaceRole.charAt(0).toUpperCase() + currentUserSpaceRole.slice(1)}
+                    </span>
+                  )}
                   <Link to={`/collaboration/${space.id}`}>
                     <Button variant="outline" size="sm">
                       View Space
