@@ -128,28 +128,37 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       // Fill with white after clearing to ensure white background in toDataURL
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      console.log("Canvas cleared.");
     }
   }, []);
 
   // Effect for initializing canvas context and handling resizes
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.log("Canvas ref is null on effect run.");
+      return;
+    }
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.error("Failed to get 2D context for canvas.");
+      return;
+    }
 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctxRef.current = ctx;
+    console.log("Canvas context initialized.");
 
-    // Initial setup
+    // Set initial canvas dimensions and fill background
     const parentDiv = canvas.parentElement;
     if (parentDiv) {
       canvas.width = parentDiv.clientWidth;
       canvas.height = parentDiv.clientHeight;
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      console.log(`Canvas dimensions set to: ${canvas.width}x${canvas.height}`);
     }
 
     const resizeObserver = new ResizeObserver(entries => {
@@ -162,6 +171,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
             canvas.width = width;
             canvas.height = height;
             ctx.putImageData(imageData, 0, 0); // Restore drawing
+            console.log(`Canvas resized to: ${width}x${height}`);
           }
         }
       }
@@ -171,6 +181,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
     return () => {
       resizeObserver.unobserve(canvas);
+      console.log("Canvas resize observer unmounted.");
     };
   }, []); // Empty dependency array: runs once on mount
 
@@ -179,6 +190,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     if (ctxRef.current) {
       ctxRef.current.strokeStyle = drawingColor;
       ctxRef.current.lineWidth = BASE_LINE_WIDTH;
+      console.log(`Drawing style updated: color=${drawingColor}, width=${BASE_LINE_WIDTH}`);
     }
     if (isDrawingMode) {
       clearCanvas(); // Clear canvas when entering drawing mode
@@ -187,11 +199,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
 
   // Drawing functions
-  const startDrawing = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!ctxRef.current || !canvasRef.current) return;
-    event.preventDefault(); // Prevent default touch/mouse behavior
-    
+  const getCoordinates = (event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
     const rect = canvas.getBoundingClientRect();
     let clientX: number;
     let clientY: number;
@@ -213,53 +224,47 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     const scaledOffsetX = offsetX / zoomLevel;
     const scaledOffsetY = offsetY / zoomLevel;
 
+    return { x: scaledOffsetX, y: scaledOffsetY };
+  };
+
+  const startDrawing = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!ctxRef.current || !canvasRef.current) {
+      console.log("Cannot start drawing: context or canvas ref missing.");
+      return;
+    }
+    event.preventDefault(); // Prevent default touch/mouse behavior
+    
+    const { x, y } = getCoordinates(event);
     ctxRef.current.beginPath();
-    ctxRef.current.moveTo(scaledOffsetX, scaledOffsetY);
+    ctxRef.current.moveTo(x, y);
     setIsDrawing(true);
+    console.log(`Started drawing at: (${x}, ${y})`);
   }, [zoomLevel]);
 
   const draw = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !ctxRef.current || !canvasRef.current) return;
     event.preventDefault(); // Prevent default touch/mouse behavior
     
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    let clientX: number;
-    let clientY: number;
-
-    if ('touches' in event.nativeEvent) { // It's a touch event
-      const touch = event.nativeEvent.touches[0];
-      clientX = touch.clientX;
-      clientY = touch.clientY;
-    } else { // It's a mouse event
-      clientX = event.nativeEvent.clientX;
-      clientY = event.nativeEvent.clientY;
-    }
-
-    // Calculate offsetX and offsetY relative to the canvas
-    const offsetX = clientX - rect.left;
-    const offsetY = clientY - rect.top;
-
-    // Adjust coordinates for zoom level
-    const scaledOffsetX = offsetX / zoomLevel;
-    const scaledOffsetY = offsetY / zoomLevel;
-
-    ctxRef.current.lineTo(scaledOffsetX, scaledOffsetY);
+    const { x, y } = getCoordinates(event);
+    ctxRef.current.lineTo(x, y);
     ctxRef.current.stroke();
+    // console.log(`Drawing to: (${x}, ${y})`); // Too verbose, uncomment if needed
   }, [isDrawing, zoomLevel]);
 
   const endDrawing = useCallback(() => {
     if (!ctxRef.current) return;
     ctxRef.current.closePath();
     setIsDrawing(false);
+    console.log("Ended drawing.");
   }, []);
 
   const insertDrawing = useCallback(() => {
     if (editor && canvasRef.current) {
-      const dataUrl = canvasRef.current.toDataURL('image/png'); // Corrected: used canvasRef.current
+      const dataUrl = canvasRef.current.toDataURL('image/png');
       editor.chain().focus().setImage({ src: dataUrl }).run();
       clearCanvas(); // Clear canvas after inserting
       setIsDrawingMode(false); // Exit drawing mode
+      console.log("Drawing inserted and mode exited.");
     }
   }, [editor, clearCanvas]);
 
@@ -271,6 +276,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
       // Show loading toast
       const toastId = showLoading("AI is analyzing your drawing...");
+      console.log("Analyzing drawing with AI...");
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -301,8 +307,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         if (result.extracted_content && result.extracted_content.trim() !== "") {
           setTextToReplace(result.extracted_content);
           setShowReplaceDialog(true);
+          console.log("AI analysis successful, showing replace dialog.");
         } else {
           showError("AI could not extract meaningful content from the drawing.");
+          console.log("AI analysis returned no meaningful content.");
         }
         
       } catch (err: any) {
@@ -319,6 +327,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       // Insert the new text as a new paragraph at the end of the document
       editor.chain().focus().insertContentAt(editor.state.doc.content.size, '<p>' + textToReplace + '</p>').run();
       showSuccess("AI transcription added to note content!");
+      console.log("AI transcription inserted.");
     }
     setShowReplaceDialog(false);
     setTextToReplace('');
@@ -328,6 +337,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     setShowReplaceDialog(false);
     setTextToReplace('');
     showSuccess("AI transcription not applied.");
+    console.log("AI transcription cancelled.");
   }, []);
 
   if (!editor) {
