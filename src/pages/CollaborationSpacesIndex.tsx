@@ -40,10 +40,10 @@ interface CollaborationSpace {
   space_members: { role: string }[]; // To check user's role in the space
 }
 
-const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("User not authenticated.");
+const fetchCollaborationSpaces = async (userId: string): Promise<CollaborationSpace[]> => {
+  // We already check for user in the useQuery enabled option, but good to keep here too
+  if (!userId) {
+    throw new Error("User not authenticated for fetching spaces.");
   }
 
   const { data, error } = await supabase
@@ -53,22 +53,22 @@ const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
       name,
       description,
       created_at,
-      created_by_user_id,
-      profiles(display_name)
+      created_by_user_id
+      // Removed profiles(display_name) join for debugging
       // Removed space_members join for debugging
     `)
     .order('name', { ascending: true });
 
   if (error) {
     console.error("Error fetching collaboration spaces:", error);
-    throw new Error("Failed to fetch your collaboration spaces.");
+    throw new Error(`Failed to fetch your collaboration spaces: ${error.message}`);
   }
   
-  // Filter space_members to only include the current user's role for the index page
-  // Since space_members is not joined, this will always be an empty array for now
+  // Since profiles and space_members are not joined, manually add placeholder data
   return data?.map(space => ({
     ...space,
-    space_members: [], 
+    profiles: null, // Placeholder
+    space_members: [], // Placeholder
   })) || [];
 };
 
@@ -88,12 +88,14 @@ const CollaborationSpacesIndex: React.FC = () => {
 
   const { data: spaces, isLoading, isError, error } = useQuery<CollaborationSpace[], Error>({
     queryKey: ['collaborationSpaces'],
-    queryFn: fetchCollaborationSpaces,
+    queryFn: () => fetchCollaborationSpaces(currentUserId!), // Pass currentUserId to the fetcher
+    enabled: !!currentUserId, // Only run query when currentUserId is available
   });
 
   const filteredSpaces = spaces?.filter(space =>
     space.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (space.description && space.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    // Cannot filter by profiles.display_name if not fetched
     (space.profiles?.display_name && space.profiles.display_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -231,7 +233,8 @@ const CollaborationSpacesIndex: React.FC = () => {
                     <Users className="mr-2 h-5 w-5 text-primary" /> {space.name}
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground mt-1">
-                    Created by: {space.profiles?.display_name || 'Unknown User'} on {format(new Date(space.created_at), 'PPP')}
+                    {/* Cannot display creator's name if profiles not joined */}
+                    Created on {format(new Date(space.created_at), 'PPP')}
                   </CardDescription>
                   {space.description && (
                     <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
