@@ -112,6 +112,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           'user-select-text touch-action-auto',
           (!editable || isDrawingMode) && 'bg-muted/50 cursor-not-allowed', // Apply disabled styles
           isDrawingMode && 'pointer-events-none', // Add this line to allow events to pass through
+          isDrawingMode && 'relative z-0', // Add relative and z-0 to push it behind the canvas (z-10)
           className
         ),
         'aria-labelledby': labelId || '', // Use aria-labelledby for accessibility, provide empty string if undefined
