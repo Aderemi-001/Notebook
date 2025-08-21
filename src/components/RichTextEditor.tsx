@@ -127,35 +127,57 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     }
   }, []);
 
-  // Initialize canvas context and set dimensions
+  // Effect for initializing canvas context and handling resizes
   useEffect(() => {
-    if (canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctxRef.current = ctx;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-        // Set canvas dimensions to match its display size initially
-        const parentDiv = canvas.parentElement;
-        if (parentDiv) {
-          canvas.width = parentDiv.clientWidth;
-          canvas.height = parentDiv.clientHeight;
-        }
-        clearCanvas();
-      }
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctxRef.current = ctx;
+
+    // Initial setup
+    const parentDiv = canvas.parentElement;
+    if (parentDiv) {
+      canvas.width = parentDiv.clientWidth;
+      canvas.height = parentDiv.clientHeight;
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-  }, [clearCanvas]);
 
-  // Update line width and clear canvas when drawing mode or color changes
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        if (entry.target === canvas) {
+          const { width, height } = entry.contentRect;
+          // Only update if dimensions actually changed to avoid infinite loops
+          if (canvas.width !== width || canvas.height !== height) {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); // Save current drawing
+            canvas.width = width;
+            canvas.height = height;
+            ctx.putImageData(imageData, 0, 0); // Restore drawing
+          }
+        }
+      }
+    });
+
+    resizeObserver.observe(canvas);
+
+    return () => {
+      resizeObserver.unobserve(canvas);
+    };
+  }, []); // Empty dependency array: runs once on mount
+
+  // Effect for updating drawing styles and clearing canvas on mode change
   useEffect(() => {
     if (ctxRef.current) {
       ctxRef.current.strokeStyle = drawingColor;
       ctxRef.current.lineWidth = BASE_LINE_WIDTH / zoomLevel; // Adjust line width based on zoom
     }
     if (isDrawingMode) {
-      clearCanvas(); // Clear canvas when entering drawing mode or changing zoom
+      clearCanvas(); // Clear canvas when entering drawing mode
     }
   }, [isDrawingMode, drawingColor, zoomLevel, clearCanvas]);
 
@@ -223,7 +245,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${session.access_token}`,
-              'apikey': "eyJhbGciOiJIUzI1NiIsInR5cai_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+              'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
             },
             body: JSON.stringify({ base64Image: base64Data, mimeType }),
           }
