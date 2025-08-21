@@ -223,7 +223,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     ctxRef.current.beginPath();
     ctxRef.current.moveTo(x, y);
     setIsDrawing(true);
-    showSuccess("Canvas received input!"); // <--- Added this toast
   }, [zoomLevel]);
 
   const draw = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -355,7 +354,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           ref={canvasRef}
           className={cn(
             "absolute top-0 left-0 bg-white dark:bg-gray-900 cursor-crosshair",
-            isDrawingMode ? "z-20 pointer-events-auto border-2 border-red-500" : "z-0 pointer-events-none" // Bring to front and make interactive when drawing
+            isDrawingMode ? "z-20 pointer-events-auto" : "z-0 pointer-events-none" // Bring to front and make interactive when drawing
           )}
           onMouseDown={startDrawing}
           onMouseMove={draw}
