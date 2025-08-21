@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import AddExistingSetToGroupDialog from '@/components/AddExistingSetToGroupDialog'; // Import the new component
 import { Separator } from '@/components/ui/separator'; // Import Separator
+import { Label } from "@/components/ui/label"; // Import Label
 
 interface StudySetGroup {
   id: string;
@@ -270,7 +271,9 @@ const GroupDetail: React.FC = () => {
       <h2 className="text-2xl font-semibold mb-4">Study Sets in this Group ({filteredStudySets?.length || 0})</h2>
       
       <div className="mb-6">
+        <Label htmlFor="search-group-sets" className="sr-only">Search sets in this group</Label>
         <Input
+          id="search-group-sets"
           type="text"
           placeholder="Search sets in this group..."
           value={searchTerm}

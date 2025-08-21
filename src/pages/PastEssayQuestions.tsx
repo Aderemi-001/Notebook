@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label"; // Import Label
 
 interface EssayQuestionSummary {
   id: string;
@@ -99,7 +100,9 @@ const PastEssayQuestions: React.FC = () => {
       </p>
 
       <div className="mb-6">
+        <Label htmlFor="search-essay-questions" className="sr-only">Search essay questions</Label>
         <Input
+          id="search-essay-questions"
           type="text"
           placeholder="Search essay questions by text or associated study set..."
           value={searchTerm}

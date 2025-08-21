@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Separator } from "@/components/ui/separator";
 import { Badge } from '@/components/ui/badge';
+import { Label } from "@/components/ui/label"; // Import Label
 
 interface EssayQuestion {
   id: string;
@@ -266,7 +267,9 @@ const EssayPractice: React.FC = () => {
           <CardDescription>Write your essay response below.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <Label htmlFor="essay-answer" className="sr-only">Your Essay Answer</Label>
           <Textarea
+            id="essay-answer"
             placeholder="Start writing your essay here..."
             value={userAnswer}
             onChange={(e) => setUserAnswer(e.target.value)}

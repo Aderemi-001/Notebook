@@ -30,6 +30,7 @@ import {
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { Separator } from '@/components/ui/separator';
+import { Label } from "@/components/ui/label"; // Import Label
 
 interface StudySet {
   id: string;
@@ -209,7 +210,9 @@ const GroupsIndex: React.FC = () => {
       </p>
 
       <div className="mb-6">
+        <Label htmlFor="search-groups" className="sr-only">Search groups</Label>
         <Input
+          id="search-groups"
           type="text"
           placeholder="Search groups by name, description, or contained sets..."
           value={searchTerm}

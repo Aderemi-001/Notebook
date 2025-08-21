@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label"; // Import Label
 
 interface ExamSummary {
   id: string;
@@ -134,7 +135,9 @@ const PastExams: React.FC = () => {
       </p>
 
       <div className="mb-6">
+        <Label htmlFor="search-past-exams" className="sr-only">Search past exams</Label>
         <Input
+          id="search-past-exams"
           type="text"
           placeholder="Search past exams by title, description, or study set..."
           value={searchTerm}

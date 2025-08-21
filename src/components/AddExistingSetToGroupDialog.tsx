@@ -145,7 +145,9 @@ const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = 
         </DialogHeader>
         <div className="flex-grow flex flex-col overflow-hidden">
           <div className="mb-4">
+            <Label htmlFor="add-set-search" className="sr-only">Search sets</Label>
             <Input
+              id="add-set-search"
               type="text"
               placeholder="Search sets..."
               value={searchTerm}

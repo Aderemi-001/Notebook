@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label"; // Import Label
 
 interface PublicStudySet {
   id: string;
@@ -84,7 +85,9 @@ const ExplorePublicSets: React.FC = () => {
       </p>
 
       <div className="mb-6">
+        <Label htmlFor="search-public-sets" className="sr-only">Search public sets</Label>
         <Input
+          id="search-public-sets"
           type="text"
           placeholder="Search public sets by title, description, or creator..."
           value={searchTerm}

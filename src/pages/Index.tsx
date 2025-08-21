@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
+import { Label } from "@/components/ui/label"; // Import Label
 
 interface StudySet {
   id: string;
@@ -325,7 +326,9 @@ const Index = () => {
       </div>
 
       <div className="mb-6">
+        <Label htmlFor="search-sets-cards" className="sr-only">Search study sets or cards</Label>
         <Input
+          id="search-sets-cards"
           type="text"
           placeholder="Search sets by title/description or cards by term/definition..."
           value={searchTerm}
