@@ -25,6 +25,7 @@ interface RichTextEditorProps {
   onContentChange: (content: string) => void;
   editable?: boolean;
   className?: string;
+  id?: string; // Add id prop
 }
 
 const MIN_ZOOM = 0.5;
@@ -32,7 +33,7 @@ const MAX_ZOOM = 2.0;
 const ZOOM_STEP = 0.1;
 const BASE_LINE_WIDTH = 3; // Base line width for drawing
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className }) => {
+const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, id }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#000000'); // Default to black
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -112,6 +113,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           (!editable || isDrawingMode) && 'bg-muted/50 cursor-not-allowed', // Apply disabled styles
           className
         ),
+        id: id, // Apply the id prop here
       },
     },
   });
@@ -323,16 +325,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     setTextToReplace('');
     showSuccess("AI transcription not applied.");
   }, []);
-
-  // Helper to get touch position relative to canvas - No longer needed as logic is in startDrawing/draw
-  // const getTouchPos = (e: React.TouchEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
-  //   const rect = canvas.getBoundingClientRect();
-  //   const touch = e.touches[0];
-  //   return {
-  //     offsetX: touch.clientX - rect.left,
-  //     offsetY: touch.clientY - rect.top,
-  //   };
-  // };
 
   if (!editor) {
     return null;

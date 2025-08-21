@@ -189,6 +189,7 @@ const CreateNote: React.FC = () => {
           <div>
             <Label htmlFor="note-content">Content</Label>
             <RichTextEditor
+              id="note-content" // Pass the id here
               content={content}
               onContentChange={setContent}
               editable={!isSaving}
