@@ -165,7 +165,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       // Optionally clear canvas after analysis if user is expected to draw something new
       // clearCanvas(); // Consider adding this if the workflow implies a new drawing after analysis
     }
-  }, [onDrawingAnalyyzed]);
+  }, [onDrawingAnalyzed]); // Corrected typo here
 
   // Helper to get touch position relative to canvas
   const getTouchPos = (e: React.TouchEvent, canvas: HTMLCanvasElement) => {
