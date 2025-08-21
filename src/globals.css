@@ -166,47 +166,47 @@
   /* Default Dark Palette (Blue-Grey with Blue-Green Primary) */
   .dark.palette-default-dark {
     --background: 240 20% 8%; /* Deep dark blue-purple */
-    --foreground: 240 10% 90%; /* Light, slightly desaturated white */
+    --foreground: 210 40% 98%; /* Very light off-white for readability */
 
     --card: 240 20% 12%; /* Slightly lighter card background */
-    --card-foreground: 240 10% 90%;
+    --card-foreground: 210 40% 98%;
 
     --popover: 240 20% 12%;
-    --popover-foreground: 240 10% 90%;
+    --popover-foreground: 210 40% 98%;
 
     --primary: 180 70% 40%; /* Vibrant Blue-Green */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 15% 20%; /* Darker grey for secondary elements */
-    --secondary-foreground: 240 10% 70%;
+    --secondary-foreground: 210 40% 80%; /* Lighter secondary text */
 
     --muted: 240 15% 20%;
-    --muted-foreground: 240 10% 60%; /* Readable muted text */
+    --muted-foreground: 215.4 16.3% 65%; /* Much lighter muted text */
 
     --accent: 240 15% 20%;
-    --accent-foreground: 240 10% 70%;
+    --accent-foreground: 210 40% 80%;
 
     --destructive: 0 84.2% 60.2%; /* Red (kept) */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 240 15% 25%; /* Clearer border for elements */
-    --input: 240 15% 15%; /* Slightly darker input background */
+    --border: 240 15% 30%; /* Clearer border for elements */
+    --input: 240 15% 20%; /* Slightly lighter input background */
     --ring: 180 70% 40%; /* Primary blue-green */
 
     --sidebar-background: 240 20% 8%;
-    --sidebar-foreground: 240 10% 90%;
+    --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 180 70% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 15% 20%;
-    --sidebar-accent-foreground: 240 10% 70%;
-    --sidebar-border: 240 15% 25%;
+    --sidebar-accent-foreground: 210 40% 80%;
+    --sidebar-border: 240 15% 30%;
     --sidebar-ring: 180 70% 40%;
   }
 
   /* Dark Palette 1 (Deep Earthy Brown/Orange) */
   .dark.palette-1-dark {
     --background: 30 20% 10%; /* Deep dark brown */
-    --foreground: 30 20% 90%;
+    --foreground: 30 20% 90%; /* Light brown-grey for readability */
 
     --card: 30 20% 15%;
     --card-foreground: 30 20% 90%;
@@ -221,7 +221,7 @@
     --secondary-foreground: 30 20% 70%;
 
     --muted: 30 10% 20%;
-    --muted-foreground: 30 10% 50%;
+    --muted-foreground: 30 10% 60%; /* Lighter muted text */
 
     --accent: 30 10% 20%;
     --accent-foreground: 30 20% 70%;
@@ -229,8 +229,8 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 10% 30%;
-    --input: 30 10% 30%;
+    --border: 30 10% 35%; /* Clearer border */
+    --input: 30 10% 25%; /* Lighter input background */
     --ring: 30 70% 50%;
 
     --sidebar-background: 30 20% 10%;
@@ -239,14 +239,14 @@
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 30 10% 20%;
     --sidebar-accent-foreground: 30 20% 70%;
-    --sidebar-border: 30 10% 30%;
+    --sidebar-border: 30 10% 35%;
     --sidebar-ring: 30 70% 50%;
   }
 
   /* Dark Palette 2 (Cool Deep Purple) */
   .dark.palette-2-dark {
     --background: 270 30% 8%; /* Deep purple */
-    --foreground: 270 10% 90%;
+    --foreground: 270 10% 90%; /* Light purple-grey for readability */
 
     --card: 270 30% 12%;
     --card-foreground: 270 10% 90%;
@@ -261,7 +261,7 @@
     --secondary-foreground: 270 10% 70%;
 
     --muted: 270 20% 20%;
-    --muted-foreground: 270 10% 50%;
+    --muted-foreground: 270 10% 60%; /* Lighter muted text */
 
     --accent: 270 20% 20%;
     --accent-foreground: 270 10% 70%;
@@ -269,8 +269,8 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 270 20% 30%;
-    --input: 270 20% 30%;
+    --border: 270 20% 35%; /* Clearer border */
+    --input: 270 20% 25%; /* Lighter input background */
     --ring: 270 70% 50%;
 
     --sidebar-background: 270 30% 8%;
@@ -279,14 +279,14 @@
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 270 20% 20%;
     --sidebar-accent-foreground: 270 10% 70%;
-    --sidebar-border: 270 20% 30%;
+    --sidebar-border: 270 20% 35%;
     --sidebar-ring: 270 70% 50%;
   }
 
   /* Dark Palette 3 (Vibrant Dark Teal) */
   .dark.palette-3-dark {
     --background: 180 30% 8%; /* Deep teal */
-    --foreground: 180 10% 90%;
+    --foreground: 180 10% 90%; /* Light teal-grey for readability */
 
     --card: 180 30% 12%;
     --card-foreground: 180 10% 90%;
@@ -301,7 +301,7 @@
     --secondary-foreground: 180 10% 70%;
 
     --muted: 180 20% 20%;
-    --muted-foreground: 180 10% 50%;
+    --muted-foreground: 180 10% 60%; /* Lighter muted text */
 
     --accent: 180 20% 20%;
     --accent-foreground: 180 10% 70%;
@@ -309,8 +309,8 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 180 20% 30%;
-    --input: 180 20% 30%;
+    --border: 180 20% 35%; /* Clearer border */
+    --input: 180 20% 25%; /* Lighter input background */
     --ring: 180 70% 50%;
 
     --sidebar-background: 180 30% 8%;
@@ -319,7 +319,7 @@
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 180 20% 20%;
     --sidebar-accent-foreground: 180 10% 70%;
-    --sidebar-border: 180 20% 30%;
+    --sidebar-border: 180 20% 35%;
     --sidebar-ring: 180 70% 50%;
   }
 
