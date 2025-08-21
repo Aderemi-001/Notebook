@@ -1,6 +1,4 @@
-"use client"; // This directive marks the component for client-side rendering
-
-import React from 'react'; // Explicitly import React for JSX parsing, though automatic runtime is used.
+import React from 'react';
 import { Editor } from '@tiptap/react';
 import { Toggle } from '@/components/ui/toggle';
 import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo, X, ListTodo, MoreHorizontal } from 'lucide-react';
@@ -42,7 +40,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleBold().run()}
               disabled={!editor.can().chain().focus().toggleBold().run()}
               aria-label="Toggle bold"
-              className="px-2 flex items-center justify-center"
+              className="px-2"
             >
               <Bold className="h-4 w-4" />
             </Toggle>
@@ -60,7 +58,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleItalic().run()}
               disabled={!editor.can().chain().focus().toggleItalic().run()}
               aria-label="Toggle italic"
-              className="px-2 flex items-center justify-center"
+              className="px-2"
             >
               <Italic className="h-4 w-4" />
             </Toggle>
@@ -78,7 +76,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleStrike().run()}
               disabled={!editor.can().chain().focus().toggleStrike().run()}
               aria-label="Toggle strikethrough"
-              className="px-2 flex items-center justify-center"
+              className="px-2"
             >
               <Strikethrough className="h-4 w-4" />
             </Toggle>
@@ -96,7 +94,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleCode().run()}
               disabled={!editor.can().chain().focus().toggleCode().run()}
               aria-label="Toggle code"
-              className="px-2 flex items-center justify-center"
+              className="px-2"
             >
               <Code className="h-4 w-4" />
             </Toggle>
@@ -115,7 +113,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
                   size="sm"
                   pressed={editor.isActive('highlight')}
                   aria-label="Toggle highlight colors"
-                  className="px-2 flex items-center justify-center"
+                  className="px-2"
                 >
                   <Highlighter className="h-4 w-4" />
                 </Toggle>
@@ -138,7 +136,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
                     onPressedChange={() => editor.chain().focus().toggleHighlight({ color: colorOption.hex }).run()}
                     disabled={!editor.can().chain().focus().toggleHighlight({ color: colorOption.hex }).run()}
                     aria-label={`Highlight ${colorOption.name}`}
-                    className="relative flex items-center justify-center"
+                    className="relative"
                   >
                     <Highlighter className="h-4 w-4" />
                     <div
@@ -162,7 +160,6 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
                   onPressedChange={() => editor.chain().focus().unsetHighlight().run()}
                   disabled={!editor.can().chain().focus().unsetHighlight().run()}
                   aria-label="Remove Highlight"
-                  className="flex items-center justify-center"
                 >
                   <Highlighter className="h-4 w-4" />
                   <X className="absolute top-0 right-0 h-3 w-3 text-red-500" />
@@ -185,7 +182,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
               disabled={!editor.can().chain().focus().toggleBulletList().run()}
               aria-label="Toggle bullet list"
-              className="px-2 flex items-center justify-center"
+              className="px-2"
             >
               <List className="h-4 w-4" />
             </Toggle>
@@ -203,7 +200,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
               disabled={!editor.can().chain().focus().toggleOrderedList().run()}
               aria-label="Toggle ordered list"
-              className="px-2 flex items-center justify-center"
+              className="px-2"
             >
               <ListOrdered className="h-4 w-4" />
             </Toggle>
@@ -221,7 +218,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().toggleTaskList().run()}
               disabled={!editor.can().chain().focus().toggleTaskList().run()}
               aria-label="Toggle todo list"
-              className="px-2 flex items-center justify-center"
+              className="px-2"
             >
               <ListTodo className="h-4 w-4" />
             </Toggle>
@@ -236,14 +233,14 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Toggle size="sm" aria-label="More formatting options" className="px-2 flex items-center justify-center">
+                <Toggle size="sm" aria-label="More formatting options" className="px-2">
                   <MoreHorizontal className="h-4 w-4" />
                 </Toggle>
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent>More Formatting</TooltipContent>
           </Tooltip>
-        </DropdownMenuTrigger>
+        </TooltipProvider>
         <DropdownMenuContent align="start" className="w-auto p-1 flex flex-wrap gap-1">
           <DropdownMenuItem asChild>
             <TooltipProvider>
@@ -255,7 +252,6 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
                     onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
                     disabled={!editor.can().chain().focus().toggleBlockquote().run()}
                     aria-label="Toggle blockquote"
-                    className="flex items-center justify-center"
                   >
                     <Quote className="h-4 w-4" />
                   </Toggle>
@@ -273,7 +269,6 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
                     onPressedChange={() => editor.chain().focus().setHorizontalRule().run()}
                     disabled={!editor.can().chain().focus().setHorizontalRule().run()}
                     aria-label="Insert horizontal rule"
-                    className="flex items-center justify-center"
                   >
                     <Minus className="h-4 w-4" />
                   </Toggle>
@@ -293,7 +288,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().undo().run()}
               disabled={!editor.can().chain().focus().undo().run()}
               aria-label="Undo"
-              className="px-2 flex items-center justify-center"
+              className="px-2"
             >
               <Undo className="h-4 w-4" />
             </Toggle>
@@ -310,7 +305,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor })
               onPressedChange={() => editor.chain().focus().redo().run()}
               disabled={!editor.can().chain().focus().redo().run()}
               aria-label="Redo"
-              className="px-2 flex items-center justify-center"
+              className="px-2"
             >
               <Redo className="h-4 w-4" />
             </Toggle>
