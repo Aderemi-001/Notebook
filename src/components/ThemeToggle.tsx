@@ -41,7 +41,7 @@ export function ThemeToggle() {
 
       <div className="flex items-center justify-between rounded-lg border p-4">
         <div className="space-y-0.5">
-          <Label htmlFor="palette-select" className="text-base">Color Palette</Label>
+          <Label htmlFor="palette-select" className="text-base">Color Theme</Label>
           <p className="text-sm text-muted-foreground">Choose a different color scheme.</p>
         </div>
         <Select onValueChange={handlePaletteChange} value={currentPalette}>
