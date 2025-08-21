@@ -70,7 +70,7 @@ const DrawingControls: React.FC<DrawingControlsProps> = ({
             </TooltipTrigger>
             <TooltipContent>Select Drawing Color</TooltipContent>
           </Tooltip>
-        </TooltipProvider>
+        </Popover>
         <PopoverContent className="w-auto p-2 flex flex-wrap gap-1">
           <span className="text-sm text-muted-foreground mr-1 h-8 flex items-center">Color:</span>
           {DRAWING_COLORS.map((colorOption) => (
