@@ -30,7 +30,7 @@ interface StudySetHeaderProps {
     is_public: boolean;
     user_id: string;
     group_id: string | null;
-    study_set_groups: { name: string } | null;
+    study_set_groups: { name: string }[] | null; // Changed to array
     cards: any[]; // Simplified for now, actual type is in StudySetDetail
   };
   isOwner: boolean;
@@ -56,11 +56,11 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
           <Globe className="h-3 w-3" />
           {studySet.is_public ? "Public" : "Private"}
         </Badge>
-        {studySet.group_id && studySet.study_set_groups?.name && (
+        {studySet.group_id && studySet.study_set_groups?.[0]?.name && (
           <Link to={`/groups/${studySet.group_id}`}>
             <Badge variant="outline" className="flex items-center gap-1 cursor-pointer hover:bg-accent">
               <Folder className="h-3 w-3" />
-              {studySet.study_set_groups.name}
+              {studySet.study_set_groups[0].name}
             </Badge>
           </Link>
         )}
