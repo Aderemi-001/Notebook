@@ -258,9 +258,9 @@ const EditNote: React.FC = () => {
             />
           </div>
           <div>
-            <Label htmlFor="note-content">Content</Label>
+            <Label id="note-content-label">Content</Label> {/* Updated label with id */}
             <RichTextEditor
-              id="note-content" // Pass the id here
+              labelId="note-content-label" // Pass the labelId here
               content={content}
               onContentChange={setContent}
               editable={!isSaving}
