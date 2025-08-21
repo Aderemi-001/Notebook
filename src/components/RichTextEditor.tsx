@@ -118,7 +118,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
   const clearCanvas = useCallback(() => {
     if (canvasRef.current && ctxRef.current) {
-      const canvas = canvasRef.current; // Fixed typo here
+      const canvas = canvasRef.current;
       const ctx = ctxRef.current;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       // Fill with white after clearing to ensure white background in toDataURL
@@ -183,9 +183,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
 
   // Drawing functions
-  const startDrawing = useCallback(({ nativeEvent }: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  const startDrawing = useCallback((e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!ctxRef.current) return;
-    const { offsetX, offsetY } = 'touches' in nativeEvent ? getTouchPos(nativeEvent, canvasRef.current!) : nativeEvent;
+    const { offsetX, offsetY } = 'touches' in e.nativeEvent ? getTouchPos(e.nativeEvent, canvasRef.current!) : e.nativeEvent;
     
     // Adjust coordinates for zoom level
     const scaledOffsetX = offsetX / zoomLevel;
@@ -196,9 +196,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     setIsDrawing(true);
   }, [zoomLevel]);
 
-  const draw = useCallback(({ nativeEvent }: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  const draw = useCallback((e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !ctxRef.current) return;
-    const { offsetX, offsetY } = 'touches' in nativeEvent ? getTouchPos(nativeEvent, canvasRef.current!) : nativeEvent;
+    const { offsetX, offsetY } = 'touches' in e.nativeEvent ? getTouchPos(e.nativeEvent, canvasRef.current!) : e.nativeEvent;
 
     // Adjust coordinates for zoom level
     const scaledOffsetX = offsetX / zoomLevel;
@@ -291,7 +291,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   }, []);
 
   // Helper to get touch position relative to canvas
-  const getTouchPos = (e: React.TouchEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
+  const getTouchPos = (e: TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
     return {
