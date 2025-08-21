@@ -35,20 +35,16 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --notebook-line-color: 0 84.2% 60.2%; /* Red-400 equivalent */
+    --notebook-hole-color: 214.3 31.8% 91.4%; /* Gray-300 equivalent */
   }
 
   .dark {
@@ -64,11 +60,11 @@
     --primary: 217.2 91.2% 59.8%; /* Vibrant blue (kept) */
     --primary-foreground: 210 40% 98%; /* White */
 
-    --secondary: 240 5% 15%; /* Darker grey for secondary elements */
-    --secondary-foreground: 210 20% 80%;
+    --secondary: 240 5% 20%; /* Slightly lighter dark grey for secondary elements */
+    --secondary-foreground: 210 20% 90%; /* Lighter text for secondary */
 
     --muted: 240 5% 15%;
-    --muted-foreground: 215 10% 60%; /* Softer grey for muted text */
+    --muted-foreground: 215 10% 50%; /* Adjusted for better readability */
 
     --accent: 240 5% 15%;
     --accent-foreground: 210 20% 80%;
@@ -76,8 +72,8 @@
     --destructive: 0 84.2% 60.2%; /* Red (kept) */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 240 5% 25%; /* Subtle dark grey border */
-    --input: 240 5% 25%;
+    --border: 240 5% 20%; /* Subtle dark grey border */
+    --input: 240 10% 12%; /* Darker input background */
     --ring: 217.2 91.2% 59.8%; /* Primary blue */
 
     --radius: 0.5rem;
@@ -90,6 +86,9 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --notebook-line-color: 0 84.2% 40.2%; /* Darker red for notebook line */
+    --notebook-hole-color: 240 5% 20%; /* Darker grey for hole punch */
   }
 }
 
@@ -116,8 +115,8 @@
       to bottom,
       transparent,
       transparent 24px,
-      hsl(240 10% 12%) 25px, /* Updated dark mode line color */
-      hsl(240 10% 12%) 26px
+      hsl(240 10% 4.5%) 25px, /* Much more subtle dark mode line color */
+      hsl(240 10% 4.5%) 26px
     );
   }
 
@@ -196,7 +195,7 @@
       to bottom,
       transparent,
       transparent 24px,
-      hsl(240 10% 12%) 25px, /* Updated dark mode line color */
-      hsl(240 10% 12%) 26px
+      hsl(240 10% 4.5%) 25px, /* Updated dark mode line color */
+      hsl(240 10% 4.5%) 26px
     );
 }
