@@ -1,7 +1,7 @@
 import React from 'react';
 import { Editor } from '@tiptap/react';
 import { Toggle } from '@/components/ui/toggle';
-import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo, X, ListTodo, MoreHorizontal, PencilLine, Eraser, CheckCircle2, Palette } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Minus, Highlighter, Undo, Redo, X, ListTodo, MoreHorizontal, PencilLine, Eraser, CheckCircle2, Palette, Brain } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -20,6 +20,7 @@ interface RichTextEditorToolbarProps {
   setDrawingColor: (color: string) => void;
   clearCanvas: () => void;
   insertDrawing: () => void;
+  analyzeDrawing: () => void; // New prop for AI analysis
 }
 
 const HIGHLIGHT_COLORS = [
@@ -47,6 +48,7 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
   setDrawingColor,
   clearCanvas,
   insertDrawing,
+  analyzeDrawing, // Destructure new prop
 }) => {
   if (!editor) {
     return null;
@@ -156,6 +158,24 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Insert Drawing</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {/* Analyze Drawing with AI */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  onClick={analyzeDrawing}
+                  aria-label="Analyze drawing with AI"
+                  className="px-2"
+                  variant="ghost"
+                >
+                  <Brain className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Analyze Drawing with AI</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </>

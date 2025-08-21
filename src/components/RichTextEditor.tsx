@@ -13,9 +13,10 @@ interface RichTextEditorProps {
   onContentChange: (content: string) => void;
   editable?: boolean;
   className?: string;
+  onDrawingAnalyzed?: (extractedText: string) => void; // New prop for AI analysis callback
 }
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className }) => {
+const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, onDrawingAnalyzed }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#000000'); // Default to black
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -151,6 +152,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     }
   }, [editor, clearCanvas]);
 
+  const analyzeDrawing = useCallback(() => {
+    if (canvasRef.current && onDrawingAnalyzed) {
+      const dataUrl = canvasRef.current.toDataURL('image/png');
+      // Extract base64 string and mime type
+      const [mimeTypePart, base64Data] = dataUrl.split(',');
+      const mimeType = mimeTypePart.split(':')[1].split(';')[0];
+      onDrawingAnalyzed(base64Data); // Pass base64 data to parent for AI analysis
+    }
+  }, [onDrawingAnalyzed]);
+
   // Helper to get touch position relative to canvas
   const getTouchPos = (e: React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
@@ -176,6 +187,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           setDrawingColor={setDrawingColor}
           clearCanvas={clearCanvas}
           insertDrawing={insertDrawing}
+          analyzeDrawing={analyzeDrawing} // Pass the new function
         />
       )}
       <div className="relative border rounded-md">

@@ -34,6 +34,7 @@ interface Note {
   id: string;
   title: string;
   content: string; // Changed to string as it's stored as HTML
+  extracted_content_ai: string | null; // New field
   created_at: string;
   updated_at: string;
   study_set_id: string | null;
@@ -52,6 +53,7 @@ const fetchUserNotes = async (): Promise<Note[]> => {
       id,
       title,
       content,
+      extracted_content_ai,
       created_at,
       updated_at,
       study_set_id,
@@ -94,6 +96,7 @@ const NotesIndex: React.FC = () => {
   const filteredNotes = notes?.filter(note =>
     note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     getPlainTextPreview(note.content, 500).toLowerCase().includes(searchTerm.toLowerCase()) || // Search in content preview
+    (note.extracted_content_ai && note.extracted_content_ai.toLowerCase().includes(searchTerm.toLowerCase())) || // Search in AI extracted content
     (note.study_sets?.[0]?.title && note.study_sets[0].title.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -182,7 +185,7 @@ const NotesIndex: React.FC = () => {
       <div className="mb-6">
         <Input
           type="text"
-          placeholder="Search notes by title or content..."
+          placeholder="Search notes by title, content, or AI extracted text..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full"
@@ -220,6 +223,11 @@ const NotesIndex: React.FC = () => {
                 {note.content && (
                   <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
                     {getPlainTextPreview(note.content)}
+                  </p>
+                )}
+                {note.extracted_content_ai && (
+                  <p className="text-xs text-blue-500 mt-1 italic line-clamp-2">
+                    AI extracted: "{note.extracted_content_ai.substring(0, 100)}..."
                   </p>
                 )}
               </CardHeader>

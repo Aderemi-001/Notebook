@@ -47,12 +47,14 @@ const CreateNote: React.FC = () => {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState<string>('');
   const [content, setContent] = useState<string>('');
+  const [extractedContentAI, setExtractedContentAI] = useState<string | null>(null); // New state for AI extracted content
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [selectedStudySetId, setSelectedStudySetId] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isAnalyzingDrawing, setIsAnalyzingDrawing] = useState(false); // New state for drawing analysis
 
   const { data: userStudySets, isLoading: isLoadingSets, isError: isErrorSets, error: errorSets } = useQuery<StudySet[], Error>({
     queryKey: ['userStudySetsForNotes'],
@@ -89,6 +91,7 @@ const CreateNote: React.FC = () => {
           title: title.trim(),
           content: content,
           study_set_id: selectedStudySetId,
+          extracted_content_ai: extractedContentAI, // Save AI extracted content
         })
         .select()
         .single();
@@ -155,6 +158,49 @@ const CreateNote: React.FC = () => {
     }
   };
 
+  const handleDrawingAnalyzed = async (base64Image: string) => {
+    setIsAnalyzingDrawing(true);
+    const toastId = showLoading("AI is analyzing your drawing...");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Session not found. Please log in again.");
+      }
+
+      const response = await fetch(
+        `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/analyze-drawing`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+          },
+          body: JSON.stringify({ base64Image, mimeType: 'image/png' }), // Assuming PNG from canvas
+        }
+      );
+
+      const result = await response.json();
+      dismissToast(toastId);
+
+      if (!response.ok || result.error) {
+        throw new Error(result?.error || "Failed to analyze drawing.");
+      }
+
+      setExtractedContentAI(prev => (prev ? prev + "\n\n" : "") + result.extracted_content);
+      showSuccess("Drawing analyzed successfully!");
+      // Optionally, you can also insert the extracted text into the RichTextEditor content
+      // setContent(prev => prev + "\n\n**AI Analysis:**\n" + result.extracted_content);
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message || "An unexpected error occurred during drawing analysis.");
+      console.error("AI drawing analysis error:", err);
+    } finally {
+      setIsAnalyzingDrawing(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
@@ -188,6 +234,7 @@ const CreateNote: React.FC = () => {
               content={content}
               onContentChange={setContent}
               editable={!isSaving}
+              onDrawingAnalyzed={handleDrawingAnalyzed} // Pass the new callback
             />
           </div>
           {/* Summarize button moved here */}
@@ -210,6 +257,30 @@ const CreateNote: React.FC = () => {
           </div>
         </CardContent>
       </NotebookCard>
+
+      {extractedContentAI && (
+        <NotebookCard className="mb-6">
+          <CardHeader>
+            <CardTitle>AI Extracted Content from Drawing</CardTitle>
+            <CardDescription>Text and descriptions identified by AI from your drawing.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-wrap text-muted-foreground">{extractedContentAI}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => {
+                setContent(prev => prev + "\n\n---\n\n**AI Extracted Content:**\n" + extractedContentAI);
+                setExtractedContentAI(null); // Clear after adding to content
+                showSuccess("Extracted content added to note content!");
+              }}
+            >
+              Add to Note Content
+            </Button>
+          </CardContent>
+        </NotebookCard>
+      )}
 
       {aiSummary && (
         <NotebookCard className="mb-6">
