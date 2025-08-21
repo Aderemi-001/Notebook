@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from '@/components/ui/slider'; // Import Slider
-import { Palette, Eraser, CheckCircle2, Brain, ZoomIn, ZoomOut, Trash2 } from 'lucide-react'; // Import Trash2
+import { Palette, Eraser, CheckCircle2, Brain, ZoomIn, ZoomOut, Trash2, PenTool } from 'lucide-react'; // Import PenTool
 
 interface DrawingControlsProps {
   drawingColor: string;
@@ -57,6 +57,24 @@ const DrawingControls: React.FC<DrawingControlsProps> = ({
 
   return (
     <div className="flex flex-nowrap items-center gap-1"> {/* Explicitly wrap all controls */}
+      {/* Pen Tool Toggle */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              size="sm"
+              pressed={!isErasing}
+              onPressedChange={() => setIsErasing(false)}
+              aria-label="Activate pen tool"
+              className="px-2"
+            >
+              <PenTool className="h-4 w-4" />
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>Pen Tool</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
       {/* Drawing Color Palette */}
       <Popover>
         <TooltipProvider>
