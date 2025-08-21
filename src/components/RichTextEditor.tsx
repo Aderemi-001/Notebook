@@ -183,10 +183,27 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
 
   // Drawing functions
-  const startDrawing = useCallback((e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!ctxRef.current) return;
-    const { offsetX, offsetY } = 'touches' in e.nativeEvent ? getTouchPos(e.nativeEvent, canvasRef.current!) : e.nativeEvent;
+  const startDrawing = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!ctxRef.current || !canvasRef.current) return;
     
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    let clientX: number;
+    let clientY: number;
+
+    if ('touches' in event.nativeEvent) { // It's a touch event
+      const touch = event.nativeEvent.touches[0];
+      clientX = touch.clientX;
+      clientY = touch.clientY;
+    } else { // It's a mouse event
+      clientX = event.nativeEvent.clientX;
+      clientY = event.nativeEvent.clientY;
+    }
+
+    // Calculate offsetX and offsetY relative to the canvas
+    const offsetX = clientX - rect.left;
+    const offsetY = clientY - rect.top;
+
     // Adjust coordinates for zoom level
     const scaledOffsetX = offsetX / zoomLevel;
     const scaledOffsetY = offsetY / zoomLevel;
@@ -196,9 +213,26 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     setIsDrawing(true);
   }, [zoomLevel]);
 
-  const draw = useCallback((e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !ctxRef.current) return;
-    const { offsetX, offsetY } = 'touches' in e.nativeEvent ? getTouchPos(e.nativeEvent, canvasRef.current!) : e.nativeEvent;
+  const draw = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || !ctxRef.current || !canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    let clientX: number;
+    let clientY: number;
+
+    if ('touches' in event.nativeEvent) { // It's a touch event
+      const touch = event.nativeEvent.touches[0];
+      clientX = touch.clientX;
+      clientY = touch.clientY;
+    } else { // It's a mouse event
+      clientX = event.nativeEvent.clientX;
+      clientY = event.nativeEvent.clientY;
+    }
+
+    // Calculate offsetX and offsetY relative to the canvas
+    const offsetX = clientX - rect.left;
+    const offsetY = clientY - rect.top;
 
     // Adjust coordinates for zoom level
     const scaledOffsetX = offsetX / zoomLevel;
@@ -290,15 +324,15 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     showSuccess("AI transcription not applied.");
   }, []);
 
-  // Helper to get touch position relative to canvas
-  const getTouchPos = (e: TouchEvent, canvas: HTMLCanvasElement) => {
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    return {
-      offsetX: touch.clientX - rect.left,
-      offsetY: touch.clientY - rect.top,
-    };
-  };
+  // Helper to get touch position relative to canvas - No longer needed as logic is in startDrawing/draw
+  // const getTouchPos = (e: React.TouchEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
+  //   const rect = canvas.getBoundingClientRect();
+  //   const touch = e.touches[0];
+  //   return {
+  //     offsetX: touch.clientX - rect.left,
+  //     offsetY: touch.clientY - rect.top,
+  //   };
+  // };
 
   if (!editor) {
     return null;

@@ -48,27 +48,24 @@ const DrawingControls: React.FC<DrawingControlsProps> = ({
   };
 
   return (
-    <>
+    <div className="flex flex-nowrap items-center gap-1"> {/* Explicitly wrap all controls */}
       {/* Drawing Color Palette */}
       <Popover>
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <PopoverTrigger asChild>
-                <Toggle
-                  size="sm"
-                  aria-label="Select drawing color"
-                  className="px-2 relative"
-                >
-                  <Palette className="h-4 w-4" />
-                  <div
-                    className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-foreground/20"
-                    style={{ backgroundColor: drawingColor }}
-                  ></div>
-                </Toggle>
-              </PopoverTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Select Drawing Color</TooltipContent>
+            <PopoverTrigger asChild>
+              <Toggle
+                size="sm"
+                aria-label="Select drawing color"
+                className="px-2 relative"
+              >
+                <Palette className="h-4 w-4" />
+                <div
+                  className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-foreground/20"
+                  style={{ backgroundColor: drawingColor }}
+                ></div>
+              </Toggle>
+            </PopoverTrigger>
           </Tooltip>
         </TooltipProvider>
         <PopoverContent className="w-auto p-2 flex flex-wrap gap-1">
@@ -188,7 +185,7 @@ const DrawingControls: React.FC<DrawingControlsProps> = ({
           <TooltipContent>Zoom In</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-    </>
+    </div>
   );
 };
 
