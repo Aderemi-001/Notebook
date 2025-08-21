@@ -153,21 +153,7 @@ const DrawingControls: React.FC<DrawingControlsProps> = ({
       </Popover>
 
       {/* Clear Canvas */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Toggle
-              size="sm"
-              onPressedChange={clearCanvas}
-              aria-label="Clear drawing"
-              className="px-2"
-            >
-              <Eraser className="h-4 w-4" />
-            </Toggle>
-          </TooltipTrigger>
-          <TooltipContent>Clear Drawing</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {/* Removed the redundant Clear Canvas button */}
 
       {/* Insert Drawing */}
       <TooltipProvider>
