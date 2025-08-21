@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, BarChart2, BookOpen, CheckCircle2, AlertCircle, LibraryBig, Menu, Flame } from 'lucide-react'; // Changed LayoutDashboard to BarChart2, added Flame
+import { ArrowLeft, BarChart2, BookOpen, CheckCircle2, AlertCircle, LibraryBig, Menu, Flame } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar"; // Import Calendar
-import { format, isSameDay, subDays, addDays } from 'date-fns'; // Import date-fns utilities
+import { isSameDay, subDays, addDays } from 'date-fns'; // Import date-fns utilities
 
 interface StudyStatistics {
   total_cards: number;

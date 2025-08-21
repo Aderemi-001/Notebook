@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, PlusCircle, FileText, History, Menu, Trash2, Pencil, BookOpen } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Menu, Trash2, Pencil, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,7 +37,7 @@ interface Note {
   created_at: string;
   updated_at: string;
   study_set_id: string | null;
-  study_sets: { title: string } | null; // To fetch linked study set title
+  study_sets: { title: string }[] | null; // Changed to array
 }
 
 const fetchUserNotes = async (): Promise<Note[]> => {
@@ -94,7 +94,7 @@ const NotesIndex: React.FC = () => {
   const filteredNotes = notes?.filter(note =>
     note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     getPlainTextPreview(note.content, 500).toLowerCase().includes(searchTerm.toLowerCase()) || // Search in content preview
-    (note.study_sets?.title && note.study_sets.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    (note.study_sets?.[0]?.title && note.study_sets[0].title.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleDeleteNote = async (noteId: string) => {
@@ -209,9 +209,9 @@ const NotesIndex: React.FC = () => {
             <NotebookCard key={note.id} className="h-full flex flex-col">
               <CardHeader className="flex-grow">
                 <CardTitle className="text-lg font-semibold">{note.title}</CardTitle>
-                {note.study_sets?.title && (
+                {note.study_sets?.[0]?.title && (
                   <CardDescription className="flex items-center text-sm text-muted-foreground mt-1">
-                    <BookOpen className="mr-1 h-3 w-3" /> Linked to: {note.study_sets.title}
+                    <BookOpen className="mr-1 h-3 w-3" /> Linked to: {note.study_sets[0].title}
                   </CardDescription>
                 )}
                 <CardDescription className="text-sm text-muted-foreground mt-1">

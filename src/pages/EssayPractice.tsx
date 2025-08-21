@@ -18,7 +18,7 @@ interface EssayQuestion {
   suggested_points: string[] | null;
   created_at: string;
   study_set_id: string | null;
-  study_sets: { title: string } | null;
+  study_sets: { title: string }[] | null; // Changed to array
 }
 
 interface EssayResponse {
@@ -99,7 +99,7 @@ const EssayPractice: React.FC = () => {
     enabled: !!questionId,
   });
 
-  const { data: pastResponses, isLoading: isLoadingResponses, isError: isErrorResponses, error: errorResponses, refetch: refetchResponses } = useQuery<EssayResponse[], Error>({
+  const { data: pastResponses, isLoading: isLoadingResponses } = useQuery<EssayResponse[], Error>({
     queryKey: ['essayResponses', questionId],
     queryFn: () => fetchEssayResponses(questionId!),
     enabled: !!questionId,
@@ -240,8 +240,8 @@ const EssayPractice: React.FC = () => {
       <NotebookCard className="mb-6">
         <CardHeader>
           <CardTitle className="text-xl">{question.question_text}</CardTitle>
-          {question.study_sets?.title && (
-            <CardDescription>From Set: {question.study_sets.title}</CardDescription>
+          {question.study_sets?.[0]?.title && (
+            <CardDescription>From Set: {question.study_sets[0].title}</CardDescription>
           )}
         </CardHeader>
         <CardContent>
@@ -307,7 +307,7 @@ const EssayPractice: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <h3 className="text-lg font-semibold">Your Response:</h3>
-            <p className="text-muted-foreground whitespace-pre-wrap border p-3 rounded-md bg-secondary/50">
+            <p className="whitespace-pre-wrap text-muted-foreground border p-3 rounded-md bg-secondary/50">
               {currentResponse.user_answer_text}
             </p>
 

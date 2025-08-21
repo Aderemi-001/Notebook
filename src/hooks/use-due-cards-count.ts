@@ -16,7 +16,7 @@ const fetchDueCardsCount = async (): Promise<number> => {
       id,
       set_id,
       study_sets(user_id),
-      user_progress!user_progress_card_id_fkey!left(
+      user_progress(
         status,
         next_review_at,
         user_id
@@ -30,7 +30,7 @@ const fetchDueCardsCount = async (): Promise<number> => {
   }
 
   let dueCount = 0;
-  userCards?.forEach(card => {
+  userCards?.forEach((card: any) => { // Explicitly type card as any to access user_progress
     const progress = card.user_progress?.[0];
     const hasProgressForCurrentUser = !!progress && progress.user_id === user.id;
     const cardStatus = hasProgressForCurrentUser ? progress.status : 'learning';

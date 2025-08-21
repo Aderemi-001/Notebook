@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
 import { Progress } from "@/components/ui/progress";
 import { useUserPreferences } from '@/hooks/use-user-preferences';
+import React, { useState, useEffect, useCallback } from 'react'; // Explicitly import React and hooks
 
 interface CardItem {
   id: string;
@@ -219,7 +220,7 @@ const StudyMode = () => {
     }
 
     if (currentCardIndex < (cards?.length || 0) - 1) {
-      setCurrentCardIndex(prevIndex => prevIndex + 1);
+      setCurrentCardIndex((prevIndex: number) => prevIndex + 1);
       setShowDefinition(preferences?.default_flashcard_side === 'definition');
     } else {
       setStudyFinished(true);
@@ -268,9 +269,9 @@ const StudyMode = () => {
         <p className="text-muted-foreground">This study set has no cards due for review, or no cards at all.</p>
         <Button asChild className="mt-4">
           <Link to={`/sets/${setId}`} className="flex items-center">
-            <React.Fragment>
+            <>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details
-            </React.Fragment>
+            </>
           </Link>
         </Button>
       </div>
@@ -283,9 +284,9 @@ const StudyMode = () => {
         <h1 className="text-3xl font-bold">Study Mode</h1>
         <Button asChild variant="outline">
           <Link to={`/sets/${setId}`} className="flex items-center">
-            <React.Fragment>
+            <>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details
-            </React.Fragment>
+            </>
           </Link>
         </Button>
       </div>

@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Form } from "@/components/ui/form";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { Brain, ArrowLeft } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import React, { useState, useEffect } from "react";
@@ -39,7 +38,7 @@ const CreateSet = () => {
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const { data: userGroups, isLoading: isLoadingGroups, isError: isErrorGroups, error: errorGroups } = useStudySetGroups();
+  const { data: userGroups, isLoading: isLoadingGroups } = useStudySetGroups();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -232,7 +231,7 @@ const CreateSet = () => {
           }
 
           let conceptId: string;
-          if (existsSync) { // Corrected variable name from existsSync to existingConcept
+          if (existingConcept) { // Corrected variable name
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
@@ -296,7 +295,7 @@ const CreateSet = () => {
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
-          <StudySetFormFields form={form} userGroups={userGroups} isLoadingGroups={isLoadingGroups} isErrorGroups={isErrorGroups} errorGroups={errorGroups} />
+          <StudySetFormFields form={form} userGroups={userGroups} isLoadingGroups={isLoadingGroups} />
 
           <NotebookCard>
             <CardHeader>

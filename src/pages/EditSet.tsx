@@ -43,7 +43,7 @@ const EditSet = () => {
   const { data: studySet, isLoading, isError, error } = useStudySetData(setId);
   const { file, setFile, sourceTextContent, setSourceTextContent, handleFileImport, currentUser, isLoadingUser } = useFileImport();
 
-  const { data: userGroups, isLoading: isLoadingGroups, isError: isErrorGroups, error: errorGroups } = useStudySetGroups();
+  const { data: userGroups, isLoading: isLoadingGroups } = useStudySetGroups();
 
   const form = useForm<EditSetFormValues>({
     resolver: zodResolver(formSchema),
@@ -56,7 +56,7 @@ const EditSet = () => {
     },
   });
 
-  const { append, replace } = useFieldArray({
+  const { append } = useFieldArray({ // Removed 'replace' as it was unused
     control: form.control,
     name: "cards",
   });

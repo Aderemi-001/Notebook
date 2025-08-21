@@ -95,7 +95,6 @@ const fetchExamResponses = async (examId: string): Promise<ExamResponse[] | null
 
 const TakeExam: React.FC = () => {
   const { examId } = useParams<{ examId: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
