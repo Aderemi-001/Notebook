@@ -91,9 +91,15 @@ const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = 
     const toastId = showLoading(`Adding ${selectedSetIds.size} set(s) to group...`);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated.");
+      }
+
       const updates = Array.from(selectedSetIds).map(setId => ({
         id: setId,
         group_id: groupId,
+        user_id: user.id, // Explicitly include user_id
       }));
 
       const { error: updateError } = await supabase
