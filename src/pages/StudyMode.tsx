@@ -286,7 +286,7 @@ const StudyMode = () => {
         <Button asChild variant="outline">
           <Link to={`/sets/${setId}`} className="flex items-center">
             <React.Fragment>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details
             </React.Fragment>
           </Link>
         </Button>

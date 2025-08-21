@@ -306,7 +306,7 @@ const TakeExam: React.FC = () => {
         <p className="text-muted-foreground">This exam has no questions.</p>
         <Button asChild className="mt-4">
           <Link to="/generate-exam" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Generate Exam
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Exam Generator
           </Link>
         </Button>
       </div>
@@ -319,7 +319,7 @@ const TakeExam: React.FC = () => {
         <h1 className="text-3xl font-bold">{exam.title}</h1>
         <Button asChild variant="outline">
           <Link to="/generate-exam" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Generator
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Exam Generator
           </Link>
         </Button>
       </div>

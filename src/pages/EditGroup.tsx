@@ -158,7 +158,7 @@ const EditGroup: React.FC = () => {
         <h1 className="text-3xl font-bold">Edit Group: {group.name}</h1>
         <Button asChild variant="outline">
           <Link to="/groups" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Groups
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Groups
           </Link>
         </Button>
       </div>

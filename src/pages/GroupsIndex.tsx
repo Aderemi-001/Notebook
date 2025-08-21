@@ -197,7 +197,7 @@ const GroupsIndex: React.FC = () => {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link to="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Sets
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -255,7 +255,7 @@ const GroupsIndex: React.FC = () => {
                     <>
                       <Separator className="my-4" />
                       <h3 className="text-md font-semibold mb-2 flex items-center">
-                        <BookOpen className="mr-2 h-4 w-4 text-muted-foreground" /> Sets in Group ({group.study_sets.length}):
+                        <BookOpen className="mr-2 h-4 w-4" /> Sets in Group ({group.study_sets.length}):
                       </h3>
                       <div className="space-y-2 text-sm">
                         {group.study_sets.slice(0, 2).map((set, setIdx) => (

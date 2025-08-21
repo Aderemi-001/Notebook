@@ -254,7 +254,7 @@ const DailyReview: React.FC = () => {
         <h1 className="text-3xl font-bold">Daily Review</h1>
         <Button asChild variant="outline">
           <Link to="/" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Sets
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
           </Link>
         </Button>
       </div>
@@ -283,7 +283,7 @@ const DailyReview: React.FC = () => {
             </Button>
             <Button asChild variant="outline" className="w-full">
               <Link to="/">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Sets
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
               </Link>
             </Button>
           </CardContent>

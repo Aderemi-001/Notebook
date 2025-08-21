@@ -168,7 +168,7 @@ const NotesIndex: React.FC = () => {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link to="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Sets
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

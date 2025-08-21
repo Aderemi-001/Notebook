@@ -204,7 +204,7 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
               <Link to="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Sets
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -330,15 +330,15 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
         <CardHeader>
           <CardTitle>Study Activity (Coming Soon!)</CardTitle>
           <CardDescription>Visualizations of your daily and weekly study habits.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-md">
-            Charts and graphs will appear here.
-          </div>
-        </CardContent>
-      </NotebookCard>
-    </div>
-  );
-};
-
-export default Statistics;
+          </CardHeader>
+          <CardContent>
+            <div className="h-48 flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-md">
+              Charts and graphs will appear here.
+            </div>
+          </CardContent>
+        </NotebookCard>
+      </div>
+    );
+  };
+  
+  export default Statistics;

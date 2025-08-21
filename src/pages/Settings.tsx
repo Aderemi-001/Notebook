@@ -101,8 +101,8 @@ const Settings: React.FC = () => {
           <SettingsIcon className="mr-3 h-7 w-7" /> Settings
         </h1>
         <Button asChild variant="outline">
-          <Link to="/" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+          <Link to="/profile" className="flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Profile
           </Link>
         </Button>
       </div>

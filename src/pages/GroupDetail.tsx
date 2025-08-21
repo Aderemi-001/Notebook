@@ -237,7 +237,7 @@ const GroupDetail: React.FC = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
               <Link to="/groups" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to All Groups
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Groups
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
@@ -308,7 +308,7 @@ const GroupDetail: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredStudySets.map((set) => (
             <Link to={`/sets/${set.id}`} key={set.id}>
-              <NotebookCard className="hover:shadow-md transition-shadow h-full flex flex-col">
+              <NotebookCard className="hover:shadow-md transition-shadow h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-lg font-semibold">{set.title}</CardTitle>
                   <Badge variant={set.is_public ? "default" : "secondary"} className="flex items-center gap-1">
@@ -316,7 +316,7 @@ const GroupDetail: React.FC = () => {
                     {set.is_public ? "Public" : "Private"}
                   </Badge>
                 </CardHeader>
-                <CardContent className="flex-grow">
+                <CardContent>
                   {set.description && (
                     <CardDescription>{set.description}</CardDescription>
                   )}

@@ -301,7 +301,7 @@ const CreateSet = () => {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Create a new study set</h1>
         <Button asChild variant="outline">
-          <Link to="/">Cancel</Link>
+          <Link to="/">Back to My Sets</Link>
         </Button>
       </div>
       <Form {...form}>

@@ -161,7 +161,7 @@ const CreateNote: React.FC = () => {
         <h1 className="text-3xl font-bold">Create New Note</h1>
         <Button asChild variant="outline">
           <Link to="/notes" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Notes
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Notes
           </Link>
         </Button>
       </div>

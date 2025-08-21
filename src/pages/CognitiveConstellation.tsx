@@ -157,7 +157,7 @@ const CognitiveConstellation: React.FC = () => {
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
                 <Link to="/" className="flex items-center">
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleRefreshConstellation} className="flex items-center">
@@ -193,7 +193,7 @@ const CognitiveConstellation: React.FC = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
               <Link to="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleRefreshConstellation} className="flex items-center">

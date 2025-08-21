@@ -232,7 +232,7 @@ const EssayPractice: React.FC = () => {
         <h1 className="text-3xl font-bold">Practice Essay</h1>
         <Button asChild variant="outline">
           <Link to="/past-essay-questions" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Past Questions
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Past Essay Questions
           </Link>
         </Button>
       </div>

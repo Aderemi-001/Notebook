@@ -87,7 +87,7 @@ const PastEssayQuestions: React.FC = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
               <Link to="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Sets
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -149,7 +149,7 @@ const PastEssayQuestions: React.FC = () => {
                   <>
                     <Separator className="my-3" />
                     <h3 className="text-md font-medium mb-2 flex items-center">
-                      <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" /> Suggested Points:
+                      <CheckCircle2 className="mr-2 h-4 w-4" /> Suggested Points:
                     </h3>
                     <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
                       {question.suggested_points.map((point, pointIndex) => (
