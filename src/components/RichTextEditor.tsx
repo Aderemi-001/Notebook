@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
-import TaskList from '@tiptap/extension-task-list'; // Import TaskList
-import TaskItem from '@tiptap/extension-task-item'; // Import TaskItem
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import Image from '@tiptap/extension-image'; // Import Image extension
 import { cn } from '@/lib/utils';
-import RichTextEditorToolbar from './RichTextEditorToolbar'; // Import the new toolbar component
+import RichTextEditorToolbar from './RichTextEditorToolbar';
 
 interface RichTextEditorProps {
   content: string;
@@ -15,6 +16,12 @@ interface RichTextEditorProps {
 }
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className }) => {
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [drawingColor, setDrawingColor] = useState('#000000'); // Default to black
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -58,30 +65,101 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       Highlight.configure({
         multicolor: true,
       }),
-      TaskList, // Add TaskList extension
-      TaskItem.configure({ // Configure TaskItem
+      TaskList,
+      TaskItem.configure({
         nested: true,
         HTMLAttributes: {
-          class: 'flex items-baseline gap-2', // Changed items-start to items-baseline for better alignment
+          class: 'flex items-baseline gap-2',
         },
+      }),
+      Image.configure({ // Configure Image extension
+        inline: true,
+        allowBase64: true, // Allow base64 images
       }),
     ],
     content: content,
     onUpdate: ({ editor }) => {
       onContentChange(editor.getHTML());
     },
-    editable: editable,
+    editable: editable && !isDrawingMode, // Disable Tiptap editing when in drawing mode
     editorProps: {
       attributes: {
         class: cn(
           'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4 border rounded-md',
           'user-select-text touch-action-auto',
-          !editable && 'bg-muted/50 cursor-not-allowed',
+          (!editable || isDrawingMode) && 'bg-muted/50 cursor-not-allowed', // Apply disabled styles
           className
         ),
       },
     },
   });
+
+  // Initialize canvas context
+  useEffect(() => {
+    if (isDrawingMode && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 3;
+        ctxRef.current = ctx;
+
+        // Set canvas dimensions to match its display size
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+      }
+    }
+  }, [isDrawingMode]);
+
+  // Drawing functions
+  const startDrawing = useCallback(({ nativeEvent }: React.MouseEvent | React.TouchEvent) => {
+    if (!ctxRef.current) return;
+    const { offsetX, offsetY } = 'touches' in nativeEvent ? getTouchPos(nativeEvent, canvasRef.current!) : nativeEvent;
+    ctxRef.current.beginPath();
+    ctxRef.current.moveTo(offsetX, offsetY);
+    setIsDrawing(true);
+  }, []);
+
+  const draw = useCallback(({ nativeEvent }: React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawing || !ctxRef.current) return;
+    const { offsetX, offsetY } = 'touches' in nativeEvent ? getTouchPos(nativeEvent, canvasRef.current!) : nativeEvent;
+    ctxRef.current.lineTo(offsetX, offsetY);
+    ctxRef.current.strokeStyle = drawingColor;
+    ctxRef.current.stroke();
+  }, [isDrawing, drawingColor]);
+
+  const endDrawing = useCallback(() => {
+    if (!ctxRef.current) return;
+    ctxRef.current.closePath();
+    setIsDrawing(false);
+  }, []);
+
+  const clearCanvas = useCallback(() => {
+    if (canvasRef.current && ctxRef.current) {
+      ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    }
+  }, []);
+
+  const insertDrawing = useCallback(() => {
+    if (editor && canvasRef.current) {
+      const dataUrl = canvasRef.current.toDataURL('image/png');
+      editor.chain().focus().setImage({ src: dataUrl }).run();
+      clearCanvas(); // Clear canvas after inserting
+      setIsDrawingMode(false); // Exit drawing mode
+    }
+  }, [editor, clearCanvas]);
+
+  // Helper to get touch position relative to canvas
+  const getTouchPos = (e: React.TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    return {
+      offsetX: touch.clientX - rect.left,
+      offsetY: touch.clientY - rect.top,
+    };
+  };
 
   if (!editor) {
     return null;
@@ -90,9 +168,33 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   return (
     <div className="w-full">
       {editable && (
-        <RichTextEditorToolbar editor={editor} />
+        <RichTextEditorToolbar
+          editor={editor}
+          isDrawingMode={isDrawingMode}
+          setIsDrawingMode={setIsDrawingMode}
+          drawingColor={drawingColor}
+          setDrawingColor={setDrawingColor}
+          clearCanvas={clearCanvas}
+          insertDrawing={insertDrawing}
+        />
       )}
-      <EditorContent editor={editor} />
+      <div className="relative border rounded-md">
+        {isDrawingMode && editable ? (
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 w-full h-full bg-white dark:bg-gray-900 z-10 cursor-crosshair"
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={endDrawing}
+            onMouseLeave={endDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={endDrawing}
+            style={{ touchAction: 'none' }} // Prevent scrolling/zooming on touch
+          />
+        ) : null}
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 };
