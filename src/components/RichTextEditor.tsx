@@ -111,6 +111,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4 border rounded-md',
           'user-select-text touch-action-auto',
           (!editable || isDrawingMode) && 'bg-muted/50 cursor-not-allowed', // Apply disabled styles
+          isDrawingMode && 'pointer-events-none', // Add this line to allow events to pass through
           className
         ),
         'aria-labelledby': labelId || '', // Use aria-labelledby for accessibility, provide empty string if undefined
