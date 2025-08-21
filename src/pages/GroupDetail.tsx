@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import AddExistingSetToGroupDialog from '@/components/AddExistingSetToGroupDialog'; // Import the new component
+import { Separator } from '@/components/ui/separator'; // Import Separator
 
 interface StudySetGroup {
   id: string;
@@ -30,6 +31,7 @@ interface StudySet {
   description: string | null;
   is_public: boolean;
   cards_count: number;
+  cards: { id: string; term: string; definition: string }[]; // Added cards array
   next_review_at?: string | null;
   due_cards_count?: number;
 }
@@ -72,8 +74,8 @@ const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
       title,
       description,
       is_public,
-      cards(id)
-    `)
+      cards(id, term, definition)
+    `) // Fetch term and definition
     .eq('group_id', groupId)
     .eq('user_id', user.id); // Ensure only user's sets are fetched
 
@@ -135,6 +137,7 @@ const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
       description: set.description,
       is_public: set.is_public,
       cards_count: set.cards.length,
+      cards: set.cards, // Include full card data
       next_review_at: earliestReviewAt,
       due_cards_count: dueCardsCount,
     };
@@ -305,7 +308,7 @@ const GroupDetail: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredStudySets.map((set) => (
             <Link to={`/sets/${set.id}`} key={set.id}>
-              <NotebookCard className="hover:shadow-md transition-shadow h-full">
+              <NotebookCard className="hover:shadow-md transition-shadow h-full flex flex-col">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-lg font-semibold">{set.title}</CardTitle>
                   <Badge variant={set.is_public ? "default" : "secondary"} className="flex items-center gap-1">
@@ -313,7 +316,7 @@ const GroupDetail: React.FC = () => {
                     {set.is_public ? "Public" : "Private"}
                   </Badge>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-grow">
                   {set.description && (
                     <CardDescription>{set.description}</CardDescription>
                   )}
@@ -334,6 +337,26 @@ const GroupDetail: React.FC = () => {
                         {isPast(new Date(set.next_review_at)) ? 'Due now' : `Next review ${formatDistanceToNowStrict(new Date(set.next_review_at), { addSuffix: true })}`}
                       </span>
                     </div>
+                  )}
+
+                  {set.cards && set.cards.length > 0 && (
+                    <>
+                      <Separator className="my-4" />
+                      <h3 className="text-md font-semibold mb-2">Card Preview:</h3>
+                      <div className="space-y-2 text-sm">
+                        {set.cards.slice(0, 2).map((card, cardIdx) => (
+                          <div key={card.id || cardIdx} className="border-l-2 pl-2">
+                            <p className="font-medium line-clamp-1">{card.term}</p>
+                            <p className="text-muted-foreground line-clamp-1">{card.definition}</p>
+                          </div>
+                        ))}
+                        {set.cards.length > 2 && (
+                          <p className="text-muted-foreground text-xs mt-2">
+                            ...and {set.cards.length - 2} more cards
+                          </p>
+                        )}
+                      </div>
+                    </>
                   )}
                 </CardContent>
               </NotebookCard>
