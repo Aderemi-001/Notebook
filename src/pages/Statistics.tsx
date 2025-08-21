@@ -330,14 +330,13 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
         <CardHeader>
           <CardTitle>Study Activity (Coming Soon!)</CardTitle>
           <CardDescription>Visualizations of your daily and weekly study habits.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-48 flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-md">
-              Charts and graphs will appear here.
-            </div>
-          </CardContent>
-        </NotebookCard>
-      </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-48 flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-md">
+            Charts and graphs will appear here.
+          </div>
+        </CardContent>
+      </NotebookCard>
     </div>
   );
 };
