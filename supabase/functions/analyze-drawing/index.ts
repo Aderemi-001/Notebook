@@ -48,6 +48,10 @@ serve(async (req) => {
       });
     }
 
+    // --- DEBUGGING LINE ADDED HERE ---
+    console.log(`Received base64Image length: ${base64Image.length}, mimeType: ${mimeType}`);
+    // --- END DEBUGGING LINE ---
+
     // Prepare the image for Gemini API
     const imagePart = {
       inlineData: {
