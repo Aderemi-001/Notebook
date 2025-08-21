@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowLeft, LogOut, Menu } from 'lucide-react';
+import { ArrowLeft, LogOut, Menu, Settings as SettingsIcon, BarChart2, History, FileText, NotebookText, Folder, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
@@ -175,14 +175,14 @@ const Profile = () => {
         </DropdownMenu>
       </div>
 
-      <NotebookCard>
+      <NotebookCard className="mb-6">
         <CardHeader>
-          <CardTitle>Manage Your Profile</CardTitle>
-          <CardDescription>Update your display name and other profile information.</CardDescription>
+          <CardTitle>Account & App Settings</CardTitle>
+          <CardDescription>Manage your personal information and application preferences.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="display_name"
@@ -196,11 +196,66 @@ const Profile = () => {
                   </FormItem>
                 )}
               />
-              <div className="flex items-center justify-end"> {/* Adjusted alignment */}
+              <div className="flex justify-end">
                 <Button type="submit">Save Changes</Button>
               </div>
             </form>
           </Form>
+          <div className="border-t pt-4">
+            <Link to="/settings">
+              <Button variant="outline" className="w-full justify-start">
+                <SettingsIcon className="mr-2 h-4 w-4" /> App Settings
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </NotebookCard>
+
+      <NotebookCard className="mb-6">
+        <CardHeader>
+          <CardTitle>My Learning Overview</CardTitle>
+          <CardDescription>Track your progress and review past activities.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Link to="/dashboard">
+            <Button variant="outline" className="w-full justify-start">
+              <BarChart2 className="mr-2 h-4 w-4" /> Statistics
+            </Button>
+          </Link>
+          <Link to="/past-exams">
+            <Button variant="outline" className="w-full justify-start">
+              <History className="mr-2 h-4 w-4" /> Past Exams
+            </Button>
+          </Link>
+          <Link to="/past-essay-questions">
+            <Button variant="outline" className="w-full justify-start">
+              <FileText className="mr-2 h-4 w-4" /> Past Essay Questions
+            </Button>
+          </Link>
+        </CardContent>
+      </NotebookCard>
+
+      <NotebookCard>
+        <CardHeader>
+          <CardTitle>My Content & Organization</CardTitle>
+          <CardDescription>Manage your notes, study set groups, and collaborations.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Link to="/notes">
+            <Button variant="outline" className="w-full justify-start">
+              <NotebookText className="mr-2 h-4 w-4" /> My Notes
+            </Button>
+          </Link>
+          <Link to="/groups">
+            <Button variant="outline" className="w-full justify-start">
+              <Folder className="mr-2 h-4 w-4" /> My Groups
+            </Button>
+          </Link>
+          <Link to="/collaborations">
+            <Button variant="outline" className="w-full justify-start">
+              <Users className="mr-2 h-4 w-4" /> Collaborations
+            </Button>
+          </Link>
         </CardContent>
       </NotebookCard>
     </div>

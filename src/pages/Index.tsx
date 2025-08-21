@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, History, FileText, Settings as SettingsIcon, LogOut, NotebookText, BarChart2, CalendarCheck, Folder, Users } from "lucide-react"; // Added Users icon
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Search, Menu, Brain, CalendarCheck } from "lucide-react"; // Removed History, FileText, SettingsIcon, LogOut, NotebookText, BarChart2, Folder, Users
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -236,14 +236,6 @@ const Index = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {/* Statistics */}
-            <DropdownMenuItem asChild>
-              <Link to="/dashboard" className="flex items-center">
-                <BarChart2 className="mr-2 h-4 w-4" /> Statistics
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
             {/* Daily Review */}
             <DropdownMenuItem asChild>
               <Link to="/daily-review" className="flex items-center">
@@ -259,16 +251,6 @@ const Index = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/groups" className="flex items-center">
-                <Folder className="mr-2 h-4 w-4" /> My Groups
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/collaborations" className="flex items-center"> {/* Added Collaborations Link */}
-                <Users className="mr-2 h-4 w-4" /> Collaborations
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
               <Link to="/create" className="flex items-center">
                 <PlusCircle className="mr-2 h-4 w-4" /> Create Set
               </Link>
@@ -276,14 +258,6 @@ const Index = () => {
             <DropdownMenuItem asChild>
               <Link to="/explore-public-sets" className="flex items-center">
                 <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
-            {/* Notes Section */}
-            <DropdownMenuItem asChild>
-              <Link to="/notes" className="flex items-center">
-                <NotebookText className="mr-2 h-4 w-4" /> My Notes
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -306,28 +280,10 @@ const Index = () => {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
 
-            {/* History & Review */}
-            <DropdownMenuItem asChild>
-              <Link to="/past-exams" className="flex items-center">
-                <History className="mr-2 h-4 w-4" /> Past Exams
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/past-essay-questions" className="flex items-center">
-                <FileText className="mr-2 h-4 w-4" /> Past Essay Questions
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
             {/* Account & App */}
             <DropdownMenuItem asChild>
               <Link to="/profile" className="flex items-center">
                 <User className="mr-2 h-4 w-4" /> Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/settings" className="flex items-center">
-                <SettingsIcon className="mr-2 h-4 w-4" /> Settings
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleSignOut} className="flex items-center text-destructive">
