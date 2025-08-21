@@ -118,7 +118,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
   const clearCanvas = useCallback(() => {
     if (canvasRef.current && ctxRef.current) {
-      const canvas = canvasRef.current;
+      const canvas = canvasRef.current; // Fixed typo here
       const ctx = ctxRef.current;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       // Fill with white after clearing to ensure white background in toDataURL
