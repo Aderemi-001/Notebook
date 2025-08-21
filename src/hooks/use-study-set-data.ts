@@ -6,6 +6,7 @@ interface StudySetData {
   title: string;
   description: string | null;
   is_public: boolean;
+  group_id: string | null; // Added group_id
   cards: { id: string; term: string; definition: string }[];
   source_text: string | null;
 }
@@ -19,6 +20,7 @@ const fetchStudySetForEdit = async (setId: string): Promise<StudySetData> => {
       description,
       source_text,
       is_public,
+      group_id, // Fetch group_id
       cards (
         id,
         term,
