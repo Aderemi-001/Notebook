@@ -26,7 +26,6 @@ interface RichTextEditorProps {
   editable?: boolean;
   className?: string;
   labelId?: string; // New prop for aria-labelledby
-  onDrawingModeChange?: (mode: boolean) => void; // New prop
 }
 
 const MIN_ZOOM = 0.5;
@@ -34,7 +33,7 @@ const MAX_ZOOM = 2.0;
 const ZOOM_STEP = 0.1;
 const BASE_LINE_WIDTH = 3; // Base line width for drawing
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, labelId, onDrawingModeChange }) => {
+const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, labelId }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#000000'); // Default to black
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -118,11 +117,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
       },
     },
   });
-
-  // Effect to notify parent about drawing mode changes
-  useEffect(() => {
-    onDrawingModeChange?.(isDrawingMode);
-  }, [isDrawingMode, onDrawingModeChange]);
 
   const clearCanvas = useCallback(() => {
     if (canvasRef.current && ctxRef.current) {
@@ -260,7 +254,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
   const insertDrawing = useCallback(() => {
     if (editor && canvasRef.current) {
-      const dataUrl = canvasRef.current.toDataURL('image/png');
+      const dataUrl = canvas.current.toDataURL('image/png');
       editor.chain().focus().setImage({ src: dataUrl }).run();
       clearCanvas(); // Clear canvas after inserting
       setIsDrawingMode(false); // Exit drawing mode

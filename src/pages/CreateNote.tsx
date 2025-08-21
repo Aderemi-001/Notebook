@@ -53,7 +53,6 @@ const CreateNote: React.FC = () => {
   const [selectedStudySetId, setSelectedStudySetId] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [isEditorDrawingMode, setIsEditorDrawingMode] = useState(false); // New state
 
   const { data: userStudySets, isLoading: isLoadingSets, isError: isErrorSets, error: errorSets } = useQuery<StudySet[], Error>({
     queryKey: ['userStudySetsForNotes'],
@@ -191,14 +190,13 @@ const CreateNote: React.FC = () => {
               content={content}
               onContentChange={setContent}
               editable={!isSaving}
-              onDrawingModeChange={setIsEditorDrawingMode} // Pass the setter
             />
           </div>
           {/* Summarize button moved here */}
           <div className="flex justify-end">
             <Button
               onClick={handleSummarizeWithAI}
-              disabled={isSummarizing || !content.trim() || isEditorDrawingMode} // Disable when in drawing mode
+              disabled={isSummarizing || !content.trim()}
               variant="outline"
             >
               {isSummarizing ? (
