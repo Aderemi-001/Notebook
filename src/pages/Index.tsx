@@ -228,7 +228,7 @@ const Index = () => {
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">My Study Sets</h1>
+        <h1 className="text-3xl font-bold">Home</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">
@@ -247,7 +247,7 @@ const Index = () => {
             {/* Study Set Management */}
             <DropdownMenuItem asChild>
               <Link to="/" className="flex items-center">
-                <BookOpen className="mr-2 h-4 w-4" /> My Study Sets
+                <BookOpen className="mr-2 h-4 w-4" /> Home
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
