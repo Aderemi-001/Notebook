@@ -108,7 +108,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     editorProps: {
       attributes: {
         class: cn(
-          'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4 border rounded-md',
+          'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4', // Removed border here, as parent div has it
           'user-select-text touch-action-auto',
           !editable && 'bg-muted/50 cursor-not-allowed', // Apply disabled styles when not editable
           className
@@ -340,29 +340,38 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           zoomStep={ZOOM_STEP}
         />
       )}
-      <div className="relative border rounded-md overflow-auto" style={{ height: '300px' }}>
-        {isDrawingMode && editable ? (
-          <canvas
-            ref={canvasRef}
-            className="absolute top-0 left-0 bg-white dark:bg-gray-900 z-10 cursor-crosshair"
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={endDrawing}
-            onMouseLeave={endDrawing}
-            onTouchStart={startDrawing}
-            onTouchMove={draw}
-            onTouchEnd={endDrawing}
-            style={{ 
-              transform: `scale(${zoomLevel})`, 
-              transformOrigin: 'top left',
-              touchAction: 'none',
-              width: '100%', // Ensure canvas fills its container at 1x zoom
-              height: '100%', // Ensure canvas fills its container at 1x zoom
-            }}
-          />
-        ) : (
+      <div className="relative border rounded-md overflow-hidden" style={{ height: '300px' }}> {/* Changed overflow-auto to overflow-hidden */}
+        {/* Editor Content Layer */}
+        <div className={cn(
+          "absolute inset-0", // Cover the whole area
+          isDrawingMode ? "pointer-events-none z-0 opacity-50" : "z-10 opacity-100", // Control visibility and interaction
+          "transition-opacity duration-300"
+        )}>
           <EditorContent editor={editor} />
-        )}
+        </div>
+
+        {/* Canvas Drawing Layer */}
+        <canvas
+          ref={canvasRef}
+          className={cn(
+            "absolute top-0 left-0 bg-white dark:bg-gray-900 cursor-crosshair",
+            isDrawingMode ? "z-20 pointer-events-auto border-2 border-red-500" : "z-0 pointer-events-none" // Bring to front and make interactive when drawing
+          )}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={endDrawing}
+          onMouseLeave={endDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={endDrawing}
+          style={{ 
+            transform: `scale(${zoomLevel})`, 
+            transformOrigin: 'top left',
+            touchAction: 'none',
+            width: '100%', // Ensure canvas fills its container at 1x zoom
+            height: '100%', // Ensure canvas fills its container at 1x zoom
+          }}
+        />
       </div>
 
       <AlertDialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
