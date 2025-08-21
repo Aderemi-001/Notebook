@@ -27,12 +27,18 @@ interface RichTextEditorProps {
   className?: string;
 }
 
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2.0;
+const ZOOM_STEP = 0.1;
+const BASE_LINE_WIDTH = 3; // Base line width for drawing
+
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#000000'); // Default to black
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1); // New zoom state
 
   // State for the replace confirmation dialog
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
@@ -121,44 +127,64 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     }
   }, []);
 
-  // Initialize canvas context and clear when entering drawing mode
+  // Initialize canvas context and set dimensions
   useEffect(() => {
-    if (isDrawingMode && canvasRef.current) {
+    if (canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        ctx.lineWidth = 3;
         ctxRef.current = ctx;
 
-        // Set canvas dimensions to match its display size
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
-
-        // Clear and fill with white when entering drawing mode
-        clearCanvas(); // Use the updated clearCanvas
+        // Set canvas dimensions to match its display size initially
+        const parentDiv = canvas.parentElement;
+        if (parentDiv) {
+          canvas.width = parentDiv.clientWidth;
+          canvas.height = parentDiv.clientHeight;
+        }
+        clearCanvas();
       }
     }
-  }, [isDrawingMode, clearCanvas]);
+  }, [clearCanvas]);
+
+  // Update line width and clear canvas when drawing mode or color changes
+  useEffect(() => {
+    if (ctxRef.current) {
+      ctxRef.current.strokeStyle = drawingColor;
+      ctxRef.current.lineWidth = BASE_LINE_WIDTH / zoomLevel; // Adjust line width based on zoom
+    }
+    if (isDrawingMode) {
+      clearCanvas(); // Clear canvas when entering drawing mode or changing zoom
+    }
+  }, [isDrawingMode, drawingColor, zoomLevel, clearCanvas]);
+
 
   // Drawing functions
   const startDrawing = useCallback(({ nativeEvent }: React.MouseEvent | React.TouchEvent) => {
     if (!ctxRef.current) return;
     const { offsetX, offsetY } = 'touches' in nativeEvent ? getTouchPos(nativeEvent, canvasRef.current!) : nativeEvent;
+    
+    // Adjust coordinates for zoom level
+    const scaledOffsetX = offsetX / zoomLevel;
+    const scaledOffsetY = offsetY / zoomLevel;
+
     ctxRef.current.beginPath();
-    ctxRef.current.moveTo(offsetX, offsetY);
+    ctxRef.current.moveTo(scaledOffsetX, scaledOffsetY);
     setIsDrawing(true);
-  }, []);
+  }, [zoomLevel]);
 
   const draw = useCallback(({ nativeEvent }: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing || !ctxRef.current) return;
     const { offsetX, offsetY } = 'touches' in nativeEvent ? getTouchPos(nativeEvent, canvasRef.current!) : nativeEvent;
-    ctxRef.current.lineTo(offsetX, offsetY);
-    ctxRef.current.strokeStyle = drawingColor;
+
+    // Adjust coordinates for zoom level
+    const scaledOffsetX = offsetX / zoomLevel;
+    const scaledOffsetY = offsetY / zoomLevel;
+
+    ctxRef.current.lineTo(scaledOffsetX, scaledOffsetY);
     ctxRef.current.stroke();
-  }, [isDrawing, drawingColor]);
+  }, [isDrawing, zoomLevel]);
 
   const endDrawing = useCallback(() => {
     if (!ctxRef.current) return;
@@ -197,7 +223,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${session.access_token}`,
-              'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+              'apikey': "eyJhbGciOiJIUzI1NiIsInR5cai_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
             },
             body: JSON.stringify({ base64Image: base64Data, mimeType }),
           }
@@ -266,13 +292,18 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
           clearCanvas={clearCanvas}
           insertDrawing={insertDrawing}
           analyzeDrawing={analyzeDrawing}
+          zoomLevel={zoomLevel}
+          setZoomLevel={setZoomLevel}
+          minZoom={MIN_ZOOM}
+          maxZoom={MAX_ZOOM}
+          zoomStep={ZOOM_STEP}
         />
       )}
-      <div className="relative border rounded-md">
+      <div className="relative border rounded-md overflow-auto" style={{ height: '300px' }}> {/* Added overflow-auto and fixed height */}
         {isDrawingMode && editable ? (
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full bg-white dark:bg-gray-900 z-10 cursor-crosshair"
+            className="absolute top-0 left-0 bg-white dark:bg-gray-900 z-10 cursor-crosshair"
             onMouseDown={startDrawing}
             onMouseMove={draw}
             onMouseUp={endDrawing}
@@ -280,7 +311,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
             onTouchStart={startDrawing}
             onTouchMove={draw}
             onTouchEnd={endDrawing}
-            style={{ touchAction: 'none' }} // Prevent scrolling/zooming on touch
+            style={{ 
+              transform: `scale(${zoomLevel})`, 
+              transformOrigin: 'top left',
+              touchAction: 'none',
+              width: '100%', // Ensure canvas fills its container at 1x zoom
+              height: '100%', // Ensure canvas fills its container at 1x zoom
+            }}
           />
         ) : null}
         <EditorContent editor={editor} />
