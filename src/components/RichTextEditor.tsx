@@ -71,7 +71,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     editorProps: {
       attributes: {
         class: cn(
-          'prose dark:prose-invert max-w-none focus:outline-none min-h-[200px] p-4 border rounded-md',
+          'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4 border rounded-md',
           'user-select-text touch-action-auto', // Add these classes for improved mobile selection
           !editable && 'bg-muted/50 cursor-not-allowed',
           className
