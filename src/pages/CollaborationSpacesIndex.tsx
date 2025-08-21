@@ -46,8 +46,7 @@ const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
     throw new Error("User not authenticated.");
   }
 
-  // Fetch spaces where the current user is a member, and also fetch creator's display name
-  // RLS policy "Users can view collaboration spaces they are members of" already filters by user.id
+  // Temporarily simplify the select to only fetch collaboration_spaces data
   const { data, error } = await supabase
     .from('collaboration_spaces')
     .select(`
@@ -55,9 +54,7 @@ const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
       name,
       description,
       created_at,
-      created_by_user_id,
-      profiles(display_name),
-      space_members(role)
+      created_by_user_id
     `)
     .order('name', { ascending: true });
 
@@ -65,7 +62,12 @@ const fetchCollaborationSpaces = async (): Promise<CollaborationSpace[]> => {
     console.error("Error fetching collaboration spaces:", error);
     throw new Error("Failed to fetch your collaboration spaces.");
   }
-  return data || [];
+  // For now, return data with empty profiles and space_members to match interface
+  return data?.map(space => ({
+    ...space,
+    profiles: null, // Will be fetched separately or handled differently
+    space_members: [], // Will be fetched separately or handled differently
+  })) || [];
 };
 
 const CollaborationSpacesIndex: React.FC = () => {
@@ -217,7 +219,8 @@ const CollaborationSpacesIndex: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredSpaces.map((space) => {
             const isCreator = space.created_by_user_id === currentUserId;
-            const userRole = space.space_members?.[0]?.role || 'member'; // Assuming only one membership per user per space
+            // userRole is not available with simplified query, default to 'member' for display
+            const userRole = 'member'; 
 
             return (
               <NotebookCard key={space.id} className="h-full flex flex-col">
