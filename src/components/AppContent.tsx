@@ -25,8 +25,6 @@ import CreateGroup from "@/pages/CreateGroup";
 import GroupsIndex from "@/pages/GroupsIndex";
 import EditGroup from "@/pages/EditGroup";
 import GroupDetail from "@/pages/GroupDetail";
-import CollaborationSpacesIndex from "@/pages/CollaborationSpacesIndex";
-import CreateCollaborationSpace from "@/pages/CreateCollaborationSpace";
 import AuthLayout from "@/layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
@@ -258,33 +256,6 @@ const AppContent: React.FC = () => {
               element={
                 <AuthLayout>
                   <EditGroup />
-                </AuthLayout>
-              }
-            />
-            {/* Collaboration Routes */}
-            <Route
-              path="/collaboration"
-              element={
-                <AuthLayout>
-                  <CollaborationSpacesIndex />
-                </AuthLayout>
-              }
-            />
-            <Route
-              path="/collaboration/create"
-              element={
-                <AuthLayout>
-                  <CreateCollaborationSpace />
-                </AuthLayout>
-              }
-            />
-            {/* Placeholder for CollaborationSpaceDetail */}
-            <Route
-              path="/collaboration/:spaceId"
-              element={
-                <AuthLayout>
-                  {/* This component will be created in a future step */}
-                  <div>Collaboration Space Detail Page (Coming Soon!)</div>
                 </AuthLayout>
               }
             />
