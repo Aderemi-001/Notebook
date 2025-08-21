@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowLeft, LogOut, Menu, Settings as SettingsIcon, BarChart2, History, FileText, NotebookText, Folder, Users } from 'lucide-react';
+import { ArrowLeft, LogOut, Menu, Settings as SettingsIcon, BarChart2 } from 'lucide-react'; // Removed History, FileText, NotebookText, Folder, Users
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
@@ -207,55 +207,12 @@ const Profile = () => {
                 <SettingsIcon className="mr-2 h-4 w-4" /> App Settings
               </Button>
             </Link>
+            <Link to="/dashboard">
+              <Button variant="outline" className="w-full justify-start mt-2">
+                <BarChart2 className="mr-2 h-4 w-4" /> Statistics
+              </Button>
+            </Link>
           </div>
-        </CardContent>
-      </NotebookCard>
-
-      <NotebookCard className="mb-6">
-        <CardHeader>
-          <CardTitle>My Learning Overview</CardTitle>
-          <CardDescription>Track your progress and review past activities.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Link to="/dashboard">
-            <Button variant="outline" className="w-full justify-start">
-              <BarChart2 className="mr-2 h-4 w-4" /> Statistics
-            </Button>
-          </Link>
-          <Link to="/past-exams">
-            <Button variant="outline" className="w-full justify-start">
-              <History className="mr-2 h-4 w-4" /> Past Exams
-            </Button>
-          </Link>
-          <Link to="/past-essay-questions">
-            <Button variant="outline" className="w-full justify-start">
-              <FileText className="mr-2 h-4 w-4" /> Past Essay Questions
-            </Button>
-          </Link>
-        </CardContent>
-      </NotebookCard>
-
-      <NotebookCard>
-        <CardHeader>
-          <CardTitle>My Content & Organization</CardTitle>
-          <CardDescription>Manage your notes, study set groups, and collaborations.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Link to="/notes">
-            <Button variant="outline" className="w-full justify-start">
-              <NotebookText className="mr-2 h-4 w-4" /> My Notes
-            </Button>
-          </Link>
-          <Link to="/groups">
-            <Button variant="outline" className="w-full justify-start">
-              <Folder className="mr-2 h-4 w-4" /> My Groups
-            </Button>
-          </Link>
-          <Link to="/collaborations">
-            <Button variant="outline" className="w-full justify-start">
-              <Users className="mr-2 h-4 w-4" /> Collaborations
-            </Button>
-          </Link>
         </CardContent>
       </NotebookCard>
     </div>

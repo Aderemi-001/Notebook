@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Menu, Brain, CalendarCheck, FileText, History, LogOut } from "lucide-react";
+import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Menu, Brain, CalendarCheck, FileText, History, LogOut, NotebookText, Folder, Users } from "lucide-react"; // Added NotebookText, Folder, Users
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -289,6 +289,24 @@ const Index = () => {
             <DropdownMenuItem asChild>
               <Link to="/past-essay-questions" className="flex items-center">
                 <FileText className="mr-2 h-4 w-4" /> Past Essay Questions
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+
+            {/* Content & Organization */}
+            <DropdownMenuItem asChild>
+              <Link to="/notes" className="flex items-center">
+                <NotebookText className="mr-2 h-4 w-4" /> My Notes
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/groups" className="flex items-center">
+                <Folder className="mr-2 h-4 w-4" /> My Groups
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/collaborations" className="flex items-center">
+                <Users className="mr-2 h-4 w-4" /> Collaborations
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
