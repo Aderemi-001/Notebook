@@ -199,7 +199,6 @@ export const useFileImport = () => {
       const { imageParts } = await extractFileContent(file); // Re-extract to ensure imageParts are fresh
 
       const data = await callAIProcessFile(sourceTextContent, imageParts, 'generate', numCardsToGenerate) as ProcessedAIData;
-      dismissToast(toastId);
 
       const newCards = data.cards;
       const newConcepts = data.concepts;
@@ -267,7 +266,7 @@ export const useFileImport = () => {
             if (insertRelError) {
               console.error("Error inserting relationships:", insertRelError);
             } else {
-              showSuccess(`${relationshipsToInsert.length} relationships processed.`);
+              // No success toast here, as the main success toast will cover it.
             }
           }
         }
@@ -276,10 +275,11 @@ export const useFileImport = () => {
       return data;
 
     } catch (error: any) {
-      dismissToast(toastId);
       showError(error.message || "An unexpected error occurred.");
       console.error(error);
       return null;
+    } finally {
+      dismissToast(toastId); // Dismiss the toast here, after all operations
     }
   }, [file, sourceTextContent, currentUser, queryClient, extractFileContent, callAIProcessFile]);
 
