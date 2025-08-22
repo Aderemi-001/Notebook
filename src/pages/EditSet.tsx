@@ -20,6 +20,7 @@ import { useFileImport } from "@/hooks/use-file-import"; // Import the hook
 import FlashcardEditor from "@/components/FlashcardEditor";
 import { useStudySetGroups } from "@/hooks/use-study-set-groups";
 import StudySetFormFields from "@/components/StudySetFormFields";
+import { Label } from "@/components/ui/label"; // Import Label for consistency
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -258,25 +259,24 @@ const EditSet = () => {
                 onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
                 className="w-full"
               />
-              <FormItem> {/* Removed FormField wrapper */}
-                <FormLabel>Number of Flashcards to Generate (Optional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="Optimal number if left blank" 
-                    min="1"
-                    value={numCardsToGenerate || ''}
-                    onChange={(e) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
-                    disabled={!file || isLoadingUser || !currentUser}
-                  />
-                </FormControl>
+              <div> {/* Replaced FormField with a div */}
+                <Label htmlFor="num-cards-to-generate">Number of Flashcards to Generate (Optional)</Label>
+                <Input 
+                  id="num-cards-to-generate"
+                  type="number" 
+                  placeholder="Optimal number if left blank" 
+                  min="1"
+                  value={numCardsToGenerate || ''}
+                  onChange={(e) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
+                  disabled={!file || isLoadingUser || !currentUser}
+                  className="mt-1"
+                />
                 {optimalMaxCards !== null && (
-                  <FormDescription>
+                  <p className="text-sm text-muted-foreground mt-2">
                     AI suggests up to {optimalMaxCards} high-quality cards from this content.
-                  </FormDescription>
+                  </p>
                 )}
-                <FormMessage />
-              </FormItem>
+              </div>
               <Button
                 type="button"
                 onClick={handleImportAndAppendCards}
