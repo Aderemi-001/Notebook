@@ -30,7 +30,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-
 } from "@/components/ui/alert-dialog";
 import { Loader2, Brain } from "lucide-react";
 
@@ -76,7 +75,7 @@ const EditSet = () => {
     },
   });
 
-  const { append, replace } = useFieldArray({ // Added 'replace'
+  const { fields, append, remove } = useFieldArray({ // Keep append/remove for manual operations
     control: form.control,
     name: "cards",
   });
@@ -215,10 +214,10 @@ const EditSet = () => {
     setIsGenerating(false);
 
     if (result && result.cards.length > 0) {
-      replace(result.cards.map(card => ({ id: undefined, term: card.term, definition: card.definition }))); // Use replace
+      form.setValue('cards', result.cards.map(card => ({ id: undefined, term: card.term, definition: card.definition }))); // Use setValue
       setShowSuccessToastAfterRender(true);
     } else {
-      replace([{ id: undefined, term: "", definition: "" }]); // Clear all and add one empty card
+      form.setValue('cards', [{ id: undefined, term: "", definition: "" }]); // Clear all and add one empty card
       showError("The AI couldn't find any terms and definitions in the file.");
     }
   };

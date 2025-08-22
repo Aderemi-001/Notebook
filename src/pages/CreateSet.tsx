@@ -65,7 +65,7 @@ const CreateSet = () => {
     },
   });
 
-  const { append, replace } = useFieldArray({ // Added 'replace'
+  const { fields, append, remove } = useFieldArray({ // Keep append/remove for manual operations
     control: form.control,
     name: "cards",
   });
@@ -152,10 +152,10 @@ const CreateSet = () => {
     setIsGenerating(false);
 
     if (result && result.cards.length > 0) {
-      replace(result.cards.map(card => ({ term: card.term, definition: card.definition }))); // Use replace
+      form.setValue('cards', result.cards.map(card => ({ term: card.term, definition: card.definition })));
       setShowSuccessToastAfterRender(true);
     } else {
-      replace([{ term: "", definition: "" }]); // Clear all and add one empty card
+      form.setValue('cards', [{ term: "", definition: "" }]); // Clear all and add one empty card
       showError("The AI couldn't find any terms and definitions in the file.");
     }
   };
