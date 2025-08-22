@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
+import { showError, showLoading, dismissToast } from "@/utils/toast"; // Removed showSuccess
 import * as pdfjsLib from 'pdfjs-dist';
 import { useQueryClient } from "@tanstack/react-query";
 

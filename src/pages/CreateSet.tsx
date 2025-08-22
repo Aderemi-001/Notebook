@@ -1,9 +1,9 @@
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form } from "@/components/ui/form"; // Removed unused Form components
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -65,10 +65,11 @@ const CreateSet = () => {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ // Keep append/remove for manual operations
-    control: form.control,
-    name: "cards",
-  });
+  // Removed unused 'fields', 'append', 'remove' from useFieldArray
+  // const { fields, append, remove } = useFieldArray({ 
+  //   control: form.control,
+  //   name: "cards",
+  // });
 
   useEffect(() => {
     if (showSuccessToastAfterRender && form.getValues('cards').length > 0) {
