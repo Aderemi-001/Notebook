@@ -91,7 +91,7 @@ export const useFileImport = () => {
                   canvas.height = viewport.height;
                   canvas.width = viewport.width;
 
-                  await page.render({ canvasContext, viewport }).promise;
+                  await page.render({ canvasContext, viewport, canvas }).promise; // Fixed: Added 'canvas' here
                   imageParts.push({
                     data: canvas.toDataURL('image/png').split(',')[1], // Base64 data
                     mimeType: 'image/png',
