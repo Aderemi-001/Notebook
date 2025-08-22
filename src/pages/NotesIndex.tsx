@@ -29,18 +29,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
-import { JSONContent } from '@tiptap/react'; // Import JSONContent
-import { generateHTML } from '@tiptap/html'; // Import generateHTML
-import StarterKit from '@tiptap/starter-kit'; // Import StarterKit
-import Highlight from '@tiptap/extension-highlight'; // Import Highlight
-import TaskList from '@tiptap/extension-task-list'; // Import TaskList
-import TaskItem from '@tiptap/extension-task-item'; // Import TaskItem
-import Image from '@tiptap/extension-image'; // Import Image
+import { JSONContent } from '@tiptap/react';
+import { generateHTML } from '@tiptap/html';
+import StarterKit from '@tiptap/starter-kit';
+import Highlight from '@tiptap/extension-highlight';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import Image from '@tiptap/extension-image';
 
 interface Note {
   id: string;
   title: string;
-  content: JSONContent; // Changed type to JSONContent
+  content: JSONContent;
   extracted_content_ai: string | null;
   created_at: string;
   updated_at: string;
@@ -51,8 +51,11 @@ interface Note {
 const fetchUserNotes = async (): Promise<Note[]> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error("User not authenticated.");
+    console.log("fetchUserNotes: No authenticated user found.");
+    return [];
   }
+
+  console.log("fetchUserNotes: Attempting to fetch notes for user ID:", user.id);
 
   const { data, error } = await supabase
     .from('notes')
@@ -70,9 +73,10 @@ const fetchUserNotes = async (): Promise<Note[]> => {
     .order('updated_at', { ascending: false });
 
   if (error) {
-    console.error("Error fetching user notes:", error);
+    console.error("fetchUserNotes: Error fetching user notes:", error);
     throw new Error("Failed to fetch your notes.");
   }
+  console.log("fetchUserNotes: Successfully fetched notes:", data);
   return data || [];
 };
 
@@ -83,9 +87,9 @@ const getPlainTextPreview = (jsonContent: JSONContent, maxLength: number = 150):
     // Generate HTML from JSON content using the same extensions as the editor
     const html = generateHTML(jsonContent, [
       StarterKit,
-      Highlight,
+      Highlight.configure({ multicolor: true }), // Ensure consistent configuration
       TaskList,
-      TaskItem,
+      TaskItem.configure({ nested: true }), // Ensure consistent configuration
       Image,
     ]);
     const parser = new DOMParser();
