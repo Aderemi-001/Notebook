@@ -47,6 +47,7 @@ const EditSet = () => {
   const { data: userGroups, isLoading: isLoadingGroups } = useStudySetGroups();
 
   const [numCardsToGenerate, setNumCardsToGenerate] = useState<number | undefined>(undefined);
+  const [showSuccessToastAfterRender, setShowSuccessToastAfterRender] = useState(false); // New state
 
   const form = useForm<EditSetFormValues>({
     resolver: zodResolver(formSchema),
@@ -80,6 +81,14 @@ const EditSet = () => {
       setSourceTextContent(studySet.source_text);
     }
   }, [studySet, form, setSourceTextContent]);
+
+  // Watch for changes in the cards array and show toast after render
+  useEffect(() => {
+    if (showSuccessToastAfterRender && form.getValues('cards').length > 0) {
+      showSuccess(`${form.getValues('cards').length} cards imported successfully!`);
+      setShowSuccessToastAfterRender(false); // Reset the flag
+    }
+  }, [form.watch('cards'), showSuccessToastAfterRender]); // Depend on form.watch('cards') to trigger after render
 
   async function onSubmit(values: EditSetFormValues) {
     if (!setId) {
@@ -151,7 +160,7 @@ const EditSet = () => {
       }
 
       dismissToast(toastId);
-      showSuccess("Study set updated successfully!");
+      showSuccess("Study set updated successfully!"); // This toast is for the final set update
       queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
       queryClient.invalidateQueries({ queryKey: ['studySetsInGroup'] });
@@ -172,15 +181,20 @@ const EditSet = () => {
   const handleImportAndAppendCards = async () => {
     // Reset optimalMaxCards before new import
     setOptimalMaxCards(null);
+    const toastId = showLoading("AI is generating your flashcards, concepts, and relationships..."); // Show loading toast here
     const result = await handleFileImport(numCardsToGenerate); // Pass desired number of cards
+    dismissToast(toastId); // Dismiss loading toast
+
     if (result && result.cards.length > 0) {
       // Directly set the entire array of cards
       form.setValue('cards', result.cards.map(card => ({ id: undefined, term: card.term, definition: card.definition })));
+      setShowSuccessToastAfterRender(true); // Set flag to show success toast after render
     } else {
       // If no cards were imported, ensure the array is empty or has one blank card if it was empty before
       if (form.getValues('cards').length === 0) {
         form.setValue('cards', [{ id: undefined, term: "", definition: "" }]);
       }
+      showError("The AI couldn't find any terms and definitions in the file."); // Show error if no cards
     }
   };
 

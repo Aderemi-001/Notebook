@@ -8,7 +8,7 @@ import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Import useEffect
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import StudySetFormFields from "@/components/StudySetFormFields";
@@ -37,6 +37,7 @@ const CreateSet = () => {
   const { data: userGroups, isLoading: isLoadingGroups } = useStudySetGroups();
 
   const [numCardsToGenerate, setNumCardsToGenerate] = useState<number | undefined>(undefined);
+  const [showSuccessToastAfterRender, setShowSuccessToastAfterRender] = useState(false); // New state
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,6 +54,14 @@ const CreateSet = () => {
     control: form.control,
     name: "cards",
   });
+
+  // Watch for changes in the cards array and show toast after render
+  useEffect(() => {
+    if (showSuccessToastAfterRender && form.getValues('cards').length > 0) {
+      showSuccess(`${form.getValues('cards').length} cards imported successfully!`);
+      setShowSuccessToastAfterRender(false); // Reset the flag
+    }
+  }, [form.watch('cards'), showSuccessToastAfterRender]); // Depend on form.watch('cards') to trigger after render
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const toastId = showLoading("Saving your study set...");
@@ -90,7 +99,7 @@ const CreateSet = () => {
       if (cardsError) throw cardsError;
 
       dismissToast(toastId);
-      showSuccess("Set created successfully!");
+      showSuccess("Set created successfully!"); // This toast is for the final set creation
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
       queryClient.invalidateQueries({ queryKey: ['studySetsInGroup'] });
       navigate('/');
@@ -110,15 +119,20 @@ const CreateSet = () => {
   const handleImportAndAppendCards = async () => {
     // Reset optimalMaxCards before new import
     setOptimalMaxCards(null);
+    const toastId = showLoading("AI is generating your flashcards, concepts, and relationships..."); // Show loading toast here
     const result = await handleFileImport(numCardsToGenerate); // Pass desired number of cards
+    dismissToast(toastId); // Dismiss loading toast
+
     if (result && result.cards.length > 0) {
       // Directly set the entire array of cards
       form.setValue('cards', result.cards.map(card => ({ term: card.term, definition: card.definition })));
+      setShowSuccessToastAfterRender(true); // Set flag to show success toast after render
     } else {
       // If no cards were imported, ensure the array is empty or has one blank card if it was empty before
       if (form.getValues('cards').length === 0) {
         form.setValue('cards', [{ term: "", definition: "" }]);
       }
+      showError("The AI couldn't find any terms and definitions in the file."); // Show error if no cards
     }
   };
 
