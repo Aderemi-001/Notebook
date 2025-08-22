@@ -10,7 +10,11 @@ interface ProcessedAIData {
   cards: { term: string; definition: string }[];
   concepts: { name: string; description?: string }[];
   relationships: { source_name: string; target_name: string; type: string; strength?: number }[];
-  optimal_max_cards?: number; // New field for AI's optimal card count
+  optimal_max_cards?: number;
+}
+
+interface EstimationResult {
+  optimal_max_cards: number;
 }
 
 const MAX_FILE_SIZE_MB = 10; // Define a max file size
@@ -21,7 +25,6 @@ export const useFileImport = () => {
   const [sourceTextContent, setSourceTextContent] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
-  const [optimalMaxCards, setOptimalMaxCards] = useState<number | null>(null); // State to store AI's optimal max cards
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -33,142 +36,179 @@ export const useFileImport = () => {
     getUser();
   }, []);
 
-  const handleFileImport = useCallback(async (numCardsToGenerate?: number): Promise<ProcessedAIData | null> => {
-    if (!file) {
-      showError("Please select a file first.");
-      return null;
+  const extractFileContent = useCallback(async (selectedFile: File) => {
+    let extractedFileContent = "";
+    let imageParts: { data: string; mimeType: string }[] = [];
+
+    if (selectedFile.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      throw new Error(`File size exceeds the limit of ${MAX_FILE_SIZE_MB}MB.`);
     }
 
+    if (selectedFile.type === "application/pdf") {
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(selectedFile);
+      await new Promise<void>((resolve, reject) => {
+        reader.onload = async (e) => {
+          try {
+            const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
+            const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+            const pdf = await loadingTask.promise;
+
+            let pageTextPromises: Promise<string>[] = [];
+            for (let i = 1; i <= pdf.numPages; i++) {
+              pageTextPromises.push(
+                pdf.getPage(i).then(page => page.getTextContent()).then(textContent =>
+                  textContent.items.map((item: any) => item.str).join(' ')
+                )
+              );
+            }
+            extractedFileContent = (await Promise.all(pageTextPromises)).join('\n');
+
+            if (!extractedFileContent.trim() || extractedFileContent.trim().length < MIN_MEANINGFUL_TEXT_LENGTH) {
+              for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 2 });
+                const canvas = document.createElement('canvas');
+                const canvasContext = canvas.getContext('2d');
+                
+                if (!canvasContext) {
+                  console.error("Could not get 2D rendering context for canvas.");
+                  continue;
+                }
+
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({ canvasContext, viewport, canvas }).promise;
+                imageParts.push({
+                  data: canvas.toDataURL('image/png').split(',')[1],
+                  mimeType: 'image/png',
+                });
+                canvas.remove();
+              }
+            }
+            resolve();
+          } catch (pdfError) {
+            console.error("Error parsing PDF:", pdfError);
+            reject(new Error("Failed to parse PDF file. It might be corrupted or unsupported."));
+          }
+        };
+        reader.onerror = (err) => reject(err);
+      });
+    } else if (selectedFile.type.startsWith("text/") || 
+               selectedFile.name.endsWith('.md') || 
+               selectedFile.name.endsWith('.csv') ||
+               selectedFile.name.endsWith('.json') ||
+               selectedFile.name.endsWith('.xml') ||
+               selectedFile.name.endsWith('.html') ||
+               selectedFile.name.endsWith('.js') ||
+               selectedFile.name.endsWith('.ts') ||
+               selectedFile.name.endsWith('.css')
+    ) {
+        extractedFileContent = await selectedFile.text();
+    } else {
+        throw new Error(`Unsupported file type: ${selectedFile.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.`);
+    }
+
+    if (!extractedFileContent.trim() && imageParts.length === 0) {
+        throw new Error("Could not extract any meaningful text or images from the file. Please ensure the file contains readable content.");
+    }
+    return { extractedFileContent, imageParts };
+  }, []);
+
+  const callAIProcessFile = useCallback(async (
+    textContent: string,
+    imageParts: { data: string; mimeType: string }[],
+    mode: 'estimate' | 'generate',
+    numCards?: number
+  ): Promise<ProcessedAIData | EstimationResult | null> => {
     if (!currentUser) {
-      showError("You must be logged in to import a file.");
+      throw new Error("You must be logged in to use AI features.");
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error("Session not found. Please try logging in again.");
+    }
+
+    const response = await fetch(
+      `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/process-file`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+        },
+        body: JSON.stringify({ 
+          textContent: textContent,
+          imageParts: imageParts,
+          numCards: numCards,
+          mode: mode, // Pass the mode to the edge function
+        }),
+      }
+    );
+    
+    const data = await response.json();
+    
+    if (!response.ok || (data as any).error) {
+      throw new Error((data as any)?.error || "Failed to process file with AI.");
+    }
+    return data;
+  }, [currentUser]);
+
+  const estimateOptimalCards = useCallback(async (): Promise<number | null> => {
+    if (!file) {
+      showError("Please select a file first to get an estimate.");
+      return null;
+    }
+    if (!currentUser) {
+      showError("You must be logged in to use AI features.");
       return null;
     }
 
-    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      showError(`File size exceeds the limit of ${MAX_FILE_SIZE_MB}MB.`);
+    const toastId = showLoading("AI is estimating optimal card count...");
+    try {
+      const { extractedFileContent, imageParts } = await extractFileContent(file);
+      setSourceTextContent(extractedFileContent); // Store for later full generation
+
+      const result = await callAIProcessFile(extractedFileContent, imageParts, 'estimate') as EstimationResult;
+      dismissToast(toastId);
+      return result.optimal_max_cards;
+    } catch (error: any) {
+      dismissToast(toastId);
+      showError(error.message || "An unexpected error occurred during estimation.");
+      console.error(error);
+      return null;
+    }
+  }, [file, currentUser, extractFileContent, callAIProcessFile]);
+
+  const generateCardsAndConcepts = useCallback(async (numCardsToGenerate?: number): Promise<ProcessedAIData | null> => {
+    if (!file || !sourceTextContent) {
+      showError("No file or source content available for generation. Please select a file first.");
+      return null;
+    }
+    if (!currentUser) {
+      showError("You must be logged in to use AI features.");
       return null;
     }
 
     const toastId = showLoading("AI is generating your flashcards, concepts, and relationships...");
-    let extractedFileContent = "";
-    let imageParts: { data: string; mimeType: string }[] = [];
-
     try {
-      if (file.type === "application/pdf") {
-        const reader = new FileReader();
-        reader.readAsArrayBuffer(file);
-        await new Promise<void>((resolve, reject) => {
-          reader.onload = async (e) => {
-            try {
-              const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
-              const loadingTask = pdfjsLib.getDocument({ data: pdfData });
-              const pdf = await loadingTask.promise;
+      // Re-extract image parts if needed, or pass an empty array if only text was extracted initially
+      const { imageParts } = await extractFileContent(file); // Re-extract to ensure imageParts are fresh
 
-              // Attempt to extract text content directly
-              let pageTextPromises: Promise<string>[] = [];
-              for (let i = 1; i <= pdf.numPages; i++) {
-                pageTextPromises.push(
-                  pdf.getPage(i).then(page => page.getTextContent()).then(textContent =>
-                    textContent.items.map((item: any) => item.str).join(' ')
-                  )
-                );
-              }
-              extractedFileContent = (await Promise.all(pageTextPromises)).join('\n');
-
-              // If text extraction is poor, try image extraction (OCR)
-              if (!extractedFileContent.trim() || extractedFileContent.trim().length < MIN_MEANINGFUL_TEXT_LENGTH) {
-                for (let i = 1; i <= pdf.numPages; i++) {
-                  const page = await pdf.getPage(i);
-                  const viewport = page.getViewport({ scale: 2 }); // Render at higher scale for better OCR
-                  const canvas = document.createElement('canvas');
-                  const canvasContext = canvas.getContext('2d');
-                  
-                  if (!canvasContext) { // Add null check here
-                    console.error("Could not get 2D rendering context for canvas.");
-                    continue; // Skip this page if context is not available
-                  }
-
-                  canvas.height = viewport.height;
-                  canvas.width = viewport.width;
-
-                  await page.render({ canvasContext, viewport, canvas }).promise; // Fixed: Added 'canvas' here
-                  imageParts.push({
-                    data: canvas.toDataURL('image/png').split(',')[1], // Base64 data
-                    mimeType: 'image/png',
-                  });
-                  canvas.remove(); // Clean up
-                }
-              }
-              resolve();
-            } catch (pdfError) {
-              console.error("Error parsing PDF:", pdfError);
-              reject(new Error("Failed to parse PDF file. It might be corrupted or unsupported."));
-            }
-          };
-          reader.onerror = (err) => reject(err);
-        });
-      } else if (file.type.startsWith("text/") || 
-                 file.name.endsWith('.md') || 
-                 file.name.endsWith('.csv') ||
-                 file.name.endsWith('.json') ||
-                 file.name.endsWith('.xml') ||
-                 file.name.endsWith('.html') ||
-                 file.name.endsWith('.js') ||
-                 file.name.endsWith('.ts') ||
-                 file.name.endsWith('.css')
-      ) {
-          extractedFileContent = await file.text();
-      } else {
-          throw new Error(`Unsupported file type: ${file.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.`);
-      }
-
-      if (!extractedFileContent.trim() && imageParts.length === 0) {
-          throw new Error("Could not extract any meaningful text or images from the file. Please ensure the file contains readable content.");
-      }
-
-      setSourceTextContent(extractedFileContent); // Store original text content if any
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("Session not found. Please try logging in again.");
-      }
-
-      const response = await fetch(
-        `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/process-file`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-            'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
-          },
-          body: JSON.stringify({ 
-            textContent: extractedFileContent, // Send text content
-            imageParts: imageParts, // Send image parts if any
-            numCards: numCardsToGenerate, // Send desired number of cards
-          }),
-        }
-      );
-      
-      const data: ProcessedAIData = await response.json();
-      
+      const data = await callAIProcessFile(sourceTextContent, imageParts, 'generate', numCardsToGenerate) as ProcessedAIData;
       dismissToast(toastId);
 
-      if (!response.ok || (data as any).error) { // Cast to any to check for error property
-        throw new Error((data as any)?.error || "Failed to process file.");
-      }
-      
       const newCards = data.cards;
       const newConcepts = data.concepts;
       const newRelationships = data.relationships;
-      setOptimalMaxCards(data.optimal_max_cards || null); // Store optimal max cards
 
       if (!newCards || newCards.length === 0) {
         showError("The AI couldn't find any terms and definitions in the file.");
         return null;
       }
-
-      showSuccess(`${newCards.length} cards imported successfully!`);
 
       if (newConcepts && newConcepts.length > 0) {
         const conceptNameToIdMap = new Map<string, string>();
@@ -187,7 +227,7 @@ export const useFileImport = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) { // Corrected variable name
+          if (existsSync) { // Corrected variable name
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
@@ -241,17 +281,16 @@ export const useFileImport = () => {
       console.error(error);
       return null;
     }
-  }, [file, currentUser, queryClient]);
+  }, [file, sourceTextContent, currentUser, queryClient, extractFileContent, callAIProcessFile]);
 
   return {
     file,
     setFile,
     sourceTextContent,
     setSourceTextContent,
-    handleFileImport,
+    estimateOptimalCards, // New function
+    generateCardsAndConcepts, // New function
     currentUser,
     isLoadingUser,
-    optimalMaxCards,
-    setOptimalMaxCards,
   };
 };

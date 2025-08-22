@@ -16,11 +16,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Import new modular components and hooks
 import { useStudySetData } from "@/hooks/use-study-set-data";
-import { useFileImport } from "@/hooks/use-file-import"; // Import the hook
+import { useFileImport } from "@/hooks/use-file-import";
 import FlashcardEditor from "@/components/FlashcardEditor";
 import { useStudySetGroups } from "@/hooks/use-study-set-groups";
 import StudySetFormFields from "@/components/StudySetFormFields";
-import { Label } from "@/components/ui/label"; // Import Label for consistency
+import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2, Brain } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -42,12 +53,16 @@ const EditSet = () => {
   const queryClient = useQueryClient();
 
   const { data: studySet, isLoading, isError, error } = useStudySetData(setId);
-  const { file, setFile, sourceTextContent, setSourceTextContent, handleFileImport, currentUser, isLoadingUser, optimalMaxCards, setOptimalMaxCards } = useFileImport(); // Use the hook
+  const { file, setFile, sourceTextContent, setSourceTextContent, estimateOptimalCards, generateCardsAndConcepts, currentUser, isLoadingUser } = useFileImport();
 
   const { data: userGroups, isLoading: isLoadingGroups } = useStudySetGroups();
 
+  const [estimatedOptimalCards, setEstimatedOptimalCards] = useState<number | null>(null);
+  const [showEstimationDialog, setShowEstimationDialog] = useState(false);
   const [numCardsToGenerate, setNumCardsToGenerate] = useState<number | undefined>(undefined);
-  const [showSuccessToastAfterRender, setShowSuccessToastAfterRender] = useState(false); // New state
+  const [isEstimating, setIsEstimating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showSuccessToastAfterRender, setShowSuccessToastAfterRender] = useState(false);
 
   const form = useForm<EditSetFormValues>({
     resolver: zodResolver(formSchema),
@@ -56,7 +71,7 @@ const EditSet = () => {
       description: "",
       is_public: false,
       group_id: null,
-      cards: [], // Initialize with an empty array
+      cards: [],
     },
   });
 
@@ -82,13 +97,12 @@ const EditSet = () => {
     }
   }, [studySet, form, setSourceTextContent]);
 
-  // Watch for changes in the cards array and show toast after render
   useEffect(() => {
     if (showSuccessToastAfterRender && form.getValues('cards').length > 0) {
       showSuccess(`${form.getValues('cards').length} cards imported successfully!`);
-      setShowSuccessToastAfterRender(false); // Reset the flag
+      setShowSuccessToastAfterRender(false);
     }
-  }, [form.watch('cards'), showSuccessToastAfterRender]); // Depend on form.watch('cards') to trigger after render
+  }, [form.watch('cards'), showSuccessToastAfterRender]);
 
   async function onSubmit(values: EditSetFormValues) {
     if (!setId) {
@@ -160,7 +174,7 @@ const EditSet = () => {
       }
 
       dismissToast(toastId);
-      showSuccess("Study set updated successfully!"); // This toast is for the final set update
+      showSuccess("Study set updated successfully!");
       queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
       queryClient.invalidateQueries({ queryKey: ['studySetsInGroup'] });
@@ -178,23 +192,35 @@ const EditSet = () => {
     showError("Please fix the errors before submitting.");
   }
 
-  const handleImportAndAppendCards = async () => {
-    // Reset optimalMaxCards before new import
-    setOptimalMaxCards(null);
-    const toastId = showLoading("AI is generating your flashcards, concepts, and relationships..."); // Show loading toast here
-    const result = await handleFileImport(numCardsToGenerate); // Pass desired number of cards
-    dismissToast(toastId); // Dismiss loading toast
+  const handleEstimateCards = async () => {
+    if (!file) {
+      showError("Please select a file first.");
+      return;
+    }
+    setIsEstimating(true);
+    const optimalCount = await estimateOptimalCards();
+    setIsEstimating(false);
+    if (optimalCount !== null) {
+      setEstimatedOptimalCards(optimalCount);
+      setNumCardsToGenerate(optimalCount); // Pre-fill with suggested count
+      setShowEstimationDialog(true);
+    }
+  };
+
+  const handleConfirmGenerate = async () => {
+    setShowEstimationDialog(false);
+    setIsGenerating(true);
+    const result = await generateCardsAndConcepts(numCardsToGenerate);
+    setIsGenerating(false);
 
     if (result && result.cards.length > 0) {
-      // Directly set the entire array of cards
       form.setValue('cards', result.cards.map(card => ({ id: undefined, term: card.term, definition: card.definition })));
-      setShowSuccessToastAfterRender(true); // Set flag to show success toast after render
+      setShowSuccessToastAfterRender(true);
     } else {
-      // If no cards were imported, ensure the array is empty or has one blank card if it was empty before
       if (form.getValues('cards').length === 0) {
         form.setValue('cards', [{ id: undefined, term: "", definition: "" }]);
       }
-      showError("The AI couldn't find any terms and definitions in the file."); // Show error if no cards
+      showError("The AI couldn't find any terms and definitions in the file.");
     }
   };
 
@@ -269,34 +295,28 @@ const EditSet = () => {
               <Input
                 type="file"
                 accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf"
-                onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+                onChange={(e) => {
+                  setFile(e.target.files ? e.target.files[0] : null);
+                  setEstimatedOptimalCards(null);
+                  setNumCardsToGenerate(undefined);
+                }}
                 className="w-full"
               />
-              <div> {/* Replaced FormField with a div */}
-                <Label htmlFor="num-cards-to-generate">Number of Flashcards to Generate (Optional)</Label>
-                <Input 
-                  id="num-cards-to-generate"
-                  type="number" 
-                  placeholder="Optimal number if left blank" 
-                  min="1"
-                  value={numCardsToGenerate || ''}
-                  onChange={(e) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
-                  disabled={!file || isLoadingUser || !currentUser}
-                  className="mt-1"
-                />
-                {optimalMaxCards !== null && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    AI suggests up to {optimalMaxCards} high-quality cards from this content.
-                  </p>
-                )}
-              </div>
               <Button
                 type="button"
-                onClick={handleImportAndAppendCards}
-                disabled={!file || isLoadingUser || !currentUser}
+                onClick={handleEstimateCards}
+                disabled={!file || isLoadingUser || !currentUser || isEstimating || isGenerating}
                 className="w-full"
               >
-                {isLoadingUser ? "Loading user..." : "Import with AI"}
+                {isEstimating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Estimating...
+                  </>
+                ) : (
+                  <>
+                    <Brain className="mr-2 h-4 w-4" /> Estimate Cards with AI
+                  </>
+                )}
               </Button>
             </CardContent>
           </NotebookCard>
@@ -308,6 +328,41 @@ const EditSet = () => {
           </div>
         </form>
       </Form>
+
+      <AlertDialog open={showEstimationDialog} onOpenChange={setShowEstimationDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>AI Card Generation Suggestion</AlertDialogTitle>
+            <AlertDialogDescription>
+              The AI suggests generating up to <span className="font-bold text-primary">{estimatedOptimalCards}</span> high-quality cards from your content.
+              How many cards would you like to generate?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-2">
+            <Label htmlFor="dialog-num-cards">Number of Cards</Label>
+            <Input
+              id="dialog-num-cards"
+              type="number"
+              min="1"
+              value={numCardsToGenerate || ''}
+              onChange={(e) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
+              placeholder="Enter desired number"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowEstimationDialog(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmGenerate} disabled={!numCardsToGenerate || numCardsToGenerate <= 0 || isGenerating}>
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
+                </>
+              ) : (
+                `Generate ${numCardsToGenerate || 0} Cards`
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

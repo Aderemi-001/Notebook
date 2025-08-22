@@ -24,7 +24,7 @@ serve(async (req) => {
   const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
   try {
-    const { textContent, imageParts, numCards } = await req.json(); // Expect textContent, imageParts, and numCards
+    const { textContent, imageParts, numCards, mode } = await req.json(); // Expect textContent, imageParts, numCards, and mode
 
     if ((!textContent || typeof textContent !== 'string' || !textContent.trim()) && (!imageParts || imageParts.length === 0)) {
       return new Response(JSON.stringify({ error: "No text content or image parts provided in the request body." }), {
@@ -34,10 +34,26 @@ serve(async (req) => {
     }
 
     const parts = [];
+    let prompt = "";
 
-    // Add the main instruction prompt
-    parts.push({
-      text: `
+    if (mode === 'estimate') {
+      prompt = `
+        You are an expert at analyzing educational content.
+        Based on the following content (which may include text and/or images), estimate the maximum number of high-quality flashcards (term and definition pairs) that could be generated.
+        Consider the depth and breadth of the information.
+        The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
+        The JSON object should have one top-level key: "optimal_max_cards".
+
+        Example format:
+        {
+          "optimal_max_cards": 25
+        }
+
+        Here is the content:
+        ---
+      `;
+    } else { // mode === 'generate' or default
+      prompt = `
         You are an expert at creating flashcard study sets and identifying key concepts and their relationships within a given text.
         Based on the following content (which may include text and/or images), generate a list of key terms and their definitions,
         a list of core concepts, and a list of relationships between these concepts.
@@ -78,8 +94,10 @@ serve(async (req) => {
 
         Here is the content:
         ---
-      `,
-    });
+      `;
+    }
+
+    parts.push({ text: prompt });
 
     // Add text content if available
     if (textContent && textContent.trim()) {
@@ -137,25 +155,35 @@ serve(async (req) => {
       throw new Error("AI returned invalid JSON. Please try again or refine your input.");
     }
 
-    // Basic validation for expected structure
-    if (!parsedData.cards || !Array.isArray(parsedData.cards)) {
-      throw new Error("AI response missing 'cards' array.");
+    if (mode === 'estimate') {
+      if (typeof parsedData.optimal_max_cards !== 'number') {
+        console.warn("AI response missing 'optimal_max_cards' or it's not a number in estimate mode. Defaulting to 0.");
+        parsedData.optimal_max_cards = 0;
+      }
+      return new Response(JSON.stringify({ optimal_max_cards: parsedData.optimal_max_cards }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    } else {
+      // Basic validation for expected structure in generate mode
+      if (!parsedData.cards || !Array.isArray(parsedData.cards)) {
+        throw new Error("AI response missing 'cards' array.");
+      }
+      if (!parsedData.concepts || !Array.isArray(parsedData.concepts)) {
+        throw new Error("AI response missing 'concepts' array.");
+      }
+      if (!parsedData.relationships || !Array.isArray(parsedData.relationships)) {
+        throw new Error("AI response missing 'relationships' array.");
+      }
+      if (typeof parsedData.optimal_max_cards !== 'number') {
+        console.warn("AI response missing 'optimal_max_cards' or it's not a number. Defaulting to 0.");
+        parsedData.optimal_max_cards = 0;
+      }
+      return new Response(JSON.stringify(parsedData), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
-    if (!parsedData.concepts || !Array.isArray(parsedData.concepts)) {
-      throw new Error("AI response missing 'concepts' array.");
-    }
-    if (!parsedData.relationships || !Array.isArray(parsedData.relationships)) {
-      throw new Error("AI response missing 'relationships' array.");
-    }
-    if (typeof parsedData.optimal_max_cards !== 'number') {
-      console.warn("AI response missing 'optimal_max_cards' or it's not a number. Defaulting to 0.");
-      parsedData.optimal_max_cards = 0;
-    }
-
-    return new Response(JSON.stringify(parsedData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
 
   } catch (error) {
     console.error("Error in function execution:", error);
