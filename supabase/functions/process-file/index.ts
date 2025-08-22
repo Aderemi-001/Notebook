@@ -63,7 +63,7 @@ serve(async (req) => {
         *   **Focus on Core Learning Content:** Generate flashcards that cover essential facts, definitions, theories, and important details directly related to the subject matter.
         *   **Avoid Meta-Information:** Do NOT create flashcards about the document's title, author, file format, structural elements (like "Module 1"), or any information that describes the document itself rather than its educational content.
         *   **Quantity:**
-            ${numCards ? `Generate exactly ${numCards} flashcards. If the content is insufficient to create this many high-quality cards, generate as many as possible up to this number.` : `Generate an optimal number of high-quality flashcards.`}
+            ${numCards ? `Generate approximately ${numCards} flashcards. Strive to produce a number of cards that is within one (plus or minus) of the requested quantity, prioritizing quality and distinctness. If the content is insufficient to meet this range, generate as many high-quality cards as possible.` : `Generate an optimal number of high-quality flashcards.`}
 
         The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
         The JSON object should have four top-level keys: "cards", "concepts", "relationships", and "optimal_max_cards".
