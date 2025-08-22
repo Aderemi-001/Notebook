@@ -174,14 +174,13 @@ const EditSet = () => {
     setOptimalMaxCards(null);
     const result = await handleFileImport(numCardsToGenerate); // Pass desired number of cards
     if (result && result.cards.length > 0) {
-      // Clear all existing cards first, then append new ones
-      form.setValue('cards', []);
-      result.cards.forEach(card => {
-        append({ term: card.term, definition: card.definition });
-      });
-    } else if (form.getValues('cards').length === 0) {
-      // If no cards were imported and there are no cards in the form, add one empty card
-      append({ term: "", definition: "" });
+      // Directly set the entire array of cards
+      form.setValue('cards', result.cards.map(card => ({ id: undefined, term: card.term, definition: card.definition })));
+    } else {
+      // If no cards were imported, ensure the array is empty or has one blank card if it was empty before
+      if (form.getValues('cards').length === 0) {
+        form.setValue('cards', [{ id: undefined, term: "", definition: "" }]);
+      }
     }
   };
 
