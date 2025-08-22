@@ -42,7 +42,7 @@ const CreateSet = () => {
       description: "",
       is_public: false,
       group_id: (location.state as { groupId?: string })?.groupId || null,
-      cards: [{ term: "", definition: "" }],
+      cards: [], // Initialize with an empty array
     },
   });
 
@@ -50,8 +50,6 @@ const CreateSet = () => {
     control: form.control,
     name: "cards",
   });
-
-  // No need for local getUser effect, useFileImport handles currentUser
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const toastId = showLoading("Saving your study set...");
@@ -109,13 +107,14 @@ const CreateSet = () => {
   const handleImportAndAppendCards = async () => {
     const result = await handleFileImport(); // Call the hook's function
     if (result && result.cards.length > 0) {
-      // Clear existing default card if it's empty, then append
-      if (form.getValues('cards').length === 1 && !form.getValues('cards')[0].term && !form.getValues('cards')[0].definition) {
-        form.setValue('cards', []);
-      }
+      // Clear all existing cards first, then append new ones
+      form.setValue('cards', []); 
       result.cards.forEach(card => {
         append({ term: card.term, definition: card.definition });
       });
+    } else if (form.getValues('cards').length === 0) {
+      // If no cards were imported and there are no cards in the form, add one empty card
+      append({ term: "", definition: "" });
     }
   };
 
