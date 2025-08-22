@@ -162,6 +162,8 @@ const CreateSet = () => {
     }
   };
 
+  const isGenerateButtonDisabled = !numCardsToGenerate || numCardsToGenerate <= 0 || isGenerating || (estimatedOptimalCards !== null && numCardsToGenerate > estimatedOptimalCards);
+
   return (
     <div className="container mx-auto py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
@@ -231,14 +233,20 @@ const CreateSet = () => {
               id="dialog-num-cards"
               type="number"
               min="1"
+              max={estimatedOptimalCards !== null ? estimatedOptimalCards : undefined} // Set max attribute
               value={numCardsToGenerate || ''}
               onChange={(e) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
               placeholder="Enter desired number"
             />
+            {numCardsToGenerate !== undefined && estimatedOptimalCards !== null && numCardsToGenerate > estimatedOptimalCards && (
+              <p className="text-sm text-destructive">
+                You cannot request more than {estimatedOptimalCards} cards.
+              </p>
+            )}
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setShowEstimationDialog(false)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmGenerate} disabled={!numCardsToGenerate || numCardsToGenerate <= 0 || isGenerating}>
+            <AlertDialogAction onClick={handleConfirmGenerate} disabled={isGenerateButtonDisabled}>
               {isGenerating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
