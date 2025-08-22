@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -32,8 +32,10 @@ const CreateSet = () => {
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const { file, setFile, sourceTextContent, setSourceTextContent, handleFileImport, currentUser, isLoadingUser } = useFileImport(); // Use the hook
+  const { file, setFile, sourceTextContent, setSourceTextContent, handleFileImport, currentUser, isLoadingUser, optimalMaxCards, setOptimalMaxCards } = useFileImport(); // Use the hook
   const { data: userGroups, isLoading: isLoadingGroups } = useStudySetGroups();
+
+  const [numCardsToGenerate, setNumCardsToGenerate] = useState<number | undefined>(undefined);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -105,7 +107,9 @@ const CreateSet = () => {
   }
 
   const handleImportAndAppendCards = async () => {
-    const result = await handleFileImport(); // Call the hook's function
+    // Reset optimalMaxCards before new import
+    setOptimalMaxCards(null);
+    const result = await handleFileImport(numCardsToGenerate); // Pass desired number of cards
     if (result && result.cards.length > 0) {
       // Clear all existing cards first, then append new ones
       form.setValue('cards', []); 
@@ -134,18 +138,43 @@ const CreateSet = () => {
             <CardHeader>
               <CardTitle>Import from file with AI</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row items-center gap-4">
+            <CardContent className="flex flex-col gap-4">
               <Input 
                 type="file" 
                 accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf" 
                 onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                className="w-full sm:w-auto flex-grow"
+                className="w-full"
+              />
+              <FormField
+                control={form.control}
+                name="numCardsToGenerate" // This field is not part of the final schema, but used for input
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number of Flashcards to Generate (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="Optimal number if left blank" 
+                        min="1"
+                        value={numCardsToGenerate || ''}
+                        onChange={(e) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
+                        disabled={!file || isLoadingUser || !currentUser}
+                      />
+                    </FormControl>
+                    {optimalMaxCards !== null && (
+                      <FormDescription>
+                        AI suggests up to {optimalMaxCards} high-quality cards from this content.
+                      </FormDescription>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               <Button 
                 type="button" 
                 onClick={handleImportAndAppendCards} 
                 disabled={!file || isLoadingUser || !currentUser} 
-                className="w-full sm:w-auto"
+                className="w-full"
               >
                 {isLoadingUser ? "Loading user..." : "Import with AI"}
               </Button>

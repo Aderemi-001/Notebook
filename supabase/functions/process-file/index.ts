@@ -24,7 +24,7 @@ serve(async (req) => {
   const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
   try {
-    const { textContent, imageParts } = await req.json(); // Expect textContent and imageParts
+    const { textContent, imageParts, numCards } = await req.json(); // Expect textContent, imageParts, and numCards
 
     if ((!textContent || typeof textContent !== 'string' || !textContent.trim()) && (!imageParts || imageParts.length === 0)) {
       return new Response(JSON.stringify({ error: "No text content or image parts provided in the request body." }), {
@@ -43,12 +43,18 @@ serve(async (req) => {
         a list of core concepts, and a list of relationships between these concepts.
         If images are provided, perform OCR to extract text from them and integrate that text into your analysis.
 
+        **Flashcard Generation Guidelines:**
+        *   **Focus on Core Learning Content:** Generate flashcards that cover essential facts, definitions, theories, and important details directly related to the subject matter.
+        *   **Avoid Meta-Information:** Do NOT create flashcards about the document's title, author, file format, structural elements (like "Module 1"), or any information that describes the document itself rather than its educational content.
+        *   **Quantity:** Generate approximately ${numCards ? numCards : 'an optimal number of'} flashcards. If a specific number is requested, prioritize quality up to that number.
+
         The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
-        The JSON object should have three top-level keys: "cards", "concepts", and "relationships".
+        The JSON object should have four top-level keys: "cards", "concepts", "relationships", and "optimal_max_cards".
 
         "cards" should be an array of objects, each with "term" and "definition" properties.
         "concepts" should be an array of objects, each with a "name" (string) and an optional "description" (string, a brief summary of the concept).
         "relationships" should be an array of objects, each with "source_name" (string, name of the source concept), "target_name" (string, name of the target concept), "type" (string, e.g., "related_to", "is_prerequisite_for", "is_part_of", "causes", "explains"), and "strength" (number, 0.0 to 1.0, indicating confidence or relevance).
+        "optimal_max_cards" should be an integer representing the maximum number of high-quality flashcards you estimate could be generated from the provided content.
 
         Ensure that all "source_name" and "target_name" in "relationships" refer to "name" values present in the "concepts" array.
         Keep the concepts and relationships concise and directly derived from the content.
@@ -65,7 +71,8 @@ serve(async (req) => {
           ],
           "relationships": [
             { "source_name": "Concept A", "target_name": "Concept B", "type": "related_to", "strength": 0.9 }
-          ]
+          ],
+          "optimal_max_cards": 15
         }
 
         Here is the content:
@@ -138,6 +145,10 @@ serve(async (req) => {
     }
     if (!parsedData.relationships || !Array.isArray(parsedData.relationships)) {
       throw new Error("AI response missing 'relationships' array.");
+    }
+    if (typeof parsedData.optimal_max_cards !== 'number') {
+      console.warn("AI response missing 'optimal_max_cards' or it's not a number. Defaulting to 0.");
+      parsedData.optimal_max_cards = 0;
     }
 
     return new Response(JSON.stringify(parsedData), {

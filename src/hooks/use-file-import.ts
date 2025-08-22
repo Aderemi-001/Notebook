@@ -10,6 +10,7 @@ interface ProcessedAIData {
   cards: { term: string; definition: string }[];
   concepts: { name: string; description?: string }[];
   relationships: { source_name: string; target_name: string; type: string; strength?: number }[];
+  optimal_max_cards?: number; // New field for AI's optimal card count
 }
 
 const MAX_FILE_SIZE_MB = 10; // Define a max file size
@@ -20,6 +21,7 @@ export const useFileImport = () => {
   const [sourceTextContent, setSourceTextContent] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [optimalMaxCards, setOptimalMaxCards] = useState<number | null>(null); // State to store AI's optimal max cards
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export const useFileImport = () => {
     getUser();
   }, []);
 
-  const handleFileImport = useCallback(async (): Promise<ProcessedAIData | null> => {
+  const handleFileImport = useCallback(async (numCardsToGenerate?: number): Promise<ProcessedAIData | null> => {
     if (!file) {
       showError("Please select a file first.");
       return null;
@@ -137,6 +139,7 @@ export const useFileImport = () => {
           body: JSON.stringify({ 
             textContent: extractedFileContent, // Send text content
             imageParts: imageParts, // Send image parts if any
+            numCards: numCardsToGenerate, // Send desired number of cards
           }),
         }
       );
@@ -152,6 +155,7 @@ export const useFileImport = () => {
       const newCards = data.cards;
       const newConcepts = data.concepts;
       const newRelationships = data.relationships;
+      setOptimalMaxCards(data.optimal_max_cards || null); // Store optimal max cards
 
       if (!newCards || newCards.length === 0) {
         showError("The AI couldn't find any terms and definitions in the file.");
@@ -241,5 +245,7 @@ export const useFileImport = () => {
     handleFileImport,
     currentUser,
     isLoadingUser,
+    optimalMaxCards,
+    setOptimalMaxCards,
   };
 };
