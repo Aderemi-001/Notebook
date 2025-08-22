@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,50 +24,72 @@ serve(async (req) => {
   const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
   try {
-    const { content } = await req.json(); // Expect content directly in JSON body
+    const { textContent, imageParts } = await req.json(); // Expect textContent and imageParts
 
-    if (!content || typeof content !== 'string' || !content.trim()) {
-      return new Response(JSON.stringify({ error: "No text content provided in the request body." }), {
+    if ((!textContent || typeof textContent !== 'string' || !textContent.trim()) && (!imageParts || imageParts.length === 0)) {
+      return new Response(JSON.stringify({ error: "No text content or image parts provided in the request body." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
-    const prompt = `
-      You are an expert at creating flashcard study sets and identifying key concepts and their relationships within a given text.
-      Based on the following text, generate a list of key terms and their definitions,
-      a list of core concepts, and a list of relationships between these concepts.
+    const parts = [];
 
-      The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
-      The JSON object should have three top-level keys: "cards", "concepts", and "relationships".
+    // Add the main instruction prompt
+    parts.push({
+      text: `
+        You are an expert at creating flashcard study sets and identifying key concepts and their relationships within a given text.
+        Based on the following content (which may include text and/or images), generate a list of key terms and their definitions,
+        a list of core concepts, and a list of relationships between these concepts.
+        If images are provided, perform OCR to extract text from them and integrate that text into your analysis.
 
-      "cards" should be an array of objects, each with "term" and "definition" properties.
-      "concepts" should be an array of objects, each with a "name" (string) and an optional "description" (string, a brief summary of the concept).
-      "relationships" should be an array of objects, each with "source_name" (string, name of the source concept), "target_name" (string, name of the target concept), "type" (string, e.g., "related_to", "is_prerequisite_for", "is_part_of", "causes", "explains"), and "strength" (number, 0.0 to 1.0, indicating confidence or relevance).
+        The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
+        The JSON object should have three top-level keys: "cards", "concepts", and "relationships".
 
-      Ensure that all "source_name" and "target_name" in "relationships" refer to "name" values present in the "concepts" array.
-      Keep the concepts and relationships concise and directly derived from the text.
+        "cards" should be an array of objects, each with "term" and "definition" properties.
+        "concepts" should be an array of objects, each with a "name" (string) and an optional "description" (string, a brief summary of the concept).
+        "relationships" should be an array of objects, each with "source_name" (string, name of the source concept), "target_name" (string, name of the target concept), "type" (string, e.g., "related_to", "is_prerequisite_for", "is_part_of", "causes", "explains"), and "strength" (number, 0.0 to 1.0, indicating confidence or relevance).
 
-      Example format:
-      {
-        "cards": [
-          { "term": "Example Term 1", "definition": "This is the definition for term 1." },
-          { "term": "Example Term 2", "definition": "This is the definition for term 2." }
-        ],
-        "concepts": [
-          { "name": "Concept A", "description": "A foundational idea." },
-          { "name": "Concept B", "description": "A related idea." }
-        ],
-        "relationships": [
-          { "source_name": "Concept A", "target_name": "Concept B", "type": "related_to", "strength": 0.9 }
-        ]
-      }
+        Ensure that all "source_name" and "target_name" in "relationships" refer to "name" values present in the "concepts" array.
+        Keep the concepts and relationships concise and directly derived from the content.
 
-      Here is the text:
-      ---
-      ${content}
-      ---
-    `;
+        Example format:
+        {
+          "cards": [
+            { "term": "Example Term 1", "definition": "This is the definition for term 1." },
+            { "term": "Example Term 2", "definition": "This is the definition for term 2." }
+          ],
+          "concepts": [
+            { "name": "Concept A", "description": "A foundational idea." },
+            { "name": "Concept B", "description": "A related idea." }
+          ],
+          "relationships": [
+            { "source_name": "Concept A", "target_name": "Concept B", "type": "related_to", "strength": 0.9 }
+          ]
+        }
+
+        Here is the content:
+        ---
+      `,
+    });
+
+    // Add text content if available
+    if (textContent && textContent.trim()) {
+      parts.push({ text: textContent });
+    }
+
+    // Add image parts if available
+    if (imageParts && imageParts.length > 0) {
+      imageParts.forEach((img: { data: string; mimeType: string }) => {
+        parts.push({
+          inlineData: {
+            data: img.data,
+            mimeType: img.mimeType,
+          },
+        });
+      });
+    }
+    parts.push({ text: "---" }); // Closing delimiter for content
 
     const geminiResponse = await fetch(GEMINI_API_URL, {
       method: "POST",
@@ -74,9 +97,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }],
+        contents: [{ parts }],
       }),
     });
 

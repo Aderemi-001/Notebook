@@ -13,6 +13,7 @@ interface ProcessedAIData {
 }
 
 const MAX_FILE_SIZE_MB = 10; // Define a max file size
+const MIN_MEANINGFUL_TEXT_LENGTH = 50; // Heuristic for "meaningful text"
 
 export const useFileImport = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -48,6 +49,7 @@ export const useFileImport = () => {
 
     const toastId = showLoading("AI is generating your flashcards, concepts, and relationships...");
     let extractedFileContent = "";
+    let imageParts: { data: string; mimeType: string }[] = [];
 
     try {
       if (file.type === "application/pdf") {
@@ -59,6 +61,8 @@ export const useFileImport = () => {
               const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
               const loadingTask = pdfjsLib.getDocument({ data: pdfData });
               const pdf = await loadingTask.promise;
+
+              // Attempt to extract text content directly
               let pageTextPromises: Promise<string>[] = [];
               for (let i = 1; i <= pdf.numPages; i++) {
                 pageTextPromises.push(
@@ -68,6 +72,25 @@ export const useFileImport = () => {
                 );
               }
               extractedFileContent = (await Promise.all(pageTextPromises)).join('\n');
+
+              // If text extraction is poor, try image extraction (OCR)
+              if (!extractedFileContent.trim() || extractedFileContent.trim().length < MIN_MEANINGFUL_TEXT_LENGTH) {
+                for (let i = 1; i <= pdf.numPages; i++) {
+                  const page = await pdf.getPage(i);
+                  const viewport = page.getViewport({ scale: 2 }); // Render at higher scale for better OCR
+                  const canvas = document.createElement('canvas');
+                  const canvasContext = canvas.getContext('2d');
+                  canvas.height = viewport.height;
+                  canvas.width = viewport.width;
+
+                  await page.render({ canvasContext, viewport }).promise;
+                  imageParts.push({
+                    data: canvas.toDataURL('image/png').split(',')[1], // Base64 data
+                    mimeType: 'image/png',
+                  });
+                  canvas.remove(); // Clean up
+                }
+              }
               resolve();
             } catch (pdfError) {
               console.error("Error parsing PDF:", pdfError);
@@ -91,11 +114,11 @@ export const useFileImport = () => {
           throw new Error(`Unsupported file type: ${file.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.`);
       }
 
-      if (!extractedFileContent.trim()) {
-          throw new Error("Could not extract any meaningful text from the file. Please ensure the file contains readable text.");
+      if (!extractedFileContent.trim() && imageParts.length === 0) {
+          throw new Error("Could not extract any meaningful text or images from the file. Please ensure the file contains readable content.");
       }
 
-      setSourceTextContent(extractedFileContent);
+      setSourceTextContent(extractedFileContent); // Store original text content if any
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -111,7 +134,10 @@ export const useFileImport = () => {
             'Authorization': `Bearer ${session.access_token}`,
             'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
           },
-          body: JSON.stringify({ content: extractedFileContent }),
+          body: JSON.stringify({ 
+            textContent: extractedFileContent, // Send text content
+            imageParts: imageParts, // Send image parts if any
+          }),
         }
       );
       
