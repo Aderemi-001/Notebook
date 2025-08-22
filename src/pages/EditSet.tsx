@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Import new modular components and hooks
 import { useStudySetData } from "@/hooks/use-study-set-data";
-import { useFileImport } from "@/hooks/use-file-import";
+import { useFileImport } from "@/hooks/use-file-import"; // Import the hook
 import FlashcardEditor from "@/components/FlashcardEditor";
 import { useStudySetGroups } from "@/hooks/use-study-set-groups";
 import StudySetFormFields from "@/components/StudySetFormFields";
@@ -41,7 +41,7 @@ const EditSet = () => {
   const queryClient = useQueryClient();
 
   const { data: studySet, isLoading, isError, error } = useStudySetData(setId);
-  const { file, setFile, sourceTextContent, setSourceTextContent, handleFileImport, currentUser, isLoadingUser } = useFileImport();
+  const { file, setFile, sourceTextContent, setSourceTextContent, handleFileImport, currentUser, isLoadingUser } = useFileImport(); // Use the hook
 
   const { data: userGroups, isLoading: isLoadingGroups } = useStudySetGroups();
 
@@ -56,7 +56,7 @@ const EditSet = () => {
     },
   });
 
-  const { append } = useFieldArray({ // Removed 'replace' as it was unused
+  const { append } = useFieldArray({
     control: form.control,
     name: "cards",
   });
@@ -167,8 +167,12 @@ const EditSet = () => {
   }
 
   const handleImportAndAppendCards = async () => {
-    const result = await handleFileImport();
+    const result = await handleFileImport(); // Call the hook's function
     if (result && result.cards.length > 0) {
+      // Clear existing default card if it's empty, then append
+      if (form.getValues('cards').length === 1 && !form.getValues('cards')[0].term && !form.getValues('cards')[0].definition) {
+        form.setValue('cards', []);
+      }
       result.cards.forEach(card => {
         append({ term: card.term, definition: card.definition });
       });
@@ -177,7 +181,7 @@ const EditSet = () => {
 
   if (!setId) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
+      <div className="container mx-auto py-10 animate-fade-in">
         No study set ID provided for editing.
       </div>
     );

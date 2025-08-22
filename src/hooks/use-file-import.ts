@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import * as pdfjsLib from 'pdfjs-dist';
@@ -11,6 +11,8 @@ interface ProcessedAIData {
   concepts: { name: string; description?: string }[];
   relationships: { source_name: string; target_name: string; type: string; strength?: number }[];
 }
+
+const MAX_FILE_SIZE_MB = 10; // Define a max file size
 
 export const useFileImport = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -28,7 +30,7 @@ export const useFileImport = () => {
     getUser();
   }, []);
 
-  const handleFileImport = async (): Promise<ProcessedAIData | null> => {
+  const handleFileImport = useCallback(async (): Promise<ProcessedAIData | null> => {
     if (!file) {
       showError("Please select a file first.");
       return null;
@@ -36,6 +38,11 @@ export const useFileImport = () => {
 
     if (!currentUser) {
       showError("You must be logged in to import a file.");
+      return null;
+    }
+
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      showError(`File size exceeds the limit of ${MAX_FILE_SIZE_MB}MB.`);
       return null;
     }
 
@@ -52,11 +59,15 @@ export const useFileImport = () => {
               const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
               const loadingTask = pdfjsLib.getDocument({ data: pdfData });
               const pdf = await loadingTask.promise;
+              let pageTextPromises: Promise<string>[] = [];
               for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                extractedFileContent += textContent.items.map((item: any) => item.str).join(' ') + '\n';
+                pageTextPromises.push(
+                  pdf.getPage(i).then(page => page.getTextContent()).then(textContent =>
+                    textContent.items.map((item: any) => item.str).join(' ')
+                  )
+                );
               }
+              extractedFileContent = (await Promise.all(pageTextPromises)).join('\n');
               resolve();
             } catch (pdfError) {
               console.error("Error parsing PDF:", pdfError);
@@ -81,7 +92,7 @@ export const useFileImport = () => {
       }
 
       if (!extractedFileContent.trim()) {
-          throw new Error("Could not extract any text from the file.");
+          throw new Error("Could not extract any meaningful text from the file. Please ensure the file contains readable text.");
       }
 
       setSourceTextContent(extractedFileContent);
@@ -140,7 +151,7 @@ export const useFileImport = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) {
+          if (existingConcept) { // Corrected variable name
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
@@ -194,7 +205,7 @@ export const useFileImport = () => {
       console.error(error);
       return null;
     }
-  };
+  }, [file, currentUser, queryClient]);
 
   return {
     file,
