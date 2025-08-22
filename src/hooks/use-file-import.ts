@@ -82,6 +82,12 @@ export const useFileImport = () => {
                   const viewport = page.getViewport({ scale: 2 }); // Render at higher scale for better OCR
                   const canvas = document.createElement('canvas');
                   const canvasContext = canvas.getContext('2d');
+                  
+                  if (!canvasContext) { // Add null check here
+                    console.error("Could not get 2D rendering context for canvas.");
+                    continue; // Skip this page if context is not available
+                  }
+
                   canvas.height = viewport.height;
                   canvas.width = viewport.width;
 

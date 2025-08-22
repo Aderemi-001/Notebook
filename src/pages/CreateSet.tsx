@@ -3,12 +3,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import { useState, useEffect } from "react";
+import { useState } from "react"; // Removed useEffect
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import StudySetFormFields from "@/components/StudySetFormFields";
@@ -32,7 +32,7 @@ const CreateSet = () => {
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const { file, setFile, sourceTextContent, setSourceTextContent, handleFileImport, currentUser, isLoadingUser, optimalMaxCards, setOptimalMaxCards } = useFileImport(); // Use the hook
+  const { file, setFile, sourceTextContent, handleFileImport, currentUser, isLoadingUser, optimalMaxCards, setOptimalMaxCards } = useFileImport(); // Removed setSourceTextContent
   const { data: userGroups, isLoading: isLoadingGroups } = useStudySetGroups();
 
   const [numCardsToGenerate, setNumCardsToGenerate] = useState<number | undefined>(undefined);
@@ -145,31 +145,25 @@ const CreateSet = () => {
                 onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
                 className="w-full"
               />
-              <FormField
-                control={form.control}
-                name="numCardsToGenerate" // This field is not part of the final schema, but used for input
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Flashcards to Generate (Optional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Optimal number if left blank" 
-                        min="1"
-                        value={numCardsToGenerate || ''}
-                        onChange={(e) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
-                        disabled={!file || isLoadingUser || !currentUser}
-                      />
-                    </FormControl>
-                    {optimalMaxCards !== null && (
-                      <FormDescription>
-                        AI suggests up to {optimalMaxCards} high-quality cards from this content.
-                      </FormDescription>
-                    )}
-                    <FormMessage />
-                  </FormItem>
+              <FormItem> {/* Removed FormField wrapper */}
+                <FormLabel>Number of Flashcards to Generate (Optional)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="Optimal number if left blank" 
+                    min="1"
+                    value={numCardsToGenerate || ''}
+                    onChange={(e) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
+                    disabled={!file || isLoadingUser || !currentUser}
+                  />
+                </FormControl>
+                {optimalMaxCards !== null && (
+                  <FormDescription>
+                    AI suggests up to {optimalMaxCards} high-quality cards from this content.
+                  </FormDescription>
                 )}
-              />
+                <FormMessage />
+              </FormItem>
               <Button 
                 type="button" 
                 onClick={handleImportAndAppendCards} 
