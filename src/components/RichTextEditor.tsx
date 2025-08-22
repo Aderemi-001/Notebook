@@ -76,6 +76,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
   const [textToReplace, setTextToReplace] = useState('');
 
+  // State for touch gestures
+  const [initialPinchDistance, setInitialPinchDistance] = useState<number | null>(null);
+  const [isPinching, setIsPinching] = useState(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -263,6 +267,17 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     if (!ctxRef.current || !canvasRef.current) {
       return;
     }
+    
+    if ('touches' in event.nativeEvent && event.nativeEvent.touches.length === 2) {
+      const touch1 = event.nativeEvent.touches[0];
+      const touch2 = event.nativeEvent.touches[1];
+      const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+      setInitialPinchDistance(dist);
+      setIsPinching(true);
+      event.preventDefault(); // Prevent default scrolling/zooming
+      return;
+    }
+
     event.preventDefault();
     
     const { x, y } = getCoordinates(event);
@@ -272,19 +287,41 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   }, [zoomLevel]);
 
   const draw = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (isPinching && 'touches' in event.nativeEvent && event.nativeEvent.touches.length === 2) {
+      const touch1 = event.nativeEvent.touches[0];
+      const touch2 = event.nativeEvent.touches[1];
+      const currentDist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+
+      if (initialPinchDistance !== null) {
+        const scaleFactor = currentDist / initialPinchDistance;
+        setZoomLevel(prevZoom => {
+          const newZoom = prevZoom * scaleFactor;
+          return Math.min(Math.max(newZoom, MIN_ZOOM), MAX_ZOOM);
+        });
+        setInitialPinchDistance(currentDist); // Update initial distance for continuous scaling
+      }
+      event.preventDefault(); // Prevent default scrolling/zooming
+      return;
+    }
+
     if (!isDrawing || !ctxRef.current || !canvasRef.current) return;
     event.preventDefault();
     
     const { x, y } = getCoordinates(event);
     ctxRef.current.lineTo(x, y);
     ctxRef.current.stroke();
-  }, [isDrawing, zoomLevel]);
+  }, [isDrawing, isPinching, initialPinchDistance, setZoomLevel, zoomLevel]);
 
   const endDrawing = useCallback(() => {
+    if (isPinching) {
+      setIsPinching(false);
+      setInitialPinchDistance(null);
+      return;
+    }
     if (!ctxRef.current) return;
     ctxRef.current.closePath();
     setIsDrawing(false);
-  }, []);
+  }, [isPinching]);
 
   const insertDrawing = useCallback(() => {
     if (editor && canvasRef.current) {
