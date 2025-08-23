@@ -1,23 +1,14 @@
-import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Menu, Brain, CalendarCheck, FileText, History, LogOut, NotebookText, Folder, Users } from "lucide-react";
+import { BookOpen, Clock, AlertCircle, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as React from "react";
-import { useState, useEffect, useMemo } from "react"; // Added useMemo
+import { useState, useEffect, useMemo } from "react";
 import { formatDistanceToNowStrict, isPast } from 'date-fns';
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 
@@ -195,22 +186,8 @@ const Index = () => {
     );
   }, [studySets, searchTerm]);
 
-  const handleSignOut = async () => {
-    const toastId = showLoading('Signing out...');
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
-      dismissToast(toastId);
-      showSuccess('Signed out successfully!');
-      // AuthLayout will handle redirect to /login
-    } catch (err: any) {
-      dismissToast(toastId);
-      showError(err.message || 'Failed to sign out.');
-      console.error('Sign out error:', err);
-    }
-  };
+  // The handleSignOut function is now handled by the main Header component.
+  // This function is no longer needed here.
 
   if (isErrorStudySets) {
     return (
@@ -234,99 +211,7 @@ const Index = () => {
     <div className="container mx-auto py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Home</h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {/* Daily Review */}
-            <DropdownMenuItem asChild>
-              <Link to="/daily-review" className="flex items-center">
-                <CalendarCheck className="mr-2 h-4 w-4" /> Daily Review
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
-            {/* Study Set Management */}
-            <DropdownMenuItem asChild>
-              <Link to="/" className="flex items-center">
-                <BookOpen className="mr-2 h-4 w-4" /> Home
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/create" className="flex items-center">
-                <PlusCircle className="mr-2 h-4 w-4" /> Create Set
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/explore-public-sets" className="flex items-center">
-                <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
-            {/* AI Tools & Practice */}
-            <DropdownMenuItem asChild>
-              <Link to="/generate-exam" className="flex items-center">
-                <Brain className="mr-2 h-4 w-4" /> Generate Exam
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/generate-essay-questions" className="flex items-center">
-                <FileText className="mr-2 h-4 w-4" /> Generate Essay Questions
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/constellation" className="flex items-center">
-                <Network className="mr-2 h-4 w-4" /> Cognitive Constellation
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
-            {/* History & Review */}
-            <DropdownMenuItem asChild>
-              <Link to="/past-exams" className="flex items-center">
-                <History className="mr-2 h-4 w-4" /> Past Exams
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/past-essay-questions" className="flex items-center">
-                <FileText className="mr-2 h-4 w-4" /> Past Essay Questions
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
-            {/* Content & Organization */}
-            <DropdownMenuItem asChild>
-              <Link to="/notes" className="flex items-center">
-                <NotebookText className="mr-2 h-4 w-4" /> My Notes
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/groups" className="flex items-center">
-                <Folder className="mr-2 h-4 w-4" /> My Groups
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/collaborations" className="flex items-center">
-                <Users className="mr-2 h-4 w-4" /> Collaborations
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
-            {/* Account & App */}
-            <DropdownMenuItem asChild>
-              <Link to="/profile" className="flex items-center">
-                <User className="mr-2 h-4 w-4" /> Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleSignOut} className="flex items-center text-destructive">
-              <LogOut className="mr-2 h-4 w-4" /> Sign Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Removed DropdownMenu from here as it's now in the main Header */}
       </div>
 
       <div className="mb-6">
