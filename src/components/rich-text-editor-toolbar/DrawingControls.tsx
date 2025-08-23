@@ -31,6 +31,7 @@ const DRAWING_COLORS = [
   { name: 'Blue', hex: '#3b82f6' },
   { name: 'Green', hex: '#22c55e' },
   { name: 'Yellow', hex: '#eab308' },
+  { name: 'Purple', hex: '#a855f7' }, // Added purple color
 ];
 
 const DrawingControls: React.FC<DrawingControlsProps> = ({
