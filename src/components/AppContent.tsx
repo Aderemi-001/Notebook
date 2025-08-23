@@ -34,6 +34,7 @@ import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { toast } from "sonner";
 import { format } from 'date-fns';
 import Chatbot from "./Chatbot"; // Import the new Chatbot component
+import { supabase } from "@/integrations/supabase/client"; // Import supabase client
 
 const AppContent: React.FC = () => {
   const { data: dueCardsCount, isLoading: isLoadingDueCards } = useDueCardsCount();
@@ -44,6 +45,22 @@ const AppContent: React.FC = () => {
     }
     return null;
   });
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false); // New state for login status
+
+  React.useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   React.useEffect(() => {
     if (!isLoadingDueCards && !isLoadingPreferences && preferences && dueCardsCount !== undefined) {
@@ -282,7 +299,7 @@ const AppContent: React.FC = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster richColors />
-          <Chatbot /> {/* Add the Chatbot component here */}
+          {isLoggedIn && <Chatbot />} {/* Conditionally render Chatbot */}
         </React.Fragment>
       </BrowserRouter>
     </>
