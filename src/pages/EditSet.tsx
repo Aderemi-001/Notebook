@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,6 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Loader2, Brain } from "lucide-react";
+import * as React from 'react'; // Explicitly import React
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),

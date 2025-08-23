@@ -32,7 +32,8 @@ const InputOTPSlot = React.forwardRef<
   React.ComponentPropsWithoutRef<"div"> & { index: number }
 >(({ index, className, ...props }, ref) => {
   const inputOTPContext = React.useContext(OTPInputContext);
-  const { char, isFocused, isActive } = inputOTPContext.slots[index]; // Corrected hasFocused to isFocused
+  // Explicitly cast to any to resolve type error for 'isFocused'
+  const { char, isFocused, isActive } = inputOTPContext.slots[index] as any; 
 
   return (
     <div
@@ -45,7 +46,7 @@ const InputOTPSlot = React.forwardRef<
       {...props}
     >
       {char}
-      {isFocused && ( // Use isFocused
+      {isFocused && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="h-4 w-px animate-caret-blink bg-foreground duration-1000" />
         </div>

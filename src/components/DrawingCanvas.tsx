@@ -1,22 +1,20 @@
 "use client";
 
-import * as React from "react";
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Eraser, Pencil, Type, Save, Sparkles, ZoomIn, ZoomOut, RotateCcw, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useDrawingCanvas } from "@/hooks/use-drawing-canvas"; // Import the new hook
-import { Slider } from "@/components/ui/slider"; // Import Slider for pen/eraser size
-import { Label } from "@/components/ui/label"; // Import Label
+import { useDrawingCanvas } from "@/hooks/use-drawing-canvas";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 
 interface DrawingCanvasProps {
   initialDrawing?: string;
-  onDrawingChange: (drawingDataUrl: string | null) => void; // Callback for when drawing changes
+  onDrawingChange: (drawingDataUrl: string | null) => void;
   isDrawingMode: boolean;
   setIsDrawingMode: (isDrawing: boolean) => void;
-  onAnalyzeDrawing: (base64Image: string, mimeType: string) => void; // Callback for AI analysis
-  onInsertText: (text: string) => void; // Callback to insert text into editor
-  isAnalyzing: boolean; // New prop to indicate if AI is analyzing
+  onAnalyzeDrawing: (base64Image: string, mimeType: string) => void;
+  isAnalyzing: boolean;
 }
 
 export function DrawingCanvas({
@@ -25,10 +23,8 @@ export function DrawingCanvas({
   isDrawingMode,
   setIsDrawingMode,
   onAnalyzeDrawing,
-  onInsertText,
   isAnalyzing,
 }: DrawingCanvasProps) {
-  const [drawingColor, setDrawingColor] = useState("black");
   const [penSize, setPenSize] = useState(5);
   const [isErasing, setIsErasing] = useState(false);
   const [eraserSize, setEraserSize] = useState(20);
@@ -47,7 +43,7 @@ export function DrawingCanvas({
     clearCanvas,
   } = useDrawingCanvas({
     isDrawingMode,
-    drawingColor,
+    drawingColor: "black", // Hardcode as it's not configurable from UI
     penSize,
     isErasing,
     eraserSize,

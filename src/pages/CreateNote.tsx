@@ -105,7 +105,7 @@ export default function CreateNote() {
         .insert({
           user_id: user.data.user.id,
           title,
-          content: content || JSON.stringify({ type: "doc", content: [{ type: "paragraph" }] }),
+          content: content || React.Fragment,
           study_set_id: selectedStudySet,
           drawing_url: drawingUrl, // Save the URL of the drawing
           extracted_content_ai: extractedDrawingText, // Save the AI extracted text
@@ -175,7 +175,6 @@ export default function CreateNote() {
             isDrawingMode={isDrawingMode}
             setIsDrawingMode={setIsDrawingMode}
             onAnalyzeDrawing={handleAnalyzeDrawingCallback}
-            onInsertText={insertTextIntoEditor}
             isAnalyzing={isAnalyzing}
           />
           {!isDrawingMode && (

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, PlusCircle, Menu, Trash2, Pencil, BookOpen, Image as ImageIcon } from 'lucide-react'; // Added ImageIcon
+import { ArrowLeft, PlusCircle, Menu, Trash2, Pencil, BookOpen, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -43,7 +43,7 @@ interface Note {
   title: string;
   content: JSONContent;
   extracted_content_ai: string | null;
-  drawing_url: string | null; // New field
+  drawing_url: string | null;
   created_at: string;
   updated_at: string;
   study_set_id: string | null;
@@ -66,7 +66,7 @@ const fetchUserNotes = async (): Promise<Note[]> => {
       title,
       content,
       extracted_content_ai,
-      drawing_url, -- Fetch new column
+      drawing_url,
       created_at,
       updated_at,
       study_set_id,
@@ -80,7 +80,7 @@ const fetchUserNotes = async (): Promise<Note[]> => {
     throw new Error("Failed to fetch your notes.");
   }
   console.log("fetchUserNotes: Successfully fetched notes:", data);
-  return data || [];
+  return data as Note[] || []; // Explicitly cast data to Note[]
 };
 
 // Function to convert JSON content to plain text preview
@@ -91,20 +91,20 @@ const getPlainTextPreview = (jsonContent: JSONContent, maxLength: number = 150):
     const html = generateHTML(jsonContent, [
       StarterKit.configure({
         // Only include basic text-generating extensions
-        paragraph: {}, // Use empty object to enable
+        paragraph: {},
         heading: { levels: [1, 2, 3] },
-        bold: {}, // Use empty object to enable
-        italic: {}, // Use empty object to enable
-        strike: {}, // Use empty object to enable
-        bulletList: {}, // Use empty object to enable
-        orderedList: {}, // Use empty object to enable
-        blockquote: {}, // Use empty object to enable
-        codeBlock: {}, // Use empty object to enable
+        bold: {},
+        italic: {},
+        strike: {},
+        bulletList: {},
+        orderedList: {},
+        blockquote: {},
+        codeBlock: {},
       }),
-      Highlight, // Include highlight if it might contain text
+      Highlight,
       TaskList,
       TaskItem,
-      Image, // Include image to handle alt text if present
+      Image,
     ]);
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
