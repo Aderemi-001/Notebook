@@ -183,7 +183,7 @@ const NotesIndex: React.FC = () => {
 
   if (isLoadingAuth || isLoading || isLoadingPreferences) {
     return (
-      <div className="container mx-auto py-10 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
         <Skeleton className="h-10 w-full mb-6" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -205,16 +205,16 @@ const NotesIndex: React.FC = () => {
 
   if (isError) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center text-red-500 animate-fade-in">
         Error loading notes: {error?.message || "Unknown error"}
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">My Notes</h1>
+    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">My Notes</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">

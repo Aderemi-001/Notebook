@@ -105,16 +105,16 @@ const PastExams: React.FC = () => {
 
   if (isError) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center text-red-500 animate-fade-in">
         Error loading past exams: {error?.message || "Unknown error"}
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Past Exams</h1>
+    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Past Exams</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">

@@ -77,9 +77,9 @@ const CreateGroup: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Create New Group</h1>
+    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Create New Group</h1>
         <Button asChild variant="outline">
           <Link to="/groups" className="flex items-center">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Groups

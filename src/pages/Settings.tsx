@@ -73,7 +73,7 @@ const Settings: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/3 mb-8" />
         <div className="space-y-6">
           <NotebookCard><Skeleton className="h-32 w-full" /></NotebookCard>
@@ -89,16 +89,16 @@ const Settings: React.FC = () => {
 
   if (isError) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center text-red-500 animate-fade-in">
         Error loading settings: {error?.message || "Unknown error"}
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold flex items-center">
+    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
           <SettingsIcon className="mr-3 h-7 w-7" /> Settings
         </h1>
         <Button asChild variant="outline">

@@ -8,7 +8,7 @@ import { NotebookCard } from "@/components/NotebookCard";
 import { ArrowLeft, Brain, Loader2, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from "@/components/ui/skeleton";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Separator } from "@/components/ui/separator";
 import { Badge } from '@/components/ui/badge';
@@ -68,7 +68,7 @@ const fetchEssayQuestionDetails = async (questionId: string): Promise<EssayQuest
 };
 
 const fetchEssayResponses = async (questionId: string): Promise<EssayResponse[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } = { user: null } } = await supabase.auth.getUser();
   if (!user) {
     throw new Error("User not authenticated.");
   }
@@ -196,7 +196,7 @@ const EssayPractice: React.FC = () => {
 
   if (!questionId) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center text-red-500 animate-fade-in">
         No essay question ID provided.
       </div>
     );
@@ -204,7 +204,7 @@ const EssayPractice: React.FC = () => {
 
   if (isLoadingQuestion || isLoadingResponses) {
     return (
-      <div className="container mx-auto py-10 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
         <Skeleton className="h-8 w-3/4 mb-8" />
         <Skeleton className="h-48 w-full rounded-lg mb-6" />
         <Skeleton className="h-64 w-full rounded-lg" />
@@ -214,7 +214,7 @@ const EssayPractice: React.FC = () => {
 
   if (isErrorQuestion) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center text-red-500 animate-fade-in">
         Error loading essay question: {errorQuestion?.message || "Unknown error"}
       </div>
     );
@@ -222,16 +222,16 @@ const EssayPractice: React.FC = () => {
 
   if (!question) {
     return (
-      <div className="container mx-auto py-10 text-center animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center animate-fade-in">
         Essay question not found.
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Practice Essay</h1>
+    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Practice Essay</h1>
         <Button asChild variant="outline">
           <Link to="/past-essay-questions" className="flex items-center">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Past Essay Questions

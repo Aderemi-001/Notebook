@@ -112,7 +112,7 @@ const EditGroup: React.FC = () => {
 
   if (!groupId) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center text-red-500 animate-fade-in">
         No group ID provided for editing.
       </div>
     );
@@ -120,7 +120,7 @@ const EditGroup: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
         <NotebookCard>
           <CardHeader>
@@ -139,7 +139,7 @@ const EditGroup: React.FC = () => {
 
   if (isError) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center text-red-500 animate-fade-in">
         Error loading group: {error?.message || "Unknown error"}
       </div>
     );
@@ -147,16 +147,16 @@ const EditGroup: React.FC = () => {
 
   if (!group) {
     return (
-      <div className="container mx-auto py-10 text-center animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center animate-fade-in">
         Group not found.
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Edit Group: {group.name}</h1>
+    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Edit Group: {group.name}</h1>
         <Button asChild variant="outline">
           <Link to="/groups" className="flex items-center">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Groups

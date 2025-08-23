@@ -195,7 +195,7 @@ const DailyReview: React.FC = () => {
 
   if (isLoading || isLoadingPreferences) {
     return (
-      <div className="container mx-auto py-10 flex flex-col items-center animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 flex flex-col items-center animate-fade-in">
         <Skeleton className="h-10 w-3/4 mb-8" />
         <Skeleton className="h-64 w-full max-w-md rounded-lg" />
         <div className="flex gap-4 mt-8">
@@ -208,7 +208,7 @@ const DailyReview: React.FC = () => {
 
   if (isError) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center text-red-500 animate-fade-in">
         Error loading daily review cards: {error?.message || "Unknown error"}
       </div>
     );
@@ -216,7 +216,7 @@ const DailyReview: React.FC = () => {
 
   if (!cards || cards.length === 0) {
     return (
-      <div className="container mx-auto py-10 text-center animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center animate-fade-in">
         <NotebookCard className="p-8">
           <CardHeader>
             <CardTitle className="text-2xl">No Cards Due Today!</CardTitle>
@@ -250,9 +250,9 @@ const DailyReview: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto py-10 flex flex-col items-center animate-fade-in">
-      <div className="w-full flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Daily Review</h1>
+    <div className="container mx-auto py-6 sm:py-8 md:py-10 flex flex-col items-center animate-fade-in">
+      <div className="w-full flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Daily Review</h1>
         <Button asChild variant="outline">
           <Link to="/" className="flex items-center">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
