@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 interface UseDrawingCanvasProps {
   isDrawingMode: boolean;
   drawingColor: string;
+  penSize: number; // New prop
   isErasing: boolean;
   eraserSize: number;
   zoomLevel: number;
@@ -11,7 +12,7 @@ interface UseDrawingCanvasProps {
   setPanOffset: (offset: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => void;
   minZoom: number;
   maxZoom: number;
-  baseLineWidth: number;
+  // baseLineWidth: number; // Removed, now using penSize
   onCanvasClickDetected: () => void; // New callback prop
 }
 
@@ -28,6 +29,7 @@ const getEventClientCoords = (event: React.MouseEvent<HTMLCanvasElement> | React
 export const useDrawingCanvas = ({
   isDrawingMode,
   drawingColor,
+  penSize, // Destructure penSize
   isErasing,
   eraserSize,
   zoomLevel,
@@ -36,7 +38,7 @@ export const useDrawingCanvas = ({
   setPanOffset,
   minZoom,
   maxZoom,
-  baseLineWidth,
+  // baseLineWidth, // Removed
   onCanvasClickDetected, // Destructure new prop
 }: UseDrawingCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -118,10 +120,10 @@ export const useDrawingCanvas = ({
   useEffect(() => {
     if (ctxRef.current) {
       ctxRef.current.strokeStyle = drawingColor;
-      ctxRef.current.lineWidth = isErasing ? eraserSize : baseLineWidth;
+      ctxRef.current.lineWidth = isErasing ? eraserSize : penSize; // Use penSize here
       ctxRef.current.globalCompositeOperation = isErasing ? 'destination-out' : 'source-over';
     }
-  }, [isDrawingMode, drawingColor, isErasing, eraserSize, baseLineWidth]);
+  }, [isDrawingMode, drawingColor, isErasing, eraserSize, penSize]); // Added penSize to dependencies
 
   const getCanvasPoint = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;

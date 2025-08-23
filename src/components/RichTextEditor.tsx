@@ -35,7 +35,7 @@ interface RichTextEditorProps {
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2.0;
 const ZOOM_STEP = 0.1;
-const BASE_LINE_WIDTH = 5; // Increased from 3 to 5 for smoother appearance
+const BASE_PEN_SIZE = 5; // Renamed from BASE_LINE_WIDTH
 const BASE_ERASER_SIZE = 15;
 
 const generateEraserCursor = (size: number) => {
@@ -67,6 +67,7 @@ const generatePenCursor = () => {
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, labelId, onEditorReady }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#000000');
+  const [penSize, setPenSize] = useState(BASE_PEN_SIZE); // New state for pen size
   const [isErasing, setIsErasing] = useState(false);
   const [eraserSize, setEraserSize] = useState(BASE_ERASER_SIZE);
   const [customCursorStyle, setCustomCursorStyle] = useState('crosshair');
@@ -153,6 +154,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   } = useDrawingCanvas({
     isDrawingMode,
     drawingColor,
+    penSize, // Pass penSize
     isErasing,
     eraserSize,
     zoomLevel,
@@ -161,7 +163,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     setPanOffset,
     minZoom: MIN_ZOOM,
     maxZoom: MAX_ZOOM,
-    baseLineWidth: BASE_LINE_WIDTH,
     onCanvasClickDetected: handleCanvasClickDetected, // Pass the new callback
   });
 
@@ -218,6 +219,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
               setIsDrawingMode={setIsDrawingMode}
               drawingColor={drawingColor}
               setDrawingColor={setDrawingColor}
+              penSize={penSize} // Pass penSize
+              setPenSize={setPenSize} // Pass setPenSize
               isErasing={isErasing}
               setIsErasing={setIsErasing}
               eraserSize={eraserSize}

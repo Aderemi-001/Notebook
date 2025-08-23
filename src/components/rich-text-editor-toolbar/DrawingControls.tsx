@@ -3,12 +3,14 @@ import { Toggle } from '@/components/ui/toggle';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Slider } from '@/components/ui/slider'; // Import Slider
-import { Palette, Eraser, CheckCircle2, Brain, ZoomIn, ZoomOut, Trash2, PenTool } from 'lucide-react'; // Import PenTool
+import { Slider } from '@/components/ui/slider';
+import { Palette, Eraser, CheckCircle2, Brain, ZoomIn, ZoomOut, Trash2, PenTool } from 'lucide-react';
 
 interface DrawingControlsProps {
   drawingColor: string;
   setDrawingColor: (color: string) => void;
+  penSize: number; // New prop
+  setPenSize: (size: number) => void; // New prop
   isErasing: boolean;
   setIsErasing: (erasing: boolean) => void;
   eraserSize: number;
@@ -34,6 +36,8 @@ const DRAWING_COLORS = [
 const DrawingControls: React.FC<DrawingControlsProps> = ({
   drawingColor,
   setDrawingColor,
+  penSize, // Destructure penSize
+  setPenSize, // Destructure setPenSize
   isErasing,
   setIsErasing,
   eraserSize,
@@ -56,24 +60,49 @@ const DrawingControls: React.FC<DrawingControlsProps> = ({
   };
 
   return (
-    <div className="flex flex-nowrap items-center gap-1"> {/* Explicitly wrap all controls */}
-      {/* Pen Tool Toggle */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Toggle
-              size="sm"
-              pressed={!isErasing}
-              onPressedChange={() => setIsErasing(false)}
-              aria-label="Activate pen tool"
-              className="px-2"
-            >
-              <PenTool className="h-4 w-4" />
-            </Toggle>
-          </TooltipTrigger>
-          <TooltipContent>Pen Tool</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+    <div className="flex flex-nowrap items-center gap-1">
+      {/* Pen Tool Toggle and Size */}
+      <Popover>
+        <TooltipProvider>
+          <Tooltip>
+            <PopoverTrigger asChild>
+              <Toggle
+                size="sm"
+                pressed={!isErasing}
+                aria-label="Activate pen tool"
+                className="px-2"
+              >
+                <PenTool className="h-4 w-4" />
+              </Toggle>
+            </PopoverTrigger>
+          </Tooltip>
+        </TooltipProvider>
+        <PopoverContent className="w-auto p-2 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Pen Size:</span>
+            <span className="text-sm font-medium">{penSize}px</span>
+          </div>
+          <Slider
+            min={1}
+            max={20}
+            step={1}
+            value={[penSize]}
+            onValueChange={(val) => {
+              setPenSize(val[0]);
+              setIsErasing(false); // Ensure pen is active when adjusting size
+            }}
+            className="w-[150px]"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsErasing(false)}
+            className="w-full"
+          >
+            Activate Pen
+          </Button>
+        </PopoverContent>
+      </Popover>
 
       {/* Drawing Color Palette */}
       <Popover>
