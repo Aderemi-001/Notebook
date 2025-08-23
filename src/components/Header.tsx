@@ -14,12 +14,12 @@ import {
   CalendarDays,
   Group,
   Handshake,
-  PlusCircle, // Added
-  Brain, // Added
-  Network, // Added for Cognitive Constellation
-  History, // Added for Past Exams/Essay Questions
-  FileText, // Added for Generate Essay Questions
-  CalendarCheck, // Added for Past Exams
+  PlusCircle,
+  Brain,
+  Network,
+  History,
+  FileText,
+  CalendarCheck,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -33,6 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MenuIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
 
 export const Header: React.FC = () => {
   const { user } = useAuth();
@@ -45,17 +46,17 @@ export const Header: React.FC = () => {
   const navItems = [
     { name: "My Study Sets", href: "/", icon: <BookOpen className="mr-2 h-4 w-4" /> },
     { name: "Daily Review", href: "/daily-review", icon: <CalendarDays className="mr-2 h-4 w-4" /> },
-    { name: "Create Set", href: "/create", icon: <PlusCircle className="mr-2 h-4 w-4" /> }, // Added
-    { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> }, // Added
-    { name: "Generate Exam", href: "/generate-exam", icon: <Brain className="mr-2 h-4 w-4" /> }, // Added
-    { name: "Generate Essay Questions", href: "/generate-essay-questions", icon: <FileText className="mr-2 h-4 w-4" /> }, // Added
-    { name: "Cognitive Constellation", href: "/constellation", icon: <Network className="mr-2 h-4 w-4" /> }, // Added
-    { name: "Past Exams", href: "/past-exams", icon: <CalendarCheck className="mr-2 h-4 w-4" /> }, // Added
-    { name: "Past Essay Questions", href: "/past-essay-questions", icon: <History className="mr-2 h-4 w-4" /> }, // Added
+    { name: "Create Set", href: "/create", icon: <PlusCircle className="mr-2 h-4 w-4" /> },
+    { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> },
+    { name: "Generate Exam", href: "/generate-exam", icon: <Brain className="mr-2 h-4 w-4" /> },
+    { name: "Generate Essay Questions", href: "/generate-essay-questions", icon: <FileText className="mr-2 h-4 w-4" /> },
+    { name: "Cognitive Constellation", href: "/constellation", icon: <Network className="mr-2 h-4 w-4" /> },
+    { name: "Past Exams", href: "/past-exams", icon: <CalendarCheck className="mr-2 h-4 w-4" /> },
+    { name: "Past Essay Questions", href: "/past-essay-questions", icon: <History className="mr-2 h-4 w-4" /> },
     { name: "My Notes", href: "/notes", icon: <NotebookPen className="mr-2 h-4 w-4" /> },
     { name: "My Groups", href: "/groups", icon: <Group className="mr-2 h-4 w-4" /> },
     { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
-    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> }, // Renamed from Statistics to Dashboard for consistency
+    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
   ];
 
   return (
@@ -131,48 +132,51 @@ export const Header: React.FC = () => {
                   <MenuIcon className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[250px] sm:w-[300px]">
-                <div className="flex flex-col space-y-4 pt-6">
-                  {/* User Info in Mobile Menu */}
-                  <div className="flex items-center space-x-2 px-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="User Avatar" />
-                      <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <p className="text-sm font-medium leading-none">{user.user_metadata?.display_name || user.email}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    </div>
+              <SheetContent side="right" className="w-[250px] sm:w-[300px] flex flex-col"> {/* Added flex flex-col */}
+                {/* User Info in Mobile Menu */}
+                <div className="flex items-center space-x-2 px-2 pt-6">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="User Avatar" />
+                    <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <p className="text-sm font-medium leading-none">{user.user_metadata?.display_name || user.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                   </div>
-                  <Separator />
-                  {/* Navigation Items */}
-                  {navItems.map((item) => (
-                    <Button key={item.name} variant="ghost" asChild className="justify-start">
-                      <Link to={item.href}>
-                        {item.icon}
-                        {item.name}
+                </div>
+                <Separator className="my-4" /> {/* Added margin to separator */}
+                
+                <ScrollArea className="flex-grow pr-4 -mr-4"> {/* Scrollable area */}
+                  <div className="flex flex-col space-y-2"> {/* Adjusted space-y */}
+                    {/* Navigation Items */}
+                    {navItems.map((item) => (
+                      <Button key={item.name} variant="ghost" asChild className="justify-start">
+                        <Link to={item.href}>
+                          {item.icon}
+                          {item.name}
+                        </Link>
+                      </Button>
+                    ))}
+                    <Separator />
+                    {/* Profile, Settings, Logout in Mobile Menu */}
+                    <Button variant="ghost" asChild className="justify-start">
+                      <Link to="/profile">
+                        <User className="mr-2 h-4 w-4" />
+                        Profile
                       </Link>
                     </Button>
-                  ))}
-                  <Separator />
-                  {/* Profile, Settings, Logout in Mobile Menu */}
-                  <Button variant="ghost" asChild className="justify-start">
-                    <Link to="/profile">
-                      <User className="mr-2 h-4 w-4" />
-                      Profile
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" asChild className="justify-start">
-                    <Link to="/settings">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" onClick={handleLogout} className="justify-start text-red-500 hover:text-red-600">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </Button>
-                </div>
+                    <Button variant="ghost" asChild className="justify-start">
+                      <Link to="/settings">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Settings
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" onClick={handleLogout} className="justify-start text-red-500 hover:text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </Button>
+                  </div>
+                </ScrollArea>
               </SheetContent>
             </Sheet>
           </div>
