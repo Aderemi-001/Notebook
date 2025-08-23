@@ -25,19 +25,19 @@ import CreateGroup from "@/pages/CreateGroup";
 import GroupsIndex from "@/pages/GroupsIndex";
 import EditGroup from "@/pages/EditGroup";
 import GroupDetail from "@/pages/GroupDetail";
-import Collaborations from "@/pages/Collaborations"; // Import Collaborations
+import Collaborations from "@/pages/Collaborations";
 import AuthLayout from "@/layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
 import { useDueCardsCount } from "@/hooks/use-due-cards-count";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { toast } from "sonner";
-import { format } from 'date-fns'; // Import date-fns for date formatting
+import { format } from 'date-fns';
+import Chatbot from "./Chatbot"; // Import the new Chatbot component
 
 const AppContent: React.FC = () => {
   const { data: dueCardsCount, isLoading: isLoadingDueCards } = useDueCardsCount();
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
-  // Use localStorage to persist the last date the reminder was shown
   const [lastReminderShownDate, setLastReminderShownDate] = React.useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('lastDailyReviewReminderDate');
@@ -47,9 +47,8 @@ const AppContent: React.FC = () => {
 
   React.useEffect(() => {
     if (!isLoadingDueCards && !isLoadingPreferences && preferences && dueCardsCount !== undefined) {
-      const today = format(new Date(), 'yyyy-MM-dd'); // Normalize today's date
+      const today = format(new Date(), 'yyyy-MM-dd');
 
-      // Check if reminders are enabled, there are due cards, and the reminder hasn't been shown today
       if (preferences.enable_review_reminders && dueCardsCount > 0 && lastReminderShownDate !== today) {
         toast.info(
           `You have ${dueCardsCount} cards due for review!`,
@@ -58,28 +57,23 @@ const AppContent: React.FC = () => {
             action: {
               label: "Study Now",
               onClick: () => {
-                window.location.href = "/daily-review"; // Navigate to the daily review page
-                // Mark reminder as shown for today after user clicks "Study Now"
+                window.location.href = "/daily-review";
                 localStorage.setItem('lastDailyReviewReminderDate', today);
                 setLastReminderShownDate(today);
               },
             },
-            duration: 10000, // Show for 10 seconds
+            duration: 10000,
             onDismiss: () => {
-              // Mark reminder as shown for today if dismissed manually or auto-closed
               localStorage.setItem('lastDailyReviewReminderDate', today);
               setLastReminderShownDate(today);
             },
             onAutoClose: () => {
-              // Mark reminder as shown for today if dismissed manually or auto-closed
               localStorage.setItem('lastDailyReviewReminderDate', today);
               setLastReminderShownDate(today);
             },
           }
         );
       } else if (dueCardsCount === 0 && lastReminderShownDate !== null) {
-        // If no cards are due, clear the reminder date so it can show again if cards become due later
-        // or on a new day. This handles cases where user finishes all cards.
         localStorage.removeItem('lastDailyReviewReminderDate');
         setLastReminderShownDate(null);
       }
@@ -205,7 +199,6 @@ const AppContent: React.FC = () => {
             />
             <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} />
             <Route path="/login" element={<Login />} />
-            {/* Notes Routes */}
             <Route
               path="/notes"
               element={
@@ -230,7 +223,6 @@ const AppContent: React.FC = () => {
                 </AuthLayout>
               }
             />
-            {/* Statistics Route */}
             <Route
               path="/dashboard"
               element={
@@ -239,7 +231,6 @@ const AppContent: React.FC = () => {
                 </AuthLayout>
               }
             />
-            {/* Daily Review Route */}
             <Route
               path="/daily-review"
               element={
@@ -248,7 +239,6 @@ const AppContent: React.FC = () => {
                 </AuthLayout>
               }
             />
-            {/* Group Routes */}
             <Route
               path="/groups"
               element={
@@ -281,7 +271,6 @@ const AppContent: React.FC = () => {
                 </AuthLayout>
               }
             />
-            {/* Collaborations Route */}
             <Route
               path="/collaborations"
               element={
@@ -293,6 +282,7 @@ const AppContent: React.FC = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster richColors />
+          <Chatbot /> {/* Add the Chatbot component here */}
         </React.Fragment>
       </BrowserRouter>
     </>
