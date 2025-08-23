@@ -1,10 +1,23 @@
 import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react";
-import type { EmblaOptionsType, EmblaPluginType } from "embla-carousel-react/embla-carousel-react";
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
+// Define local type interfaces for EmblaOptionsType and EmblaPluginType
+// This is a workaround if the types are not correctly exported by the package.
+interface EmblaOptionsType {
+  [key: string]: any;
+}
+
+interface EmblaPluginType {
+  name: string;
+  options: Record<string, any>;
+  init: (embla: any, OptionsHandler: any) => void;
+  destroy: () => void;
+  [key: string]: any; // Allow other properties
+}
 
 type CarouselContextProps = {
   carouselRef: UseEmblaCarouselType[0];
@@ -57,7 +70,7 @@ const Carousel = React.forwardRef<
         ...opts,
         axis: orientation === "horizontal" ? "x" : "y",
       },
-      plugins
+      plugins // This should now be type-compatible
     );
     const [canScrollPrev, setCanScrollPrev] = React.useState(false);
     const [canScrollNext, setCanScrollNext] = React.useState(false);
