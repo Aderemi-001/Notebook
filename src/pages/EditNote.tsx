@@ -39,7 +39,7 @@ type EditNoteFormValues = z.infer<typeof formSchema>;
 const EditNote: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useAuth(); // Keep for initial checks and UI rendering
 
   const [richTextContent, setRichTextContent] = useState<string>("");
   const [drawingUrl, setDrawingUrl] = useState<string | undefined>(undefined);
@@ -105,7 +105,7 @@ const EditNote: React.FC = () => {
   }, [noteId, navigate, form]);
 
   const handleSummarizeNote = async () => {
-    if (!user) {
+    if (!user) { // Initial check for user from useAuth
       showError("You must be logged in to summarize a note.");
       return;
     }
@@ -116,8 +116,8 @@ const EditNote: React.FC = () => {
 
     const toastId = showLoading("AI is summarizing your note...");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
         throw new Error("Session not found. Please log in again.");
       }
 
@@ -153,8 +153,8 @@ const EditNote: React.FC = () => {
   };
 
   const onSubmit = async (values: EditNoteFormValues) => {
-    if (!user || !noteId) {
-      showError("You must be logged in to edit a note.");
+    if (!noteId) {
+      showError("Note ID is missing.");
       return;
     }
 
@@ -162,6 +162,12 @@ const EditNote: React.FC = () => {
     const toastId = showLoading("Updating note...");
 
     try {
+      // Re-fetch user session to ensure it's current and valid
+      const { data: { user: currentUserSession }, error: userSessionError } = await supabase.auth.getUser();
+      if (userSessionError || !currentUserSession) {
+        throw new Error('User not authenticated. Please log in again.');
+      }
+
       const { error } = await supabase
         .from("notes")
         .update({
@@ -172,7 +178,7 @@ const EditNote: React.FC = () => {
           updated_at: new Date().toISOString(),
         })
         .eq("id", noteId)
-        .eq("user_id", user.id);
+        .eq("user_id", currentUserSession.id); // Use currentUserSession.id here
 
       if (error) throw error;
 
@@ -227,7 +233,6 @@ const EditNote: React.FC = () => {
                   showError("The drawing pad is currently under construction.");
                 }
               }}
-              // disabled={isDrawingFeatureUnderConstruction} // Removed disabled prop
               className={cn("flex-1", isDrawingFeatureUnderConstruction && "text-muted-foreground cursor-not-allowed")}
             >
               <ImageIcon className="mr-2 h-4 w-4" /> Drawing Pad
