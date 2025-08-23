@@ -1,12 +1,26 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 
 export default function PrivacyPolicy() {
+  const navigate = useNavigate();
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-3xl mx-auto">
-        <CardHeader>
+        <CardHeader className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="absolute left-4 top-4"
+            aria-label="Go back"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
           <CardTitle className="text-3xl font-bold text-center">Privacy Policy</CardTitle>
         </CardHeader>
         <CardContent className="prose max-w-none">
