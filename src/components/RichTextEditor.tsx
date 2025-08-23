@@ -72,6 +72,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 }); // New state for panning
+  const lastPointerPosition = useRef<{ x: number; y: number } | null>(null); // For panning and drawing
 
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
   const [textToReplace, setTextToReplace] = useState('');
@@ -157,9 +159,15 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     if (canvasRef.current && ctxRef.current) {
       const canvas = canvasRef.current;
       const ctx = ctxRef.current;
+      // Save current transform
+      ctx.save();
+      // Reset transform to clear the entire canvas
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Restore original transform
+      ctx.restore();
     }
   }, []);
 
@@ -187,6 +195,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         if (entry.target === canvas) {
           const { width, height } = entry.contentRect;
           if (canvas.width !== width || canvas.height !== height) {
+            // When resizing, redraw the content to the new canvas size
+            // This is a simplified approach; for complex drawings, you might need to store drawing history
+            // and redraw it with the new dimensions and current transform.
+            // For now, we'll just clear and resize.
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             canvas.width = width;
             canvas.height = height;
@@ -207,6 +219,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   useEffect(() => {
     if (!isDrawingMode) {
       clearCanvas();
+      setPanOffset({ x: 0, y: 0 }); // Reset pan when exiting drawing mode
+      setZoomLevel(1); // Reset zoom when exiting drawing mode
     }
   }, [isDrawingMode, clearCanvas]);
 
@@ -237,90 +251,119 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     }
   }, [isDrawingMode, isErasing, eraserSize]);
 
-  const getCoordinates = (event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  // Function to get canvas coordinates from clientX/Y, accounting for pan and zoom
+  const getCanvasPoint = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
-    let clientX: number;
-    let clientY: number;
-
-    if ('touches' in event.nativeEvent) {
-      const touch = event.nativeEvent.touches[0];
-      clientX = touch.clientX;
-      clientY = touch.clientY;
-    } else {
-      clientX = event.nativeEvent.clientX;
-      clientY = event.nativeEvent.clientY;
-    }
-
+    // Get coordinates relative to the canvas's *visual* top-left
     const offsetX = clientX - rect.left;
     const offsetY = clientY - rect.top;
 
-    const scaledOffsetX = offsetX / zoomLevel;
-    const scaledOffsetY = offsetY / zoomLevel;
-
-    return { x: scaledOffsetX, y: scaledOffsetY };
-  };
+    // Reverse the CSS transform (pan and scale) to get the logical canvas coordinates
+    const x = (offsetX / zoomLevel) - panOffset.x;
+    const y = (offsetY / zoomLevel) - panOffset.y;
+    return { x, y };
+  }, [zoomLevel, panOffset]);
 
   const startDrawing = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!ctxRef.current || !canvasRef.current) {
-      return;
-    }
-    
-    if ('touches' in event.nativeEvent && event.nativeEvent.touches.length === 2) {
-      const touch1 = event.nativeEvent.touches[0];
-      const touch2 = event.nativeEvent.touches[1];
-      const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
-      setInitialPinchDistance(dist);
-      setIsPinching(true);
-      event.preventDefault(); // Prevent default scrolling/zooming
-      return;
-    }
+    if (!ctxRef.current || !canvasRef.current) return;
+    event.preventDefault(); // Prevent default browser behavior (e.g., scrolling, native pinch-zoom)
 
-    event.preventDefault();
-    
-    const { x, y } = getCoordinates(event);
-    ctxRef.current.beginPath();
-    ctxRef.current.moveTo(x, y);
-    setIsDrawing(true);
-  }, [zoomLevel]);
+    if ('touches' in event.nativeEvent) {
+      if (event.nativeEvent.touches.length === 2) {
+        const touch1 = event.nativeEvent.touches[0];
+        const touch2 = event.nativeEvent.touches[1];
+        const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+        setInitialPinchDistance(dist);
+        setIsPinching(true);
+        lastPointerPosition.current = null; // Reset for pinch
+        setIsDrawing(false); // Ensure not drawing during pinch
+        return;
+      } else if (event.nativeEvent.touches.length === 1) {
+        const { clientX, clientY } = event.nativeEvent.touches[0];
+        lastPointerPosition.current = { x: clientX, y: clientY };
+        const { x, y } = getCanvasPoint(clientX, clientY);
+        ctxRef.current.beginPath();
+        ctxRef.current.moveTo(x, y);
+        setIsDrawing(true);
+        setIsPinching(false); // Ensure not in pinch mode
+        return;
+      }
+    } else { // Mouse event
+      lastPointerPosition.current = { x: event.clientX, y: event.clientY };
+      const { x, y } = getCanvasPoint(event.clientX, event.clientY);
+      ctxRef.current.beginPath();
+      ctxRef.current.moveTo(x, y);
+      setIsDrawing(true);
+      setIsPinching(false); // Ensure not in pinch mode
+    }
+  }, [getCanvasPoint]);
 
   const draw = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (isPinching && 'touches' in event.nativeEvent && event.nativeEvent.touches.length === 2) {
+    if (!ctxRef.current || !canvasRef.current) return;
+    event.preventDefault();
+
+    if ('touches' in event.nativeEvent && event.nativeEvent.touches.length === 2 && isPinching) {
       const touch1 = event.nativeEvent.touches[0];
       const touch2 = event.nativeEvent.touches[1];
       const currentDist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
 
       if (initialPinchDistance !== null) {
         const scaleFactor = currentDist / initialPinchDistance;
-        setZoomLevel(prevZoom => {
-          const newZoom = prevZoom * scaleFactor;
-          return Math.min(Math.max(newZoom, MIN_ZOOM), MAX_ZOOM);
-        });
+        const newZoom = Math.min(Math.max(zoomLevel * scaleFactor, MIN_ZOOM), MAX_ZOOM);
+
+        // Calculate pinch center in client coordinates
+        const centerX = (touch1.clientX + touch2.clientX) / 2;
+        const centerY = (touch1.clientY + touch2.clientY) / 2;
+
+        // Get current canvas point at pinch center before zoom change
+        const { x: oldCanvasX, y: oldCanvasY } = getCanvasPoint(centerX, centerY);
+
+        // Update zoom level
+        setZoomLevel(newZoom);
+
+        // Calculate new pan offset to keep the oldCanvasX/Y point fixed relative to the screen
+        setPanOffset(prevPan => ({
+          x: oldCanvasX - (centerX / newZoom),
+          y: oldCanvasY - (centerY / newZoom),
+        }));
+        
         setInitialPinchDistance(currentDist); // Update initial distance for continuous scaling
       }
-      event.preventDefault(); // Prevent default scrolling/zooming
       return;
     }
 
-    if (!isDrawing || !ctxRef.current || !canvasRef.current) return;
-    event.preventDefault();
-    
-    const { x, y } = getCoordinates(event);
-    ctxRef.current.lineTo(x, y);
-    ctxRef.current.stroke();
-  }, [isDrawing, isPinching, initialPinchDistance, setZoomLevel, zoomLevel]);
+    if (isDrawing) {
+      const { clientX, clientY } = 'touches' in event.nativeEvent ? event.nativeEvent.touches[0] : event;
+      const { x, y } = getCanvasPoint(clientX, clientY);
+      ctxRef.current.lineTo(x, y);
+      ctxRef.current.stroke();
+      lastPointerPosition.current = { x: clientX, y: clientY };
+    } else if (lastPointerPosition.current && isDrawingMode && !isErasing && !isPinching) { // Panning logic
+      const { clientX, clientY } = 'touches' in event.nativeEvent ? event.nativeEvent.touches[0] : event;
+      const dx = clientX - lastPointerPosition.current.x;
+      const dy = clientY - lastPointerPosition.current.y;
+
+      setPanOffset(prevPan => ({
+        x: prevPan.x + dx,
+        y: prevPan.y + dy,
+      }));
+      lastPointerPosition.current = { x: clientX, y: clientY };
+    }
+  }, [isDrawing, isPinching, initialPinchDistance, zoomLevel, panOffset, isDrawingMode, isErasing, getCanvasPoint]);
 
   const endDrawing = useCallback(() => {
     if (isPinching) {
       setIsPinching(false);
       setInitialPinchDistance(null);
-      return;
     }
-    if (!ctxRef.current) return;
-    ctxRef.current.closePath();
+    if (ctxRef.current) {
+      ctxRef.current.closePath();
+    }
     setIsDrawing(false);
+    lastPointerPosition.current = null; // Clear last position
   }, [isPinching]);
 
   const insertDrawing = useCallback(() => {
@@ -353,7 +396,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${session.access_token}`,
-              // 'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU", // Removed apikey
             },
             body: JSON.stringify({ base64Image: base64Data, mimeType }),
           }
@@ -445,9 +487,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
               onTouchMove={draw}
               onTouchEnd={endDrawing}
               style={{ 
-                transform: `scale(${zoomLevel})`, 
-                transformOrigin: 'top left',
-                touchAction: 'none',
+                transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`, 
+                transformOrigin: '0 0', // Set transform origin to top-left
+                touchAction: 'none', // Prevent default browser touch actions
                 width: '100%',
                 height: '100%',
                 cursor: customCursorStyle,
