@@ -1,7 +1,6 @@
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import * as React from "react"; // Explicitly import React
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();

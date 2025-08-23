@@ -4,7 +4,7 @@ import * as RechartsPrimitive from "recharts";
 import { cn } from "@/lib/utils";
 
 // Helper to extract item config from a payload
-function get  (payload: any, { dataKey, nameKey, labelKey }: { dataKey?: string; nameKey?: string; labelKey?: string }) {
+function get  (payload: any, options: { dataKey?: string; nameKey?: string; labelKey?: string }) {
   if (payload.length === 0) {
     return null;
   }
@@ -81,7 +81,7 @@ function ChartStyle({ id, config }: { id: string; config: Record<string, any> })
         __html: `
           ${colorConfig
             .map(
-              ([key, item]) => `
+              ([key, _]) => `
             .recharts-surface--${id} .recharts-dot.${key}-dot,
             .recharts-surface--${id} .recharts-legend-item.${key}-item,
             .recharts-surface--${id} .recharts-bar.${key}-bar,
@@ -224,6 +224,7 @@ type ChartLegendProps = React.ComponentProps<typeof RechartsPrimitive.Legend> & 
   className?: string;
   hideIcon?: boolean;
   formatter?: (value: string, entry: any, index: number) => React.ReactNode;
+  nameKey?: string; // Added nameKey
 };
 
 const ChartLegend = React.forwardRef<
@@ -231,7 +232,7 @@ const ChartLegend = React.forwardRef<
   ChartLegendProps
 >(
   (
-    { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
+    { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey, ...props }, // Destructured nameKey
     ref
   ) => {
     const { config } = useChart();
@@ -248,6 +249,7 @@ const ChartLegend = React.forwardRef<
           verticalAlign === "top" ? "pb-8" : "pt-8",
           className
         )}
+        {...props}
       >
         {payload.map((item: any) => {
           const key = `${nameKey || item.dataKey || "value"}`;

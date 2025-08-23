@@ -3,11 +3,11 @@ import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import {
   Controller,
-  // ControllerProps, // Not directly used
-  // FieldPath, // Not directly used
-  // FieldValues, // Not directly used
-  // useFormContext, // Not directly used
-  // useFormState, // Not directly used
+  ControllerProps, // Added
+  FieldPath, // Added
+  FieldValues, // Added
+  useFormContext, // Added
+  FormProvider, // Added
 } from "react-hook-form";
 
 import { cn } from "@/lib/utils";
@@ -118,7 +118,7 @@ const FormControl = React.forwardRef<
   React.ElementRef<typeof Slot>,
   React.ComponentPropsWithoutRef<typeof Slot>
 >(({ ...props }, ref) => {
-  const { formItemId, formDescriptionId, formMessageId } =
+  const { error, formItemId, formDescriptionId, formMessageId } =
     useFormField();
 
   return (

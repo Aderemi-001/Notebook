@@ -8,7 +8,6 @@ import { CardContent, CardHeader, CardTitle, CardDescription } from '@/component
 import { NotebookCard } from '@/components/NotebookCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import * as React from 'react'; // Explicitly import React
 import { useEffect, useState } from 'react';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 

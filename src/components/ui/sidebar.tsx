@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { VariantProps, cva } from "class-variance-authority";
+import { cva } from "class-variance-authority"; // Removed VariantProps
 import { PanelLeft } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -129,7 +129,7 @@ type SidebarPanelProps = {
 
 const SidebarPanel = React.forwardRef<HTMLDivElement, SidebarPanelProps>(
   ({ className, children, ...props }, ref) => {
-    const { open, collapsible } = useSidebar();
+    const { open } = useSidebar();
     return (
       <div
         ref={ref}
@@ -483,7 +483,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps>(
       <Comp
         ref={ref}
         className={cn(
-          "relative flex h-9 items-center justify-center whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+          "relative flex h-9 items-center justify-center whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground", // Added data-[state=open] styles
           !open && "size-9",
           !open && showOnHover && "lg:opacity-0 lg:group-hover:opacity-100",
           className

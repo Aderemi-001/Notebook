@@ -3,7 +3,7 @@
 import * as React from "react"; // Explicitly import React
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Eraser, Pencil, Type, Save, Sparkles } from "lucide-react"; // Removed unused X
+import { Eraser, Pencil, Type, Save, Sparkles } from "lucide-react";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { toast } from "sonner";
 import { Editor } from "@tiptap/react"; // Import Editor type
@@ -30,7 +30,7 @@ export function DrawingCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [isErasing, setIsErasing] = useState(false);
+  const _isErasing = useState(false)[0]; // Renamed to _isErasing as it's unused
   const [drawingData, setDrawingData] = useState<string | null>(null);
   const editorRef = useRef<Editor | null>(null);
 
@@ -81,25 +81,26 @@ export function DrawingCanvas({
     saveDrawing();
   };
 
-  const startErasing = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawingMode) return;
-    const { offsetX, offsetY } = nativeEvent;
-    contextRef.current?.clearRect(offsetX, offsetY, 20, 20); // Eraser size
-    setIsErasing(true);
-  };
+  // Removed startErasing, erase, stopErasing as they are unused
+  // const startErasing = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
+  //   if (!isDrawingMode) return;
+  //   const { offsetX, offsetY } = nativeEvent;
+  //   contextRef.current?.clearRect(offsetX, offsetY, 20, 20); // Eraser size
+  //   setIsErasing(true);
+  // };
 
-  const erase = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isErasing) return;
-    if (!isDrawingMode) return;
-    const { offsetX, offsetY } = nativeEvent;
-    contextRef.current?.clearRect(offsetX, offsetY, 20, 20); // Eraser size
-  };
+  // const erase = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
+  //   if (!isErasing) return;
+  //   if (!isDrawingMode) return;
+  //   const { offsetX, offsetY } = nativeEvent;
+  //   contextRef.current?.clearRect(offsetX, offsetY, 20, 20); // Eraser size
+  // };
 
-  const stopErasing = () => {
-    if (!isDrawingMode) return;
-    setIsErasing(false);
-    saveDrawing();
-  };
+  // const stopErasing = () => {
+  //   if (!isDrawingMode) return;
+  //   setIsErasing(false);
+  //   saveDrawing();
+  // };
 
   const saveDrawing = useCallback(() => {
     const canvas = canvasRef.current;
@@ -120,7 +121,7 @@ export function DrawingCanvas({
     }
   };
 
-  const analyzeDrawing = useCallback(async (image: string) => {
+  const analyzeDrawing = useCallback(async (_image: string) => { // Renamed image to _image
     toast.info("Analyzing drawing with AI...");
     // Placeholder for AI analysis
     return new Promise<string>((resolve) => {
@@ -185,14 +186,14 @@ export function DrawingCanvas({
             onMouseUp={stopDrawing}
             onMouseLeave={stopDrawing}
           ></canvas>
-          {isErasing && (
+          {_isErasing && ( // Used _isErasing here
             <div
               className="absolute bg-red-500 opacity-50 rounded-full"
               style={{
                 width: 20,
                 height: 20,
                 pointerEvents: "none",
-                transform: `translate(${isErasing ? -10 : 0}px, ${isErasing ? -10 : 0}px)`,
+                transform: `translate(${_isErasing ? -10 : 0}px, ${_isErasing ? -10 : 0}px)`,
               }}
             ></div>
           )}

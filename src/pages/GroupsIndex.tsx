@@ -26,6 +26,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger, // Added
 } from "@/components/ui/alert-dialog";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { useUserPreferences } from '@/hooks/use-user-preferences';

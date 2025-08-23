@@ -19,7 +19,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import * as React from 'react'; // Explicitly import React
 import { useEffect } from 'react'; // Explicitly import useEffect
 
 const profileSchema = z.object({

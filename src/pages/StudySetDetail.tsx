@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import * as React from "react"; // Explicitly import React
 import { useState, useEffect } from "react";
 
 // Import new modular components

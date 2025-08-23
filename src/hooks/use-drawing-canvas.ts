@@ -214,7 +214,7 @@ export const useDrawingCanvas = ({
         setZoomLevel(newZoom);
 
         // Calculate new pan offset to keep the oldCanvasPoint fixed relative to the screen
-        setPanOffset(prevPan => ({
+        setPanOffset((_prevPan: { x: number; y: number }) => ({ // Renamed prevPan to _prevPan
           x: centerX - oldCanvasPointX * newZoom,
           y: centerY - oldCanvasPointY * newZoom,
         }));

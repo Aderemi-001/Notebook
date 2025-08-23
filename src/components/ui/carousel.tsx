@@ -1,5 +1,7 @@
 import * as React from "react";
 import useEmblaCarousel, {
+  EmblaOptionsType, // Corrected import
+  EmblaPluginType, // Corrected import
   type UseEmblaCarouselType,
 } from "embla-carousel-react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -30,9 +32,9 @@ function useCarousel() {
 }
 
 type CarouselProps = {
-  opts?: React.ComponentProps<typeof useEmblaCarousel>[0];
+  opts?: EmblaOptionsType; // Corrected type
   orientation?: "horizontal" | "vertical";
-  plugins?: React.ComponentProps<typeof useEmblaCarousel>[1];
+  plugins?: EmblaPluginType[]; // Corrected type
   setApi?: (api: CarouselContextProps["api"]) => void;
 } & React.HTMLAttributes<HTMLDivElement>;
 
@@ -112,7 +114,6 @@ const Carousel = React.forwardRef<
         value={{
           carouselRef,
           api: api,
-          opts,
           orientation:
             orientation || (opts?.axis === "y" ? "vertical" : "horizontal"),
           scrollPrev,

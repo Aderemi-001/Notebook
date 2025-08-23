@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Label } from "@/components/ui/label";
+import { useQuery } from "@tanstack/react-query"; // Added useQuery import
 
 interface StudySet {
   id: string;
