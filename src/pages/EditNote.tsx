@@ -7,14 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { DrawingCanvas } from "@/components/DrawingCanvas";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { RichTextEditor } from '@/components/RichTextEditor'; // Corrected import to named import
 import { Editor } from "@tiptap/react"; // Import Editor type
 
 export default function EditNote() {
-  const { id } = useParams();
+  const { noteId } = useParams<{ noteId: string }>(); // Changed 'id' to 'noteId' for clarity
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [studySets, setStudySets] = useState<any[]>([]);
@@ -34,7 +34,7 @@ export default function EditNote() {
         const { data: noteData, error: noteError } = await supabase
           .from("notes")
           .select("*")
-          .eq("id", id)
+          .eq("id", noteId) // Use noteId here
           .single();
 
         if (noteError) {
@@ -62,10 +62,20 @@ export default function EditNote() {
         dismissToast(toastId);
       }
     }
-    fetchNoteAndStudySets();
-  }, [id]);
+
+    if (noteId) { // Only fetch if noteId is defined
+      fetchNoteAndStudySets();
+    } else {
+      // If noteId is undefined, an error message will be displayed by the conditional render below
+      console.error("No note ID provided for editing.");
+    }
+  }, [noteId]);
 
   const handleSaveNote = async () => {
+    if (!noteId) { // Also check noteId before saving
+      showError("Cannot save: No note ID available.");
+      return;
+    }
     const toastId = showLoading("Saving changes...");
     try {
       const user = await supabase.auth.getUser();
@@ -82,14 +92,14 @@ export default function EditNote() {
           study_set_id: selectedStudySet,
           extracted_content_ai: drawingData ? "AI analysis of drawing: " + drawingData : null, // Placeholder for actual AI analysis
         })
-        .eq("id", id);
+        .eq("id", noteId); // Use noteId here
 
       if (error) {
         throw error;
       }
 
       showSuccess("Note updated successfully!");
-      navigate(`/notes/${id}`);
+      navigate(`/notes/${noteId}`);
     } catch (error: any) {
       console.error("Error saving note:", error);
       showError(`Error saving note: ${error.message}`);
@@ -101,6 +111,14 @@ export default function EditNote() {
   const handleDrawingChange = (data: string) => {
     setDrawingData(data);
   };
+
+  if (!noteId) {
+    return (
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
+        No note ID provided for editing. Please navigate from the <Link to="/notes" className="underline">My Notes</Link> page.
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4">
