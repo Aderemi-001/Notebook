@@ -26,13 +26,13 @@ const TextEditorContent: React.FC<TextEditorContentProps> = ({ editor, editable,
       <EditorContent
         editor={editor}
         className={cn(
-          'prose dark:prose-invert max-w-none focus:outline-none p-4 h-full overflow-y-auto',
+          'prose dark:prose-invert max-w-none focus:outline-none p-4 h-full overflow-y-auto w-full', // Added w-full here
           'user-select-text touch-action-auto',
           !editable && 'bg-muted/50 cursor-not-allowed',
           className
         )}
         aria-labelledby={labelId || ''}
-        onContextMenu={handleContextMenu} // Add this handler to prevent the default context menu
+        onContextMenu={handleContextMenu}
       />
     </div>
   );
