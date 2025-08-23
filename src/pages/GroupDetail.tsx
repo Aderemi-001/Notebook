@@ -253,15 +253,17 @@ const GroupDetail: React.FC = () => {
                 <Pencil className="mr-2 h-4 w-4" /> Edit Group
               </Link>
             </DropdownMenuItem>
-            <AddExistingSetToGroupDialog
-              groupId={groupId}
-              trigger={
-                <DropdownMenuItem className="flex items-center cursor-pointer" onSelect={(e: Event) => e.preventDefault()}>
-                  <PlusCircle className="mr-2 h-4 w-4" /> Add Existing Set
-                </DropdownMenuItem>
-              }
-              onSetAdded={() => refetchStudySetsInGroup()} // Refetch sets in group after adding
-            />
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} asChild> {/* Prevent dropdown from closing */}
+              <AddExistingSetToGroupDialog
+                groupId={groupId}
+                trigger={
+                  <Button variant="ghost" className="flex items-center w-full justify-start">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Existing Set
+                  </Button>
+                }
+                onSetAdded={() => refetchStudySetsInGroup()} // Refetch sets in group after adding
+              />
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/create" state={{ groupId: groupId }} className="flex items-center">
                 <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
