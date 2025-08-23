@@ -21,8 +21,8 @@ const getEventClientCoords = (event: React.MouseEvent<HTMLCanvasElement> | React
     const touch = event.nativeEvent.touches[0];
     return { clientX: touch.clientX, clientY: touch.clientY };
   }
-  // For MouseEvent, clientX/Y are directly on the event object
-  return { clientX: event.clientX, clientY: event.clientY };
+  // For MouseEvent, clientX/Y are directly on the nativeEvent object
+  return { clientX: event.nativeEvent.clientX, clientY: event.nativeEvent.clientY };
 };
 
 export const useDrawingCanvas = ({
