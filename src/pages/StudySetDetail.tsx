@@ -11,6 +11,7 @@ import StudyProgressSummary from '@/components/StudyProgressSummary';
 import StudySetCardsList from '@/components/StudySetCardsList';
 import StudySetLinkedNotes from '@/components/StudySetLinkedNotes';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
+import { useAuth } from '@/hooks/useAuth'; // Import useAuth
 
 interface StudySet {
   id: string;
@@ -43,10 +44,8 @@ interface LinkedNote {
 }
 
 const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("User not authenticated.");
-  }
+  // The RLS policies now handle access for unauthenticated users to public sets.
+  // We will fetch the user later to determine ownership and progress.
 
   const now = new Date();
 
@@ -81,14 +80,17 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
     throw error;
   }
   if (!data) {
-    throw new Error("Study set not found.");
+    throw new Error("Study set not found or you do not have permission to view it.");
   }
+
+  // Fetch current user to determine progress and ownership
+  const { data: { user } } = await supabase.auth.getUser();
 
   let masteredCount = 0;
   let dueCount = 0;
   const processedCards: CardItem[] = data.cards.map((card: any) => {
     const progress = card.user_progress?.[0];
-    const hasProgress = !!progress && progress.user_id === user.id;
+    const hasProgress = !!user && !!progress && progress.user_id === user.id;
     const cardStatus = hasProgress ? progress.status : 'learning';
     const nextReviewAt = hasProgress ? progress.next_review_at : now.toISOString();
 
@@ -97,7 +99,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
     }
 
     const cardNextReviewDate = new Date(nextReviewAt);
-    const isNewCardForCurrentUser = !hasProgress;
+    const isNewCardForCurrentUser = !!user && !hasProgress; // Only count as new if user is logged in
     const isDueForReview = cardNextReviewDate <= now;
 
     if (isNewCardForCurrentUser || (hasProgress && isDueForReview && cardStatus === 'learning')) {
@@ -122,7 +124,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
 const fetchLinkedNotes = async (setId: string): Promise<LinkedNote[]> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error("User not authenticated.");
+    return []; // No notes for unauthenticated users
   }
 
   const { data, error } = await supabase
@@ -143,6 +145,7 @@ const StudySetDetail = () => {
   const { setId } = useParams<{ setId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user, loading: isLoadingAuth } = useAuth(); // Use useAuth to get user and loading state
 
   const [isOwner, setIsOwner] = useState(false);
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
@@ -150,24 +153,22 @@ const StudySetDetail = () => {
   const { data: studySet, isLoading, isError, error } = useQuery<StudySet, Error>({
     queryKey: ['studySet', setId],
     queryFn: () => fetchStudySetDetails(setId!),
-    enabled: !!setId,
+    enabled: !!setId && !isLoadingAuth, // Enable only when auth state is known
   });
 
   const { data: linkedNotes, isLoading: isLoadingLinkedNotes } = useQuery<LinkedNote[], Error>({
     queryKey: ['linkedNotes', setId],
     queryFn: () => fetchLinkedNotes(setId!),
-    enabled: !!setId,
+    enabled: !!setId && !isLoadingAuth && !!user, // Only fetch linked notes if authenticated
   });
 
   useEffect(() => {
-    const checkOwner = async () => {
-      if (studySet?.user_id) {
-        const { data: { user } } = await supabase.auth.getUser();
-        setIsOwner(user?.id === studySet.user_id);
-      }
-    };
-    checkOwner();
-  }, [studySet?.user_id]);
+    if (studySet?.user_id && user) {
+      setIsOwner(user.id === studySet.user_id);
+    } else {
+      setIsOwner(false);
+    }
+  }, [studySet?.user_id, user]);
 
   const handleDeleteSet = async () => {
     if (!studySet?.id) return;
@@ -199,7 +200,6 @@ const StudySetDetail = () => {
 
     const toastId = showLoading("Resetting progress...");
     try {
-      const { data: { user } = { user: null } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("User not authenticated.");
       }
@@ -237,6 +237,10 @@ const StudySetDetail = () => {
   };
 
   const handleToggleFlag = async (cardId: string, currentFlagStatus: boolean) => {
+    if (!user) {
+      showError("You must be logged in to flag cards.");
+      return;
+    }
     const toastId = showLoading(currentFlagStatus ? "Unflagging card..." : "Flagging card...");
     try {
       const { error } = await supabase
@@ -261,7 +265,6 @@ const StudySetDetail = () => {
 
     const toastId = showLoading(`Adding "${studySet.title}" to your sets...`);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("User not authenticated. Please log in to add sets.");
       }
@@ -313,7 +316,7 @@ const StudySetDetail = () => {
     );
   }
 
-  if (isLoading || isLoadingPreferences || isLoadingLinkedNotes) {
+  if (isLoading || isLoadingPreferences || isLoadingAuth || (user && isLoadingLinkedNotes)) {
     return (
       <div className="container mx-auto py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
@@ -349,6 +352,7 @@ const StudySetDetail = () => {
       <StudySetHeader
         studySet={studySet}
         isOwner={isOwner}
+        isLoggedIn={!!user} // Pass isLoggedIn status
         preferences={preferences}
         handleDeleteSet={handleDeleteSet}
         handleResetProgress={handleResetProgress}
@@ -359,21 +363,25 @@ const StudySetDetail = () => {
         <p className="text-muted-foreground mb-6">{studySet.description}</p>
       )}
 
-      <StudyProgressSummary
-        totalCards={studySet.cards.length}
-        masteredCardsCount={studySet.mastered_cards_count}
-        dueCardsCount={studySet.due_cards_count}
-      />
+      {user && ( // Only show progress summary if user is logged in
+        <StudyProgressSummary
+          totalCards={studySet.cards.length}
+          masteredCardsCount={studySet.mastered_cards_count}
+          dueCardsCount={studySet.due_cards_count}
+        />
+      )}
 
       <StudySetCardsList
         cards={studySet.cards}
         handleToggleFlag={handleToggleFlag}
       />
 
-      <StudySetLinkedNotes
-        linkedNotes={linkedNotes}
-        isLoadingLinkedNotes={isLoadingLinkedNotes}
-      />
+      {user && ( // Only show linked notes if user is logged in
+        <StudySetLinkedNotes
+          linkedNotes={linkedNotes}
+          isLoadingLinkedNotes={isLoadingLinkedNotes}
+        />
+      )}
     </div>
   );
 };

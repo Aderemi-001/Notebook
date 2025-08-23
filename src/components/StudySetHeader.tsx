@@ -33,6 +33,7 @@ interface StudySetHeaderProps {
     cards: any[]; // Simplified for now, actual type is in StudySetDetail
   };
   isOwner: boolean;
+  isLoggedIn: boolean; // New prop
   preferences: UserPreferences | null | undefined;
   handleDeleteSet: () => void;
   handleResetProgress: () => void;
@@ -42,6 +43,7 @@ interface StudySetHeaderProps {
 const StudySetHeader: React.FC<StudySetHeaderProps> = ({
   studySet,
   isOwner,
+  isLoggedIn, // Use isLoggedIn
   preferences,
   handleDeleteSet,
   handleResetProgress,
@@ -80,7 +82,7 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
             </Link>
           </DropdownMenuItem>
-          {studySet.cards.length > 0 && (
+          {isLoggedIn && studySet.cards.length > 0 && ( // Only show "Start Study" if logged in and has cards
             <DropdownMenuItem asChild>
               <Link to={`/sets/${studySet.id}/study`} className="flex items-center">
                 <PlayCircle className="mr-2 h-4 w-4" /> Start Study
@@ -119,7 +121,11 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
             </>
           )}
           {studySet.is_public && !isOwner && (
-            <DropdownMenuItem onClick={handleAddToMySets} className="flex items-center">
+            <DropdownMenuItem 
+              onClick={handleAddToMySets} 
+              disabled={!isLoggedIn} // Disable if not logged in
+              className="flex items-center"
+            >
               <Plus className="mr-2 h-4 w-4" /> Add to My Sets
             </DropdownMenuItem>
           )}
