@@ -12,7 +12,7 @@ import ChatMessageList from './chatbot/ChatMessageList';
 import ChatInput from './chatbot/ChatInput';
 import SuggestedQuestions from './chatbot/SuggestedQuestions';
 import { ChatMessage } from './chatbot/types';
-import { parseAndRenderLinks, getDynamicSuggestions } from './chatbot/utils';
+import { parseAndRenderLinks, getDynamicSuggestions } from './chatbot/utils'; // Updated import path
 
 const INACTIVITY_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 const LOCAL_STORAGE_KEY = 'chatbotMessages';

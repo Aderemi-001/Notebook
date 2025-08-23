@@ -1,4 +1,5 @@
 import React from 'react';
+import { parseAndRenderLinks, getDynamicSuggestions } from './utils'; // Updated import path
 
 export interface ChatMessage {
   id: number;
