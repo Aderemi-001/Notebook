@@ -1,119 +1,270 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/hooks/useAuth"; // Import AuthProvider
+import { AuthProvider } from "@/hooks/useAuth";
 
-import Index from "./pages/Index";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Login from "./pages/Login";
-import Notes from "./pages/Notes";
-import CreateNote from "./pages/CreateNote";
-import EditNote from "./pages/EditNote";
-import NoteDetail from "./pages/NoteDetail";
-import StudySets from "./pages/StudySets";
-import CreateStudySet from "./pages/CreateStudySet";
-import EditStudySet from "./pages/EditStudySet";
-import StudySetDetail from "./pages/StudySetDetail";
-import StudySession from "./pages/StudySession";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import Dashboard from "./pages/Dashboard";
-import Concepts from "./pages/Concepts";
-import CreateConcept from "./pages/CreateConcept";
-import EditConcept from "./pages/EditConcept";
-import ConceptDetail from "./pages/ConceptDetail";
-import GeneratedQuestions from "./pages/GeneratedQuestions";
-import CreateGeneratedQuestion from "./pages/CreateGeneratedQuestion";
-import EditGeneratedQuestion from "./pages/EditGeneratedQuestion";
-import GeneratedQuestionDetail from "./pages/GeneratedQuestionDetail";
-import Exams from "./pages/Exams";
-import CreateExam from "./pages/CreateExam";
-import EditExam from "./pages/EditExam";
-import ExamDetail from "./pages/ExamDetail";
-import EssayQuestions from "./pages/EssayQuestions";
-import CreateEssayQuestion from "./pages/CreateEssayQuestion";
-import EditEssayQuestion from "./pages/EditEssayQuestion";
-import EssayQuestionDetail from "./pages/EssayQuestionDetail";
-import EssayResponses from "./pages/EssayResponses";
-import CreateEssayResponse from "./pages/CreateEssayResponse";
-import EditEssayResponse from "./pages/EditEssayResponse";
-import EssayResponseDetail from "./pages/EssayResponseDetail";
-import LearningContent from "./pages/LearningContent";
-import CreateLearningContent from "./pages/CreateLearningContent";
-import EditLearningContent from "./pages/EditLearningContent";
-import LearningContentDetail from "./pages/LearningContentDetail";
-import StudySetGroups from "./pages/StudySetGroups";
-import CreateStudySetGroup from "./pages/CreateStudySetGroup";
-import EditStudySetGroup from "./pages/EditStudySetGroup";
-import StudySetGroupDetail from "./pages/StudySetGroupDetail";
-import PublicStudySets from "./pages/PublicStudySets";
-import Layout from "./components/Layout";
+import Index from "@/pages/Index";
+import Login from "@/pages/Login";
+import NotFound from "@/pages/NotFound";
+import StudySetDetail from "@/pages/StudySetDetail";
+import StudyMode from "@/pages/StudyMode";
+import EditSet from "@/pages/EditSet";
+import Profile from "@/pages/Profile";
+import CognitiveConstellation from "@/pages/CognitiveConstellation";
+import GenerateExam from "@/pages/GenerateExam";
+import TakeExam from "@/pages/TakeExam";
+import PastExams from "@/pages/PastExams";
+import ExplorePublicSets from "@/pages/ExplorePublicSets";
+import GenerateEssayQuestions from "@/pages/GenerateEssayQuestions";
+import PastEssayQuestions from "@/pages/PastEssayQuestions";
+import EssayPractice from "@/pages/EssayPractice";
+import Settings from "@/pages/Settings";
+import NotesIndex from "@/pages/NotesIndex";
+import CreateNote from "@/pages/CreateNote";
+import EditNote from "@/pages/EditNote";
+import Statistics from "@/pages/Statistics";
+import DailyReview from "@/pages/DailyReview";
+import CreateGroup from "@/pages/CreateGroup";
+import GroupsIndex from "@/pages/GroupsIndex";
+import EditGroup from "@/pages/EditGroup";
+import GroupDetail from "@/pages/GroupDetail";
+import Collaborations from "@/pages/Collaborations";
+import AuthLayout from "@/layouts/AuthLayout";
+import * as React from "react";
+import { useDueCardsCount } from "@/hooks/use-due-cards-count";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { toast } from "sonner";
+import { format } from 'date-fns';
+import Chatbot from "./components/Chatbot";
+import { supabase } from "@/integrations/supabase/client";
+import CreateSet from "@/pages/CreateSet";
 
 const queryClient = new QueryClient();
 
-function App() {
+const App: React.FC = () => {
+  const { data: dueCardsCount, isLoading: isLoadingDueCards } = useDueCardsCount();
+  const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
+  const [lastReminderShownDate, setLastReminderShownDate] = React.useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('lastDailyReviewReminderDate');
+    }
+    return null;
+  });
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  React.useEffect(() => {
+    if (!isLoadingDueCards && !isLoadingPreferences && preferences && dueCardsCount !== undefined) {
+      const today = format(new Date(), 'yyyy-MM-dd');
+
+      if (preferences.enable_review_reminders && dueCardsCount > 0 && lastReminderShownDate !== today) {
+        toast.info(
+          `You have ${dueCardsCount} cards due for review!`,
+          {
+            description: "Click here to start studying.",
+            action: {
+              label: "Study Now",
+              onClick: () => {
+                window.location.href = "/daily-review";
+                localStorage.setItem('lastDailyReviewReminderDate', today);
+                setLastReminderShownDate(today);
+              },
+            },
+            duration: 10000,
+            onDismiss: () => {
+              localStorage.setItem('lastDailyReviewReminderDate', today);
+              setLastReminderShownDate(today);
+            },
+            onAutoClose: () => {
+              localStorage.setItem('lastDailyReviewReminderDate', today);
+              setLastReminderShownDate(today);
+            },
+          }
+        );
+      } else if (dueCardsCount === 0 && lastReminderShownDate !== null) {
+        localStorage.removeItem('lastDailyReviewReminderDate');
+        setLastReminderShownDate(null);
+      }
+    }
+  }, [dueCardsCount, isLoadingDueCards, preferences, isLoadingPreferences, lastReminderShownDate]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router>
-          <AuthProvider> {/* Wrap with AuthProvider */}
+        <Toaster richColors />
+        <BrowserRouter future={{ v7_relativeSplatPath: true }}>
+          <AuthProvider>
             <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Index />} />
-                <Route path="about" element={<About />} />
-                <Route path="contact" element={<Contact />} />
-                <Route path="login" element={<Login />} />
-                <Route path="notes" element={<Notes />} />
-                <Route path="notes/new" element={<CreateNote />} />
-                <Route path="notes/:id" element={<NoteDetail />} />
-                <Route path="notes/:id/edit" element={<EditNote />} />
-                <Route path="study-sets" element={<StudySets />} />
-                <Route path="study-sets/new" element={<CreateStudySet />} />
-                <Route path="study-sets/:id" element={<StudySetDetail />} />
-                <Route path="study-sets/:id/edit" element={<EditStudySet />} />
-                <Route path="study-sets/:id/study" element={<StudySession />} />
-                <Route path="public-study-sets" element={<PublicStudySets />} />
-                <Route path="profile" element={<Profile />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="concepts" element={<Concepts />} />
-                <Route path="concepts/new" element={<CreateConcept />} />
-                <Route path="concepts/:id" element={<ConceptDetail />} />
-                <Route path="concepts/:id/edit" element={<EditConcept />} />
-                <Route path="generated-questions" element={<GeneratedQuestions />} />
-                <Route path="generated-questions/new" element={<CreateGeneratedQuestion />} />
-                <Route path="generated-questions/:id" element={<GeneratedQuestionDetail />} />
-                <Route path="generated-questions/:id/edit" element={<EditGeneratedQuestion />} />
-                <Route path="exams" element={<Exams />} />
-                <Route path="exams/new" element={<CreateExam />} />
-                <Route path="exams/:id" element={<ExamDetail />} />
-                <Route path="exams/:id/edit" element={<EditExam />} />
-                <Route path="essay-questions" element={<EssayQuestions />} />
-                <Route path="essay-questions/new" element={<CreateEssayQuestion />} />
-                <Route path="essay-questions/:id" element={<EssayQuestionDetail />} />
-                <Route path="essay-questions/:id/edit" element={<EditEssayQuestion />} />
-                <Route path="essay-responses" element={<EssayResponses />} />
-                <Route path="essay-responses/new" element={<CreateEssayResponse />} />
-                <Route path="essay-responses/:id" element={<EssayResponseDetail />} />
-                <Route path="essay-responses/:id/edit" element={<EditEssayResponse />} />
-                <Route path="learning-content" element={<LearningContent />} />
-                <Route path="learning-content/new" element={<CreateLearningContent />} />
-                <Route path="learning-content/:id" element={<LearningContentDetail />} />
-                <Route path="learning-content/:id/edit" element={<EditLearningContent />} />
-                <Route path="study-set-groups" element={<StudySetGroups />} />
-                <Route path="study-set-groups/new" element={<CreateStudySetGroup />} />
-                <Route path="study-set-groups/:id" element={<StudySetGroupDetail />} />
-                <Route path="study-set-groups/:id/edit" element={<EditStudySetGroup />} />
-              </Route>
+              <Route
+                path="/"
+                element={
+                  <AuthLayout><Index /></AuthLayout>
+                }
+              />
+              <Route
+                path="/create"
+                element={
+                  <AuthLayout><CreateSet /></AuthLayout>
+                }
+              />
+              <Route
+                path="/sets/:setId"
+                element={
+                  <AuthLayout><StudySetDetail /></AuthLayout>
+                }
+              />
+              <Route
+                path="/sets/:setId/study"
+                element={
+                  <AuthLayout><StudyMode /></AuthLayout>
+                }
+              />
+              <Route
+                path="/sets/:setId/edit"
+                element={
+                  <AuthLayout><EditSet /></AuthLayout>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <AuthLayout><Profile /></AuthLayout>
+                }
+              />
+              <Route
+                path="/constellation"
+                element={
+                  <AuthLayout><CognitiveConstellation /></AuthLayout>
+                }
+              />
+              <Route
+                path="/explore-public-sets"
+                element={
+                  <AuthLayout><ExplorePublicSets /></AuthLayout>
+                }
+              />
+              <Route
+                path="/generate-exam"
+                element={
+                  <AuthLayout><GenerateExam /></AuthLayout>
+                }
+              />
+              <Route
+                path="/generate-essay-questions"
+                element={
+                  <AuthLayout><GenerateEssayQuestions /></AuthLayout>
+                }
+              />
+              <Route
+                path="/past-essay-questions"
+                element={
+                  <AuthLayout><PastEssayQuestions /></AuthLayout>
+                }
+              />
+              <Route
+                path="/essay-practice/:questionId"
+                element={
+                  <AuthLayout><EssayPractice /></AuthLayout>
+                }
+              />
+              <Route
+                path="/exams/:examId"
+                element={
+                  <AuthLayout><TakeExam /></AuthLayout>
+                }
+              />
+              <Route
+                path="/past-exams"
+                element={
+                  <AuthLayout><PastExams /></AuthLayout>
+                }
+              />
+              <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} />
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/notes"
+                element={
+                  <AuthLayout><NotesIndex /></AuthLayout>
+                }
+              />
+              <Route
+                path="/create-note"
+                element={
+                  <AuthLayout><CreateNote /></AuthLayout>
+                }
+              />
+              <Route
+                path="/notes/:noteId/edit"
+                element={
+                  <AuthLayout><EditNote /></AuthLayout>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <AuthLayout><Statistics /></AuthLayout>
+                }
+              />
+              <Route
+                path="/daily-review"
+                element={
+                  <AuthLayout><DailyReview /></AuthLayout>
+                }
+              />
+              <Route
+                path="/groups"
+                element={
+                  <AuthLayout><GroupsIndex /></AuthLayout>
+                }
+              />
+              <Route
+                path="/groups/create"
+                element={
+                  <AuthLayout><CreateGroup /></AuthLayout>
+                }
+              />
+              <Route
+                path="/groups/:groupId"
+                element={
+                  <AuthLayout><GroupDetail /></AuthLayout>
+                }
+              />
+              <Route
+                path="/groups/:groupId/edit"
+                element={
+                  <AuthLayout><EditGroup /></AuthLayout>
+                }
+              />
+              <Route
+                path="/collaborations"
+                element={
+                  <AuthLayout><Collaborations /></AuthLayout>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
             </Routes>
+            <Toaster richColors />
+            {isLoggedIn && <Chatbot />}
           </AuthProvider>
-        </Router>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;
