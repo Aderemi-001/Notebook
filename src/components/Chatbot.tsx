@@ -1,140 +1,18 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { MessageSquareText, Send, Loader2, Bot, User2, Lightbulb, ThumbsUp, ThumbsDown, XCircle } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { MessageSquareText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
-import { cn } from '@/lib/utils';
-import { useLocation, Link } from 'react-router-dom'; // Import useLocation and Link
+import { useLocation } from 'react-router-dom';
 
-interface ChatMessage {
-  id: number;
-  sender: 'user' | 'bot';
-  text: string | React.ReactNode; // Allow React.ReactNode for links
-  timestamp: Date;
-  feedbackGiven?: 'up' | 'down' | null;
-}
-
-const DEFAULT_SUGGESTED_QUESTIONS = [
-  "How do I create a new study set?",
-  "How do I generate an exam?",
-  "What is the Cognitive Constellation?",
-  "How do I reset my study progress?",
-  "Can I share my study sets?",
-  "How do I use the drawing tool in notes?",
-];
-
-// Define route-specific suggestions
-const ROUTE_SPECIFIC_SUGGESTIONS: { [key: string]: string[] } = {
-  '/create': [
-    "How do I import a file to create cards?",
-    "What file types can I import?",
-    "How does AI generate cards?",
-  ],
-  '/sets/:setId': [ // Use a placeholder for dynamic IDs
-    "How do I start studying this set?",
-    "How do I edit this study set?",
-    "How do I delete this study set?",
-    "How do I add this set to my collection?",
-  ],
-  '/daily-review': [
-    "How does the spaced repetition system work?",
-    "What do 'Again', 'Hard', and 'Good' mean?",
-    "How can I change my daily cards goal?",
-  ],
-  '/notes': [
-    "How do I create a new note?",
-    "How do I summarize a note with AI?",
-    "How do I use the drawing tool in notes?",
-  ],
-  '/generate-exam': [
-    "What types of questions can AI generate?",
-    "How do I take a generated exam?",
-    "Where can I see my past exams?",
-  ],
-  '/profile': [
-    "How do I change my display name?",
-    "How do I sign out?",
-    "Where are the app settings?",
-  ],
-  '/settings': [
-    "How do I change the theme?",
-    "How do I change default flashcard side?",
-    "How do I enable review reminders?",
-  ],
-  '/dashboard': [
-    "What statistics can I see here?",
-    "How is my study streak calculated?",
-    "What are 'mastered cards'?",
-  ],
-  '/groups': [
-    "How do I create a new group?",
-    "How do I add sets to a group?",
-    "How do I edit a group?",
-  ],
-  '/constellation': [
-    "How are concepts generated?",
-    "How do I refresh the constellation?",
-    "What are concept relationships?",
-  ],
-};
-
-// Map of keywords/phrases to their corresponding static routes
-const ROUTE_KEYWORDS: { [key: string]: string } = {
-  "home page": "/",
-  "my study sets": "/",
-  "/": "/",
-  "create set page": "/create",
-  "new study set": "/create",
-  "/create": "/create",
-  "profile page": "/profile",
-  "user profile": "/profile",
-  "/profile": "/profile",
-  "cognitive constellation page": "/constellation",
-  "cognitive constellation": "/constellation",
-  "/constellation": "/constellation",
-  "explore public sets page": "/explore-public-sets",
-  "explore public sets": "/explore-public-sets",
-  "/explore-public-sets": "/explore-public-sets",
-  "generate exam page": "/generate-exam",
-  "generate exam": "/generate-exam",
-  "/generate-exam": "/generate-exam",
-  "generate essay questions page": "/generate-essay-questions",
-  "generate essay questions": "/generate-essay-questions",
-  "/generate-essay-questions": "/generate-essay-questions",
-  "past essay questions page": "/past-essay-questions",
-  "past essay questions": "/past-essay-questions",
-  "/past-essay-questions": "/past-essay-questions",
-  "past exams page": "/past-exams",
-  "past exams": "/past-exams",
-  "/past-exams": "/past-exams",
-  "settings page": "/settings",
-  "app settings": "/settings",
-  "/settings": "/settings",
-  "my notes page": "/notes",
-  "my notes": "/notes",
-  "/notes": "/notes",
-  "create note page": "/create-note",
-  "new note": "/create-note",
-  "/create-note": "/create-note",
-  "statistics page": "/dashboard",
-  "statistics": "/dashboard",
-  "/dashboard": "/dashboard",
-  "daily review page": "/daily-review",
-  "daily review": "/daily-review",
-  "/daily-review": "/daily-review",
-  "my groups page": "/groups",
-  "my groups": "/groups",
-  "/groups": "/groups",
-  "create group page": "/groups/create",
-  "new group": "/groups/create",
-  "/groups/create": "/groups/create",
-  "collaborations page": "/collaborations",
-  "collaborations": "/collaborations",
-  "/collaborations": "/collaborations",
-};
+// Import modular components and types/utils
+import ChatHeader from './chatbot/ChatHeader';
+import ChatMessageList from './chatbot/ChatMessageList';
+import ChatInput from './chatbot/ChatInput';
+import SuggestedQuestions from './chatbot/SuggestedQuestions';
+import { ChatMessage } from './chatbot/types';
+import { parseAndRenderLinks, getDynamicSuggestions } from './chatbot/utils';
 
 const INACTIVITY_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 const LOCAL_STORAGE_KEY = 'chatbotMessages';
@@ -163,77 +41,26 @@ const Chatbot: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Function to parse text and insert React Router Links
-  const parseAndRenderLinks = useCallback((text: string): React.ReactNode => {
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-
-    // Sort keywords by length descending to match longer phrases first
-    const sortedKeywords = Object.keys(ROUTE_KEYWORDS).sort((a, b) => b.length - a.length);
-
-    let currentText = text;
-    let matchFound = true;
-
-    while (matchFound) {
-      matchFound = false;
-      let bestMatch: { keyword: string; route: string; index: number; length: number } | null = null;
-
-      for (const keyword of sortedKeywords) {
-        const index = currentText.toLowerCase().indexOf(keyword.toLowerCase());
-        if (index !== -1) {
-          if (!bestMatch || index < bestMatch.index || (index === bestMatch.index && keyword.length > bestMatch.length)) {
-            bestMatch = { keyword, route: ROUTE_KEYWORDS[keyword], index, length: keyword.length };
-            matchFound = true;
-          }
-        }
-      }
-
-      if (bestMatch) {
-        const beforeMatch = currentText.substring(0, bestMatch.index);
-        if (beforeMatch.length > 0) {
-          parts.push(beforeMatch);
-        }
-        parts.push(
-          <Link key={lastIndex++} to={bestMatch.route} className="text-blue-500 hover:underline font-medium">
-            {currentText.substring(bestMatch.index, bestMatch.index + bestMatch.length)}
-          </Link>
-        );
-        currentText = currentText.substring(bestMatch.index + bestMatch.length);
-      }
-    }
-
-    if (currentText.length > 0) {
-      parts.push(currentText);
-    }
-
-    return <>{parts}</>;
-  }, []);
-
-  // Function to reset the inactivity timer
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimerRef.current) {
       clearTimeout(inactivityTimerRef.current);
     }
     inactivityTimerRef.current = setTimeout(() => {
-      setMessages([]); // Clear messages
-      setInput(''); // Clear input
-      localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear local storage on inactivity
-      // setIsOpen(false); // Optionally close the sheet, but user might prefer it open
+      setMessages([]);
+      setInput('');
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
       console.log("Chatbot reset due to inactivity.");
     }, INACTIVITY_TIMEOUT_MS);
   }, []);
 
-  // Effect to manage the inactivity timer
   useEffect(() => {
     if (isOpen) {
-      resetInactivityTimer(); // Start/reset timer when chat is open
+      resetInactivityTimer();
     } else {
       if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current); // Clear timer when chat is closed
+        clearTimeout(inactivityTimerRef.current);
       }
     }
-
-    // Clean up timer on component unmount
     return () => {
       if (inactivityTimerRef.current) {
         clearTimeout(inactivityTimerRef.current);
@@ -241,10 +68,8 @@ const Chatbot: React.FC = () => {
     };
   }, [isOpen, resetInactivityTimer]);
 
-  // Scroll to bottom whenever messages change
   useEffect(scrollToBottom, [messages]);
 
-  // Save messages to local storage whenever they change
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(messages));
@@ -256,7 +81,7 @@ const Chatbot: React.FC = () => {
   const handleSendMessage = async () => {
     if (!input.trim() || isSending) return;
 
-    resetInactivityTimer(); // Reset timer on user action
+    resetInactivityTimer();
 
     const userMessage: ChatMessage = {
       id: messages.length + 1,
@@ -293,7 +118,7 @@ const Chatbot: React.FC = () => {
       const botMessage: ChatMessage = {
         id: messages.length + 2,
         sender: 'bot',
-        text: parseAndRenderLinks(result.chatbot_response), // Parse and render links here
+        text: parseAndRenderLinks(result.chatbot_response),
         timestamp: new Date(),
         feedbackGiven: null,
       };
@@ -325,7 +150,7 @@ const Chatbot: React.FC = () => {
   const handleClearChat = () => {
     setMessages([]);
     setInput('');
-    localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear local storage
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
     resetInactivityTimer();
   };
 
@@ -339,26 +164,7 @@ const Chatbot: React.FC = () => {
     // Here you could send this feedback to a backend service
   };
 
-  const getDynamicSuggestions = () => {
-    const currentPath = location.pathname;
-    let suggestions = DEFAULT_SUGGESTED_QUESTIONS;
-
-    for (const routePattern in ROUTE_SPECIFIC_SUGGESTIONS) {
-      if (routePattern.includes(':')) {
-        const regex = new RegExp(`^${routePattern.replace(/:\w+/g, '[^/]+')}$`);
-        if (regex.test(currentPath)) {
-          suggestions = ROUTE_SPECIFIC_SUGGESTIONS[routePattern];
-          break;
-        }
-      } else if (routePattern === currentPath) {
-        suggestions = ROUTE_SPECIFIC_SUGGESTIONS[routePattern];
-        break;
-      }
-    }
-    return suggestions;
-  };
-
-  const currentSuggestions = getDynamicSuggestions();
+  const currentSuggestions = getDynamicSuggestions(location.pathname);
   const showSuggestions = messages.length === 0 && !isSending && !input.trim();
 
   return (
@@ -378,121 +184,26 @@ const Chatbot: React.FC = () => {
         </Button>
       </SheetTrigger>
       <SheetContent className="flex flex-col w-full sm:max-w-md">
-        <SheetHeader className="flex flex-row items-center justify-between pr-6">
-          <SheetTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5" /> How-To Chatbot
-          </SheetTitle>
-          <Button variant="ghost" size="icon" onClick={handleClearChat} aria-label="Clear Chat">
-            <XCircle className="h-5 w-5 text-muted-foreground" />
-          </Button>
-        </SheetHeader>
-        <div className="flex-grow flex flex-col border rounded-md p-4 bg-muted/20 overflow-hidden">
-          <ScrollArea className="flex-grow pr-4 -mr-4">
-            <div className="space-y-4">
-              {messages.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <p>Hi there! I'm your personal assistant for "My Notebook".</p>
-                  <p>Ask me anything about how to use the app!</p>
-                </div>
-              ) : (
-                messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={cn(
-                      "flex items-start gap-3",
-                      msg.sender === 'user' ? 'justify-end' : 'justify-start'
-                    )}
-                  >
-                    {msg.sender === 'bot' && <Bot className="h-6 w-6 text-primary flex-shrink-0" />}
-                    <div
-                      className={cn(
-                        "max-w-[70%] p-3 rounded-lg shadow-sm",
-                        msg.sender === 'user'
-                          ? 'bg-primary text-primary-foreground rounded-br-none'
-                          : 'bg-background text-foreground rounded-bl-none border'
-                      )}
-                    >
-                      <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                      <span className="block text-xs text-muted-foreground mt-1">
-                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      {msg.sender === 'bot' && (
-                        <div className="flex gap-2 mt-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn("h-6 w-6", msg.feedbackGiven === 'up' && "text-green-500")}
-                            onClick={() => handleFeedback(msg.id, 'up')}
-                            disabled={!!msg.feedbackGiven}
-                          >
-                            <ThumbsUp className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn("h-6 w-6", msg.feedbackGiven === 'down' && "text-red-500")}
-                            onClick={() => handleFeedback(msg.id, 'down')}
-                            disabled={!!msg.feedbackGiven}
-                          >
-                            <ThumbsDown className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                    {msg.sender === 'user' && <User2 className="h-6 w-6 text-muted-foreground flex-shrink-0" />}
-                  </div>
-                ))
-              )}
-              {isSending && (
-                <div className="flex items-start gap-3 justify-start">
-                  <Bot className="h-6 w-6 text-primary flex-shrink-0" />
-                  <div className="max-w-[70%] p-3 rounded-lg shadow-sm bg-background text-foreground rounded-bl-none border">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="ml-2 text-sm">Bot is typing...</span>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
-        </div>
+        <ChatHeader onClearChat={handleClearChat} />
+        <ChatMessageList
+          messages={messages}
+          isSending={isSending}
+          messagesEndRef={messagesEndRef}
+          onFeedback={handleFeedback}
+        />
         {showSuggestions && (
-          <div className="mt-4 p-2 border rounded-md bg-muted/20">
-            <p className="text-sm font-semibold text-muted-foreground mb-2 flex items-center">
-              <Lightbulb className="h-4 w-4 mr-2" /> Suggested Questions:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {currentSuggestions.map((question, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSuggestedQuestionClick(question)}
-                  className="h-auto py-1.5 px-3 text-xs whitespace-normal text-left"
-                >
-                  {question}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
-        <div className="flex gap-2 mt-4">
-          <Input
-            placeholder="Ask me a question..."
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              resetInactivityTimer();
-            }}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-            disabled={isSending}
-            className="flex-grow"
+          <SuggestedQuestions
+            suggestions={currentSuggestions}
+            onQuestionClick={handleSuggestedQuestionClick}
           />
-          <Button onClick={handleSendMessage} disabled={!input.trim() || isSending}>
-            <Send className="h-4 w-4" />
-            <span className="sr-only">Send message</span>
-          </Button>
-        </div>
+        )}
+        <ChatInput
+          input={input}
+          setInput={setInput}
+          onSendMessage={handleSendMessage}
+          isSending={isSending}
+          resetInactivityTimer={resetInactivityTimer}
+        />
       </SheetContent>
     </Sheet>
   );
