@@ -1,4 +1,7 @@
+/// <reference types="../deno.d.ts" />
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+// @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
@@ -7,9 +10,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// @ts-ignore
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
-serve(async (req) => {
+serve(async (req: Request) => { // Explicitly type 'req' as Request
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -25,8 +29,11 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization');
+    // @ts-ignore
     const supabase = createClient(
+      // @ts-ignore
       Deno.env.get('SUPABASE_URL') ?? '',
+      // @ts-ignore
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
@@ -58,17 +65,17 @@ serve(async (req) => {
 
     const prompt = `
       You are an expert at transcribing handwritten content from images.
-      Analyze the content of this image, which is a drawing on a white background with black lines.
+      Your sole purpose is to accurately transcribe any handwritten text (letters, words) or numbers present in the image.
 
-      **Task:**
-      1.  **Prioritize Transcription:** Your primary goal is to accurately transcribe any handwritten text (letters, words) or numbers.
-          *   If the image contains a clear single character or number, output *only* that character or number.
-          *   If there are multiple distinct characters/numbers, transcribe them all, separated by spaces if they are distinct entities.
-          *   **Example for numbers:** If the drawing is "25", output "25". If it's "1 2 3", output "1 2 3".
-      2.  **Describe if Unclear:** If you cannot confidently transcribe any text or numbers, then provide a brief, concise description of any simple diagrams, sketches, or abstract shapes present. Do NOT state "No text or numbers present" if you can provide a description.
+      If you find clear handwritten text or numbers:
+      - Transcribe them directly.
+      - If there are multiple distinct items, separate them with spaces.
+      - For example, if the drawing is "25", output "25". If it's "1 2 3", output "1 2 3".
 
-      **Output Format:**
-      Provide a concise, plain text output of your observations, without any introductory or concluding remarks. Your response should be the direct transcription or description.
+      If you cannot confidently transcribe any text or numbers, then provide a very brief, concise description of any simple diagrams, sketches, or abstract shapes.
+
+      Output Format:
+      Provide a concise, plain text output of your transcription or description. Do not add any other text or markdown.
     `;
 
     const geminiResponse = await fetch(GEMINI_API_URL, {
@@ -105,9 +112,9 @@ serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
+  } catch (error: unknown) { // Explicitly type 'error' as unknown
     console.error("Error in analyze-drawing function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), { // Cast 'error' to Error to access .message
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
