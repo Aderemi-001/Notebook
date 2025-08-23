@@ -80,39 +80,40 @@ export const useDrawingCanvas = ({
     ctx.lineJoin = 'round';
     ctxRef.current = ctx;
 
-    const parentDiv = canvas.parentElement;
-    if (parentDiv) {
-      canvas.width = parentDiv.clientWidth;
-      canvas.height = parentDiv.clientHeight;
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
+    const setCanvasDimensions = () => {
+      const parentDiv = canvas.parentElement;
+      if (parentDiv) {
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        const cssWidth = parentDiv.clientWidth;
+        const cssHeight = parentDiv.clientHeight;
 
-    const resizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        if (entry.target === canvas) {
-          const { width, height } = entry.contentRect;
-          if (canvas.width !== width || canvas.height !== height) {
-            // Note: For a "proper" drawing app, you would store drawing history (strokes)
-            // and redraw them here with the new dimensions and current transform.
-            // For this implementation, resizing the canvas will clear the drawing.
-            // If preserving drawings on resize is critical, a more complex state management for strokes is needed.
-            clearCanvas(); // Clear the canvas on resize
-            canvas.width = width;
-            canvas.height = height;
-            ctx.fillStyle = 'white'; // Re-fill background
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-          }
-        }
+        // Set internal canvas dimensions to be higher resolution
+        canvas.width = cssWidth * devicePixelRatio;
+        canvas.height = cssHeight * devicePixelRatio;
+
+        // Set canvas style dimensions to match parent for display
+        canvas.style.width = `${cssWidth}px`;
+        canvas.style.height = `${cssHeight}px`;
+
+        // Scale the context to draw at the higher resolution
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset any previous transforms
+        ctx.scale(devicePixelRatio, devicePixelRatio);
+
+        // Re-fill background after scaling
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, cssWidth, cssHeight); // Fill the *logical* area
       }
-    });
+    };
 
+    setCanvasDimensions(); // Initial setup
+
+    const resizeObserver = new ResizeObserver(setCanvasDimensions);
     resizeObserver.observe(canvas);
 
     return () => {
       resizeObserver.unobserve(canvas);
     };
-  }, [clearCanvas]); // Added clearCanvas to dependency array
+  }, []);
 
   useEffect(() => {
     if (ctxRef.current) {
@@ -130,7 +131,8 @@ export const useDrawingCanvas = ({
     const offsetX = clientX - rect.left;
     const offsetY = clientY - rect.top;
 
-    // Adjust for panOffset and zoomLevel
+    // Adjust for panOffset and zoomLevel.
+    // The ctx is already scaled by devicePixelRatio, so offsetX/Y (in CSS pixels) are correct.
     const x = (offsetX - panOffset.x) / zoomLevel;
     const y = (offsetY - panOffset.y) / zoomLevel;
     return { x, y };
