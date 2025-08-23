@@ -1,4 +1,4 @@
-import { Mark, mergeAttributes, type MarkRenderHTMLProps, type Commands } from '@tiptap/core';
+import { Mark, mergeAttributes, type CommandProps } from '@tiptap/core'; // Removed 'type Commands'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -36,7 +36,7 @@ export const CustomHighlight = Mark.create({
           const color = element.getAttribute('data-color') || element.style.backgroundColor;
           return color || null;
         },
-        renderHTML: (attributes: { color: string | null }) => {
+        renderHTML: (attributes: { color: string | null }) => { // Explicitly typed attributes
           if (attributes.color) {
             return {
               'data-color': attributes.color,
@@ -64,19 +64,19 @@ export const CustomHighlight = Mark.create({
     ];
   },
 
-  renderHTML({ HTMLAttributes }: MarkRenderHTMLProps) {
+  renderHTML({ HTMLAttributes }) { // Removed MarkRenderHTMLProps type, inferred from context
     return ['mark', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
   },
 
   addCommands() {
     return {
-      setCustomHighlight: (attributes?: { color: string }) => ({ commands }: { commands: Commands<any> }) => {
+      setCustomHighlight: (attributes?: { color: string }) => ({ commands }: CommandProps) => { // Corrected type for commands
         return commands.setMark(this.name, attributes);
       },
-      toggleCustomHighlight: (attributes?: { color: string }) => ({ commands }: { commands: Commands<any> }) => {
+      toggleCustomHighlight: (attributes?: { color: string }) => ({ commands }: CommandProps) => { // Corrected type for commands
         return commands.toggleMark(this.name, attributes);
       },
-      unsetCustomHighlight: () => ({ commands }: { commands: Commands<any> }) => {
+      unsetCustomHighlight: () => ({ commands }: CommandProps) => { // Corrected type for commands
         return commands.unsetMark(this.name);
       },
     };

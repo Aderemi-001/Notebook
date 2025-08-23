@@ -489,18 +489,18 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
 
             <div className="flex items-center gap-1">
               <Tooltip>
-              <TooltipTrigger asChild>
-                <Toggle
-                  size="sm"
-                  pressed={isErasing}
-                  onPressedChange={handleToggleEraser}
-                  aria-label="Select eraser"
-                >
-                  <Eraser className="h-4 w-4" />
-                </Toggle>
-              </TooltipTrigger>
-              <TooltipContent>Eraser</TooltipContent>
-            </Tooltip>
+                <TooltipTrigger asChild>
+                  <Toggle
+                    size="sm"
+                    pressed={isErasing}
+                    onPressedChange={handleToggleEraser}
+                    aria-label="Select eraser"
+                  >
+                    <Eraser className="h-4 w-4" />
+                  </Toggle>
+                </TooltipTrigger>
+                <TooltipContent>Eraser</TooltipContent>
+              </Tooltip>
               <div className="w-20">
                 <Slider
                   min={5}

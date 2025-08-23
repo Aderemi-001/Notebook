@@ -32,7 +32,7 @@ interface RichTextEditorProps {
   className?: string;
   labelId?: string;
   isDrawingMode: boolean;
-  setIsDrawingMode: (mode: boolean) => void;
+  setIsDrawingMode: React.Dispatch<React.SetStateAction<boolean>>; // Updated type
   onEditorReady?: (
     editor: Editor,
     analyzeDrawing: () => Promise<void>,
