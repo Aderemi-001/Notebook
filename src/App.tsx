@@ -1,72 +1,117 @@
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import * as React from "react";
-import AppContent from "./components/AppContent"; // Import the new AppContent component
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/hooks/useAuth"; // Import AuthProvider
+
+import Index from "./pages/Index";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Login from "./pages/Login";
+import Notes from "./pages/Notes";
+import CreateNote from "./pages/CreateNote";
+import EditNote from "./pages/EditNote";
+import NoteDetail from "./pages/NoteDetail";
+import StudySets from "./pages/StudySets";
+import CreateStudySet from "./pages/CreateStudySet";
+import EditStudySet from "./pages/EditStudySet";
+import StudySetDetail from "./pages/StudySetDetail";
+import StudySession from "./pages/StudySession";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Dashboard from "./pages/Dashboard";
+import Concepts from "./pages/Concepts";
+import CreateConcept from "./pages/CreateConcept";
+import EditConcept from "./pages/EditConcept";
+import ConceptDetail from "./pages/ConceptDetail";
+import GeneratedQuestions from "./pages/GeneratedQuestions";
+import CreateGeneratedQuestion from "./pages/CreateGeneratedQuestion";
+import EditGeneratedQuestion from "./pages/EditGeneratedQuestion";
+import GeneratedQuestionDetail from "./pages/GeneratedQuestionDetail";
+import Exams from "./pages/Exams";
+import CreateExam from "./pages/CreateExam";
+import EditExam from "./pages/EditExam";
+import ExamDetail from "./pages/ExamDetail";
+import EssayQuestions from "./pages/EssayQuestions";
+import CreateEssayQuestion from "./pages/CreateEssayQuestion";
+import EditEssayQuestion from "./pages/EditEssayQuestion";
+import EssayQuestionDetail from "./pages/EssayQuestionDetail";
+import EssayResponses from "./pages/EssayResponses";
+import CreateEssayResponse from "./pages/CreateEssayResponse";
+import EditEssayResponse from "./pages/EditEssayResponse";
+import EssayResponseDetail from "./pages/EssayResponseDetail";
+import LearningContent from "./pages/LearningContent";
+import CreateLearningContent from "./pages/CreateLearningContent";
+import EditLearningContent from "./pages/EditLearningContent";
+import LearningContentDetail from "./pages/LearningContentDetail";
+import StudySetGroups from "./pages/StudySetGroups";
+import CreateStudySetGroup from "./pages/CreateStudySetGroup";
+import EditStudySetGroup from "./pages/EditStudySetGroup";
+import StudySetGroupDetail from "./pages/StudySetGroupDetail";
+import PublicStudySets from "./pages/PublicStudySets";
+import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
-
-// Define a simple ErrorBoundary component
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    // Update state so the next render will show the fallback UI.
-    return { hasError: true, error: error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // You can also log the error to an error reporting service
-    console.error("Uncaught error:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      // You can render any custom fallback UI
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200 p-4">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">
-              Oops! Something went wrong.
-            </h1>
-            <p className="mb-2">
-              We're sorry, but an unexpected error occurred.
-            </p>
-            {this.state.error && (
-              <div className="bg-red-100 dark:bg-red-900 border border-red-200 dark:border-red-800 p-3 rounded-md text-sm text-left break-all">
-                <p className="font-semibold">Error Message:</p>
-                <p>{this.state.error.message}</p>
-                {/* Uncomment below for stack trace in development */}
-                {/* <pre className="mt-2 text-xs whitespace-pre-wrap">{this.state.error.stack}</pre> */}
-              </div>
-            )}
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-6 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-            >
-              Refresh Page
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <div>
-          <AppContent />
-        </div>
-      </ErrorBoundary>
+      <TooltipProvider>
+        <Toaster />
+        <Router>
+          <AuthProvider> {/* Wrap with AuthProvider */}
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Index />} />
+                <Route path="about" element={<About />} />
+                <Route path="contact" element={<Contact />} />
+                <Route path="login" element={<Login />} />
+                <Route path="notes" element={<Notes />} />
+                <Route path="notes/new" element={<CreateNote />} />
+                <Route path="notes/:id" element={<NoteDetail />} />
+                <Route path="notes/:id/edit" element={<EditNote />} />
+                <Route path="study-sets" element={<StudySets />} />
+                <Route path="study-sets/new" element={<CreateStudySet />} />
+                <Route path="study-sets/:id" element={<StudySetDetail />} />
+                <Route path="study-sets/:id/edit" element={<EditStudySet />} />
+                <Route path="study-sets/:id/study" element={<StudySession />} />
+                <Route path="public-study-sets" element={<PublicStudySets />} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="concepts" element={<Concepts />} />
+                <Route path="concepts/new" element={<CreateConcept />} />
+                <Route path="concepts/:id" element={<ConceptDetail />} />
+                <Route path="concepts/:id/edit" element={<EditConcept />} />
+                <Route path="generated-questions" element={<GeneratedQuestions />} />
+                <Route path="generated-questions/new" element={<CreateGeneratedQuestion />} />
+                <Route path="generated-questions/:id" element={<GeneratedQuestionDetail />} />
+                <Route path="generated-questions/:id/edit" element={<EditGeneratedQuestion />} />
+                <Route path="exams" element={<Exams />} />
+                <Route path="exams/new" element={<CreateExam />} />
+                <Route path="exams/:id" element={<ExamDetail />} />
+                <Route path="exams/:id/edit" element={<EditExam />} />
+                <Route path="essay-questions" element={<EssayQuestions />} />
+                <Route path="essay-questions/new" element={<CreateEssayQuestion />} />
+                <Route path="essay-questions/:id" element={<EssayQuestionDetail />} />
+                <Route path="essay-questions/:id/edit" element={<EditEssayQuestion />} />
+                <Route path="essay-responses" element={<EssayResponses />} />
+                <Route path="essay-responses/new" element={<CreateEssayResponse />} />
+                <Route path="essay-responses/:id" element={<EssayResponseDetail />} />
+                <Route path="essay-responses/:id/edit" element={<EditEssayResponse />} />
+                <Route path="learning-content" element={<LearningContent />} />
+                <Route path="learning-content/new" element={<CreateLearningContent />} />
+                <Route path="learning-content/:id" element={<LearningContentDetail />} />
+                <Route path="learning-content/:id/edit" element={<EditLearningContent />} />
+                <Route path="study-set-groups" element={<StudySetGroups />} />
+                <Route path="study-set-groups/new" element={<CreateStudySetGroup />} />
+                <Route path="study-set-groups/:id" element={<StudySetGroupDetail />} />
+                <Route path="study-set-groups/:id/edit" element={<EditStudySetGroup />} />
+              </Route>
+            </Routes>
+          </AuthProvider>
+        </Router>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
