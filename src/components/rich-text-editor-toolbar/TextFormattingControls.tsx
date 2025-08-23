@@ -2,7 +2,7 @@ import React from 'react';
 import { Editor } from '@tiptap/react';
 import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Bold, Italic, Strikethrough, Code, Underline, Eraser } from 'lucide-react'; // New: Import Underline and Eraser (for clear formatting)
+import { Bold, Italic, Underline, Strikethrough, Code, Eraser } from 'lucide-react';
 
 interface TextFormattingControlsProps {
   editor: Editor;
@@ -10,8 +10,8 @@ interface TextFormattingControlsProps {
 
 const TextFormattingControls: React.FC<TextFormattingControlsProps> = ({ editor }) => {
   return (
-    <>
-      <TooltipProvider>
+    <TooltipProvider>
+      <div className="flex items-center gap-1">
         <Tooltip>
           <TooltipTrigger asChild>
             <Toggle
@@ -20,16 +20,13 @@ const TextFormattingControls: React.FC<TextFormattingControlsProps> = ({ editor 
               onPressedChange={() => editor.chain().focus().toggleBold().run()}
               disabled={!editor.can().chain().focus().toggleBold().run()}
               aria-label="Toggle bold"
-              className="px-2"
             >
               <Bold className="h-4 w-4" />
             </Toggle>
           </TooltipTrigger>
           <TooltipContent>Bold</TooltipContent>
         </Tooltip>
-      </TooltipProvider>
 
-      <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Toggle
@@ -38,34 +35,28 @@ const TextFormattingControls: React.FC<TextFormattingControlsProps> = ({ editor 
               onPressedChange={() => editor.chain().focus().toggleItalic().run()}
               disabled={!editor.can().chain().focus().toggleItalic().run()}
               aria-label="Toggle italic"
-              className="px-2"
             >
               <Italic className="h-4 w-4" />
             </Toggle>
           </TooltipTrigger>
           <TooltipContent>Italic</TooltipContent>
         </Tooltip>
-      </TooltipProvider>
 
-      <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Toggle
               size="sm"
-              pressed={editor.isActive('underline')} // New: Underline toggle
+              pressed={editor.isActive('underline')}
               onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
               disabled={!editor.can().chain().focus().toggleUnderline().run()}
               aria-label="Toggle underline"
-              className="px-2"
             >
               <Underline className="h-4 w-4" />
             </Toggle>
           </TooltipTrigger>
           <TooltipContent>Underline</TooltipContent>
         </Tooltip>
-      </TooltipProvider>
 
-      <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Toggle
@@ -74,16 +65,13 @@ const TextFormattingControls: React.FC<TextFormattingControlsProps> = ({ editor 
               onPressedChange={() => editor.chain().focus().toggleStrike().run()}
               disabled={!editor.can().chain().focus().toggleStrike().run()}
               aria-label="Toggle strikethrough"
-              className="px-2"
             >
               <Strikethrough className="h-4 w-4" />
             </Toggle>
           </TooltipTrigger>
           <TooltipContent>Strikethrough</TooltipContent>
         </Tooltip>
-      </TooltipProvider>
 
-      <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Toggle
@@ -92,32 +80,28 @@ const TextFormattingControls: React.FC<TextFormattingControlsProps> = ({ editor 
               onPressedChange={() => editor.chain().focus().toggleCode().run()}
               disabled={!editor.can().chain().focus().toggleCode().run()}
               aria-label="Toggle code"
-              className="px-2"
             >
               <Code className="h-4 w-4" />
             </Toggle>
           </TooltipTrigger>
           <TooltipContent>Code</TooltipContent>
         </Tooltip>
-      </TooltipProvider>
 
-      <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Toggle
               size="sm"
-              onPressedChange={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} // New: Clear formatting
-              disabled={!editor.can().chain().focus().unsetAllMarks().clearNodes().run()}
+              onPressedChange={() => editor.chain().focus().unsetAllMarks().run()}
+              disabled={!editor.can().chain().focus().unsetAllMarks().run()}
               aria-label="Clear formatting"
-              className="px-2"
             >
               <Eraser className="h-4 w-4" />
             </Toggle>
           </TooltipTrigger>
           <TooltipContent>Clear Formatting</TooltipContent>
         </Tooltip>
-      </TooltipProvider>
-    </>
+      </div>
+    </TooltipProvider>
   );
 };
 

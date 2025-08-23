@@ -1,14 +1,22 @@
 import React from 'react';
 import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { PencilLine } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 
 interface DrawingModeToggleProps {
   isDrawingMode: boolean;
-  setIsDrawingMode: (mode: boolean) => void;
+  setIsDrawingMode: (isDrawingMode: boolean) => void;
+  drawingColor: string;
+  // Removed: setDrawingColor: (color: string) => void; // This prop is not currently used in this component
+  penSize: number; // Added penSize prop
+  setPenSize: (size: number) => void; // Added setPenSize prop
 }
 
-const DrawingModeToggle: React.FC<DrawingModeToggleProps> = ({ isDrawingMode, setIsDrawingMode }) => {
+const DrawingModeToggle: React.FC<DrawingModeToggleProps> = ({ isDrawingMode, setIsDrawingMode, drawingColor, penSize, setPenSize }) => {
+  // For now, we're just passing the color and pen size down. If you want a color/size picker here,
+  // we'd integrate it similar to how HighlightControls does it.
+  // The setDrawingColor and setPenSize props are available if you want to add a selection UI later.
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -18,13 +26,19 @@ const DrawingModeToggle: React.FC<DrawingModeToggleProps> = ({ isDrawingMode, se
             pressed={isDrawingMode}
             onPressedChange={setIsDrawingMode}
             aria-label="Toggle drawing mode"
-            className="px-2"
+            className="px-2 relative"
           >
-            <PencilLine className="h-4 w-4" />
+            <Pencil className="h-4 w-4" />
+            {isDrawingMode && (
+              <div
+                className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-foreground/20"
+                style={{ backgroundColor: drawingColor }}
+              ></div>
+            )}
           </Toggle>
         </TooltipTrigger>
         <TooltipContent>
-          {isDrawingMode ? "Exit Drawing Mode" : "Enter Drawing Mode"}
+          {isDrawingMode ? "Drawing Mode Active" : "Toggle Drawing Mode"}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
