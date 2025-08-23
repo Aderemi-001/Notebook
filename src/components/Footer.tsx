@@ -6,7 +6,7 @@ export const Footer: React.FC = () => {
     <footer className="border-t bg-background py-6">
       <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
         <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Learnsync. All rights reserved.
+          &copy; {new Date().getFullYear()} My Notebook. All rights reserved.
         </p>
         <nav className="flex gap-4">
           <Link to="/about" className="text-sm text-muted-foreground hover:text-primary">
