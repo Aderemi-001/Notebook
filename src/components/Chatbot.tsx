@@ -1,21 +1,23 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'; // Import useCallback
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { MessageSquareText, Send, Loader2, Bot, User2, Lightbulb } from 'lucide-react';
+import { MessageSquareText, Send, Loader2, Bot, User2, Lightbulb, ThumbsUp, ThumbsDown, XCircle } from 'lucide-react'; // Added ThumbsUp, ThumbsDown, XCircle
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
+import { useLocation } from 'react-router-dom'; // Import useLocation
 
 interface ChatMessage {
   id: number;
   sender: 'user' | 'bot';
   text: string;
   timestamp: Date;
+  feedbackGiven?: 'up' | 'down' | null; // New property for feedback
 }
 
-const SUGGESTED_QUESTIONS = [
+const DEFAULT_SUGGESTED_QUESTIONS = [
   "How do I create a new study set?",
   "How do I generate an exam?",
   "What is the Cognitive Constellation?",
@@ -23,6 +25,61 @@ const SUGGESTED_QUESTIONS = [
   "Can I share my study sets?",
   "How do I use the drawing tool in notes?",
 ];
+
+// Define route-specific suggestions
+const ROUTE_SPECIFIC_SUGGESTIONS: { [key: string]: string[] } = {
+  '/create': [
+    "How do I import a file to create cards?",
+    "What file types can I import?",
+    "How does AI generate cards?",
+  ],
+  '/sets/:setId': [ // Use a placeholder for dynamic IDs
+    "How do I start studying this set?",
+    "How do I edit this study set?",
+    "How do I delete this study set?",
+    "How do I add this set to my collection?",
+  ],
+  '/daily-review': [
+    "How does the spaced repetition system work?",
+    "What do 'Again', 'Hard', and 'Good' mean?",
+    "How can I change my daily cards goal?",
+  ],
+  '/notes': [
+    "How do I create a new note?",
+    "How do I summarize a note with AI?",
+    "How do I use the drawing tool in notes?",
+  ],
+  '/generate-exam': [
+    "What types of questions can AI generate?",
+    "How do I take a generated exam?",
+    "Where can I see my past exams?",
+  ],
+  '/profile': [
+    "How do I change my display name?",
+    "How do I sign out?",
+    "Where are the app settings?",
+  ],
+  '/settings': [
+    "How do I change the theme?",
+    "How do I change default flashcard side?",
+    "How do I enable review reminders?",
+  ],
+  '/dashboard': [
+    "What statistics can I see here?",
+    "How is my study streak calculated?",
+    "What are 'mastered cards'?",
+  ],
+  '/groups': [
+    "How do I create a new group?",
+    "How do I add sets to a group?",
+    "How do I edit a group?",
+  ],
+  '/constellation': [
+    "How are concepts generated?",
+    "How do I refresh the constellation?",
+    "What are concept relationships?",
+  ],
+};
 
 const INACTIVITY_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 
@@ -33,6 +90,7 @@ const Chatbot: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const location = useLocation(); // Get current location
 
   const CHATBOT_API_URL = `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/chatbot-qa`;
 
@@ -48,7 +106,7 @@ const Chatbot: React.FC = () => {
     inactivityTimerRef.current = setTimeout(() => {
       setMessages([]); // Clear messages
       setInput(''); // Clear input
-      setIsOpen(false); // Optionally close the sheet
+      // setIsOpen(false); // Optionally close the sheet, but user might prefer it open
       console.log("Chatbot reset due to inactivity.");
     }, INACTIVITY_TIMEOUT_MS);
   }, []);
@@ -116,6 +174,7 @@ const Chatbot: React.FC = () => {
         sender: 'bot',
         text: result.chatbot_response,
         timestamp: new Date(),
+        feedbackGiven: null, // Initialize feedback for new bot messages
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (err: any) {
@@ -126,6 +185,7 @@ const Chatbot: React.FC = () => {
         sender: 'bot',
         text: "Sorry, I'm having trouble connecting right now. Please try again later.",
         timestamp: new Date(),
+        feedbackGiven: null,
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -142,6 +202,45 @@ const Chatbot: React.FC = () => {
     }, 0);
   };
 
+  const handleClearChat = () => {
+    setMessages([]);
+    setInput('');
+    resetInactivityTimer(); // Reset timer after clearing chat
+  };
+
+  const handleFeedback = (messageId: number, feedback: 'up' | 'down') => {
+    setMessages(prevMessages =>
+      prevMessages.map(msg =>
+        msg.id === messageId ? { ...msg, feedbackGiven: feedback } : msg
+      )
+    );
+    console.log(`Feedback for message ${messageId}: ${feedback}`);
+    // Here you could send this feedback to a backend service
+  };
+
+  const getDynamicSuggestions = () => {
+    const currentPath = location.pathname;
+    let suggestions = DEFAULT_SUGGESTED_QUESTIONS;
+
+    // Check for direct path matches first
+    if (ROUTE_SPECIFIC_SUGGESTIONS[currentPath]) {
+      suggestions = ROUTE_SPECIFIC_SUGGESTIONS[currentPath];
+    } else {
+      // Check for dynamic path matches (e.g., /sets/:setId)
+      for (const routePattern in ROUTE_SPECIFIC_SUGGESTIONS) {
+        if (routePattern.includes(':')) {
+          const regex = new RegExp(`^${routePattern.replace(/:\w+/g, '[^/]+')}$`);
+          if (regex.test(currentPath)) {
+            suggestions = ROUTE_SPECIFIC_SUGGESTIONS[routePattern];
+            break;
+          }
+        }
+      }
+    }
+    return suggestions;
+  };
+
+  const currentSuggestions = getDynamicSuggestions();
   const showSuggestions = messages.length === 0 && !isSending && !input.trim();
 
   return (
@@ -161,10 +260,13 @@ const Chatbot: React.FC = () => {
         </Button>
       </SheetTrigger>
       <SheetContent className="flex flex-col w-full sm:max-w-md">
-        <SheetHeader>
+        <SheetHeader className="flex flex-row items-center justify-between pr-6">
           <SheetTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" /> How-To Chatbot
           </SheetTitle>
+          <Button variant="ghost" size="icon" onClick={handleClearChat} aria-label="Clear Chat">
+            <XCircle className="h-5 w-5 text-muted-foreground" />
+          </Button>
         </SheetHeader>
         <div className="flex-grow flex flex-col border rounded-md p-4 bg-muted/20 overflow-hidden">
           <ScrollArea className="flex-grow pr-4 -mr-4">
@@ -196,6 +298,28 @@ const Chatbot: React.FC = () => {
                       <span className="block text-xs text-muted-foreground mt-1">
                         {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
+                      {msg.sender === 'bot' && (
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn("h-6 w-6", msg.feedbackGiven === 'up' && "text-green-500")}
+                            onClick={() => handleFeedback(msg.id, 'up')}
+                            disabled={!!msg.feedbackGiven}
+                          >
+                            <ThumbsUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn("h-6 w-6", msg.feedbackGiven === 'down' && "text-red-500")}
+                            onClick={() => handleFeedback(msg.id, 'down')}
+                            disabled={!!msg.feedbackGiven}
+                          >
+                            <ThumbsDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     {msg.sender === 'user' && <User2 className="h-6 w-6 text-muted-foreground flex-shrink-0" />}
                   </div>
@@ -206,6 +330,7 @@ const Chatbot: React.FC = () => {
                   <Bot className="h-6 w-6 text-primary flex-shrink-0" />
                   <div className="max-w-[70%] p-3 rounded-lg shadow-sm bg-background text-foreground rounded-bl-none border">
                     <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="ml-2 text-sm">Bot is typing...</span>
                   </div>
                 </div>
               )}
@@ -219,7 +344,7 @@ const Chatbot: React.FC = () => {
               <Lightbulb className="h-4 w-4 mr-2" /> Suggested Questions:
             </p>
             <div className="flex flex-wrap gap-2">
-              {SUGGESTED_QUESTIONS.map((question, index) => (
+              {currentSuggestions.map((question, index) => (
                 <Button
                   key={index}
                   variant="outline"
