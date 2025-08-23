@@ -218,7 +218,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
               zoomStep={ZOOM_STEP}
             />
           )}
-          <div className="relative border rounded-md overflow-hidden" style={{ height: '300px' }}>
+          <div className="relative border rounded-md overflow-hidden min-h-[300px] h-[300px]">
             <TextEditorContent 
               editor={editor} 
               editable={editable} 
