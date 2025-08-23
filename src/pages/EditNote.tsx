@@ -21,6 +21,8 @@ import LinkExtension from '@tiptap/extension-link';
 import Highlight from '@tiptap/extension-highlight';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from "lowlight";
+import TaskList from '@tiptap/extension-task-list'; // Added
+import TaskItem from '@tiptap/extension-task-item'; // Added
 
 // New modular imports
 import NoteFormFields from "@/components/notes/NoteFormFields";
@@ -39,7 +41,7 @@ type EditNoteFormValues = z.infer<typeof formSchema>;
 const EditNote: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth(); // Keep for initial checks and UI rendering
+  const { user } = useAuth();
 
   const [richTextContent, setRichTextContent] = useState<string>("");
   const [drawingUrl, setDrawingUrl] = useState<string | undefined>(undefined);
@@ -85,6 +87,8 @@ const EditNote: React.FC = () => {
               LinkExtension.configure({ openOnClick: false, autolink: true }),
               Highlight.configure({ multicolor: true }),
               CodeBlockLowlight.configure({ lowlight }),
+              TaskList, // Added
+              TaskItem, // Added
             ]);
             setRichTextContent(htmlContent);
           } else {
@@ -105,7 +109,7 @@ const EditNote: React.FC = () => {
   }, [noteId, navigate, form]);
 
   const handleSummarizeNote = async () => {
-    if (!user) { // Initial check for user from useAuth
+    if (!user) {
       showError("You must be logged in to summarize a note.");
       return;
     }
@@ -116,8 +120,8 @@ const EditNote: React.FC = () => {
 
     const toastId = showLoading("AI is summarizing your note...");
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         throw new Error("Session not found. Please log in again.");
       }
 
@@ -162,7 +166,6 @@ const EditNote: React.FC = () => {
     const toastId = showLoading("Updating note...");
 
     try {
-      // Re-fetch user session to ensure it's current and valid
       const { data: { user: currentUserSession }, error: userSessionError } = await supabase.auth.getUser();
       if (userSessionError || !currentUserSession) {
         throw new Error('User not authenticated. Please log in again.');
@@ -178,7 +181,7 @@ const EditNote: React.FC = () => {
           updated_at: new Date().toISOString(),
         })
         .eq("id", noteId)
-        .eq("user_id", currentUserSession.id); // Use currentUserSession.id here
+        .eq("user_id", currentUserSession.id);
 
       if (error) throw error;
 
