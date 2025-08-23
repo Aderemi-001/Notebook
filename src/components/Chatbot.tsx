@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { MessageSquareText, Send, Loader2, Bot, User2 } from 'lucide-react';
+import { MessageSquareText, Send, Loader2, Bot, User2, Lightbulb } from 'lucide-react'; // Import Lightbulb icon
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,15 @@ interface ChatMessage {
   text: string;
   timestamp: Date;
 }
+
+const SUGGESTED_QUESTIONS = [
+  "How do I create a new study set?",
+  "How do I generate an exam?",
+  "What is the Cognitive Constellation?",
+  "How do I reset my study progress?",
+  "Can I share my study sets?",
+  "How do I use the drawing tool in notes?",
+];
 
 const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -87,6 +96,16 @@ const Chatbot: React.FC = () => {
     }
   };
 
+  const handleSuggestedQuestionClick = (question: string) => {
+    setInput(question);
+    // Automatically send the message after setting the input
+    setTimeout(() => {
+      handleSendMessage();
+    }, 0);
+  };
+
+  const showSuggestions = messages.length === 0 && !isSending && !input.trim();
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -152,6 +171,26 @@ const Chatbot: React.FC = () => {
             </div>
           </ScrollArea>
         </div>
+        {showSuggestions && (
+          <div className="mt-4 p-2 border rounded-md bg-muted/20">
+            <p className="text-sm font-semibold text-muted-foreground mb-2 flex items-center">
+              <Lightbulb className="h-4 w-4 mr-2" /> Suggested Questions:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTED_QUESTIONS.map((question, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSuggestedQuestionClick(question)}
+                  className="h-auto py-1.5 px-3 text-xs whitespace-normal text-left"
+                >
+                  {question}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="flex gap-2 mt-4">
           <Input
             placeholder="Ask me a question..."
