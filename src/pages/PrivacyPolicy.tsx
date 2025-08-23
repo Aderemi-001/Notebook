@@ -1,90 +1,85 @@
-import * as React from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { NotebookCard, CardHeader, CardTitle, CardContent } from "@/components/NotebookCard";
-import { ArrowLeft } from 'lucide-react';
+"use client";
 
-const PrivacyPolicy: React.FC = () => {
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export default function PrivacyPolicy() {
   return (
-    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold">Privacy Policy</h1>
-        <Button asChild variant="outline">
-          <Link to="/" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
-          </Link>
-        </Button>
-      </div>
-
-      <NotebookCard>
+    <div className="container mx-auto px-4 py-8">
+      <Card className="max-w-3xl mx-auto">
         <CardHeader>
-          <CardTitle>Your Privacy Matters to Us</CardTitle>
+          <CardTitle className="text-3xl font-bold text-center">Privacy Policy</CardTitle>
         </CardHeader>
-        <CardContent className="prose dark:prose-invert max-w-none">
+        <CardContent className="prose max-w-none">
           <p>
-            This Privacy Policy describes how My Notebook ("we," "us," or "our") collects, uses, and discloses your personal information when you use our application.
+            This Privacy Policy describes how My Notebook ("we," "us," or "our") collects, uses, and discloses your information when you use our application (the "Service").
           </p>
 
           <h2>1. Information We Collect</h2>
           <p>
-            We collect information to provide better services to all our users. The types of information we collect depend on how you use our services.
+            We collect information to provide and improve our Service.
           </p>
-          <h3>Personal Information You Provide to Us:</h3>
+          <h3>Personal Information:</h3>
           <ul>
-            <li><strong>Account Information:</strong> When you create an account, we collect your email address and a display name.</li>
-            <li><strong>Study Content:</strong> Any study sets, flashcards, notes, or other learning materials you create or upload within the app.</li>
-            <li><strong>Usage Data:</strong> Information about how you interact with the app, such as study progress, exam attempts, and feature usage.</li>
+            <li><strong>Account Information:</strong> When you create an account, we collect your email address and display name.</li>
+            <li><strong>Usage Data:</strong> We collect information about how you use the Service, such as study sets created, cards reviewed, and progress.</li>
           </ul>
-
-          <h3>Information We Collect Automatically:</h3>
+          <h3>Non-Personal Information:</h3>
           <ul>
-            <li><strong>Device and Usage Information:</strong> We may collect information about the device you use to access our services, including IP address, browser type, operating system, and app version.</li>
-            <li><strong>Cookies and Similar Technologies:</strong> We use cookies to maintain your session and preferences.</li>
+            <li><strong>Technical Data:</strong> This includes IP addresses, browser type, operating system, and device information.</li>
           </ul>
 
           <h2>2. How We Use Your Information</h2>
-          <p>We use the information we collect for the following purposes:</p>
+          <p>We use the information we collect for various purposes, including:</p>
           <ul>
-            <li>To provide, maintain, and improve our services.</li>
-            <li>To personalize your learning experience, such as tracking study progress and suggesting reviews.</li>
-            <li>To communicate with you about your account or our services.</li>
-            <li>To develop new features and services.</li>
-            <li>To ensure the security and integrity of our services.</li>
+            <li>To provide, operate, and maintain our Service.</li>
+            <li>To improve, personalize, and expand our Service.</li>
+            <li>To understand and analyze how you use our Service.</li>
+            <li>To develop new products, services, features, and functionality.</li>
+            <li>To communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the Service, and for marketing and promotional purposes.</li>
+            <li>To process your transactions.</li>
+            <li>To find and prevent fraud.</li>
           </ul>
 
           <h2>3. How We Share Your Information</h2>
-          <p>We do not share your personal information with companies, organizations, or individuals outside of My Notebook except in the following cases:</p>
+          <p>We may share your information in the following situations:</p>
           <ul>
-            <li><strong>With Your Consent:</strong> We will share personal information with companies, organizations, or individuals outside of My Notebook when we have your consent to do so.</li>
-            <li><strong>For External Processing:</strong> We provide personal information to our affiliates or other trusted businesses or persons to process it for us, based on our instructions and in compliance with our Privacy Policy and any other appropriate confidentiality and security measures. This includes services like AI content generation (e.g., flashcards, summaries) where your study content may be sent to third-party AI models for processing.</li>
-            <li><strong>For Legal Reasons:</strong> We will share personal information outside of My Notebook if we have a good-faith belief that access, use, preservation, or disclosure of the information is reasonably necessary to meet any applicable law, regulation, legal process, or enforceable governmental request.</li>
+            <li><strong>With Service Providers:</strong> We may share your information with third-party vendors, service providers, contractors, or agents who perform services for us or on our behalf and require access to such information to do that work.</li>
+            <li><strong>For Business Transfers:</strong> We may share or transfer your personal information in connection with, or during negotiations of, any merger, sale of company assets, financing, or acquisition of all or a portion of our business to another company.</li>
+            <li><strong>With Affiliates:</strong> We may share your information with our affiliates, in which case we will require those affiliates to honor this Privacy Policy.</li>
+            <li><strong>With Business Partners:</strong> We may share your information with our business partners to offer you certain products, services, or promotions.</li>
+            <li><strong>With Other Users:</strong> When you share personal information or otherwise interact in the public areas with other users, such personal information may be viewed by all users and may be publicly distributed outside.</li>
+            <li><strong>With Your Consent:</strong> We may disclose your personal information for any other purpose with your consent.</li>
           </ul>
 
-          <h2>4. Your Choices and Rights</h2>
-          <ul>
-            <li>You can access and update your profile information through your account settings.</li>
-            <li>You can delete your study content at any time.</li>
-            <li>You may have additional rights depending on your jurisdiction, such as the right to request access to, rectification of, or erasure of your personal data.</li>
-          </ul>
-
-          <h2>5. Data Security</h2>
+          <h2>4. Data Security</h2>
           <p>
-            We work hard to protect My Notebook and our users from unauthorized access to or unauthorized alteration, disclosure, or destruction of information we hold. We implement various security measures, including encryption and access controls, to safeguard your data.
+            We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.
           </p>
+
+          <h2>5. Your Data Protection Rights</h2>
+          <p>
+            Depending on your location, you may have the following rights regarding your personal data:
+          </p>
+          <ul>
+            <li>The right to access, update, or delete the information we have on you.</li>
+            <li>The right of rectification.</li>
+            <li>The right to object.</li>
+            <li>The right of restriction.</li>
+            <li>The right to data portability.</li>
+            <li>The right to withdraw consent.</li>
+          </ul>
 
           <h2>6. Changes to This Privacy Policy</h2>
           <p>
-            We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page.
+            We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.
           </p>
 
           <h2>7. Contact Us</h2>
           <p>
-            If you have any questions about this Privacy Policy, please contact us at [Your Contact Email Here].
+            If you have any questions about this Privacy Policy, please contact us at my.notebook.by.remi@gmail.com.
           </p>
         </CardContent>
-      </NotebookCard>
+      </Card>
     </div>
   );
-};
-
-export default PrivacyPolicy;
+}
