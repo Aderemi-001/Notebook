@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useEditor, JSONContent, Editor } from '@tiptap/react'; // Import Editor type
+import { useEditor, JSONContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
@@ -34,7 +34,7 @@ interface RichTextEditorProps {
   isDrawingMode: boolean;
   setIsDrawingMode: (mode: boolean) => void;
   onEditorReady?: (
-    editor: Editor, // Use Editor type here
+    editor: Editor,
     analyzeDrawing: () => Promise<void>,
     insertDrawing: () => void
   ) => void;
@@ -132,7 +132,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         },
       }),
       Highlight.configure({
-        multicolor: true,
+        // Temporarily remove multicolor to diagnose the error
+        // multicolor: true,
       }),
       TaskList,
       TaskItem.configure({
