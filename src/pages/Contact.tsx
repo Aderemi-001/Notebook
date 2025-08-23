@@ -9,12 +9,12 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "react-hot-toast";
-import { useUser } from "@/hooks/useUser";
+import { toast } from "sonner"; // Changed from react-hot-toast
+import { useAuth } from "@/hooks/useAuth"; // Changed from useUser
 
 export default function Contact() {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user } = useAuth(); // Changed from useUser
   const [name, setName] = useState(user?.user_metadata?.display_name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [subject, setSubject] = useState("");

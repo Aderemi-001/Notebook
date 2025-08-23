@@ -3,7 +3,7 @@
 import { Route, Routes } from "react-router-dom";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "@/components/ui/sonner"; // Changed from react-hot-toast
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import Contact from "@/pages/Contact"; // Import the new Contact page
 
