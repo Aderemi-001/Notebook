@@ -11,22 +11,11 @@ import {
   Minus,
   Redo,
   Undo,
-  Heading1,
-  Heading2,
-  Heading3,
-  Pilcrow, // Paragraph icon
   Highlighter, // Generic highlighter icon
   Eraser, // Icon for clearing highlight
 } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,31 +39,6 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
   if (!editor) {
     return null;
   }
-
-  const handleHeadingChange = (value: string) => {
-    if (value === 'paragraph') {
-      editor.chain().focus().setParagraph().run();
-    } else {
-      // Assert the parsed number to be one of the valid heading levels (1, 2, or 3)
-      const level = parseInt(value.replace('heading', '')) as 1 | 2 | 3;
-      editor.chain().focus().toggleHeading({ level }).run();
-    }
-  };
-
-  const getActiveHeading = () => {
-    if (editor.isActive('paragraph')) return 'paragraph';
-    if (editor.isActive('heading', { level: 1 })) return 'heading1';
-    if (editor.isActive('heading', { level: 2 })) return 'heading2';
-    if (editor.isActive('heading', { level: 3 })) return 'heading3';
-    return 'paragraph'; // Default to paragraph if nothing else is active
-  };
-
-  const getActiveHeadingIcon = () => {
-    if (editor.isActive('heading', { level: 1 })) return <Heading1 className="h-4 w-4 mr-2" />;
-    if (editor.isActive('heading', { level: 2 })) return <Heading2 className="h-4 w-4 mr-2" />;
-    if (editor.isActive('heading', { level: 3 })) return <Heading3 className="h-4 w-4 mr-2" />;
-    return <Pilcrow className="h-4 w-4 mr-2" />; // Default for paragraph
-  };
 
   return (
     <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-muted/20 rounded-t-md">
@@ -150,36 +114,6 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         >
           <Minus className="h-4 w-4" />
         </ToggleGroupItem>
-
-        {/* Heading/Paragraph Selector */}
-        <Select onValueChange={handleHeadingChange} value={getActiveHeading()}>
-          <SelectTrigger className="w-[130px] h-8 px-2 rounded-lg">
-            {getActiveHeadingIcon()}
-            <SelectValue placeholder="Text Style" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="paragraph">
-              <div className="flex items-center">
-                <Pilcrow className="h-4 w-4 mr-2" /> Paragraph
-              </div>
-            </SelectItem>
-            <SelectItem value="heading1">
-              <div className="flex items-center">
-                <Heading1 className="h-4 w-4 mr-2" /> Heading 1
-              </div>
-            </SelectItem>
-            <SelectItem value="heading2">
-              <div className="flex items-center">
-                <Heading2 className="h-4 w-4 mr-2" /> Heading 2
-              </div>
-            </SelectItem>
-            <SelectItem value="heading3">
-              <div className="flex items-center">
-                <Heading3 className="h-4 w-4 mr-2" /> Heading 3
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
 
         {/* Highlight Color Selector */}
         <DropdownMenu>
