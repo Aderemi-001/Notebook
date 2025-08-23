@@ -21,7 +21,7 @@ const TextEditorContent: React.FC<TextEditorContentProps> = ({ editor, editable,
       <EditorContent 
         editor={editor} 
         className={cn(
-          'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4 h-full', // Added p-4 and min-h-[300px] back here
+          'prose dark:prose-invert max-w-none focus:outline-none p-4 h-full', // Removed min-h-[300px]
           'user-select-text touch-action-auto',
           !editable && 'bg-muted/50 cursor-not-allowed',
           className

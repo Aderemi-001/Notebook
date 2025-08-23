@@ -200,6 +200,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     }
   }, [editor, onEditorReady]);
 
+  // NEW: Effect to update editor content when the 'content' prop changes
+  useEffect(() => {
+    if (editor && content && editor.getHTML() !== editor.options.content) {
+      editor.commands.setContent(content, { emitUpdate: false }); // Corrected argument
+    }
+  }, [editor, content]);
+
   return (
     <div className="w-full flex flex-col">
       {editor && (
