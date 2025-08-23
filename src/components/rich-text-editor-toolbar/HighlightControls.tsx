@@ -126,15 +126,28 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
     if (!isPopoverOpen) {
       const currentHighlightAttrs = editor.getAttributes('highlight');
       if (currentHighlightAttrs && currentHighlightAttrs.color) {
-        const matchedColor = HIGHLIGHT_COLORS.find(c => c.hex === currentHighlightAttrs.color) ||
-                             recentlyUsedColors.find(c => c === currentHighlightAttrs.color) ||
-                             pinnedColors.find(c => c === currentHighlightAttrs.color);
-        if (matchedColor) {
-          setActiveHighlightColor(matchedColor.hex || matchedColor);
-        } else {
-          // If it's a custom color not in presets/recent/pinned, just use it
-          setActiveHighlightColor(currentHighlightAttrs.color);
+        const colorFromAttrs = currentHighlightAttrs.color;
+
+        // Check if it's one of the preset colors
+        const presetMatch = HIGHLIGHT_COLORS.find(c => c.hex === colorFromAttrs);
+        if (presetMatch) {
+          setActiveHighlightColor(presetMatch.hex);
+          setCustomPickerColor(presetMatch.hex);
+          return;
         }
+
+        // Check if it's a recently used or pinned color (which are stored as hex strings)
+        const recentOrPinnedMatch = recentlyUsedColors.find(c => c === colorFromAttrs) ||
+                                   pinnedColors.find(c => c === colorFromAttrs);
+        if (recentOrPinnedMatch) {
+          setActiveHighlightColor(recentOrPinnedMatch);
+          setCustomPickerColor(recentOrPinnedMatch);
+          return;
+        }
+
+        // If it's a custom color not in presets/recent/pinned, just use it
+        setActiveHighlightColor(colorFromAttrs);
+        setCustomPickerColor(colorFromAttrs);
       } else {
         // If no highlight is active, default to the first color or the last active custom color
         setActiveHighlightColor(customPickerColor || HIGHLIGHT_COLORS[0].hex);
