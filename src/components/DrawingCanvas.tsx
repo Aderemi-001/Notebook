@@ -45,8 +45,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
       style={{ 
-        transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`, 
-        transformOrigin: '0 0',
+        transform: isDrawingMode ? `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})` : 'none', 
+        transformOrigin: isDrawingMode ? '0 0' : 'initial',
         touchAction: 'none',
         width: '100%',
         height: '100%',
