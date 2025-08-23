@@ -47,6 +47,7 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.55.0",
     "@tanstack/react-query": "^5.56.2",
+    "@tiptap/core": "^3.2.2",
     "@tiptap/extension-highlight": "^3.2.0",
     "@tiptap/extension-image": "^3.2.0",
     "@tiptap/extension-link": "^3.2.2",
