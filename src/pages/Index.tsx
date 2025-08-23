@@ -206,9 +206,9 @@ const Index = () => {
 
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4"> {/* Adjusted for responsiveness */}
         <h1 className="text-2xl sm:text-3xl font-bold">My Study Sets</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 justify-end"> {/* Added flex-wrap and justify-end */}
           <Button asChild variant="outline">
             <Link to="/create" className="flex items-center">
               <PlusCircle className="mr-2 h-4 w-4" /> Create Set
