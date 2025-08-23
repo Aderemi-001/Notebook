@@ -4,7 +4,7 @@ import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Highlighter, X } from 'lucide-react';
-import { Button } from '@/components/ui/button'; // Import Button for "Remove Highlight"
+import { Button } from '@/components/ui/button';
 
 interface HighlightControlsProps {
   editor: Editor;
@@ -20,26 +20,28 @@ const HIGHLIGHT_COLORS = [
 
 const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
   const [activeHighlightColor, setActiveHighlightColor] = useState(HIGHLIGHT_COLORS[0].hex);
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false); // State to control the popover
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   useEffect(() => {
-    const currentHighlightAttrs = editor.getAttributes('highlight');
-    if (currentHighlightAttrs && currentHighlightAttrs.color) {
-      const matchedColor = HIGHLIGHT_COLORS.find(c => c.hex === currentHighlightAttrs.color);
-      if (matchedColor) {
-        setActiveHighlightColor(matchedColor.hex);
+    // When the popover is closed, or if the selection changes, update the activeHighlightColor
+    // to reflect the highlight under the cursor, if any.
+    if (!isPopoverOpen) {
+      const currentHighlightAttrs = editor.getAttributes('highlight');
+      if (currentHighlightAttrs && currentHighlightAttrs.color) {
+        const matchedColor = HIGHLIGHT_COLORS.find(c => c.hex === currentHighlightAttrs.color);
+        if (matchedColor) {
+          setActiveHighlightColor(matchedColor.hex);
+        }
+      } else {
+        // If no highlight is active, default to the first color
+        setActiveHighlightColor(HIGHLIGHT_COLORS[0].hex);
       }
     }
-  }, [editor, editor.state.selection]);
-
-  const handleToggleHighlight = () => {
-    editor.chain().focus().toggleHighlight({ color: activeHighlightColor }).run();
-    setIsPopoverOpen(false); // Close popover after toggling highlight
-  };
+  }, [editor, editor.state.selection, isPopoverOpen]);
 
   const handleSelectColor = (colorHex: string) => {
     setActiveHighlightColor(colorHex);
-    editor.chain().focus().setHighlight({ color: colorHex }).run(); // Apply immediately
+    editor.chain().focus().setHighlight({ color: colorHex }).run();
     setIsPopoverOpen(false); // Close popover after selecting a color
   };
 
@@ -48,22 +50,21 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
     setIsPopoverOpen(false); // Close popover after removing highlight
   };
 
-  const isCurrentColorActive = editor.isActive('highlight', { color: activeHighlightColor });
-
   return (
-    <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}> {/* Control the popover state */}
+    <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
               <Toggle
                 size="sm"
-                pressed={isCurrentColorActive}
-                onPressedChange={handleToggleHighlight}
-                aria-label="Toggle highlight"
+                pressed={editor.isActive('highlight')} // Indicate if ANY highlight is active
+                // onPressedChange removed to prevent conflict with popover open/close
+                aria-label="Highlight options"
                 className="px-2 relative"
               >
                 <Highlighter className="h-4 w-4" />
+                {/* Visual indicator for the currently selected highlight color */}
                 <div
                   className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-foreground/20"
                   style={{ backgroundColor: activeHighlightColor }}
@@ -72,7 +73,7 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
             </PopoverTrigger>
           </TooltipTrigger>
           <TooltipContent>
-            {isCurrentColorActive ? "Toggle Highlight Off" : "Toggle Highlight On"}
+            {editor.isActive('highlight') ? "Highlight Active (Click to change color)" : "Add Highlight (Click to choose color)"}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
