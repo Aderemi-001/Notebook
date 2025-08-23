@@ -7,23 +7,17 @@ interface UtilityControlsProps {
   editor: Editor;
   isDrawingMode: boolean;
   setIsDrawingMode: (isDrawingMode: boolean) => void;
-  drawingColor: string;
-  setDrawingColor: (color: string) => void;
-  penSize: number; // Added penSize prop
-  setPenSize: (size: number) => void; // Added setPenSize prop
+  // Removed drawingColor, setDrawingColor, penSize, setPenSize as they are not passed to DrawingModeToggle from here.
 }
 
-const UtilityControls: React.FC<UtilityControlsProps> = ({ editor, isDrawingMode, setIsDrawingMode, drawingColor, setDrawingColor, penSize, setPenSize }) => {
+const UtilityControls: React.FC<UtilityControlsProps> = ({ editor, isDrawingMode, setIsDrawingMode }) => {
   return (
     <div className="flex items-center gap-1">
       <HighlightControls editor={editor} />
       <DrawingModeToggle
         isDrawingMode={isDrawingMode}
         setIsDrawingMode={setIsDrawingMode}
-        drawingColor={drawingColor}
-        setDrawingColor={setDrawingColor}
-        penSize={penSize} // Pass penSize
-        setPenSize={setPenSize} // Pass setPenSize
+        // drawingColor and penSize are no longer passed to DrawingModeToggle
       />
     </div>
   );

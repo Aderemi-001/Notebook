@@ -6,6 +6,7 @@ import BlockControls from '@/components/rich-text-editor-toolbar/BlockControls';
 import ListControls from '@/components/rich-text-editor-toolbar/ListControls';
 import HistoryControls from '@/components/rich-text-editor-toolbar/HistoryControls';
 import UtilityControls from '@/components/rich-text-editor-toolbar/UtilityControls';
+import DrawingControls from '@/components/rich-text-editor-toolbar/DrawingControls'; // Import the new DrawingControls
 
 interface RichTextEditorToolbarProps {
   editor: Editor | null;
@@ -13,11 +14,43 @@ interface RichTextEditorToolbarProps {
   setIsDrawingMode: (isDrawingMode: boolean) => void;
   drawingColor: string;
   setDrawingColor: (color: string) => void;
-  penSize: number; // Added penSize prop
-  setPenSize: (size: number) => void; // Added setPenSize prop
+  penSize: number;
+  setPenSize: (size: number) => void;
+  isErasing: boolean;
+  setIsErasing: (erasing: boolean) => void;
+  eraserSize: number;
+  setEraserSize: (size: number) => void;
+  clearCanvas: () => void;
+  insertDrawing: () => void;
+  analyzeDrawing: () => void;
+  zoomLevel: number;
+  setZoomLevel: (level: number | ((prev: number) => number)) => void;
+  minZoom: number;
+  maxZoom: number;
+  zoomStep: number;
 }
 
-const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor, isDrawingMode, setIsDrawingMode, drawingColor, setDrawingColor, penSize, setPenSize }) => {
+const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
+  editor,
+  isDrawingMode,
+  setIsDrawingMode,
+  drawingColor,
+  setDrawingColor,
+  penSize,
+  setPenSize,
+  isErasing,
+  setIsErasing,
+  eraserSize,
+  setEraserSize,
+  clearCanvas,
+  insertDrawing,
+  analyzeDrawing,
+  zoomLevel,
+  setZoomLevel,
+  minZoom,
+  maxZoom,
+  zoomStep,
+}) => {
   if (!editor) {
     return null;
   }
@@ -36,11 +69,30 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ editor, i
         editor={editor}
         isDrawingMode={isDrawingMode}
         setIsDrawingMode={setIsDrawingMode}
-        drawingColor={drawingColor}
-        setDrawingColor={setDrawingColor}
-        penSize={penSize} // Pass penSize
-        setPenSize={setPenSize} // Pass setPenSize
       />
+      {isDrawingMode && (
+        <>
+          <Separator orientation="vertical" className="h-6" />
+          <DrawingControls
+            drawingColor={drawingColor}
+            setDrawingColor={setDrawingColor}
+            penSize={penSize}
+            setPenSize={setPenSize}
+            isErasing={isErasing}
+            setIsErasing={setIsErasing}
+            eraserSize={eraserSize}
+            setEraserSize={setEraserSize}
+            clearCanvas={clearCanvas}
+            insertDrawing={insertDrawing}
+            analyzeDrawing={analyzeDrawing}
+            zoomLevel={zoomLevel}
+            setZoomLevel={setZoomLevel}
+            minZoom={minZoom}
+            maxZoom={maxZoom}
+            zoomStep={zoomStep}
+          />
+        </>
+      )}
     </div>
   );
 };

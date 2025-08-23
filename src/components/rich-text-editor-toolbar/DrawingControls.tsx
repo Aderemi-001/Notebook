@@ -9,8 +9,8 @@ import { Palette, Eraser, CheckCircle2, Brain, ZoomIn, ZoomOut, Trash2, PenTool 
 interface DrawingControlsProps {
   drawingColor: string;
   setDrawingColor: (color: string) => void;
-  penSize: number; // New prop
-  setPenSize: (size: number) => void; // New prop
+  penSize: number;
+  setPenSize: (size: number) => void;
   isErasing: boolean;
   setIsErasing: (erasing: boolean) => void;
   eraserSize: number;
@@ -37,8 +37,8 @@ const DRAWING_COLORS = [
 const DrawingControls: React.FC<DrawingControlsProps> = ({
   drawingColor,
   setDrawingColor,
-  penSize, // Destructure penSize
-  setPenSize, // Destructure setPenSize
+  penSize,
+  setPenSize,
   isErasing,
   setIsErasing,
   eraserSize,
