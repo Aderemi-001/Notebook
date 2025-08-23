@@ -40,15 +40,15 @@ export const Header: React.FC = () => {
   };
 
   const navItems = [
-    { name: "My Study Sets", href: "/", icon: <BookOpen className="mr-2 h-4 w-4" /> },
     { name: "Daily Review", href: "/daily-review", icon: <CalendarDays className="mr-2 h-4 w-4" /> },
+    { name: "My Study Sets", href: "/", icon: <BookOpen className="mr-2 h-4 w-4" /> },
     { name: "My Notes", href: "/notes", icon: <NotebookPen className="mr-2 h-4 w-4" /> },
     { name: "My Groups", href: "/groups", icon: <Group className="mr-2 h-4 w-4" /> },
-    { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> }, // Consolidated link
-    { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> }, // Consolidated link
+    { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> },
+    { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> },
     { name: "Cognitive Constellation", href: "/constellation", icon: <Network className="mr-2 h-4 w-4" /> },
+    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
     { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
-    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> }, // Renamed from Statistics to Dashboard for consistency
   ];
 
   return (
@@ -64,10 +64,10 @@ export const Header: React.FC = () => {
             {/* Desktop Navigation & User Dropdown */}
             <div className="hidden md:flex items-center space-x-4">
               <Button variant="ghost" asChild>
-                <Link to="/">My Study Sets</Link>
+                <Link to="/daily-review">Daily Review</Link>
               </Button>
               <Button variant="ghost" asChild>
-                <Link to="/daily-review">Daily Review</Link>
+                <Link to="/">My Study Sets</Link>
               </Button>
               <Button variant="ghost" asChild>
                 <Link to="/notes">My Notes</Link>
