@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useEditor, JSONContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Highlight from '@tiptap/extension-highlight'; // Reverted to standard Highlight extension
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Image from '@tiptap/extension-image';
@@ -23,7 +24,7 @@ import { useDrawingCanvas } from '@/hooks/use-drawing-canvas';
 import { useAIDrawingAnalysis } from '@/hooks/use-ai-drawing-analysis';
 import DrawingCanvas from './DrawingCanvas';
 import TextEditorContent from './TextEditorContent';
-import { CustomHighlight } from '@/extensions/CustomHighlight'; // Import the new custom highlight extension
+// Removed import for CustomHighlight
 
 interface RichTextEditorProps {
   content: JSONContent | string;
@@ -32,7 +33,7 @@ interface RichTextEditorProps {
   className?: string;
   labelId?: string;
   isDrawingMode: boolean;
-  setIsDrawingMode: React.Dispatch<React.SetStateAction<boolean>>; // Updated type
+  setIsDrawingMode: React.Dispatch<React.SetStateAction<boolean>>;
   onEditorReady?: (
     editor: Editor,
     analyzeDrawing: () => Promise<void>,
@@ -131,7 +132,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           },
         },
       }),
-      CustomHighlight, // Using the custom highlight extension
+      Highlight.configure({
+        multicolor: true, // Re-enabled multicolor
+      }),
       TaskList,
       TaskItem.configure({
         nested: true,
