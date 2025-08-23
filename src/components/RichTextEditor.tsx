@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useEditor, JSONContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Highlight from '@tiptap/extension-highlight'; // Reverted to standard Highlight extension
+import Highlight from '@tiptap/extension-highlight'; // Standard Highlight extension
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Image from '@tiptap/extension-image';
@@ -24,7 +24,6 @@ import { useDrawingCanvas } from '@/hooks/use-drawing-canvas';
 import { useAIDrawingAnalysis } from '@/hooks/use-ai-drawing-analysis';
 import DrawingCanvas from './DrawingCanvas';
 import TextEditorContent from './TextEditorContent';
-// Removed import for CustomHighlight
 
 interface RichTextEditorProps {
   content: JSONContent | string;
@@ -133,7 +132,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         },
       }),
       Highlight.configure({
-        multicolor: true, // Re-enabled multicolor
+        // The Highlight extension handles the 'color' attribute and applies background-color style by default.
+        // No need to explicitly define addAttributes, parseHTML, or renderHTML here.
+        // The toolbar will pass the 'color' attribute correctly.
       }),
       TaskList,
       TaskItem.configure({
