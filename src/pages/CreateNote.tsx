@@ -1,6 +1,5 @@
 import React, { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-// import DrawingCanvas from "@/components/DrawingCanvas"; // This component will be replaced by the integrated canvas logic
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,15 +25,44 @@ import TextEditorContent from "@/components/TextEditorContent";
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useDrawingCanvas } from "@/hooks/use-drawing-canvas";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useUserStudySets } from "@/hooks/use-user-study-sets";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
+const formSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  study_set_id: z.string().nullable().optional(),
+});
+
+type CreateNoteFormValues = z.infer<typeof formSchema>;
 
 const CreateNote: React.FC = () => {
-  const [title, setTitle] = useState("");
   const [richTextContent, setRichTextContent] = useState<string>("");
   const [drawingUrl, setDrawingUrl] = useState<string | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const editorRef = useRef<Editor | null>(null);
+
+  const { data: userStudySets, isLoading: isLoadingStudySets } = useUserStudySets();
+
+  const form = useForm<CreateNoteFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      study_set_id: null,
+    },
+  });
 
   // Drawing canvas state and hooks
   const [isDrawingMode, setIsDrawingMode] = useState(true);
@@ -153,9 +181,7 @@ const CreateNote: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const onSubmit = async (values: CreateNoteFormValues) => {
     if (!user) {
       showError("You must be logged in to create a note.");
       return;
@@ -169,9 +195,10 @@ const CreateNote: React.FC = () => {
         .from("notes")
         .insert([{
           user_id: user.id,
-          title,
+          title: values.title,
           content: editorRef.current?.getJSON(), // Save Tiptap JSON content
-          drawing_url: drawingUrl
+          drawing_url: drawingUrl,
+          study_set_id: values.study_set_id,
         }])
         .select();
 
@@ -199,132 +226,180 @@ const CreateNote: React.FC = () => {
         </Button>
       </div>
 
-      <NotebookCard className="mb-6">
-        <CardHeader>
-          <CardTitle>Note Details</CardTitle>
-          <CardDescription>Enter the title and content for your new note.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <Label htmlFor="title" className="text-lg">Title</Label>
-              <Input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Note Title"
-                required
-                className="mt-1"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <NotebookCard className="mb-6">
+            <CardHeader>
+              <CardTitle>Note Details</CardTitle>
+              <CardDescription>Enter the title and content for your new note.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }: { field: any }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Note Title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div>
-              <Label htmlFor="content" className="text-lg mb-2 block">Content</Label>
-              <RichTextEditor
-                content={richTextContent}
-                onContentChange={setRichTextContent}
-                editorRef={editorRef}
+              <FormField
+                control={form.control}
+                name="study_set_id"
+                render={({ field }: { field: any }) => (
+                  <FormItem>
+                    <FormLabel>Link to Study Set (Optional)</FormLabel>
+                    <Select onValueChange={(value: string) => field.onChange(value === "null" ? null : value)} value={field.value || "null"}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a study set" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="null">No Study Set</SelectItem>
+                        {isLoadingStudySets ? (
+                          <SelectItem disabled value="loading">Loading study sets...</SelectItem>
+                        ) : userStudySets?.length === 0 ? (
+                          <SelectItem disabled value="no-sets">No study sets available</SelectItem>
+                        ) : (
+                          userStudySets?.map((set) => (
+                            <SelectItem key={set.id} value={set.id}>
+                              {set.title}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <Button
-                type="button"
-                onClick={handleSummarizeNote}
-                className="mt-4 w-full"
-                disabled={!richTextContent.trim() || isSaving}
-              >
-                <FileText className="mr-2 h-4 w-4" /> Summarize with AI
-              </Button>
-            </div>
-            <div>
-              <Label className="text-lg mb-2 block">Drawing Canvas</Label>
-              <div className="relative border rounded-md overflow-hidden w-full h-[400px] bg-white">
-                <TextEditorContent editor={editorRef.current} editable={false} isDrawingMode={isDrawingMode} />
-                <canvas
-                  ref={canvasRef}
-                  className="absolute inset-0 cursor-crosshair touch-none"
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={endDrawing}
-                  onMouseLeave={endDrawing}
-                  onTouchStart={startDrawing}
-                  onTouchMove={draw}
-                  onTouchEnd={endDrawing}
-                  style={{
-                    transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
-                    transformOrigin: '0 0',
-                    pointerEvents: isDrawingMode ? 'auto' : 'none',
-                  }}
+            </CardContent>
+          </NotebookCard>
+
+          <ResizablePanelGroup
+            direction="horizontal"
+            className="min-h-[500px] rounded-lg border"
+          >
+            <ResizablePanel defaultSize={50}>
+              <div className="flex h-full flex-col p-4">
+                <Label htmlFor="content" className="text-lg mb-2 block">Rich Text Content</Label>
+                <RichTextEditor
+                  content={richTextContent}
+                  onContentChange={setRichTextContent}
+                  editorRef={editorRef}
                 />
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-2 mt-4 p-2 border rounded-md bg-muted/20">
-                <ToggleGroup type="single" value={isDrawingMode ? 'draw' : 'pan'} onValueChange={(value) => setIsDrawingMode(value === 'draw')}>
-                  <ToggleGroupItem value="draw" aria-label="Toggle drawing mode">
-                    <Pencil className="h-4 w-4" />
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="pan" aria-label="Toggle pan mode">
-                    <Move className="h-4 w-4" />
-                  </ToggleGroupItem>
-                </ToggleGroup>
-
-                {isDrawingMode && (
-                  <>
-                    <ToggleGroup type="single" value={isErasing ? 'eraser' : 'pen'} onValueChange={(value) => setIsErasing(value === 'eraser')}>
-                      <ToggleGroupItem value="pen" aria-label="Toggle pen">
-                        <Pencil className="h-4 w-4" />
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="eraser" aria-label="Toggle eraser">
-                        <Eraser className="h-4 w-4" />
-                      </ToggleGroupItem>
-                    </ToggleGroup>
-                    <input
-                      type="color"
-                      value={drawingColor}
-                      onChange={(e) => setDrawingColor(e.target.value)}
-                      className="w-10 h-10 p-1 border rounded-md cursor-pointer"
-                      title="Select brush color"
-                      disabled={isErasing}
-                    />
-                    <Slider
-                      min={1}
-                      max={20}
-                      step={1}
-                      value={[isErasing ? eraserSize : penSize]}
-                      onValueChange={(val) => isErasing ? setEraserSize(val[0]) : setPenSize(val[0])}
-                      className="w-[100px]"
-                    />
-                  </>
-                )}
-
-                {!isDrawingMode && (
-                  <>
-                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.min(prev + 0.1, 3))}>
-                      <ZoomIn className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.min(prev - 0.1, 0.5))}>
-                      <ZoomOut className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
-                <Button onClick={clearCanvas}>Clear Drawing</Button>
-                <Button onClick={() => handleSaveDrawing(canvasRef.current?.toDataURL('image/png') || '')} disabled={isAnalyzing}>
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Brain className="mr-2 h-4 w-4" /> Analyze Drawing
-                    </>
-                  )}
+                <Button
+                  type="button"
+                  onClick={handleSummarizeNote}
+                  className="mt-4 w-full"
+                  disabled={!richTextContent.trim() || isSaving}
+                >
+                  <FileText className="mr-2 h-4 w-4" /> Summarize with AI
                 </Button>
               </div>
-              {drawingUrl && (
-                <div className="mt-4">
-                  <h3 className="text-xl font-semibold mb-2">Current Drawing:</h3>
-                  <img src={drawingUrl} alt="Current Drawing" className="max-w-full h-auto border rounded-md" />
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel defaultSize={50}>
+              <div className="flex h-full flex-col p-4">
+                <Label className="text-lg mb-2 block">Drawing Canvas</Label>
+                <div className="relative border rounded-md overflow-hidden flex-grow bg-white">
+                  <TextEditorContent editor={editorRef.current} editable={false} isDrawingMode={isDrawingMode} />
+                  <canvas
+                    ref={canvasRef}
+                    className="absolute inset-0 cursor-crosshair touch-none"
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={endDrawing}
+                    onMouseLeave={endDrawing}
+                    onTouchStart={startDrawing}
+                    onTouchMove={draw}
+                    onTouchEnd={endDrawing}
+                    style={{
+                      transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
+                      transformOrigin: '0 0',
+                      pointerEvents: isDrawingMode ? 'auto' : 'none',
+                    }}
+                  />
                 </div>
-              )}
-            </div>
-            <Button type="submit" className="w-full" disabled={isSaving}>
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-4 p-2 border rounded-md bg-muted/20">
+                  <ToggleGroup type="single" value={isDrawingMode ? 'draw' : 'pan'} onValueChange={(value) => setIsDrawingMode(value === 'draw')}>
+                    <ToggleGroupItem value="draw" aria-label="Toggle drawing mode">
+                      <Pencil className="h-4 w-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="pan" aria-label="Toggle pan mode">
+                      <Move className="h-4 w-4" />
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+
+                  {isDrawingMode && (
+                    <>
+                      <ToggleGroup type="single" value={isErasing ? 'eraser' : 'pen'} onValueChange={(value) => setIsErasing(value === 'eraser')}>
+                        <ToggleGroupItem value="pen" aria-label="Toggle pen">
+                          <Pencil className="h-4 w-4" />
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="eraser" aria-label="Toggle eraser">
+                          <Eraser className="h-4 w-4" />
+                        </ToggleGroupItem>
+                      </ToggleGroup>
+                      <input
+                        type="color"
+                        value={drawingColor}
+                        onChange={(e) => setDrawingColor(e.target.value)}
+                        className="w-10 h-10 p-1 border rounded-md cursor-pointer"
+                        title="Select brush color"
+                        disabled={isErasing}
+                      />
+                      <Slider
+                        min={1}
+                        max={20}
+                        step={1}
+                        value={[isErasing ? eraserSize : penSize]}
+                        onValueChange={(val) => isErasing ? setEraserSize(val[0]) : setPenSize(val[0])}
+                        className="w-[100px]"
+                      />
+                    </>
+                  )}
+
+                  {!isDrawingMode && (
+                    <>
+                      <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.min(prev + 0.1, 3))}>
+                        <ZoomIn className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.min(prev - 0.1, 0.5))}>
+                        <ZoomOut className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                  <Button onClick={clearCanvas}>Clear Drawing</Button>
+                  <Button onClick={() => handleSaveDrawing(canvasRef.current?.toDataURL('image/png') || '')} disabled={isAnalyzing}>
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="mr-2 h-4 w-4" /> Analyze Drawing
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {drawingUrl && (
+                  <div className="mt-4">
+                    <h3 className="text-xl font-semibold mb-2">Current Drawing:</h3>
+                    <img src={drawingUrl} alt="Current Drawing" className="max-w-full h-auto border rounded-md" />
+                  </div>
+                )}
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-6">
+            <Button type="submit" className="flex-1" disabled={isSaving}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating Note...
@@ -335,9 +410,10 @@ const CreateNote: React.FC = () => {
                 </>
               )}
             </Button>
-          </form>
-        </CardContent>
-      </NotebookCard>
+            <Button type="button" variant="outline" onClick={() => navigate(`/notes`)} className="flex-1">Cancel</Button>
+          </div>
+        </form>
+      </Form>
 
       <AlertDialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
         <AlertDialogContent>
