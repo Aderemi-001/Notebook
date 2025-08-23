@@ -1,47 +1,49 @@
-import { GripVertical } from "lucide-react";
-import * as ResizablePrimitive from "react-resizable-panels";
-import * as React from "react";
-import { cn } from "@/lib/utils";
+"use client"
+
+import * as React from "react"
+import {
+  PanelGroup,
+  PanelGroupProps,
+  Panel,
+  PanelProps,
+  PanelResizeHandle,
+} from "react-resizable-panels"
+
+import { cn } from "@/lib/utils"
 
 const ResizablePanelGroup = ({
   className,
   ...props
-}: React.ComponentProps<typeof ResizablePrimitive.PanelGroup>) => (
-  <ResizablePrimitive.PanelGroup
+}: PanelGroupProps) => (
+  <PanelGroup
     className={cn(
       "flex h-full w-full data-[panel-group-direction=vertical]:flex-col",
       className
     )}
     {...props}
   />
-);
+)
 
-const ResizablePanel = ResizablePrimitive.Panel;
+const ResizablePanel = ({
+  className,
+  ...props
+}: PanelProps) => (
+  <Panel className={cn(className)} {...props} />
+)
 
 const ResizableHandle = React.forwardRef<
-  React.ElementRef<typeof ResizablePrimitive.PanelResizeHandle>,
-  React.ComponentPropsWithoutRef<typeof ResizablePrimitive.PanelResizeHandle> & {
-    withHandle?: boolean;
-  }
->(({ withHandle, className, ...props }, ref) => {
-  const PanelResizeHandle = ResizablePrimitive.PanelResizeHandle as any; // Cast the component to any
-  return (
-    <PanelResizeHandle
-      ref={ref}
-      className={cn(
-        "relative flex w-px items-center justify-center bg-border after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:-translate-y-1/2 data-[panel-group-direction=vertical]:after:translate-x-0 [&[data-panel-group-direction=vertical]>div]:rotate-90",
-        className
-      )}
-      {...props}
-    >
-      {withHandle && (
-        <div className="z-10 flex h-4 w-3 items-center justify-center rounded-sm border bg-border">
-          <GripVertical className="h-2.5 w-2.5" />
-        </div>
-      )}
-    </PanelResizeHandle>
-  );
-});
-ResizableHandle.displayName = "ResizableHandle";
+  React.ElementRef<typeof PanelResizeHandle>,
+  React.ComponentPropsWithoutRef<typeof PanelResizeHandle>
+>(({ className, ...props }, ref) => (
+  <PanelResizeHandle
+    ref={ref as any} // Cast ref to any to bypass the type error
+    className={cn(
+      "flex w-px items-center justify-center bg-border after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:-translate-y-1/2 data-[panel-group-direction=vertical]:after:translate-x-0 [&[data-panel-group-direction=vertical]>div]:rotate-90",
+      className
+    )}
+    {...props}
+  />
+))
+ResizableHandle.displayName = "ResizableHandle"
 
-export { ResizablePanelGroup, ResizablePanel, ResizableHandle };
+export { ResizablePanelGroup, ResizablePanel, ResizableHandle }
