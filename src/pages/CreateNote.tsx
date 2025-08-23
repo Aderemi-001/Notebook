@@ -65,13 +65,15 @@ const CreateNote: React.FC = () => {
   });
 
   // Drawing canvas state and hooks
-  const [isDrawingMode, setIsDrawingMode] = useState(true);
+  const [toolMode, setToolMode] = useState<'pen' | 'eraser' | 'pan'>('pen');
   const [drawingColor, setDrawingColor] = useState('#000000');
   const [penSize, setPenSize] = useState(5);
-  const [isErasing, setIsErasing] = useState(false);
   const [eraserSize, setEraserSize] = useState(10);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+
+  const isDrawingMode = toolMode === 'pen' || toolMode === 'eraser';
+  const isErasing = toolMode === 'eraser';
 
   const {
     canvasRef,
@@ -327,45 +329,50 @@ const CreateNote: React.FC = () => {
                   />
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-2 mt-4 p-2 border rounded-md bg-muted/20">
-                  <ToggleGroup type="single" value={isDrawingMode ? 'draw' : 'pan'} onValueChange={(value) => setIsDrawingMode(value === 'draw')}>
-                    <ToggleGroupItem value="draw" aria-label="Toggle drawing mode">
+                  <ToggleGroup type="single" value={toolMode} onValueChange={(value: 'pen' | 'eraser' | 'pan') => setToolMode(value)}>
+                    <ToggleGroupItem value="pen" aria-label="Pen tool">
                       <Pencil className="h-4 w-4" />
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="pan" aria-label="Toggle pan mode">
+                    <ToggleGroupItem value="eraser" aria-label="Eraser tool">
+                      <Eraser className="h-4 w-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="pan" aria-label="Pan tool">
                       <Move className="h-4 w-4" />
                     </ToggleGroupItem>
                   </ToggleGroup>
 
-                  {isDrawingMode && (
+                  {toolMode === 'pen' && (
                     <>
-                      <ToggleGroup type="single" value={isErasing ? 'eraser' : 'pen'} onValueChange={(value) => setIsErasing(value === 'eraser')}>
-                        <ToggleGroupItem value="pen" aria-label="Toggle pen">
-                          <Pencil className="h-4 w-4" />
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="eraser" aria-label="Toggle eraser">
-                          <Eraser className="h-4 w-4" />
-                        </ToggleGroupItem>
-                      </ToggleGroup>
                       <input
                         type="color"
                         value={drawingColor}
                         onChange={(e) => setDrawingColor(e.target.value)}
                         className="w-10 h-10 p-1 border rounded-md cursor-pointer"
                         title="Select brush color"
-                        disabled={isErasing}
                       />
                       <Slider
                         min={1}
                         max={20}
                         step={1}
-                        value={[isErasing ? eraserSize : penSize]}
-                        onValueChange={(val) => isErasing ? setEraserSize(val[0]) : setPenSize(val[0])}
+                        value={[penSize]}
+                        onValueChange={(val) => setPenSize(val[0])}
                         className="w-[100px]"
                       />
                     </>
                   )}
 
-                  {!isDrawingMode && (
+                  {toolMode === 'eraser' && (
+                    <Slider
+                      min={1}
+                      max={20}
+                      step={1}
+                      value={[eraserSize]}
+                      onValueChange={(val) => setEraserSize(val[0])}
+                      className="w-[100px]"
+                    />
+                  )}
+
+                  {toolMode === 'pan' && (
                     <>
                       <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.min(prev + 0.1, 3))}>
                         <ZoomIn className="h-4 w-4" />
@@ -375,6 +382,7 @@ const CreateNote: React.FC = () => {
                       </Button>
                     </>
                   )}
+
                   <Button onClick={clearCanvas}>Clear Drawing</Button>
                   <Button onClick={() => handleSaveDrawing(canvasRef.current?.toDataURL('image/png') || '')} disabled={isAnalyzing}>
                     {isAnalyzing ? (
