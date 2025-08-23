@@ -6,10 +6,11 @@ import { Pencil } from 'lucide-react';
 interface DrawingModeToggleProps {
   isDrawingMode: boolean;
   setIsDrawingMode: (isDrawingMode: boolean) => void;
-  // Removed drawingColor, setDrawingColor, penSize, setPenSize as they are not directly used here.
+  drawingColor: string;
+  // Removed penSize and setPenSize as they are not used directly in this component
 }
 
-const DrawingModeToggle: React.FC<DrawingModeToggleProps> = ({ isDrawingMode, setIsDrawingMode }) => {
+const DrawingModeToggle: React.FC<DrawingModeToggleProps> = ({ isDrawingMode, setIsDrawingMode, drawingColor }) => {
   return (
     <TooltipProvider>
       <Tooltip>
@@ -22,7 +23,12 @@ const DrawingModeToggle: React.FC<DrawingModeToggleProps> = ({ isDrawingMode, se
             className="px-2 relative"
           >
             <Pencil className="h-4 w-4" />
-            {/* Removed the color indicator as drawingColor is no longer passed here */}
+            {isDrawingMode && (
+              <div
+                className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-foreground/20"
+                style={{ backgroundColor: drawingColor }}
+              ></div>
+            )}
           </Toggle>
         </TooltipTrigger>
         <TooltipContent>

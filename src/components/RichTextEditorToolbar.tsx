@@ -6,7 +6,6 @@ import BlockControls from '@/components/rich-text-editor-toolbar/BlockControls';
 import ListControls from '@/components/rich-text-editor-toolbar/ListControls';
 import HistoryControls from '@/components/rich-text-editor-toolbar/HistoryControls';
 import UtilityControls from '@/components/rich-text-editor-toolbar/UtilityControls';
-import DrawingControls from '@/components/rich-text-editor-toolbar/DrawingControls'; // Import the new DrawingControls
 
 interface RichTextEditorToolbarProps {
   editor: Editor | null;
@@ -69,30 +68,23 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
         editor={editor}
         isDrawingMode={isDrawingMode}
         setIsDrawingMode={setIsDrawingMode}
+        drawingColor={drawingColor}
+        setDrawingColor={setDrawingColor}
+        penSize={penSize}
+        setPenSize={setPenSize}
+        isErasing={isErasing}
+        setIsErasing={setIsErasing}
+        eraserSize={eraserSize}
+        setEraserSize={setEraserSize}
+        clearCanvas={clearCanvas}
+        insertDrawing={insertDrawing}
+        analyzeDrawing={analyzeDrawing}
+        zoomLevel={zoomLevel}
+        setZoomLevel={setZoomLevel}
+        minZoom={minZoom}
+        maxZoom={maxZoom}
+        zoomStep={zoomStep}
       />
-      {isDrawingMode && (
-        <>
-          <Separator orientation="vertical" className="h-6" />
-          <DrawingControls
-            drawingColor={drawingColor}
-            setDrawingColor={setDrawingColor}
-            penSize={penSize}
-            setPenSize={setPenSize}
-            isErasing={isErasing}
-            setIsErasing={setIsErasing}
-            eraserSize={eraserSize}
-            setEraserSize={setEraserSize}
-            clearCanvas={clearCanvas}
-            insertDrawing={insertDrawing}
-            analyzeDrawing={analyzeDrawing}
-            zoomLevel={zoomLevel}
-            setZoomLevel={setZoomLevel}
-            minZoom={minZoom}
-            maxZoom={maxZoom}
-            zoomStep={zoomStep}
-          />
-        </>
-      )}
     </div>
   );
 };
