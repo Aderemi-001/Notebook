@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Quote, Minus, MoreHorizontal } from 'lucide-react';
+import { Quote, Minus, MoreHorizontal, CodeXml } from 'lucide-react'; // New: Import CodeXml for Code Block
 
 interface MoreFormattingControlsProps {
   editor: Editor;
@@ -62,6 +62,24 @@ const MoreFormattingControls: React.FC<MoreFormattingControlsProps> = ({ editor 
                 </Toggle>
               </TooltipTrigger>
               <TooltipContent>Horizontal Rule</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Toggle
+                  size="sm"
+                  pressed={editor.isActive('codeBlock')}
+                  onPressedChange={() => editor.chain().focus().toggleCodeBlock().run()}
+                  disabled={!editor.can().chain().focus().toggleCodeBlock().run()}
+                  aria-label="Toggle code block"
+                >
+                  <CodeXml className="h-4 w-4" />
+                </Toggle>
+              </TooltipTrigger>
+              <TooltipContent>Code Block</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </DropdownMenuItem>

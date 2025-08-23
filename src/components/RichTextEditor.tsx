@@ -5,6 +5,9 @@ import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Image from '@tiptap/extension-image';
+import Underline from '@tiptap/extension-underline'; // New: Import Underline extension
+import TextAlign from '@tiptap/extension-text-align'; // New: Import TextAlign extension
+import Link from '@tiptap/extension-link'; // New: Import Link extension
 import RichTextEditorToolbar from './RichTextEditorToolbar';
 import {
   AlertDialog,
@@ -35,7 +38,7 @@ interface RichTextEditorProps {
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2.0;
 const ZOOM_STEP = 0.1;
-const BASE_PEN_SIZE = 5; // Renamed from BASE_LINE_WIDTH
+const BASE_PEN_SIZE = 5;
 const BASE_ERASER_SIZE = 15;
 
 const generateEraserCursor = (size: number) => {
@@ -67,7 +70,7 @@ const generatePenCursor = () => {
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, labelId, onEditorReady }) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState('#000000');
-  const [penSize, setPenSize] = useState(BASE_PEN_SIZE); // New state for pen size
+  const [penSize, setPenSize] = useState(BASE_PEN_SIZE);
   const [isErasing, setIsErasing] = useState(false);
   const [eraserSize, setEraserSize] = useState(BASE_ERASER_SIZE);
   const [customCursorStyle, setCustomCursorStyle] = useState('crosshair');
@@ -129,6 +132,17 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
         inline: true,
         allowBase64: true,
       }),
+      Underline, // New: Add Underline extension
+      TextAlign.configure({ // New: Add TextAlign extension
+        types: ['heading', 'paragraph'],
+      }),
+      Link.configure({ // New: Add Link extension
+        openOnClick: false,
+        autolink: true,
+        HTMLAttributes: {
+          class: 'text-blue-500 underline hover:text-blue-600',
+        },
+      }),
     ],
     content: content,
     onUpdate: ({ editor }) => {
@@ -154,7 +168,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   } = useDrawingCanvas({
     isDrawingMode,
     drawingColor,
-    penSize, // Pass penSize
+    penSize,
     isErasing,
     eraserSize,
     zoomLevel,
@@ -163,7 +177,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     setPanOffset,
     minZoom: MIN_ZOOM,
     maxZoom: MAX_ZOOM,
-    onCanvasClickDetected: handleCanvasClickDetected, // Pass the new callback
+    onCanvasClickDetected: handleCanvasClickDetected,
   });
 
   // Use the new AI drawing analysis hook
@@ -219,8 +233,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
               setIsDrawingMode={setIsDrawingMode}
               drawingColor={drawingColor}
               setDrawingColor={setDrawingColor}
-              penSize={penSize} // Pass penSize
-              setPenSize={setPenSize} // Pass setPenSize
+              penSize={penSize}
+              setPenSize={setPenSize}
               isErasing={isErasing}
               setIsErasing={setIsErasing}
               eraserSize={eraserSize}

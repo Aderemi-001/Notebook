@@ -7,6 +7,11 @@ import ListFormattingControls from './rich-text-editor-toolbar/ListFormattingCon
 import MoreFormattingControls from './rich-text-editor-toolbar/MoreFormattingControls';
 import UndoRedoControls from './rich-text-editor-toolbar/UndoRedoControls';
 import DrawingControls from './rich-text-editor-toolbar/DrawingControls';
+import HeadingControls from './rich-text-editor-toolbar/HeadingControls'; // New: Import HeadingControls
+import AlignmentControls from './rich-text-editor-toolbar/AlignmentControls'; // New: Import AlignmentControls
+import LinkControls from './rich-text-editor-toolbar/LinkControls'; // New: Import LinkControls
+import ImageControls from './rich-text-editor-toolbar/ImageControls'; // New: Import ImageControls
+import { Separator } from '@/components/ui/separator'; // New: Import Separator
 
 interface RichTextEditorToolbarProps {
   editor: Editor; // Editor is guaranteed to be non-null by parent
@@ -14,12 +19,12 @@ interface RichTextEditorToolbarProps {
   setIsDrawingMode: (mode: boolean) => void;
   drawingColor: string;
   setDrawingColor: (color: string) => void;
-  penSize: number; // New prop
-  setPenSize: (size: number) => void; // New prop
-  isErasing: boolean; // New prop
-  setIsErasing: (erasing: boolean) => void; // New prop
-  eraserSize: number; // New prop
-  setEraserSize: (size: number) => void; // New prop
+  penSize: number;
+  setPenSize: (size: number) => void;
+  isErasing: boolean;
+  setIsErasing: (erasing: boolean) => void;
+  eraserSize: number;
+  setEraserSize: (size: number) => void;
   clearCanvas: () => void;
   insertDrawing: () => void;
   analyzeDrawing: () => void;
@@ -36,8 +41,8 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
   setIsDrawingMode,
   drawingColor,
   setDrawingColor,
-  penSize, // Destructure penSize
-  setPenSize, // Destructure setPenSize
+  penSize,
+  setPenSize,
   isErasing,
   setIsErasing,
   eraserSize,
@@ -51,19 +56,18 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
   maxZoom,
   zoomStep,
 }) => {
-  // The parent component (RichTextEditor) now ensures 'editor' is not null before rendering this component.
-  // So, this check is no longer necessary here.
-
   return (
-    <div className="flex flex-nowrap w-full border-b overflow-x-auto scrollbar-hide px-2 py-1">
+    <div className="flex flex-nowrap w-full border-b overflow-x-auto scrollbar-hide px-2 py-1 items-center gap-1">
       <DrawingModeToggle isDrawingMode={isDrawingMode} setIsDrawingMode={setIsDrawingMode} />
+
+      <Separator orientation="vertical" className="h-6" />
 
       {isDrawingMode ? (
         <DrawingControls
           drawingColor={drawingColor}
           setDrawingColor={setDrawingColor}
-          penSize={penSize} // Pass penSize
-          setPenSize={setPenSize} // Pass setPenSize
+          penSize={penSize}
+          setPenSize={setPenSize}
           isErasing={isErasing}
           setIsErasing={setIsErasing}
           eraserSize={eraserSize}
@@ -79,10 +83,16 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
         />
       ) : (
         <>
+          <HeadingControls editor={editor} />
+          <Separator orientation="vertical" className="h-6" />
           <TextFormattingControls editor={editor} />
           <HighlightControls editor={editor} />
           <ListFormattingControls editor={editor} />
+          <AlignmentControls editor={editor} />
+          <LinkControls editor={editor} />
+          <ImageControls editor={editor} />
           <MoreFormattingControls editor={editor} />
+          <Separator orientation="vertical" className="h-6" />
           <UndoRedoControls editor={editor} />
         </>
       )}
