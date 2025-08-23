@@ -60,6 +60,7 @@ export const Header: React.FC = () => {
                 <Link to="/groups">My Groups</Link>
               </Button>
 
+              {/* User Dropdown - now correctly inside the desktop-only div */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -100,7 +101,7 @@ export const Header: React.FC = () => {
               </DropdownMenu>
             </div>
 
-            {/* Mobile Sheet Menu */}
+            {/* Mobile Sheet Menu - remains visible on mobile */}
             <Sheet>
               <SheetTrigger asChild className="md:hidden">
                 <Button variant="ghost" size="icon">
