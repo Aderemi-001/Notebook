@@ -16,13 +16,13 @@ const TextEditorContent: React.FC<TextEditorContentProps> = ({ editor, editable,
   return (
     <div className={cn(
       "absolute inset-0",
-      isDrawingMode ? "pointer-events-none z-0 opacity-50" : "z-10 opacity-100", // Revert to original z-index logic
+      isDrawingMode ? "pointer-events-none z-0 opacity-50" : "z-10 opacity-100",
       "transition-opacity duration-300"
     )}>
       <EditorContent 
         editor={editor} 
         className={cn(
-          'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4',
+          'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4 h-full',
           'user-select-text touch-action-auto',
           !editable && 'bg-muted/50 cursor-not-allowed',
           className
