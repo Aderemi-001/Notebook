@@ -43,7 +43,7 @@ export const Header: React.FC = () => {
   const navItems = [
     { name: "Daily Review", href: "/daily-review", icon: <CalendarDays className="mr-2 h-4 w-4" /> },
     { name: "My Study Sets", href: "/", icon: <BookOpen className="mr-2 h-4 w-4" /> },
-    { name: "My Notes", href: "/notes", icon: <NotebookPen className="mr-2 h-4 w-4" /> },
+    { name: "My Notes", href: "/notes-under-construction", icon: <NotebookPen className="mr-2 h-4 w-4" /> }, // Updated link
     { name: "My Groups", href: "/groups", icon: <Group className="mr-2 h-4 w-4" /> },
     { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> },
     { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> },
@@ -71,7 +71,7 @@ export const Header: React.FC = () => {
                 <Link to="/">My Study Sets</Link>
               </Button>
               <Button variant="ghost" asChild>
-                <Link to="/notes">My Notes</Link>
+                <Link to="/notes-under-construction">My Notes</Link> {/* Updated link */}
               </Button>
               <Button variant="ghost" asChild>
                 <Link to="/groups">My Groups</Link>

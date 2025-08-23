@@ -18,9 +18,9 @@ import GenerateEssayQuestions from "@/pages/GenerateEssayQuestions";
 import PastEssayQuestions from "@/pages/PastEssayQuestions";
 import EssayPractice from "@/pages/EssayPractice";
 import Settings from "@/pages/Settings";
-import NotesIndex from "@/pages/NotesIndex";
-import CreateNote from "@/pages/CreateNote";
-import EditNote from "@/pages/EditNote";
+// Removed: import NotesIndex from "@/pages/NotesIndex";
+// Removed: import CreateNote from "@/pages/CreateNote";
+// Removed: import EditNote from "@/pages/EditNote";
 import Statistics from "@/pages/Statistics";
 import DailyReview from "@/pages/DailyReview";
 import CreateGroup from "@/pages/CreateGroup";
@@ -40,6 +40,7 @@ import Chatbot from "./Chatbot";
 import { supabase } from "@/integrations/supabase/client";
 import CreateSet from "@/pages/CreateSet";
 import TakeExam from "@/pages/TakeExam";
+import NotesUnderConstruction from "@/pages/NotesUnderConstruction"; // Import the new component
 
 const AppContent: React.FC = () => {
   const { data: dueCardsCount, isLoading: isLoadingDueCards } = useDueCardsCount();
@@ -211,22 +212,23 @@ const AppContent: React.FC = () => {
             />
             <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} />
             <Route path="/login" element={<Login />} />
+            {/* Notes routes now point to Under Construction page */}
             <Route
               path="/notes"
               element={
-                <AuthLayout><NotesIndex /></AuthLayout>
+                <AuthLayout><NotesUnderConstruction /></AuthLayout>
               }
             />
             <Route
               path="/create-note"
               element={
-                <AuthLayout><CreateNote /></AuthLayout>
+                <AuthLayout><NotesUnderConstruction /></AuthLayout>
               }
             />
             <Route
               path="/notes/:noteId/edit"
               element={
-                <AuthLayout><EditNote /></AuthLayout>
+                <AuthLayout><NotesUnderConstruction /></AuthLayout>
               }
             />
             <Route
@@ -273,7 +275,6 @@ const AppContent: React.FC = () => {
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          {/* Removed duplicate Toaster richColors /> */}
           {isLoggedIn && <Chatbot />}
         </AuthProvider>
       </BrowserRouter>

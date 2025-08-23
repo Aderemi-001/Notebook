@@ -160,6 +160,8 @@ const CreateNote: React.FC = () => {
     }
   };
 
+  // Removed isDrawingFeatureUnderConstruction = true;
+
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
@@ -239,9 +241,9 @@ const CreateNote: React.FC = () => {
               type="button"
               variant={activeView === 'drawing' ? 'default' : 'outline'}
               onClick={() => {
-                setActiveView('drawing');
+                showError("The drawing pad is currently under construction."); // Show error directly
               }}
-              className="flex-1"
+              className="flex-1 text-muted-foreground cursor-not-allowed" // Always disabled and styled as such
             >
               <ImageIcon className="mr-2 h-4 w-4" /> Drawing Pad
             </Button>

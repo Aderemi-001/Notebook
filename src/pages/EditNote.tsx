@@ -25,7 +25,7 @@ import { common, createLowlight } from "lowlight";
 // New modular imports
 import NoteFormFields from "@/components/notes/NoteFormFields";
 import NoteDrawingSection from "@/components/notes/NoteDrawingSection";
-// Removed: import { cn } from "@/lib/utils";
+// Removed: import { cn } from "@/lib/utils"; // cn is not used in this file
 
 const lowlight = createLowlight(common);
 
@@ -39,11 +39,11 @@ type EditNoteFormValues = z.infer<typeof formSchema>;
 const EditNote: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth(); // Keep useAuth for user context
+  const { user } = useAuth();
 
   const [richTextContent, setRichTextContent] = useState<string>("");
   const [drawingUrl, setDrawingUrl] = useState<string | undefined>(undefined);
-  const [isNoteDataLoading, setIsNoteDataLoading] = useState(true); // Renamed 'loading'
+  const [isNoteDataLoading, setIsNoteDataLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const editorRef = useRef<Editor | null>(null);
 
@@ -60,7 +60,7 @@ const EditNote: React.FC = () => {
   useEffect(() => {
     const fetchNote = async () => {
       if (!noteId) return;
-      setIsNoteDataLoading(true); // Use renamed state
+      setIsNoteDataLoading(true);
       try {
         const { data, error } = await supabase
           .from("notes")
@@ -98,7 +98,7 @@ const EditNote: React.FC = () => {
         showError(`Failed to fetch note: ${error.message}`);
         navigate("/notes");
       } finally {
-        setIsNoteDataLoading(false); // Use renamed state
+        setIsNoteDataLoading(false);
       }
     };
 
@@ -193,7 +193,7 @@ const EditNote: React.FC = () => {
     }
   };
 
-  if (isNoteDataLoading) { // Use renamed state
+  if (isNoteDataLoading) {
     return <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center">Loading note...</div>;
   }
 
@@ -225,9 +225,9 @@ const EditNote: React.FC = () => {
               type="button"
               variant={activeView === 'drawing' ? 'default' : 'outline'}
               onClick={() => {
-                setActiveView('drawing');
+                showError("The drawing pad is currently under construction."); // Show error directly
               }}
-              className="flex-1"
+              className="flex-1 text-muted-foreground cursor-not-allowed" // Always disabled and styled as such
             >
               <ImageIcon className="mr-2 h-4 w-4" /> Drawing Pad
             </Button>
