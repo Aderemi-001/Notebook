@@ -1,6 +1,6 @@
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { BookOpen, Clock, AlertCircle, Globe } from "lucide-react";
+import { BookOpen, Clock, AlertCircle, Globe, PlusCircle, CalendarDays } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button"; // Import Button
 
 interface StudySet {
   id: string;
@@ -186,9 +187,6 @@ const Index = () => {
     );
   }, [studySets, searchTerm]);
 
-  // The handleSignOut function is now handled by the main Header component.
-  // This function is no longer needed here.
-
   if (isErrorStudySets) {
     return (
       <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
@@ -211,7 +209,18 @@ const Index = () => {
     <div className="container mx-auto py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Home</h1>
-        {/* Removed DropdownMenu from here as it's now in the main Header */}
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/create" className="flex items-center">
+              <PlusCircle className="mr-2 h-4 w-4" /> Create Set
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link to="/daily-review" className="flex items-center">
+              <CalendarDays className="mr-2 h-4 w-4" /> Daily Review
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -294,6 +303,20 @@ const Index = () => {
               <p className="text-muted-foreground mt-2">
                 {searchTerm ? "Try a different search term or " : ""}Click "Create Set" to get started.
               </p>
+              {!searchTerm && (
+                <div className="flex flex-col sm:flex-row gap-4 justify-center mt-4">
+                  <Button asChild>
+                    <Link to="/create">
+                      <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to="/daily-review">
+                      <CalendarDays className="mr-2 h-4 w-4" /> Daily Review
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
