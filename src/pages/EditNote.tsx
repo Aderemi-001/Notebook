@@ -25,7 +25,7 @@ import { common, createLowlight } from "lowlight";
 // New modular imports
 import NoteFormFields from "@/components/notes/NoteFormFields";
 import NoteDrawingSection from "@/components/notes/NoteDrawingSection";
-import { cn } from "@/lib/utils";
+// Removed: import { cn } from "@/lib/utils";
 
 const lowlight = createLowlight(common);
 
@@ -39,11 +39,11 @@ type EditNoteFormValues = z.infer<typeof formSchema>;
 const EditNote: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useAuth(); // Keep useAuth for user context
 
   const [richTextContent, setRichTextContent] = useState<string>("");
   const [drawingUrl, setDrawingUrl] = useState<string | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
+  const [isNoteDataLoading, setIsNoteDataLoading] = useState(true); // Renamed 'loading'
   const [isSaving, setIsSaving] = useState(false);
   const editorRef = useRef<Editor | null>(null);
 
@@ -60,7 +60,7 @@ const EditNote: React.FC = () => {
   useEffect(() => {
     const fetchNote = async () => {
       if (!noteId) return;
-      setLoading(true);
+      setIsNoteDataLoading(true); // Use renamed state
       try {
         const { data, error } = await supabase
           .from("notes")
@@ -98,7 +98,7 @@ const EditNote: React.FC = () => {
         showError(`Failed to fetch note: ${error.message}`);
         navigate("/notes");
       } finally {
-        setLoading(false);
+        setIsNoteDataLoading(false); // Use renamed state
       }
     };
 
@@ -193,11 +193,9 @@ const EditNote: React.FC = () => {
     }
   };
 
-  if (loading) {
+  if (isNoteDataLoading) { // Use renamed state
     return <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center">Loading note...</div>;
   }
-
-  const isDrawingFeatureUnderConstruction = true;
 
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
@@ -227,13 +225,9 @@ const EditNote: React.FC = () => {
               type="button"
               variant={activeView === 'drawing' ? 'default' : 'outline'}
               onClick={() => {
-                if (!isDrawingFeatureUnderConstruction) {
-                  setActiveView('drawing');
-                } else {
-                  showError("The drawing pad is currently under construction.");
-                }
+                setActiveView('drawing');
               }}
-              className={cn("flex-1", isDrawingFeatureUnderConstruction && "text-muted-foreground cursor-not-allowed")}
+              className="flex-1"
             >
               <ImageIcon className="mr-2 h-4 w-4" /> Drawing Pad
             </Button>

@@ -34,7 +34,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import NoteDrawingSection from "@/components/notes/NoteDrawingSection";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils"; // Import cn utility
+// Removed: import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -160,8 +160,6 @@ const CreateNote: React.FC = () => {
     }
   };
 
-  const isDrawingFeatureUnderConstruction = true; // Flag to control drawing feature visibility
-
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
@@ -241,14 +239,9 @@ const CreateNote: React.FC = () => {
               type="button"
               variant={activeView === 'drawing' ? 'default' : 'outline'}
               onClick={() => {
-                if (!isDrawingFeatureUnderConstruction) {
-                  setActiveView('drawing');
-                } else {
-                  showError("The drawing pad is currently under construction.");
-                }
+                setActiveView('drawing');
               }}
-              // disabled={isDrawingFeatureUnderConstruction} // Removed disabled prop
-              className={cn("flex-1", isDrawingFeatureUnderConstruction && "text-muted-foreground cursor-not-allowed")}
+              className="flex-1"
             >
               <ImageIcon className="mr-2 h-4 w-4" /> Drawing Pad
             </Button>
