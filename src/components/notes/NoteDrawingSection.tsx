@@ -5,13 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Pencil, Eraser, ZoomIn, ZoomOut, Move, Brain, Loader2 } from 'lucide-react';
-import TextEditorContent from "@/components/TextEditorContent";
+// import TextEditorContent from "@/components/TextEditorContent"; // This import is no longer needed here
 import { Editor } from "@tiptap/react";
 import { useDrawingCanvas } from "@/hooks/use-drawing-canvas";
 import { useAIDrawingAnalysis } from "@/hooks/use-ai-drawing-analysis";
 import { useAuth } from '@/hooks/useAuth';
 import { showError } from '@/utils/toast';
-import AIExtractedTextDialog from './AIExtractedTextDialog'; // Import the new dialog
+import AIExtractedTextDialog from './AIExtractedTextDialog';
 
 interface NoteDrawingSectionProps {
   editorRef: React.MutableRefObject<Editor | null>;
@@ -102,8 +102,7 @@ const NoteDrawingSection: React.FC<NoteDrawingSectionProps> = ({
     <div className="flex h-full flex-col p-4">
       <Label className="text-lg mb-2 block">Drawing Canvas</Label>
       <div className="relative border rounded-md overflow-hidden flex-grow bg-white">
-        <TextEditorContent editor={editorRef.current} editable={false} isDrawingMode={toolMode !== 'pan'} />
-        {/* Added bg-white here */}
+        {/* TextEditorContent was removed from here as it was obscuring the canvas */}
         <canvas
           ref={canvasRef}
           className="absolute inset-0 cursor-crosshair touch-none bg-white"
