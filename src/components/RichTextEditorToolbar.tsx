@@ -56,6 +56,7 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { HexColorPicker } from 'react-colorful';
+import { showError, showSuccess } from '@/utils/toast'; // Re-added toast imports
 import {
   Select,
   SelectContent,
@@ -242,9 +243,25 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
   }, [editor, editor.state.selection, isHighlightPopoverOpen, recentlyUsedColors, pinnedColors, customPickerColor]);
 
   const addImage = useCallback(() => {
-    const url = window.prompt('URL');
-    if (url) {
+    const url = window.prompt('Enter image URL');
+    if (!url) {
+      showError("Image URL cannot be empty.");
+      return;
+    }
+
+    // Basic URL validation for common image file extensions
+    const imageRegex = /\.(jpeg|jpg|gif|png|webp|svg)$/i;
+    if (!imageRegex.test(url)) {
+      showError("Invalid image URL format. Please provide a direct link to an image file (e.g., .png, .jpg).");
+      return;
+    }
+
+    try {
       editor.chain().focus().setImage({ src: url }).run();
+      showSuccess("Image inserted successfully!");
+    } catch (error) {
+      console.error("Error inserting image:", error);
+      showError("Failed to insert image. Please check the URL or try again.");
     }
   }, [editor]);
 
@@ -581,221 +598,249 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
                   <DropdownMenuSeparator />
 
                   {/* Lists */}
-                  <DropdownMenuItem className="flex items-center gap-1 p-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Toggle
-                          size="sm"
-                          pressed={editor.isActive('bulletList')}
-                          onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
-                          disabled={!editor.can().chain().focus().toggleBulletList().run()}
-                          aria-label="Toggle bullet list"
-                          className="rounded-lg"
-                        >
-                          <List className="h-4 w-4" />
-                        </Toggle>
-                      </TooltipTrigger>
-                      <TooltipContent>Bullet List</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Toggle
-                          size="sm"
-                          pressed={editor.isActive('orderedList')}
-                          onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
-                          disabled={!editor.can().chain().focus().toggleOrderedList().run()}
-                          aria-label="Toggle ordered list"
-                          className="rounded-lg"
-                        >
-                          <ListOrdered className="h-4 w-4" />
-                        </Toggle>
-                      </TooltipTrigger>
-                      <TooltipContent>Ordered List</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Toggle
-                          size="sm"
-                          pressed={editor.isActive('taskList')}
-                          onPressedChange={() => editor.chain().focus().toggleTaskList().run()}
-                          disabled={!editor.can().chain().focus().toggleTaskList().run()}
-                          aria-label="Toggle todo list"
-                          className="rounded-lg"
-                        >
-                          <ListTodo className="h-4 w-4" />
-                        </Toggle>
-                      </TooltipTrigger>
-                      <TooltipContent>Todo List</TooltipContent>
-                    </Tooltip>
-                  </DropdownMenuItem>
+                  <div className="flex items-center gap-1 p-1">
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Toggle
+                            size="sm"
+                            pressed={editor.isActive('bulletList')}
+                            onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
+                            disabled={!editor.can().chain().focus().toggleBulletList().run()}
+                            aria-label="Toggle bullet list"
+                            className="rounded-lg"
+                          >
+                            <List className="h-4 w-4" />
+                          </Toggle>
+                        </TooltipTrigger>
+                        <TooltipContent>Bullet List</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Toggle
+                            size="sm"
+                            pressed={editor.isActive('orderedList')}
+                            onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
+                            disabled={!editor.can().chain().focus().toggleOrderedList().run()}
+                            aria-label="Toggle ordered list"
+                            className="rounded-lg"
+                          >
+                            <ListOrdered className="h-4 w-4" />
+                          </Toggle>
+                        </TooltipTrigger>
+                        <TooltipContent>Ordered List</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Toggle
+                            size="sm"
+                            pressed={editor.isActive('taskList')}
+                            onPressedChange={() => editor.chain().focus().toggleTaskList().run()}
+                            disabled={!editor.can().chain().focus().toggleTaskList().run()}
+                            aria-label="Toggle todo list"
+                            className="rounded-lg"
+                          >
+                            <ListTodo className="h-4 w-4" />
+                          </Toggle>
+                        </TooltipTrigger>
+                        <TooltipContent>Todo List</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                  </div>
                   <DropdownMenuSeparator />
 
                   {/* Alignment */}
-                  <DropdownMenuItem className="flex items-center gap-1 p-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Toggle
-                          size="sm"
-                          pressed={editor.isActive({ textAlign: 'left' })}
-                          onPressedChange={() => editor.chain().focus().setTextAlign('left').run()}
-                          aria-label="Align left"
-                          className="rounded-lg"
-                        >
-                          <AlignLeft className="h-4 w-4" />
-                        </Toggle>
-                      </TooltipTrigger>
-                      <TooltipContent>Align Left</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Toggle
-                          size="sm"
-                          pressed={editor.isActive({ textAlign: 'center' })}
-                          onPressedChange={() => editor.chain().focus().setTextAlign('center').run()}
-                          aria-label="Align center"
-                          className="rounded-lg"
+                  <div className="flex items-center gap-1 p-1">
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Toggle
+                            size="sm"
+                            pressed={editor.isActive({ textAlign: 'left' })}
+                            onPressedChange={() => editor.chain().focus().setTextAlign('left').run()}
+                            aria-label="Align left"
+                            className="rounded-lg"
+                          >
+                            <AlignLeft className="h-4 w-4" />
+                          </Toggle>
+                        </TooltipTrigger>
+                        <TooltipContent>Align Left</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Toggle
+                            size="sm"
+                            pressed={editor.isActive({ textAlign: 'center' })}
+                            onPressedChange={() => editor.chain().focus().setTextAlign('center').run()}
+                            aria-label="Align center"
+                            className="rounded-lg"
                         >
                           <AlignCenter className="h-4 w-4" />
                         </Toggle>
                       </TooltipTrigger>
                       <TooltipContent>Align Center</TooltipContent>
                     </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Toggle
-                          size="sm"
-                          pressed={editor.isActive({ textAlign: 'right' })}
-                          onPressedChange={() => editor.chain().focus().setTextAlign('right').run()}
-                          aria-label="Align right"
-                          className="rounded-lg"
-                        >
-                          <AlignRight className="h-4 w-4" />
-                        </Toggle>
-                      </TooltipTrigger>
-                      <TooltipContent>Align Right</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Toggle
-                          size="sm"
-                          pressed={editor.isActive({ textAlign: 'justify' })}
-                          onPressedChange={() => editor.chain().focus().setTextAlign('justify').run()}
-                          aria-label="Align justify"
-                          className="rounded-lg"
-                        >
-                          <AlignJustify className="h-4 w-4" />
-                        </Toggle>
-                      </TooltipTrigger>
-                      <TooltipContent>Align Justify</TooltipContent>
-                    </Tooltip>
-                  </DropdownMenuItem>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Toggle
+                            size="sm"
+                            pressed={editor.isActive({ textAlign: 'right' })}
+                            onPressedChange={() => editor.chain().focus().setTextAlign('right').run()}
+                            aria-label="Align right"
+                            className="rounded-lg"
+                          >
+                            <AlignRight className="h-4 w-4" />
+                          </Toggle>
+                        </TooltipTrigger>
+                        <TooltipContent>Align Right</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Toggle
+                            size="sm"
+                            pressed={editor.isActive({ textAlign: 'justify' })}
+                            onPressedChange={() => editor.chain().focus().setTextAlign('justify').run()}
+                            aria-label="Align justify"
+                            className="rounded-lg"
+                          >
+                            <AlignJustify className="h-4 w-4" />
+                          </Toggle>
+                        </TooltipTrigger>
+                        <TooltipContent>Align Justify</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                  </div>
                   <DropdownMenuSeparator />
 
                   {/* Other Block Formats */}
-                  <DropdownMenuItem className="flex items-center gap-1 p-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Toggle
-                          size="sm"
-                          pressed={editor.isActive('blockquote')}
-                          onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
-                          disabled={!editor.can().chain().focus().toggleBlockquote().run()}
-                          aria-label="Toggle blockquote"
-                          className="rounded-lg"
-                        >
-                          <Quote className="h-4 w-4" />
-                        </Toggle>
-                      </TooltipTrigger>
-                      <TooltipContent>Blockquote</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Toggle
-                          size="sm"
-                          onPressedChange={() => editor.chain().focus().setHorizontalRule().run()}
-                          disabled={!editor.can().chain().focus().setHorizontalRule().run()}
-                          aria-label="Insert horizontal rule"
-                          className="rounded-lg"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Toggle>
-                      </TooltipTrigger>
-                      <TooltipContent>Horizontal Rule</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Toggle
-                          size="sm"
-                          pressed={editor.isActive('codeBlock')}
-                          onPressedChange={() => editor.chain().focus().toggleCodeBlock().run()}
-                          disabled={!editor.can().chain().focus().toggleCodeBlock().run()}
-                          aria-label="Toggle code block"
-                          className="rounded-lg"
-                        >
-                          <CodeXml className="h-4 w-4" />
-                        </Toggle>
-                      </TooltipTrigger>
-                      <TooltipContent>Code Block</TooltipContent>
-                    </Tooltip>
-                  </DropdownMenuItem>
+                  <div className="flex items-center gap-1 p-1">
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Toggle
+                            size="sm"
+                            pressed={editor.isActive('blockquote')}
+                            onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
+                            disabled={!editor.can().chain().focus().toggleBlockquote().run()}
+                            aria-label="Toggle blockquote"
+                            className="rounded-lg"
+                          >
+                            <Quote className="h-4 w-4" />
+                          </Toggle>
+                        </TooltipTrigger>
+                        <TooltipContent>Blockquote</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Toggle
+                            size="sm"
+                            onPressedChange={() => editor.chain().focus().setHorizontalRule().run()}
+                            disabled={!editor.can().chain().focus().setHorizontalRule().run()}
+                            aria-label="Insert horizontal rule"
+                            className="rounded-lg"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Toggle>
+                        </TooltipTrigger>
+                        <TooltipContent>Horizontal Rule</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Toggle
+                            size="sm"
+                            pressed={editor.isActive('codeBlock')}
+                            onPressedChange={() => editor.chain().focus().toggleCodeBlock().run()}
+                            disabled={!editor.can().chain().focus().toggleCodeBlock().run()}
+                            aria-label="Toggle code block"
+                            className="rounded-lg"
+                          >
+                            <CodeXml className="h-4 w-4" />
+                          </Toggle>
+                        </TooltipTrigger>
+                        <TooltipContent>Code Block</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                  </div>
                   <DropdownMenuSeparator />
 
                   {/* Image and Undo/Redo */}
-                  <DropdownMenuItem className="flex items-center gap-1 p-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" onClick={addImage} aria-label="Add image" className="rounded-lg">
-                          <Image className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Add Image</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => editor.chain().focus().undo().run()}
-                          disabled={!editor.can().undo()}
-                          aria-label="Undo"
-                          className="rounded-lg"
-                        >
-                          <Undo className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Undo</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => editor.chain().focus().redo().run()}
-                          disabled={!editor.can().redo()}
-                          aria-label="Redo"
-                          className="rounded-lg"
-                        >
-                          <Redo className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Redo</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => editor.chain().focus().unsetLink().run()}
-                          disabled={!editor.isActive('link')}
-                          aria-label="Unset link"
-                          className="rounded-lg"
-                        >
-                          <Unlink className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Unset Link</TooltipContent>
-                    </Tooltip>
-                  </DropdownMenuItem>
+                  <div className="flex items-center gap-1 p-1">
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="sm" onClick={addImage} aria-label="Add image" className="rounded-lg">
+                            <Image className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Add Image</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => editor.chain().focus().undo().run()}
+                            disabled={!editor.can().undo()}
+                            aria-label="Undo"
+                            className="rounded-lg"
+                          >
+                            <Undo className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Undo</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => editor.chain().focus().redo().run()}
+                            disabled={!editor.can().redo()}
+                            aria-label="Redo"
+                            className="rounded-lg"
+                          >
+                            <Redo className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Redo</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => editor.chain().focus().unsetLink().run()}
+                            disabled={!editor.isActive('link')}
+                            aria-label="Unset link"
+                            className="rounded-lg"
+                          >
+                            <Unlink className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Unset Link</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuItem>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
