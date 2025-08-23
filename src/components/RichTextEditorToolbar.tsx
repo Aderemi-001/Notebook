@@ -9,7 +9,7 @@ import UndoRedoControls from './rich-text-editor-toolbar/UndoRedoControls';
 import DrawingControls from './rich-text-editor-toolbar/DrawingControls';
 
 interface RichTextEditorToolbarProps {
-  editor: Editor | null;
+  editor: Editor; // Editor is guaranteed to be non-null by parent
   isDrawingMode: boolean;
   setIsDrawingMode: (mode: boolean) => void;
   drawingColor: string;
@@ -47,9 +47,8 @@ const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({
   maxZoom,
   zoomStep,
 }) => {
-  if (!editor) {
-    return null;
-  }
+  // The parent component (RichTextEditor) now ensures 'editor' is not null before rendering this component.
+  // So, this check is no longer necessary here.
 
   return (
     <div className="flex flex-nowrap w-full border-b overflow-x-auto scrollbar-hide px-2 py-1">

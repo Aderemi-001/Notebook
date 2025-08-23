@@ -397,65 +397,65 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     showSuccess("AI transcription not applied.");
   }, []);
 
-  if (!editor) {
-    return null;
-  }
-
   return (
     <div className="w-full">
-      {editable && (
-        <RichTextEditorToolbar
-          editor={editor}
-          isDrawingMode={isDrawingMode}
-          setIsDrawingMode={setIsDrawingMode}
-          drawingColor={drawingColor}
-          setDrawingColor={setDrawingColor}
-          isErasing={isErasing}
-          setIsErasing={setIsErasing}
-          eraserSize={eraserSize}
-          setEraserSize={setEraserSize}
-          clearCanvas={clearCanvas}
-          insertDrawing={insertDrawing}
-          analyzeDrawing={analyzeDrawing}
-          zoomLevel={zoomLevel}
-          setZoomLevel={setZoomLevel}
-          minZoom={MIN_ZOOM}
-          maxZoom={MAX_ZOOM}
-          zoomStep={ZOOM_STEP}
-        />
-      )}
-      <div className="relative border rounded-md overflow-hidden" style={{ height: '300px' }}>
-        <div className={cn(
-          "absolute inset-0",
-          isDrawingMode ? "pointer-events-none z-0 opacity-50" : "z-10 opacity-100",
-          "transition-opacity duration-300"
-        )}>
-          <EditorContent editor={editor} />
-        </div>
-
-        <canvas
-          ref={canvasRef}
-          className={cn(
-            "absolute top-0 left-0 bg-white dark:bg-gray-900",
-            isDrawingMode ? "z-20 pointer-events-auto" : "z-0 pointer-events-none"
+      {editor && ( // Conditionally render toolbar and editor content when editor is ready
+        <>
+          {editable && (
+            <RichTextEditorToolbar
+              editor={editor}
+              isDrawingMode={isDrawingMode}
+              setIsDrawingMode={setIsDrawingMode}
+              drawingColor={drawingColor}
+              setDrawingColor={setDrawingColor}
+              isErasing={isErasing}
+              setIsErasing={setIsErasing}
+              eraserSize={eraserSize}
+              setEraserSize={setEraserSize}
+              clearCanvas={clearCanvas}
+              insertDrawing={insertDrawing}
+              analyzeDrawing={analyzeDrawing}
+              zoomLevel={zoomLevel}
+              setZoomLevel={setZoomLevel}
+              minZoom={MIN_ZOOM}
+              maxZoom={MAX_ZOOM}
+              zoomStep={ZOOM_STEP}
+            />
           )}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={endDrawing}
-          onMouseLeave={endDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={endDrawing}
-          style={{ 
-            transform: `scale(${zoomLevel})`, 
-            transformOrigin: 'top left',
-            touchAction: 'none',
-            width: '100%',
-            height: '100%',
-            cursor: customCursorStyle,
-          }}
-        />
-      </div>
+          <div className="relative border rounded-md overflow-hidden" style={{ height: '300px' }}>
+            <div className={cn(
+              "absolute inset-0",
+              isDrawingMode ? "pointer-events-none z-0 opacity-50" : "z-10 opacity-100",
+              "transition-opacity duration-300"
+            )}>
+              <EditorContent editor={editor} />
+            </div>
+
+            <canvas
+              ref={canvasRef}
+              className={cn(
+                "absolute top-0 left-0 bg-white dark:bg-gray-900",
+                isDrawingMode ? "z-20 pointer-events-auto" : "z-0 pointer-events-none"
+              )}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={endDrawing}
+              onMouseLeave={endDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={endDrawing}
+              style={{ 
+                transform: `scale(${zoomLevel})`, 
+                transformOrigin: 'top left',
+                touchAction: 'none',
+                width: '100%',
+                height: '100%',
+                cursor: customCursorStyle,
+              }}
+            />
+          </div>
+        </>
+      )}
 
       <AlertDialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
         <AlertDialogContent>
