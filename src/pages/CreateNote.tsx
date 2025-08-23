@@ -2,12 +2,11 @@ import React, { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { NotebookCard, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/NotebookCard";
-import { ArrowLeft, Brain, Save, Loader2, FileText, Pencil, Eraser, ZoomIn, ZoomOut, Move, TextCursorInput, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, FileText, Save, Loader2, TextCursorInput, Image as ImageIcon } from "lucide-react";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { Editor } from "@tiptap/react";
 import { useAIDrawingAnalysis } from "@/hooks/use-ai-drawing-analysis";
@@ -21,10 +20,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import TextEditorContent from "@/components/TextEditorContent";
-import { Slider } from "@/components/ui/slider";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useDrawingCanvas } from "@/hooks/use-drawing-canvas";
 import {
   Select,
   SelectContent,
@@ -38,6 +33,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import NoteDrawingSection from "@/components/notes/NoteDrawingSection"; // Import NoteDrawingSection
+import { Input } from "@/components/ui/input"; // Added missing import for Input
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -77,10 +73,8 @@ const CreateNote: React.FC = () => {
     showReplaceDialog,
     setShowReplaceDialog,
     textToReplace,
-    analyzeDrawing,
     handleConfirmReplace,
     handleCancelReplace,
-    isAnalyzing,
   } = useAIDrawingAnalysis({ editor: editorRef.current, insertTextIntoEditor });
 
   const handleSummarizeNote = async () => {
