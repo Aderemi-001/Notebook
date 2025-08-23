@@ -28,8 +28,8 @@ import GroupsIndex from "@/pages/GroupsIndex";
 import EditGroup from "@/pages/EditGroup";
 import GroupDetail from "@/pages/GroupDetail";
 import Collaborations from "@/pages/Collaborations";
-import ExamsIndex from "@/pages/ExamsIndex"; // New import
-import EssayIndex from "@/pages/EssayIndex"; // New import
+import ExamsIndex from "@/pages/ExamsIndex";
+import EssayIndex from "@/pages/EssayIndex";
 import AuthLayout from "@/layouts/AuthLayout";
 import * as React from "react";
 import { useDueCardsCount } from "@/hooks/use-due-cards-count";
@@ -39,7 +39,7 @@ import { format } from 'date-fns';
 import Chatbot from "./Chatbot";
 import { supabase } from "@/integrations/supabase/client";
 import CreateSet from "@/pages/CreateSet";
-import TakeExam from "@/pages/TakeExam"; // This import is actually used in the TakeExam route
+import TakeExam from "@/pages/TakeExam";
 
 const AppContent: React.FC = () => {
   const { data: dueCardsCount, isLoading: isLoadingDueCards } = useDueCardsCount();
@@ -72,29 +72,32 @@ const AppContent: React.FC = () => {
       const today = format(new Date(), 'yyyy-MM-dd');
 
       if (preferences.enable_review_reminders && dueCardsCount > 0 && lastReminderShownDate !== today) {
-        toast.info(
-          `You have ${dueCardsCount} cards due for review!`,
-          {
-            description: "Click here to start studying.",
-            action: {
-              label: "Study Now",
-              onClick: () => {
-                window.location.href = "/daily-review";
+        // Defer the toast display to prevent React warnings
+        setTimeout(() => {
+          toast.info(
+            `You have ${dueCardsCount} cards due for review!`,
+            {
+              description: "Click here to start studying.",
+              action: {
+                label: "Study Now",
+                onClick: () => {
+                  window.location.href = "/daily-review";
+                  localStorage.setItem('lastDailyReviewReminderDate', today);
+                  setLastReminderShownDate(today);
+                },
+              },
+              duration: 10000,
+              onDismiss: () => {
                 localStorage.setItem('lastDailyReviewReminderDate', today);
                 setLastReminderShownDate(today);
               },
-            },
-            duration: 10000,
-            onDismiss: () => {
-              localStorage.setItem('lastDailyReviewReminderDate', today);
-              setLastReminderShownDate(today);
-            },
-            onAutoClose: () => {
-              localStorage.setItem('lastDailyReviewReminderDate', today);
-              setLastReminderShownDate(today);
-            },
-          }
-        );
+              onAutoClose: () => {
+                localStorage.setItem('lastDailyReviewReminderDate', today);
+                setLastReminderShownDate(today);
+              },
+            }
+          );
+        }, 0); // 0ms delay to defer
       } else if (dueCardsCount === 0 && lastReminderShownDate !== null) {
         localStorage.removeItem('lastDailyReviewReminderDate');
         setLastReminderShownDate(null);
@@ -104,7 +107,7 @@ const AppContent: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <Toaster richColors />
+      <Toaster richColors /> {/* Keep this one */}
       <BrowserRouter future={{ v7_relativeSplatPath: true }}>
         <AuthProvider>
           <Routes>
@@ -270,7 +273,7 @@ const AppContent: React.FC = () => {
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <Toaster richColors />
+          {/* Removed duplicate Toaster richColors /> */}
           {isLoggedIn && <Chatbot />}
         </AuthProvider>
       </BrowserRouter>
