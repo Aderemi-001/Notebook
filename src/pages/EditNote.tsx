@@ -28,6 +28,17 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"; // 
 import { Pencil, Eraser, ZoomIn, ZoomOut, Move } from 'lucide-react'; // Import icons
 import { useDrawingCanvas } from "@/hooks/use-drawing-canvas"; // Import useDrawingCanvas
 
+// Tiptap imports for content conversion
+import { generateHTML } from '@tiptap/html';
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import LinkExtension from '@tiptap/extension-link'; // Renamed to avoid conflict with lucide-react Link
+import Highlight from '@tiptap/extension-highlight';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from "lowlight";
+
+const lowlight = createLowlight(common);
+
 const EditNote: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
@@ -104,7 +115,22 @@ const EditNote: React.FC = () => {
 
         if (data) {
           setTitle(data.title);
-          setRichTextContent(data.content ? JSON.stringify(data.content) : ""); // Store as JSON string
+          // Convert JSON content to HTML string for the RichTextEditor
+          if (data.content) {
+            const htmlContent = generateHTML(data.content, [
+              StarterKit.configure({
+                heading: { levels: [1, 2, 3] },
+                codeBlock: false,
+              }),
+              Image.configure({ inline: true, allowBase64: true }),
+              LinkExtension.configure({ openOnClick: false, autolink: true }),
+              Highlight.configure({ multicolor: true }),
+              CodeBlockLowlight.configure({ lowlight }),
+            ]);
+            setRichTextContent(htmlContent);
+          } else {
+            setRichTextContent("");
+          }
           setDrawingUrl(data.drawing_url || undefined);
         }
       } catch (error: any) {
