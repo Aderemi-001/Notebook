@@ -126,8 +126,16 @@ const getPlainTextPreview = (jsonContent: JSONContent, maxLength: number = 150):
       }),
       Highlight.configure({ multicolor: true }), // Ensure consistent configuration
       TaskList,
-      TaskItem.configure({ nested: true }), // Ensure consistent configuration
-      Image,
+      TaskItem.configure({ 
+        nested: true,
+        HTMLAttributes: {
+          class: 'flex items-baseline gap-2',
+        },
+      }), // Ensure consistent configuration
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+      }), // Ensure consistent configuration
     ]);
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
