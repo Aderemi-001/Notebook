@@ -201,7 +201,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
   }, [editor, onEditorReady]);
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col">
       {editor && (
         <>
           {editable && (
@@ -225,7 +225,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
               zoomStep={ZOOM_STEP}
             />
           )}
-          <div className="relative border rounded-md overflow-hidden min-h-[300px] h-[300px]">
+          <div className="relative border rounded-md overflow-y-auto min-h-[300px] flex-grow">
             <TextEditorContent
               editor={editor}
               editable={editable} // Keep this as is, editor's editable state is managed by Tiptap
