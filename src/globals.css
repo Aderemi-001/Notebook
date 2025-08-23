@@ -108,3 +108,31 @@
     margin-bottom: 0;
   }
 }
+
+/* Custom scrollbar styling */
+/* For Webkit browsers (Chrome, Safari) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted)); /* Use muted background for the track */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary)); /* Use primary color for the thumb */
+  border-radius: 10px;
+  border: 2px solid hsl(var(--muted)); /* Add a border to match track color */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary-foreground)); /* Slightly darker on hover */
+}
+
+/* For Firefox */
+html {
+  scrollbar-color: hsl(var(--primary)) hsl(var(--muted)); /* thumb and track color */
+  scrollbar-width: thin;
+}
