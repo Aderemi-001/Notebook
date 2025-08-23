@@ -19,11 +19,9 @@ const HIGHLIGHT_COLORS = [
 ];
 
 const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
-  // State to keep track of the currently selected highlight color for applying
   const [activeHighlightColor, setActiveHighlightColor] = useState(HIGHLIGHT_COLORS[0].hex);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false); // State to control the popover
 
-  // Effect to update activeHighlightColor based on the current selection's highlight, if any
-  // This helps the UI reflect the color of an existing highlight when the cursor moves.
   useEffect(() => {
     const currentHighlightAttrs = editor.getAttributes('highlight');
     if (currentHighlightAttrs && currentHighlightAttrs.color) {
@@ -32,42 +30,43 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
         setActiveHighlightColor(matchedColor.hex);
       }
     }
-  }, [editor, editor.state.selection]); // Update when editor or selection changes
+  }, [editor, editor.state.selection]);
 
   const handleToggleHighlight = () => {
     editor.chain().focus().toggleHighlight({ color: activeHighlightColor }).run();
+    setIsPopoverOpen(false); // Close popover after toggling highlight
   };
 
   const handleSelectColor = (colorHex: string) => {
     setActiveHighlightColor(colorHex);
     editor.chain().focus().setHighlight({ color: colorHex }).run(); // Apply immediately
+    setIsPopoverOpen(false); // Close popover after selecting a color
   };
 
   const handleRemoveHighlight = () => {
     editor.chain().focus().unsetHighlight().run();
+    setIsPopoverOpen(false); // Close popover after removing highlight
   };
 
-  // Determine if the *currently selected* active highlight color is applied to the selection
   const isCurrentColorActive = editor.isActive('highlight', { color: activeHighlightColor });
 
   return (
-    <Popover>
+    <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}> {/* Control the popover state */}
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
               <Toggle
                 size="sm"
-                pressed={isCurrentColorActive} // Reflect if the active color is currently applied
-                onPressedChange={handleToggleHighlight} // Toggle with the active color
+                pressed={isCurrentColorActive}
+                onPressedChange={handleToggleHighlight}
                 aria-label="Toggle highlight"
                 className="px-2 relative"
               >
                 <Highlighter className="h-4 w-4" />
-                {/* Visual indicator for the active highlight color */}
                 <div
                   className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-foreground/20"
-                  style={{ backgroundColor: activeHighlightColor }} // Always show the selected color
+                  style={{ backgroundColor: activeHighlightColor }}
                 ></div>
               </Toggle>
             </PopoverTrigger>
@@ -85,7 +84,7 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
               <TooltipTrigger asChild>
                 <Toggle
                   size="sm"
-                  pressed={activeHighlightColor === colorOption.hex} // Indicate selected color in popover
+                  pressed={activeHighlightColor === colorOption.hex}
                   onPressedChange={() => handleSelectColor(colorOption.hex)}
                   disabled={!editor.can().chain().focus().setHighlight({ color: colorOption.hex }).run()}
                   aria-label={`Highlight ${colorOption.name}`}
@@ -104,7 +103,6 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
             </Tooltip>
           </TooltipProvider>
         ))}
-        {/* Dedicated button to remove highlight */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
