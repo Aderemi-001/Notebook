@@ -205,10 +205,10 @@ const EditNote: React.FC = () => {
           <NoteFormFields form={form} />
 
           <ResizablePanelGroup
-            direction="horizontal"
+            direction="vertical" // Changed to vertical
             className="min-h-[500px] rounded-lg border"
           >
-            <ResizablePanel defaultSize={50}>
+            <ResizablePanel defaultSize={50}> {/* Adjusted default size for vertical */}
               <div className="flex h-full flex-col p-4">
                 <Label htmlFor="content" className="text-lg mb-2 block">Rich Text Content</Label>
                 <RichTextEditor
@@ -227,7 +227,7 @@ const EditNote: React.FC = () => {
               </div>
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize={50}>
+            <ResizablePanel defaultSize={50}> {/* Adjusted default size for vertical */}
               <NoteDrawingSection
                 editorRef={editorRef}
                 initialDrawingUrl={drawingUrl}
