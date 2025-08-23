@@ -232,7 +232,7 @@ const CreateNote: React.FC = () => {
               onClick={() => setActiveView('editor')}
               className="flex-1"
             >
-              <TextCursorInput className="mr-2 h-4 w-4" /> Rich Text Content
+              <TextCursorInput className="mr-2 h-4 w-4" /> Text Editor
             </Button>
             <Button
               type="button"
@@ -240,14 +240,14 @@ const CreateNote: React.FC = () => {
               onClick={() => setActiveView('drawing')}
               className="flex-1"
             >
-              <ImageIcon className="mr-2 h-4 w-4" /> Drawing Canvas
+              <ImageIcon className="mr-2 h-4 w-4" /> Drawing Pad
             </Button>
           </div>
 
           <div className="min-h-[500px] rounded-lg border p-4">
             {activeView === 'editor' && (
               <div className="flex h-full flex-col">
-                <Label htmlFor="content" className="text-lg mb-2 block">Rich Text Content</Label>
+                <Label htmlFor="content" className="text-lg mb-2 block">Text Editor Content</Label>
                 <RichTextEditor
                   content={richTextContent}
                   onContentChange={setRichTextContent}
