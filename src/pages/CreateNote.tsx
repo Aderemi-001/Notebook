@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react"; // Explicitly import React
+import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,21 +10,48 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { DrawingCanvas } from "@/components/DrawingCanvas";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
-import { RichTextEditor } from '@/components/RichTextEditor'; // Corrected import to named import
-import { Editor } from "@tiptap/react"; // Import Editor type
+import { RichTextEditor } from '@/components/RichTextEditor';
+import { Editor } from "@tiptap/react";
+import { useAIDrawingAnalysis } from "@/hooks/use-ai-drawing-analysis"; // Import the AI drawing analysis hook
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function CreateNote() {
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(""); // HTML content for RichTextEditor
   const [studySets, setStudySets] = useState<any[]>([]);
   const [selectedStudySet, setSelectedStudySet] = useState<string | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
-  const [drawingData, setDrawingData] = useState<string | null>(null);
+  const [drawingDataUrl, setDrawingDataUrl] = useState<string | null>(null); // Stores the data URL of the drawing
+  const [extractedDrawingText, setExtractedDrawingText] = useState<string | null>(null); // Stores AI extracted text
   const navigate = useNavigate();
 
-  const editorRef = useRef<Editor | null>(null); // Use Editor type
-  const analyzeDrawingRef = useRef<((image: string) => Promise<string>) | null>(null);
-  const insertTextIntoEditorRef = useRef<((text: string) => void) | null>(null);
+  const editorRef = useRef<Editor | null>(null); // Ref for the RichTextEditor instance
+
+  const insertTextIntoEditor = useCallback((text: string) => {
+    if (editorRef.current) {
+      editorRef.current.chain().focus().insertContent(text).run();
+      setContent(editorRef.current.getHTML()); // Update parent state
+    }
+  }, []);
+
+  const {
+    showReplaceDialog,
+    setShowReplaceDialog,
+    textToReplace,
+    analyzeDrawing,
+    handleConfirmReplace,
+    handleCancelReplace,
+    isAnalyzing,
+  } = useAIDrawingAnalysis({ editor: editorRef.current, insertTextIntoEditor });
 
   useEffect(() => {
     async function fetchStudySets() {
@@ -47,6 +74,31 @@ export default function CreateNote() {
         return;
       }
 
+      // If in drawing mode and there's drawing data, upload it
+      let drawingUrl: string | null = null;
+      if (isDrawingMode && drawingDataUrl) {
+        const base64Data = drawingDataUrl.split(',')[1];
+        const mimeType = 'image/png'; // Assuming PNG for canvas output
+        const fileName = `drawings/${user.data.user.id}/${uuidv4()}.png`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('notes_drawings')
+          .upload(fileName, decode(base64Data), {
+            contentType: mimeType,
+            upsert: true,
+          });
+
+        if (uploadError) {
+          throw new Error(`Failed to upload drawing: ${uploadError.message}`);
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('notes_drawings')
+          .getPublicUrl(fileName);
+        
+        drawingUrl = publicUrlData?.publicUrl || null;
+      }
+
       const { data, error } = await supabase
         .from("notes")
         .insert({
@@ -54,7 +106,8 @@ export default function CreateNote() {
           title,
           content: content || JSON.stringify({ type: "doc", content: [{ type: "paragraph" }] }),
           study_set_id: selectedStudySet,
-          extracted_content_ai: drawingData ? "AI analysis of drawing: " + drawingData : null, // Placeholder for actual AI analysis
+          drawing_url: drawingUrl, // Save the URL of the drawing
+          extracted_content_ai: extractedDrawingText, // Save the AI extracted text
         })
         .select();
 
@@ -63,7 +116,7 @@ export default function CreateNote() {
       }
 
       showSuccess("Note saved successfully!");
-      navigate(`/notes/${data[0].id}`);
+      navigate(`/notes/${data[0].id}/edit`); // Navigate to edit page after creation
     } catch (error: any) {
       console.error("Error saving note:", error);
       showError(`Error saving note: ${error.message}`);
@@ -72,8 +125,13 @@ export default function CreateNote() {
     }
   };
 
-  const handleDrawingChange = (data: string) => {
-    setDrawingData(data);
+  const handleDrawingChange = (dataUrl: string | null) => {
+    setDrawingDataUrl(dataUrl);
+  };
+
+  const handleAnalyzeDrawingCallback = async (base64Image: string, mimeType: string) => {
+    const extractedText = await analyzeDrawing(base64Image, mimeType);
+    setExtractedDrawingText(extractedText); // Store the extracted text
   };
 
   return (
@@ -111,22 +169,20 @@ export default function CreateNote() {
         <div className="flex flex-col gap-2">
           <Label>Content</Label>
           <DrawingCanvas
-            initialDrawing={drawingData || undefined}
+            initialDrawing={drawingDataUrl || undefined}
             onDrawingChange={handleDrawingChange}
             isDrawingMode={isDrawingMode}
             setIsDrawingMode={setIsDrawingMode}
-            onEditorReady={(instance: Editor, analyzeFn, insertFn) => { // Explicitly type instance
-              editorRef.current = instance;
-              analyzeDrawingRef.current = analyzeFn;
-              insertTextIntoEditorRef.current = insertFn;
-            }}
+            onAnalyzeDrawing={handleAnalyzeDrawingCallback}
+            onInsertText={insertTextIntoEditor}
+            isAnalyzing={isAnalyzing}
           />
           {!isDrawingMode && (
             <RichTextEditor
               content={content}
               onContentChange={setContent}
               placeholder="Start writing your note here..."
-              editorRef={editorRef} // Pass the ref to RichTextEditor
+              editorRef={editorRef}
             />
           )}
         </div>
@@ -135,6 +191,36 @@ export default function CreateNote() {
           Save Note
         </Button>
       </div>
+
+      <AlertDialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>AI Transcription Available</AlertDialogTitle>
+            <AlertDialogDescription>
+              The AI has transcribed the following text from your drawing:
+              <p className="mt-2 p-2 border rounded-md bg-muted text-foreground max-h-40 overflow-y-auto">
+                {textToReplace}
+              </p>
+              Would you like to insert this text into your note?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelReplace}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmReplace}>Insert Text</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
+}
+
+// Helper function to decode base64 to Uint8Array for Supabase Storage
+function decode(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
 }

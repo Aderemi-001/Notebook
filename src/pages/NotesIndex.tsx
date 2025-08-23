@@ -1,11 +1,11 @@
-import * as React from 'react'; // Explicitly import React
+import * as React from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, PlusCircle, Menu, Trash2, Pencil, BookOpen } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Menu, Trash2, Pencil, BookOpen, Image as ImageIcon } from 'lucide-react'; // Added ImageIcon
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,7 +26,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger, // Added
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
@@ -43,6 +43,7 @@ interface Note {
   title: string;
   content: JSONContent;
   extracted_content_ai: string | null;
+  drawing_url: string | null; // New field
   created_at: string;
   updated_at: string;
   study_set_id: string | null;
@@ -65,6 +66,7 @@ const fetchUserNotes = async (): Promise<Note[]> => {
       title,
       content,
       extracted_content_ai,
+      drawing_url, -- Fetch new column
       created_at,
       updated_at,
       study_set_id,
@@ -85,58 +87,24 @@ const fetchUserNotes = async (): Promise<Note[]> => {
 const getPlainTextPreview = (jsonContent: JSONContent, maxLength: number = 150): string => {
   if (!jsonContent) return '';
   try {
-    // Generate HTML from JSON content using the same extensions as the editor
+    // Use a minimal set of extensions for text extraction to avoid unnecessary overhead
     const html = generateHTML(jsonContent, [
       StarterKit.configure({
-        blockquote: {
-          HTMLAttributes: {
-            class: 'border-l-4 border-gray-300 pl-4 italic text-muted-foreground',
-          },
-        },
-        bulletList: {
-          HTMLAttributes: {
-            class: 'list-disc',
-          },
-        },
-        orderedList: {
-          HTMLAttributes: {
-            class: 'list-decimal',
-          },
-        },
-        codeBlock: {
-          HTMLAttributes: {
-            class: 'bg-gray-100 dark:bg-gray-800 p-3 rounded-md text-sm overflow-x-auto',
-          },
-        },
-        paragraph: {
-          HTMLAttributes: {
-            class: 'mb-2',
-          },
-        },
-        heading: {
-          levels: [1, 2, 3, 4, 5, 6],
-          HTMLAttributes: {
-            1: { class: 'text-3xl font-bold mb-4 mt-6' },
-            2: { class: 'text-2xl font-semibold mb-3 mt-5' },
-            3: { class: 'text-xl font-semibold mb-2 mt-4' },
-            4: { class: 'text-lg font-semibold mb-1 mt-3' },
-            5: { class: 'text-base font-semibold mb-1 mt-2' },
-            6: { class: 'text-sm font-semibold mb-1 mt-1' },
-          },
-        },
+        // Only include basic text-generating extensions
+        paragraph: true,
+        heading: { levels: [1, 2, 3] },
+        bold: true,
+        italic: true,
+        strike: true,
+        bulletList: true,
+        orderedList: true,
+        blockquote: true,
+        codeBlock: true,
       }),
-      Highlight.configure({ multicolor: true }), // Ensure consistent configuration
+      Highlight, // Include highlight if it might contain text
       TaskList,
-      TaskItem.configure({ 
-        nested: true,
-        HTMLAttributes: {
-          class: 'flex items-baseline gap-2',
-        },
-      }), // Ensure consistent configuration
-      Image.configure({
-        inline: true,
-        allowBase64: true,
-      }), // Ensure consistent configuration
+      TaskItem,
+      Image, // Include image to handle alt text if present
     ]);
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
@@ -168,6 +136,33 @@ const NotesIndex: React.FC = () => {
   const handleDeleteNote = async (noteId: string) => {
     const toastId = showLoading("Deleting note...");
     try {
+      // First, fetch the note to get the drawing_url if it exists
+      const { data: noteToDelete, error: fetchNoteError } = await supabase
+        .from('notes')
+        .select('drawing_url')
+        .eq('id', noteId)
+        .single();
+
+      if (fetchNoteError && fetchNoteError.code !== 'PGRST116') {
+        throw fetchNoteError;
+      }
+
+      // If a drawing_url exists, delete the image from storage
+      if (noteToDelete?.drawing_url) {
+        const urlParts = noteToDelete.drawing_url.split('/');
+        const fileName = urlParts.slice(urlParts.indexOf('drawings')).join('/'); // Get path from 'drawings' onwards
+        
+        const { error: deleteStorageError } = await supabase.storage
+          .from('notes_drawings')
+          .remove([fileName]);
+
+        if (deleteStorageError) {
+          console.warn("Failed to delete drawing from storage:", deleteStorageError.message);
+          // Don't throw, proceed with note deletion even if image deletion fails
+        }
+      }
+
+      // Then, delete the note record from the database
       const { error } = await supabase
         .from('notes')
         .delete()
@@ -178,7 +173,6 @@ const NotesIndex: React.FC = () => {
       dismissToast(toastId);
       showSuccess("Note deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ['userNotes'] });
-      // Also invalidate any study sets that might have been linked to this note
       queryClient.invalidateQueries({ queryKey: ['studySet'] });
     } catch (err: any) {
       dismissToast(toastId);
@@ -285,6 +279,11 @@ const NotesIndex: React.FC = () => {
                 <CardDescription className="text-sm text-muted-foreground mt-1">
                   Last updated: {format(new Date(note.updated_at), 'PPP')}
                 </CardDescription>
+                {note.drawing_url && (
+                  <div className="flex items-center text-sm text-blue-500 mt-2 italic">
+                    <ImageIcon className="mr-1 h-3 w-3" /> Contains a drawing
+                  </div>
+                )}
                 {note.content && (
                   <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
                     {getPlainTextPreview(note.content)}

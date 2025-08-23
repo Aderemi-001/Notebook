@@ -1,23 +1,21 @@
 "use client";
 
-import * as React from "react"; // Explicitly import React
+import * as React from "react";
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Eraser, Pencil, Type, Save, Sparkles } from "lucide-react";
-import { RichTextEditor } from "@/components/RichTextEditor";
+import { Eraser, Pencil, Type, Save, Sparkles, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { Editor } from "@tiptap/react"; // Import Editor type
+import { useDrawingCanvas } from "@/hooks/use-drawing-canvas"; // Import the new hook
+import { Slider } from "@/components/ui/slider"; // Import Slider for pen/eraser size
 
 interface DrawingCanvasProps {
   initialDrawing?: string;
-  onDrawingChange: (drawing: string) => void;
+  onDrawingChange: (drawingDataUrl: string | null) => void; // Callback for when drawing changes
   isDrawingMode: boolean;
   setIsDrawingMode: (isDrawing: boolean) => void;
-  onEditorReady: (
-    instance: Editor, // Correctly type the editor instance
-    analyzeFn: (image: string) => Promise<string>,
-    insertFn: (text: string) => void
-  ) => void;
+  onAnalyzeDrawing: (base64Image: string, mimeType: string) => void; // Callback for AI analysis
+  onInsertText: (text: string) => void; // Callback to insert text into editor
+  isAnalyzing: boolean; // New prop to indicate if AI is analyzing
 }
 
 export function DrawingCanvas({
@@ -25,128 +23,121 @@ export function DrawingCanvas({
   onDrawingChange,
   isDrawingMode,
   setIsDrawingMode,
-  onEditorReady,
+  onAnalyzeDrawing,
+  onInsertText,
+  isAnalyzing,
 }: DrawingCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const _isErasing = useState(false)[0]; // Renamed to _isErasing as it's unused
-  const [drawingData, setDrawingData] = useState<string | null>(null);
-  const editorRef = useRef<Editor | null>(null);
+  const [drawingColor, setDrawingColor] = useState("black");
+  const [penSize, setPenSize] = useState(5);
+  const [isErasing, setIsErasing] = useState(false);
+  const [eraserSize, setEraserSize] = useState(20);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
+  const minZoom = 0.5;
+  const maxZoom = 3;
+
+  const {
+    canvasRef,
+    ctxRef,
+    startDrawing,
+    draw,
+    endDrawing,
+    clearCanvas,
+  } = useDrawingCanvas({
+    isDrawingMode,
+    drawingColor,
+    penSize,
+    isErasing,
+    eraserSize,
+    zoomLevel,
+    setZoomLevel,
+    panOffset,
+    setPanOffset,
+    minZoom,
+    maxZoom,
+    onCanvasClickDetected: () => { /* No specific action on click in drawing mode for now */ },
+  });
+
+  // Load initial drawing if provided
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      const context = canvas.getContext("2d");
-      if (context) {
-        context.lineCap = "round";
-        context.lineJoin = "round";
-        context.lineWidth = 5;
-        context.strokeStyle = "black";
-        contextRef.current = context;
+    const ctx = ctxRef.current;
+    if (canvas && ctx && initialDrawing) {
+      const img = new Image();
+      img.onload = () => {
+        // Clear canvas before drawing the image
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
 
-        if (initialDrawing) {
-          const img = new Image();
-          img.onload = () => {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(img, 0, 0);
-            setDrawingData(initialDrawing);
-          };
-          img.src = initialDrawing;
-        }
-      }
+        // Draw the image, scaled to fit if necessary
+        const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+        const x = (canvas.width / 2) - (img.width / 2) * scale;
+        const y = (canvas.height / 2) - (img.height / 2) * scale;
+        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+        
+        // Save the loaded drawing to state
+        onDrawingChange(canvas.toDataURL('image/png'));
+      };
+      img.src = initialDrawing;
+    } else if (canvas && ctx && !initialDrawing) {
+      // If no initial drawing, ensure canvas is clear and white
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      onDrawingChange(null);
     }
-  }, [initialDrawing]);
+  }, [initialDrawing, canvasRef, ctxRef]);
 
-  const startDrawing = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawingMode) return;
-    const { offsetX, offsetY } = nativeEvent;
-    contextRef.current?.beginPath();
-    contextRef.current?.moveTo(offsetX, offsetY);
-    setIsDrawing(true);
-  };
 
-  const draw = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-    if (!isDrawingMode) return;
-    const { offsetX, offsetY } = nativeEvent;
-    contextRef.current?.lineTo(offsetX, offsetY);
-    contextRef.current?.stroke();
-  };
+  const handleClearCanvas = useCallback(() => {
+    clearCanvas();
+    onDrawingChange(null); // Notify parent that drawing is cleared
+    toast.info("Canvas cleared.");
+  }, [clearCanvas, onDrawingChange]);
 
-  const stopDrawing = () => {
-    if (!isDrawingMode) return;
-    contextRef.current?.closePath();
-    setIsDrawing(false);
-    saveDrawing();
-  };
-
-  // Removed startErasing, erase, stopErasing as they are unused
-  // const startErasing = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
-  //   if (!isDrawingMode) return;
-  //   const { offsetX, offsetY } = nativeEvent;
-  //   contextRef.current?.clearRect(offsetX, offsetY, 20, 20); // Eraser size
-  //   setIsErasing(true);
-  // };
-
-  // const erase = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
-  //   if (!isErasing) return;
-  //   if (!isDrawingMode) return;
-  //   const { offsetX, offsetY } = nativeEvent;
-  //   contextRef.current?.clearRect(offsetX, offsetY, 20, 20); // Eraser size
-  // };
-
-  // const stopErasing = () => {
-  //   if (!isDrawingMode) return;
-  //   setIsErasing(false);
-  //   saveDrawing();
-  // };
-
-  const saveDrawing = useCallback(() => {
+  const handleSaveDrawing = useCallback(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      const data = canvas.toDataURL();
-      setDrawingData(data);
-      onDrawingChange(data);
+      const dataUrl = canvas.toDataURL('image/png');
+      onDrawingChange(dataUrl); // Notify parent with the new drawing data
+      toast.success("Drawing saved!");
     }
   }, [onDrawingChange]);
 
-  const clearCanvas = () => {
+  const handleAnalyzeDrawing = useCallback(() => {
     const canvas = canvasRef.current;
-    const context = contextRef.current;
-    if (canvas && context) {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      setDrawingData(null);
-      onDrawingChange("");
+    if (canvas) {
+      const dataUrl = canvas.toDataURL('image/png');
+      const base64Data = dataUrl.split(',')[1];
+      const mimeType = 'image/png';
+      onAnalyzeDrawing(base64Data, mimeType);
     }
+  }, [canvasRef, onAnalyzeDrawing]);
+
+  const handleZoomIn = () => {
+    setZoomLevel((prev: number) => Math.min(prev + 0.2, maxZoom));
   };
 
-  const analyzeDrawing = useCallback(async (_image: string) => { // Renamed image to _image
-    toast.info("Analyzing drawing with AI...");
-    // Placeholder for AI analysis
-    return new Promise<string>((resolve) => {
-      setTimeout(() => {
-        resolve("AI analysis of drawing: This appears to be a diagram of a circuit board with several components.");
-      }, 2000);
-    });
-  }, []);
+  const handleZoomOut = () => {
+    setZoomLevel((prev: number) => Math.max(prev - 0.2, minZoom));
+  };
 
-  const insertTextIntoEditor = useCallback((text: string) => {
-    if (editorRef.current) {
-      editorRef.current.chain().focus().insertContent(text).run();
-      toast.success("AI analysis inserted into note!");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (editorRef.current) {
-      onEditorReady(editorRef.current, analyzeDrawing, insertTextIntoEditor);
-    }
-  }, [onEditorReady, analyzeDrawing, insertTextIntoEditor]);
+  const handleResetView = () => {
+    setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
+  };
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           variant={isDrawingMode ? "secondary" : "outline"}
           onClick={() => setIsDrawingMode(!isDrawingMode)}
@@ -154,57 +145,79 @@ export function DrawingCanvas({
           {isDrawingMode ? <Type className="h-4 w-4 mr-2" /> : <Pencil className="h-4 w-4 mr-2" />}
           {isDrawingMode ? "Switch to Text Mode" : "Switch to Drawing Mode"}
         </Button>
+
         {isDrawingMode && (
           <>
-            <Button variant="outline" onClick={clearCanvas}>
-              <Eraser className="h-4 w-4 mr-2" /> Clear Drawing
+            <Button
+              variant={!isErasing ? "secondary" : "outline"}
+              onClick={() => setIsErasing(false)}
+              size="icon"
+              aria-label="Pen Tool"
+            >
+              <Pencil className="h-4 w-4" />
             </Button>
-            <Button variant="outline" onClick={saveDrawing}>
-              <Save className="h-4 w-4 mr-2" /> Save Drawing
+            <Button
+              variant={isErasing ? "secondary" : "outline"}
+              onClick={() => setIsErasing(true)}
+              size="icon"
+              aria-label="Eraser Tool"
+            >
+              <Eraser className="h-4 w-4" />
             </Button>
-            {drawingData && (
-              <Button variant="outline" onClick={async () => {
-                const analysis = await analyzeDrawing(drawingData);
-                insertTextIntoEditor(analysis);
-              }}>
-                <Sparkles className="h-4 w-4 mr-2" /> Analyze Drawing
-              </Button>
-            )}
+
+            <div className="flex items-center gap-2">
+              <Label className="text-sm">Size:</Label>
+              <Slider
+                min={1}
+                max={isErasing ? 50 : 20}
+                step={1}
+                value={[isErasing ? eraserSize : penSize]}
+                onValueChange={(val: number[]) => isErasing ? setEraserSize(val[0]) : setPenSize(val[0])}
+                className="w-[100px]"
+              />
+            </div>
+
+            <Button variant="outline" onClick={handleClearCanvas}>
+              <Trash2 className="h-4 w-4 mr-2" /> Clear
+            </Button>
+            <Button variant="outline" onClick={handleSaveDrawing}>
+              <Save className="h-4 w-4 mr-2" /> Save
+            </Button>
+            <Button variant="outline" onClick={handleAnalyzeDrawing} disabled={isAnalyzing}>
+              {isAnalyzing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
+              )}
+              Analyze
+            </Button>
+            <Button variant="outline" onClick={handleZoomIn} size="icon" aria-label="Zoom In">
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" onClick={handleZoomOut} size="icon" aria-label="Zoom Out">
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" onClick={handleResetView} size="icon" aria-label="Reset View">
+              <RotateCcw className="h-4 w-4" />
+            </Button>
           </>
         )}
       </div>
 
-      {isDrawingMode ? (
-        <div className="relative border rounded-md overflow-hidden">
+      {isDrawingMode && (
+        <div className="relative border rounded-md overflow-hidden w-full h-[400px]"> {/* Responsive height */}
           <canvas
             ref={canvasRef}
-            width={800}
-            height={400}
-            className="bg-white cursor-crosshair"
+            className="bg-white cursor-crosshair touch-none"
             onMouseDown={startDrawing}
             onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
+            onMouseUp={endDrawing}
+            onMouseLeave={endDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={endDrawing}
           ></canvas>
-          {_isErasing && ( // Used _isErasing here
-            <div
-              className="absolute bg-red-500 opacity-50 rounded-full"
-              style={{
-                width: 20,
-                height: 20,
-                pointerEvents: "none",
-                transform: `translate(${_isErasing ? -10 : 0}px, ${_isErasing ? -10 : 0}px)`,
-              }}
-            ></div>
-          )}
         </div>
-      ) : (
-        <RichTextEditor
-          content={""} // Content will be managed by the parent component
-          onContentChange={() => {}} // Content change will be managed by the parent component
-          editable={true}
-          editorRef={editorRef} // Pass the ref to RichTextEditor
-        />
       )}
     </div>
   );
