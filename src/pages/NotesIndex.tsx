@@ -34,15 +34,13 @@ import { JSONContent } from '@tiptap/react';
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
-import TaskList from '@tiptap/extension-task-list';
-import TaskItem from '@tiptap/extension-task-item';
 import Image from '@tiptap/extension-image';
-import LinkExtension from '@tiptap/extension-link'; // Import LinkExtension
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'; // Import CodeBlockLowlight
-import { common, createLowlight } from "lowlight"; // Import lowlight dependencies
-import { useAuth } from '@/hooks/useAuth'; // Import useAuth
+import LinkExtension from '@tiptap/extension-link';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from "lowlight";
+import { useAuth } from '@/hooks/useAuth';
 
-const lowlight = createLowlight(common); // Initialize lowlight
+const lowlight = createLowlight(common);
 
 interface Note {
   id: string;
@@ -87,27 +85,16 @@ const fetchUserNotes = async (userId: string): Promise<Note[]> => {
 const getPlainTextPreview = (jsonContent: JSONContent, maxLength: number = 150): string => {
   if (!jsonContent) return '';
   try {
-    // Use a minimal set of extensions for text extraction to avoid unnecessary overhead
     const html = generateHTML(jsonContent, [
       StarterKit.configure({
-        // Only include basic text-generating extensions
-        paragraph: {},
         heading: { levels: [1, 2, 3] },
-        bold: {},
-        italic: {},
-        strike: {},
-        bulletList: {},
-        orderedList: {},
-        blockquote: {},
-        codeBlock: false, // Disable default codeBlock to use CodeBlockLowlight
-        link: false, // Explicitly disable link from StarterKit
+        codeBlock: false,
+        link: false,
       }),
-      Highlight,
-      TaskList,
-      TaskItem,
-      Image,
-      LinkExtension.configure({ openOnClick: false, autolink: true }), // Added LinkExtension
-      CodeBlockLowlight.configure({ lowlight }), // Added CodeBlockLowlight
+      Image.configure({ inline: true, allowBase64: true }),
+      LinkExtension.configure({ openOnClick: false, autolink: true }),
+      Highlight.configure({ multicolor: true }),
+      CodeBlockLowlight.configure({ lowlight }),
     ]);
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
@@ -123,15 +110,15 @@ const NotesIndex: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
-  const { user, loading: isLoadingAuth } = useAuth(); // Get user from useAuth
+  const { user, loading: isLoadingAuth } = useAuth();
 
   console.log("NotesIndex: User from useAuth:", user);
   console.log("NotesIndex: isLoadingAuth:", isLoadingAuth);
 
   const { data: notes, isLoading, isError, error } = useQuery<Note[], Error>({
-    queryKey: ['userNotes', user?.id], // Include user.id in queryKey
-    queryFn: () => fetchUserNotes(user!.id), // Pass user.id to fetcher
-    enabled: !!user?.id && !isLoadingAuth, // Only run query if user is authenticated and auth is not loading
+    queryKey: ['userNotes', user?.id],
+    queryFn: () => fetchUserNotes(user!.id),
+    enabled: !!user?.id && !isLoadingAuth,
   });
 
   const filteredNotes = notes?.filter((note: Note) =>
@@ -144,7 +131,6 @@ const NotesIndex: React.FC = () => {
   const handleDeleteNote = async (noteId: string) => {
     const toastId = showLoading("Deleting note...");
     try {
-      // First, fetch the note to get the drawing_url if it exists
       const { data: noteToDelete, error: fetchNoteError } = await supabase
         .from('notes')
         .select('drawing_url')
@@ -155,10 +141,9 @@ const NotesIndex: React.FC = () => {
         throw fetchNoteError;
       }
 
-      // If a drawing_url exists, delete the image from storage
       if (noteToDelete?.drawing_url) {
         const urlParts = noteToDelete.drawing_url.split('/');
-        const fileName = urlParts.slice(urlParts.indexOf('drawings')).join('/'); // Get path from 'drawings' onwards
+        const fileName = urlParts.slice(urlParts.indexOf('drawings')).join('/');
         
         const { error: deleteStorageError } = await supabase.storage
           .from('notes_drawings')
@@ -166,11 +151,9 @@ const NotesIndex: React.FC = () => {
 
         if (deleteStorageError) {
           console.warn("Failed to delete drawing from storage:", deleteStorageError.message);
-          // Don't throw, proceed with note deletion even if image deletion fails
         }
       }
 
-      // Then, delete the note record from the database
       const { error } = await supabase
         .from('notes')
         .delete()

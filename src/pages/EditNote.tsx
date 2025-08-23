@@ -21,13 +21,11 @@ import LinkExtension from '@tiptap/extension-link';
 import Highlight from '@tiptap/extension-highlight';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from "lowlight";
-import TaskList from '@tiptap/extension-task-list'; // Added
-import TaskItem from '@tiptap/extension-task-item'; // Added
 
 // New modular imports
 import NoteFormFields from "@/components/notes/NoteFormFields";
 import NoteDrawingSection from "@/components/notes/NoteDrawingSection";
-import { cn } from "@/lib/utils"; // Import cn utility
+import { cn } from "@/lib/utils";
 
 const lowlight = createLowlight(common);
 
@@ -82,14 +80,12 @@ const EditNote: React.FC = () => {
               StarterKit.configure({
                 heading: { levels: [1, 2, 3] },
                 codeBlock: false,
-                link: false, // Explicitly disable link from StarterKit
+                link: false,
               }),
               Image.configure({ inline: true, allowBase64: true }),
               LinkExtension.configure({ openOnClick: false, autolink: true }),
               Highlight.configure({ multicolor: true }),
               CodeBlockLowlight.configure({ lowlight }),
-              TaskList, // Added
-              TaskItem, // Added
             ]);
             setRichTextContent(htmlContent);
           } else {
@@ -201,7 +197,7 @@ const EditNote: React.FC = () => {
     return <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center">Loading note...</div>;
   }
 
-  const isDrawingFeatureUnderConstruction = true; // Flag to control drawing feature visibility
+  const isDrawingFeatureUnderConstruction = true;
 
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
