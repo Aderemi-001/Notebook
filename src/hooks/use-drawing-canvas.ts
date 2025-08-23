@@ -93,14 +93,15 @@ export const useDrawingCanvas = ({
         if (entry.target === canvas) {
           const { width, height } = entry.contentRect;
           if (canvas.width !== width || canvas.height !== height) {
-            // When resizing, redraw the content to the new canvas size
-            // This is a simplified approach; for complex drawings, you might need to store drawing history
-            // and redraw it with the new dimensions and current transform.
-            // For now, we'll just clear and resize.
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            // Note: For a "proper" drawing app, you would store drawing history (strokes)
+            // and redraw them here with the new dimensions and current transform.
+            // For this implementation, resizing the canvas will clear the drawing.
+            // If preserving drawings on resize is critical, a more complex state management for strokes is needed.
+            clearCanvas(); // Clear the canvas on resize
             canvas.width = width;
             canvas.height = height;
-            ctx.putImageData(imageData, 0, 0);
+            ctx.fillStyle = 'white'; // Re-fill background
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
           }
         }
       }
@@ -111,15 +112,7 @@ export const useDrawingCanvas = ({
     return () => {
       resizeObserver.unobserve(canvas);
     };
-  }, []);
-
-  useEffect(() => {
-    if (!isDrawingMode) {
-      clearCanvas();
-      setPanOffset({ x: 0, y: 0 });
-      setZoomLevel(1);
-    }
-  }, [isDrawingMode, clearCanvas, setPanOffset, setZoomLevel]);
+  }, [clearCanvas]); // Added clearCanvas to dependency array
 
   useEffect(() => {
     if (ctxRef.current) {

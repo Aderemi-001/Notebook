@@ -15,13 +15,13 @@ const TextEditorContent: React.FC<TextEditorContentProps> = ({ editor, editable,
 
   return (
     <div className={cn(
-      isDrawingMode ? "pointer-events-none z-0 opacity-50" : "z-10 opacity-100",
-      "transition-opacity duration-300 h-full" // Added h-full here to ensure the wrapper takes full height
+      "absolute inset-0 transition-opacity duration-300", // Absolute positioning to layer correctly
+      isDrawingMode ? "pointer-events-none opacity-30" : "pointer-events-auto opacity-100", // Control interaction and visibility
     )}>
       <EditorContent 
         editor={editor} 
         className={cn(
-          'prose dark:prose-invert max-w-none focus:outline-none p-4 h-full', // Removed min-h-[300px]
+          'prose dark:prose-invert max-w-none focus:outline-none p-4 h-full overflow-y-auto', // Added overflow-y-auto
           'user-select-text touch-action-auto',
           !editable && 'bg-muted/50 cursor-not-allowed',
           className

@@ -34,8 +34,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     <canvas
       ref={canvasRef}
       className={cn(
-        "absolute top-0 left-0 bg-white dark:bg-gray-900",
-        isDrawingMode ? "z-20 pointer-events-auto" : "z-0 pointer-events-none"
+        "absolute inset-0 bg-white dark:bg-gray-900 transition-opacity duration-300", // Absolute positioning
+        isDrawingMode ? "z-20 pointer-events-auto opacity-100" : "z-0 pointer-events-none opacity-0" // Control interaction and visibility
       )}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
@@ -45,11 +45,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
       style={{ 
-        transform: isDrawingMode ? `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})` : 'none', 
-        transformOrigin: isDrawingMode ? '0 0' : 'initial',
-        touchAction: 'none',
-        width: '100%',
-        height: '100%',
+        transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`, 
+        transformOrigin: '0 0',
+        touchAction: 'none', // Prevent default touch behaviors like scrolling/zooming
         cursor: customCursorStyle,
       }}
     />

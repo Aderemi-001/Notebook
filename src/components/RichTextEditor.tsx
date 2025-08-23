@@ -202,8 +202,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
 
   // NEW: Effect to update editor content when the 'content' prop changes
   useEffect(() => {
-    if (editor && content && editor.getHTML() !== editor.options.content) {
-      editor.commands.setContent(content, { emitUpdate: false }); // Corrected argument
+    if (editor && content && JSON.stringify(editor.getJSON()) !== JSON.stringify(content)) {
+      editor.commands.setContent(content, { emitUpdate: false });
     }
   }, [editor, content]);
 
@@ -232,10 +232,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
               zoomStep={ZOOM_STEP}
             />
           )}
-          <div className="relative border rounded-md overflow-y-auto min-h-[300px] flex-grow">
+          <div className="relative border rounded-md overflow-hidden min-h-[300px] flex-grow">
             <TextEditorContent
               editor={editor}
-              editable={editable} // Keep this as is, editor's editable state is managed by Tiptap
+              editable={editable}
               className={className}
               labelId={labelId}
               isDrawingMode={isDrawingMode}
