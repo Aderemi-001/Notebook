@@ -3,7 +3,24 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { LogOut, User, BookOpen, LayoutDashboard, Settings, Globe, NotebookPen, CalendarDays, Group, Handshake } from 'lucide-react';
+import {
+  LogOut,
+  User,
+  BookOpen,
+  LayoutDashboard,
+  Settings,
+  Globe,
+  NotebookPen,
+  CalendarDays,
+  Group,
+  Handshake,
+  PlusCircle, // Added
+  Brain, // Added
+  Network, // Added for Cognitive Constellation
+  History, // Added for Past Exams/Essay Questions
+  FileText, // Added for Generate Essay Questions
+  CalendarCheck, // Added for Past Exams
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,11 +45,17 @@ export const Header: React.FC = () => {
   const navItems = [
     { name: "My Study Sets", href: "/", icon: <BookOpen className="mr-2 h-4 w-4" /> },
     { name: "Daily Review", href: "/daily-review", icon: <CalendarDays className="mr-2 h-4 w-4" /> },
+    { name: "Create Set", href: "/create", icon: <PlusCircle className="mr-2 h-4 w-4" /> }, // Added
+    { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> }, // Added
+    { name: "Generate Exam", href: "/generate-exam", icon: <Brain className="mr-2 h-4 w-4" /> }, // Added
+    { name: "Generate Essay Questions", href: "/generate-essay-questions", icon: <FileText className="mr-2 h-4 w-4" /> }, // Added
+    { name: "Cognitive Constellation", href: "/constellation", icon: <Network className="mr-2 h-4 w-4" /> }, // Added
+    { name: "Past Exams", href: "/past-exams", icon: <CalendarCheck className="mr-2 h-4 w-4" /> }, // Added
+    { name: "Past Essay Questions", href: "/past-essay-questions", icon: <History className="mr-2 h-4 w-4" /> }, // Added
     { name: "My Notes", href: "/notes", icon: <NotebookPen className="mr-2 h-4 w-4" /> },
     { name: "My Groups", href: "/groups", icon: <Group className="mr-2 h-4 w-4" /> },
     { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
-    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
-    { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> },
+    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> }, // Renamed from Statistics to Dashboard for consistency
   ];
 
   return (
