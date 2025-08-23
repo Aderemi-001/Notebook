@@ -3,7 +3,7 @@ import { Editor } from '@tiptap/react';
 import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Highlighter, Eraser, Pin } from 'lucide-react'; // Added Eraser and Pin
+import { Highlighter, Eraser, Pin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { HexColorPicker } from 'react-colorful'; // Import HexColorPicker
@@ -216,7 +216,7 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <PopoverContent className="w-64 p-2">
+      <PopoverContent className="w-full sm:w-64 p-2"> {/* Adjusted width for responsiveness */}
         {pinnedColors.length > 0 && (
           <div className="mb-2">
             <p className="text-sm font-medium text-muted-foreground mb-1">Pinned Colors</p>
