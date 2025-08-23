@@ -32,7 +32,13 @@ interface RichTextEditorProps {
   editable?: boolean;
   className?: string;
   labelId?: string;
-  onEditorReady?: (editor: any) => void; // Keep any for Tiptap Editor type
+  isDrawingMode: boolean; // Now a prop
+  setIsDrawingMode: (mode: boolean) => void; // Now a prop
+  onEditorReady?: (
+    editor: any,
+    analyzeDrawing: () => Promise<void>,
+    insertDrawing: () => void
+  ) => void; // Updated callback signature
 }
 
 const MIN_ZOOM = 0.5;
@@ -67,8 +73,16 @@ const generatePenCursor = () => {
   return `url("data:image/svg+xml;utf8,${encodedSvg}") 0 24, auto`;
 };
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editable = true, className, labelId, onEditorReady }) => {
-  const [isDrawingMode, setIsDrawingMode] = useState(false);
+const RichTextEditor: React.FC<RichTextEditorProps> = ({
+  content,
+  onContentChange,
+  editable = true,
+  className,
+  labelId,
+  isDrawingMode, // Now a prop
+  setIsDrawingMode, // Now a prop
+  onEditorReady,
+}) => {
   const [drawingColor, setDrawingColor] = useState('#000000');
   const [penSize, setPenSize] = useState(BASE_PEN_SIZE);
   const [isErasing, setIsErasing] = useState(false);
@@ -208,12 +222,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     }
   }, [isDrawingMode, isErasing, eraserSize]);
 
-  // Effect to expose editor instance
+  // Effect to expose editor instance and AI drawing functions
   useEffect(() => {
     if (editor && onEditorReady) {
-      onEditorReady(editor);
+      onEditorReady(editor, analyzeDrawing, insertDrawing);
     }
-  }, [editor, onEditorReady]);
+  }, [editor, onEditorReady, analyzeDrawing, insertDrawing]);
 
   // NEW: Effect to update editor content when the 'content' prop changes
   useEffect(() => {

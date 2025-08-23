@@ -82,13 +82,17 @@ const EditNote: React.FC = () => {
   const queryClient = useQueryClient();
 
   const [title, setTitle] = useState<string>('');
-  const [content, setContent] = useState<JSONContent | string>(''); // Changed type to JSONContent | string
+  const [content, setContent] = useState<JSONContent | string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [selectedStudySetId, setSelectedStudySetId] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isDrawingMode, setIsDrawingMode] = useState(false); // New state for drawing mode
+  const [isAnalyzing, setIsAnalyzing] = useState(false); // New state for AI analysis loading
 
-  const editorRef = useRef<Editor | null>(null); // Ref to store editor instance
+  const editorRef = useRef<Editor | null>(null);
+  const analyzeDrawingRef = useRef<(() => Promise<void>) | null>(null);
+  const insertDrawingRef = useRef<(() => void) | null>(null);
 
   const { data: note, isLoading, isError, error } = useQuery<Note, Error>({
     queryKey: ['note', noteId],
@@ -104,7 +108,7 @@ const EditNote: React.FC = () => {
   useEffect(() => {
     if (note) {
       setTitle(note.title);
-      setContent(note.content); // This will now be JSONContent
+      setContent(note.content);
       setSelectedStudySetId(note.study_set_id);
     }
   }, [note]);
@@ -127,7 +131,7 @@ const EditNote: React.FC = () => {
         .from('notes')
         .update({
           title: title.trim(),
-          content: content, // This will now be JSONContent
+          content: content,
           study_set_id: selectedStudySetId,
           extracted_content_ai: null,
         })
@@ -138,9 +142,9 @@ const EditNote: React.FC = () => {
       dismissToast(toastId);
       showSuccess("Note updated successfully!");
       queryClient.invalidateQueries({ queryKey: ['note', noteId] });
-      queryClient.invalidateQueries({ queryKey: ['userNotes'] }); // Invalidate list of notes
-      queryClient.invalidateQueries({ queryKey: ['studySet', selectedStudySetId] }); // Invalidate linked study set
-      queryClient.invalidateQueries({ queryKey: ['studySet', note?.study_set_id] }); // Invalidate previously linked study set if changed
+      queryClient.invalidateQueries({ queryKey: ['userNotes'] });
+      queryClient.invalidateQueries({ queryKey: ['studySet', selectedStudySetId] });
+      queryClient.invalidateQueries({ queryKey: ['studySet', note?.study_set_id] });
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message || "Failed to update note.");
@@ -150,13 +154,13 @@ const EditNote: React.FC = () => {
     }
   };
 
-  const handleSummarizeWithAI = async () => {
+  const handleSummarizeNote = async () => {
     const editorInstance = editorRef.current;
     if (!editorInstance) {
       showError("Editor not ready. Please try again.");
       return;
     }
-    const noteContentText = editorInstance.getText(); // Get plain text from editor
+    const noteContentText = editorInstance.getText();
 
     if (!noteContentText.trim()) {
       showError("Please write some content in the note before summarizing.");
@@ -179,9 +183,8 @@ const EditNote: React.FC = () => {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
-            // 'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU", // Removed apikey
           },
-          body: JSON.stringify({ noteContent: noteContentText }), // Pass plain text
+          body: JSON.stringify({ noteContent: noteContentText }),
         }
       );
 
@@ -200,6 +203,23 @@ const EditNote: React.FC = () => {
       console.error("AI summarization error:", err);
     } finally {
       setIsSummarizing(false);
+    }
+  };
+
+  const handleProcessAIContent = async () => {
+    if (isDrawingMode) {
+      if (analyzeDrawingRef.current) {
+        setIsAnalyzing(true);
+        try {
+          await analyzeDrawingRef.current();
+        } finally {
+          setIsAnalyzing(false);
+        }
+      } else {
+        showError("Drawing analysis function not available.");
+      }
+    } else {
+      await handleSummarizeNote();
     }
   };
 
@@ -268,26 +288,44 @@ const EditNote: React.FC = () => {
             <Label id="note-content-label">Content</Label>
             <RichTextEditor
               labelId="note-content-label"
-              content={content || '<p></p>'} // Provide a default empty paragraph
+              content={content || '<p></p>'}
               onContentChange={setContent}
               editable={!isSaving}
-              onEditorReady={(instance) => (editorRef.current = instance)} // Pass editor instance
+              isDrawingMode={isDrawingMode}
+              setIsDrawingMode={setIsDrawingMode}
+              onEditorReady={(instance, analyzeFn, insertFn) => {
+                editorRef.current = instance;
+                analyzeDrawingRef.current = analyzeFn;
+                insertDrawingRef.current = insertFn;
+              }}
             />
           </div>
           <div className="flex justify-end">
             <Button
-              onClick={handleSummarizeWithAI}
-              disabled={isSummarizing || !editorRef.current?.getText().trim()} // Check content from editor ref
+              onClick={handleProcessAIContent}
+              disabled={isSummarizing || isAnalyzing || (!isDrawingMode && !editorRef.current?.getText().trim())}
               variant="outline"
             >
-              {isSummarizing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Summarizing...
-                </>
+              {isDrawingMode ? (
+                isAnalyzing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Brain className="mr-2 h-4 w-4" /> Analyze with AI
+                  </>
+                )
               ) : (
-                <>
-                  <Brain className="mr-2 h-4 w-4" /> Summarize with AI
-                </>
+                isSummarizing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Summarizing...
+                  </>
+                ) : (
+                  <>
+                    <Brain className="mr-2 h-4 w-4" /> Summarize with AI
+                  </>
+                )
               )}
             </Button>
           </div>
@@ -309,7 +347,7 @@ const EditNote: React.FC = () => {
               onClick={() => {
                 if (editorRef.current) {
                   editorRef.current.chain().focus().insertContentAt(editorRef.current.state.doc.content.size, '<p>---</p><p><b>AI Summary:</b></p><p>' + aiSummary + '</p>').run();
-                  setAiSummary(null); // Clear summary after adding to content
+                  setAiSummary(null);
                   showSuccess("Summary added to note content!");
                 }
               }}

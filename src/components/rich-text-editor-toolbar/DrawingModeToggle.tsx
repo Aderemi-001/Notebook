@@ -7,7 +7,6 @@ interface DrawingModeToggleProps {
   isDrawingMode: boolean;
   setIsDrawingMode: (isDrawingMode: boolean) => void;
   drawingColor: string;
-  // Removed penSize and setPenSize as they are not used directly in this component
 }
 
 const DrawingModeToggle: React.FC<DrawingModeToggleProps> = ({ isDrawingMode, setIsDrawingMode, drawingColor }) => {

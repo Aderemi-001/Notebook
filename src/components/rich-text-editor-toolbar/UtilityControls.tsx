@@ -56,8 +56,6 @@ const UtilityControls: React.FC<UtilityControlsProps> = ({
         isDrawingMode={isDrawingMode}
         setIsDrawingMode={setIsDrawingMode}
         drawingColor={drawingColor}
-        // setDrawingColor is not used directly by DrawingModeToggle, removed
-        // penSize and setPenSize are not used directly by DrawingModeToggle, removed
       />
       {isDrawingMode && (
         <>
