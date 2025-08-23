@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
+import * as React from "react"; // Explicitly import React
 import { useState, useEffect } from "react";
 
 // Import new modular components
@@ -211,7 +212,7 @@ const StudySetDetail = () => {
 
       if (fetchCardsError) throw fetchCardsError;
 
-      const cardIds = cardsInSet?.map(card => card.id) || [];
+      const cardIds = cardsInSet?.map((card: { id: string }) => card.id) || [];
 
       if (cardIds.length > 0) {
         const { error: deleteProgressError } = await supabase
@@ -280,7 +281,7 @@ const StudySetDetail = () => {
       if (newSetError) throw newSetError;
       if (!newSet) throw new Error("Failed to create new study set.");
 
-      const cardsToInsert = studySet.cards.map(card => ({
+      const cardsToInsert = studySet.cards.map((card: CardItem) => ({
         set_id: newSet.id,
         term: card.term,
         definition: card.definition,

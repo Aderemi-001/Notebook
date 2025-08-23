@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label"; // Import Label
+import { Label } from "@/components/ui/label";
 
 interface ExamSummary {
   id: string;
@@ -23,7 +24,7 @@ interface ExamSummary {
   description: string | null;
   created_at: string;
   study_set_id: string;
-  study_sets: { title: string }[] | null; // Changed to array
+  study_sets: { title: string }[] | null;
   total_questions: number;
   correct_responses: number;
 }
@@ -54,9 +55,9 @@ const fetchPastExams = async (): Promise<ExamSummary[]> => {
     throw new Error("Failed to fetch your past exams.");
   }
 
-  const processedExams: ExamSummary[] = exams?.map((exam: any) => { // Explicitly type 'exam'
+  const processedExams: ExamSummary[] = exams?.map((exam: any) => {
     const totalQuestions = exam.generated_questions?.length || 0;
-    const correctResponses = exam.exam_responses?.filter((res: any) => res.is_correct).length || 0; // Explicitly type 'res'
+    const correctResponses = exam.exam_responses?.filter((res: { is_correct: boolean }) => res.is_correct).length || 0;
 
     return {
       id: exam.id,
@@ -96,10 +97,10 @@ const PastExams: React.FC = () => {
     queryFn: fetchPastExams,
   });
 
-  const filteredExams = pastExams?.filter(exam =>
+  const filteredExams = pastExams?.filter((exam: ExamSummary) =>
     exam.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (exam.description && formatExamDescription(exam.description).toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (exam.study_sets?.[0]?.title && exam.study_sets[0].title.toLowerCase().includes(searchTerm.toLowerCase())) // Access first element
+    (exam.study_sets?.[0]?.title && exam.study_sets[0].title.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (isError) {
@@ -141,7 +142,7 @@ const PastExams: React.FC = () => {
           type="text"
           placeholder="Search past exams by title, description, or study set..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
           className="w-full"
         />
       </div>
@@ -169,7 +170,7 @@ const PastExams: React.FC = () => {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredExams.map((exam) => (
+          {filteredExams.map((exam: ExamSummary) => (
             <Link to={`/exams/${exam.id}`} key={exam.id}>
               <NotebookCard className="hover:shadow-md transition-shadow h-full">
                 <CardHeader>
@@ -179,7 +180,7 @@ const PastExams: React.FC = () => {
                   )}
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {exam.study_sets?.[0]?.title && ( // Access first element
+                  {exam.study_sets?.[0]?.title && (
                     <div className="flex items-center text-sm text-muted-foreground">
                       <BookOpen className="mr-2 h-4 w-4" />
                       <span>From Set: {exam.study_sets[0].title}</span>

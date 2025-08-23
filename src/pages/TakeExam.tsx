@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -74,7 +75,7 @@ const fetchExamDetails = async (examId: string): Promise<ExamDetails> => {
 };
 
 const fetchExamResponses = async (examId: string): Promise<ExamResponse[] | null> => {
-  const { data: { user } = { user: null } } = await supabase.auth.getUser(); // Ensure user is destructured safely
+  const { data: { user } = { user: null } } = await supabase.auth.getUser();
   if (!user) {
     throw new Error("User not authenticated.");
   }
@@ -125,7 +126,7 @@ const TakeExam: React.FC = () => {
       setExamCompleted(true);
       setExamResults(pastResponses);
       const initialAnswers: Record<string, string> = {};
-      pastResponses.forEach(res => {
+      pastResponses.forEach((res: ExamResponse) => {
         initialAnswers[res.question_id] = res.user_answer;
       });
       setUserAnswers(initialAnswers);
@@ -138,12 +139,12 @@ const TakeExam: React.FC = () => {
   }, [pastResponses]);
 
   const handleAnswerChange = (questionId: string, answer: string) => {
-    setUserAnswers(prev => ({ ...prev, [questionId]: answer }));
+    setUserAnswers((prev: Record<string, string>) => ({ ...prev, [questionId]: answer }));
   };
 
   const handleNextQuestion = () => {
     if (currentQuestionIndex < totalQuestions - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+      setCurrentQuestionIndex((prev: number) => prev + 1);
     } else {
       // Last question, prepare for submission
       handleSubmitExam();
@@ -152,7 +153,7 @@ const TakeExam: React.FC = () => {
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
+      setCurrentQuestionIndex((prev: number) => prev - 1);
     }
   };
 
@@ -340,7 +341,7 @@ const TakeExam: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-lg font-semibold">
-              You answered {examResults?.filter(r => r.is_correct).length || 0} out of {totalQuestions} questions correctly.
+              You answered {examResults?.filter((r: ExamResponse) => r.is_correct).length || 0} out of {totalQuestions} questions correctly.
             </p>
             <Button onClick={handleRetakeExam} className="w-full">
               <RefreshCw className="mr-2 h-4 w-4" /> Retake Exam
@@ -348,8 +349,8 @@ const TakeExam: React.FC = () => {
             <Separator />
             <h3 className="text-xl font-semibold">Detailed Review:</h3>
             <div className="space-y-6">
-              {questions.map((q, index) => {
-                const result = examResults?.find(r => r.question_id === q.id);
+              {questions.map((q: GeneratedQuestion, index: number) => {
+                const result = examResults?.find((r: ExamResponse) => r.question_id === q.id);
                 const isCorrect = result?.is_correct;
                 const userAnswer = result?.user_answer || 'No answer provided';
 
@@ -359,7 +360,7 @@ const TakeExam: React.FC = () => {
                     <p className="font-semibold text-lg mb-2">{q.question_text}</p>
                     {q.question_type === 'multiple_choice' && q.options && (
                       <div className="space-y-1 mb-2">
-                        {q.options.map((option, optIndex) => (
+                        {q.options.map((option: string, optIndex: number) => (
                           <div key={optIndex} className="flex items-center">
                             <span className="mr-2 text-muted-foreground">{String.fromCharCode(65 + optIndex)}.</span>
                             <span>{option}</span>
@@ -367,17 +368,9 @@ const TakeExam: React.FC = () => {
                         ))}
                       </div>
                     )}
-                    <div className="flex items-center mb-2">
-                      {isCorrect ? (
-                        <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />
-                      ) : (
-                        <XCircle className="mr-2 h-4 w-4 text-red-600" />
-                      )}
-                      <span className="font-medium">Your Answer: {userAnswer}</span>
-                    </div>
+                    <Separator className="my-3" />
                     <div className="flex items-center text-green-600">
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                      <span className="font-medium">Correct Answer: {q.answer_text}</span>
+                      <span className="font-medium">Answer: {q.answer_text}</span>
                     </div>
                     {result?.ai_feedback && (
                       <p className="text-sm text-muted-foreground mt-2">AI Feedback: {result.ai_feedback}</p>
@@ -400,10 +393,10 @@ const TakeExam: React.FC = () => {
             {currentQuestion?.question_type === 'multiple_choice' && currentQuestion.options && (
               <RadioGroup
                 value={userAnswers[currentQuestion.id] || ''}
-                onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+                onValueChange={(value: string) => handleAnswerChange(currentQuestion.id, value)}
                 className="space-y-2"
               >
-                {currentQuestion.options.map((option, index) => (
+                {currentQuestion.options.map((option: string, index: number) => (
                   <div key={index} className="flex items-center space-x-2">
                     <RadioGroupItem value={option} id={`option-${index}`} />
                     <Label htmlFor={`option-${index}`}>{option}</Label>
@@ -416,7 +409,7 @@ const TakeExam: React.FC = () => {
               <Textarea
                 placeholder="Type your answer here..."
                 value={userAnswers[currentQuestion.id] || ''}
-                onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleAnswerChange(currentQuestion.id, e.target.value)}
                 className="min-h-[100px]"
               />
             )}
@@ -424,7 +417,7 @@ const TakeExam: React.FC = () => {
             {currentQuestion?.question_type === 'true_false' && (
               <RadioGroup
                 value={userAnswers[currentQuestion.id] || ''}
-                onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+                onValueChange={(value: string) => handleAnswerChange(currentQuestion.id, value)}
                 className="flex space-x-4"
               >
                 <div className="flex items-center space-x-2">

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Separator } from "@/components/ui/separator";
 import { Badge } from '@/components/ui/badge';
-import { Label } from "@/components/ui/label"; // Import Label
+import { Label } from "@/components/ui/label";
 
 interface EssayQuestion {
   id: string;
@@ -19,7 +20,7 @@ interface EssayQuestion {
   suggested_points: string[] | null;
   created_at: string;
   study_set_id: string | null;
-  study_sets: { title: string }[] | null; // Changed to array
+  study_sets: { title: string }[] | null;
 }
 
 interface EssayResponse {
@@ -252,7 +253,7 @@ const EssayPractice: React.FC = () => {
                 <Lightbulb className="mr-2 h-4 w-4 text-blue-500" /> Suggested Points:
               </h3>
               <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                {question.suggested_points.map((point, index) => (
+                {question.suggested_points.map((point: string, index: number) => (
                   <li key={index}>{point}</li>
                 ))}
               </ul>
@@ -272,7 +273,7 @@ const EssayPractice: React.FC = () => {
             id="essay-answer"
             placeholder="Start writing your essay here..."
             value={userAnswer}
-            onChange={(e) => setUserAnswer(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setUserAnswer(e.target.value)}
             className="min-h-[200px]"
             disabled={isGrading}
           />
@@ -340,7 +341,7 @@ const EssayPractice: React.FC = () => {
                       <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" /> Points Covered:
                     </h4>
                     <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                      {currentResponse.ai_detailed_feedback.points_covered.map((point, index) => (
+                      {currentResponse.ai_detailed_feedback.points_covered.map((point: string, index: number) => (
                         <li key={index}>{point}</li>
                       ))}
                     </ul>
@@ -352,7 +353,7 @@ const EssayPractice: React.FC = () => {
                       <XCircle className="mr-2 h-4 w-4 text-red-600" /> Points Missed:
                     </h4>
                     <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                      {currentResponse.ai_detailed_feedback.points_missed.map((point, index) => (
+                      {currentResponse.ai_detailed_feedback.points_missed.map((point: string, index: number) => (
                         <li key={index}>{point}</li>
                       ))}
                     </ul>
@@ -371,7 +372,7 @@ const EssayPractice: React.FC = () => {
             <CardDescription>Review your previous attempts for this question.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {pastResponses.slice(1).map((response, index) => (
+            {pastResponses.slice(1).map((response: EssayResponse, index: number) => (
               <div key={response.id} className="border p-4 rounded-md bg-background">
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-sm text-muted-foreground">Attempt {pastResponses.length - index - 1} ({new Date(response.created_at).toLocaleDateString()})</p>

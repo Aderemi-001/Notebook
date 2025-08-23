@@ -76,11 +76,11 @@ export const useUserPreferences = () => {
 
   const mutation = useMutation<UserPreferences, Error, Partial<UserPreferences>>({
     mutationFn: updateUserPreferences,
-    onSuccess: (data) => {
+    onSuccess: (data: UserPreferences) => {
       queryClient.setQueryData(['userPreferences'], data);
       showSuccess("Preferences saved!");
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       showError(`Failed to save preferences: ${err.message}`);
       console.error("Error saving preferences:", err);
     },

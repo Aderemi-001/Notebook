@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'; // Explicitly import React
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send } from 'lucide-react';
@@ -17,11 +17,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ input, setInput, onSendMessage, i
       <Input
         placeholder="Ask me a question..."
         value={input}
-        onChange={(e) => {
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           setInput(e.target.value);
           resetInactivityTimer();
         }}
-        onKeyPress={(e) => e.key === 'Enter' && onSendMessage()}
+        onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && onSendMessage()}
         disabled={isSending}
         className="flex-grow"
       />

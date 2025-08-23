@@ -1,3 +1,5 @@
+import * as React from "react"; // Explicitly import React
+
 export const MadeWithDyad = () => {
   return (
     <div className="p-4 text-center">

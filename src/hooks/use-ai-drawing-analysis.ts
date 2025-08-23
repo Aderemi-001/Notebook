@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState, useCallback } from 'react';
 import { Editor } from '@tiptap/react';
 import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 import { supabase } from '@/integrations/supabase/client';

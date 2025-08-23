@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'; // Explicitly import React
 import { CardContent, CardHeader, CardTitle, CardDescription, NotebookCard } from "@/components/NotebookCard";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +37,7 @@ const StudySetCardsList: React.FC<StudySetCardsListProps> = ({ cards, handleTogg
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {cards.map((card) => {
+          {cards.map((card: CardItem) => {
             const cardNextReviewDate = card.next_review_at ? new Date(card.next_review_at) : null;
             const isCardDue = cardNextReviewDate && isValid(cardNextReviewDate) && isPast(cardNextReviewDate);
 
@@ -60,7 +60,7 @@ const StudySetCardsList: React.FC<StudySetCardsListProps> = ({ cards, handleTogg
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent) => {
                             e.preventDefault();
                             handleToggleFlag(card.id, card.is_flagged || false);
                           }}

@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -54,7 +55,7 @@ const Settings: React.FC = () => {
   const handleQuestionTypeChange = (type: string, checked: boolean) => {
     const newTypes = checked
       ? [...defaultExamQuestionTypes, type]
-      : defaultExamQuestionTypes.filter(t => t !== type);
+      : defaultExamQuestionTypes.filter((t: string) => t !== type);
     setDefaultExamQuestionTypes(newTypes);
     updatePreferences({ default_exam_question_types: newTypes });
   };

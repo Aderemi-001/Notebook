@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom'; // Removed useLocation
+import * as React from 'react'; // Explicitly import React
+import { Link } from 'react-router-dom';
 import { ROUTE_KEYWORDS, ROUTE_SPECIFIC_SUGGESTIONS, DEFAULT_SUGGESTED_QUESTIONS } from './types';
 
 export const parseAndRenderLinks = (text: string): React.ReactNode => {

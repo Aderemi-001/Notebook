@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import * as React from "react"; // Explicitly import React
 import { useEffect } from "react";
 
 const NotFound = () => {

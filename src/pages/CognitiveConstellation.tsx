@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import * as React from 'react'; // Explicitly import React
 import { useState } from 'react';
 
 interface Concept {
@@ -177,7 +178,7 @@ const CognitiveConstellation: React.FC = () => {
 
   const { concepts, relationships } = data;
 
-  const conceptMap = new Map(concepts.map(c => [c.id, c]));
+  const conceptMap = new Map(concepts.map((c: Concept) => [c.id, c]));
 
   return (
     <div className="container mx-auto py-10 animate-fade-in">
@@ -213,7 +214,7 @@ const CognitiveConstellation: React.FC = () => {
               <CardTitle>Your Concepts</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto">
-              {concepts.map(concept => (
+              {concepts.map((concept: Concept) => (
                 <Button
                   key={concept.id}
                   variant={selectedConcept?.id === concept.id ? "default" : "outline"}
@@ -240,11 +241,11 @@ const CognitiveConstellation: React.FC = () => {
                     <p className="text-muted-foreground text-sm">{selectedConcept.description}</p>
                   )}
                   <h4 className="text-lg font-medium mt-4">Relationships:</h4>
-                  {relationships.filter(r => r.source_concept_id === selectedConcept.id || r.target_concept_id === selectedConcept.id).length > 0 ? (
+                  {relationships.filter((r: Relationship) => r.source_concept_id === selectedConcept.id || r.target_concept_id === selectedConcept.id).length > 0 ? (
                     <ul className="list-disc pl-5 space-y-1 text-sm">
                       {relationships
-                        .filter(r => r.source_concept_id === selectedConcept.id)
-                        .map(r => (
+                        .filter((r: Relationship) => r.source_concept_id === selectedConcept.id)
+                        .map((r: Relationship) => (
                           <li key={r.id}>
                             <span className="font-semibold">{selectedConcept.name}</span>{' '}
                             <span className="text-muted-foreground">({r.type})</span>{' '}
@@ -253,8 +254,8 @@ const CognitiveConstellation: React.FC = () => {
                           </li>
                         ))}
                       {relationships
-                        .filter(r => r.target_concept_id === selectedConcept.id && r.source_concept_id !== selectedConcept.id)
-                        .map(r => (
+                        .filter((r: Relationship) => r.target_concept_id === selectedConcept.id && r.source_concept_id !== selectedConcept.id)
+                        .map((r: Relationship) => (
                           <li key={r.id}>
                             <span className="font-semibold">{conceptMap.get(r.source_concept_id)?.name}</span>{' '}
                             <span className="text-muted-foreground">({r.type} to)</span>{' '}

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import * as React from "react";
+import * as React from "react"; // Explicitly import React
 import AppContent from "./components/AppContent"; // Import the new AppContent component
 
 const queryClient = new QueryClient();

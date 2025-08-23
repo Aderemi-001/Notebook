@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'; // Explicitly import React
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Bot, User2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,7 +23,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, isSending, 
               <p>Ask me anything about how to use the app!</p>
             </div>
           ) : (
-            messages.map((msg) => (
+            messages.map((msg: ChatMessage) => (
               <div
                 key={msg.id}
                 className={cn(

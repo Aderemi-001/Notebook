@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
@@ -157,10 +157,10 @@ const NotesIndex: React.FC = () => {
     queryFn: fetchUserNotes,
   });
 
-  const filteredNotes = notes?.filter(note =>
+  const filteredNotes = notes?.filter((note: Note) =>
     note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    getPlainTextPreview(note.content, 500).toLowerCase().includes(searchTerm.toLowerCase()) || // Search in content preview
-    (note.extracted_content_ai && note.extracted_content_ai.toLowerCase().includes(searchTerm.toLowerCase())) || // Search in AI extracted content
+    getPlainTextPreview(note.content, 500).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (note.extracted_content_ai && note.extracted_content_ai.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (note.study_sets?.[0]?.title && note.study_sets[0].title.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -251,7 +251,7 @@ const NotesIndex: React.FC = () => {
           type="text"
           placeholder="Search notes by title, content, or AI extracted text..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
           className="w-full"
         />
       </div>
@@ -272,7 +272,7 @@ const NotesIndex: React.FC = () => {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredNotes.map((note) => (
+          {filteredNotes.map((note: Note) => (
             <NotebookCard key={note.id} className="h-full flex flex-col">
               <CardHeader className="flex-grow">
                 <CardTitle className="text-lg font-semibold">{note.title}</CardTitle>

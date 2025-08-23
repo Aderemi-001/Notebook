@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import * as React from "react"; // Explicitly import React
+import { useRef, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Eraser, Pencil, Type, Save, Sparkles, X } from "lucide-react";
+import { Eraser, Pencil, Type, Save, Sparkles } from "lucide-react"; // Removed unused X
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { toast } from "sonner";
 import { Editor } from "@tiptap/react"; // Import Editor type
@@ -57,7 +58,7 @@ export function DrawingCanvas({
     }
   }, [initialDrawing]);
 
-  const startDrawing = ({ nativeEvent }: React.MouseEvent) => {
+  const startDrawing = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawingMode) return;
     const { offsetX, offsetY } = nativeEvent;
     contextRef.current?.beginPath();
@@ -65,7 +66,7 @@ export function DrawingCanvas({
     setIsDrawing(true);
   };
 
-  const draw = ({ nativeEvent }: React.MouseEvent) => {
+  const draw = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
     if (!isDrawingMode) return;
     const { offsetX, offsetY } = nativeEvent;
@@ -80,14 +81,14 @@ export function DrawingCanvas({
     saveDrawing();
   };
 
-  const startErasing = ({ nativeEvent }: React.MouseEvent) => {
+  const startErasing = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawingMode) return;
     const { offsetX, offsetY } = nativeEvent;
     contextRef.current?.clearRect(offsetX, offsetY, 20, 20); // Eraser size
     setIsErasing(true);
   };
 
-  const erase = ({ nativeEvent }: React.MouseEvent) => {
+  const erase = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isErasing) return;
     if (!isDrawingMode) return;
     const { offsetX, offsetY } = nativeEvent;

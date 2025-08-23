@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'; // Explicitly import React
 import { Button } from '@/components/ui/button';
 import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Bot, XCircle } from 'lucide-react';

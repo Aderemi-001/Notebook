@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'; // Explicitly import React
 import { EditorContent, Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'; // Explicitly import React
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -153,7 +153,7 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
     queryFn: fetchStudyDays,
   });
 
-  const studyDates = studyDaysData?.map(d => new Date(d.study_date)) || [];
+  const studyDates = studyDaysData?.map((d: StudyDay) => new Date(d.study_date)) || [];
   const { currentStreak, longestStreak } = calculateStreak(studyDates);
 
   const modifiers = {
@@ -165,7 +165,7 @@ const Statistics: React.FC = () => { // Renamed component to Statistics
   };
 
   const handleDayClick = (day: Date) => {
-    const hasStudiedOnDay = studyDates.some(d => isSameDay(d, day));
+    const hasStudiedOnDay = studyDates.some((d: Date) => isSameDay(d, day));
     if (!hasStudiedOnDay) {
       navigate('/daily-review');
     }

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'; // Explicitly import React
 import { UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -31,7 +31,7 @@ const StudySetFormFields: React.FC<StudySetFormFieldsProps> = ({ form, userGroup
         <FormField
           control={form.control}
           name="title"
-          render={({ field }) => (
+          render={({ field }: { field: any }) => (
             <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
@@ -45,7 +45,7 @@ const StudySetFormFields: React.FC<StudySetFormFieldsProps> = ({ form, userGroup
           <FormField
             control={form.control}
             name="description"
-            render={({ field }) => (
+            render={({ field }: { field: any }) => (
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
@@ -60,10 +60,10 @@ const StudySetFormFields: React.FC<StudySetFormFieldsProps> = ({ form, userGroup
           <FormField
             control={form.control}
             name="group_id"
-            render={({ field }) => (
+            render={({ field }: { field: any }) => (
               <FormItem>
                 <FormLabel>Group (Optional)</FormLabel>
-                <Select onValueChange={(value) => field.onChange(value === "null" ? null : value)} value={field.value || "null"}>
+                <Select onValueChange={(value: string) => field.onChange(value === "null" ? null : value)} value={field.value || "null"}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a group" />
@@ -76,7 +76,7 @@ const StudySetFormFields: React.FC<StudySetFormFieldsProps> = ({ form, userGroup
                     ) : userGroups?.length === 0 ? (
                       <SelectItem disabled value="no-groups">No groups available</SelectItem>
                     ) : (
-                      userGroups?.map(group => (
+                      userGroups?.map((group: StudySetGroup) => (
                         <SelectItem key={group.id} value={group.id}>
                           {group.name}
                         </SelectItem>
@@ -96,7 +96,7 @@ const StudySetFormFields: React.FC<StudySetFormFieldsProps> = ({ form, userGroup
           <FormField
             control={form.control}
             name="is_public"
-            render={({ field }) => (
+            render={({ field }: { field: any }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
                   <FormLabel className="text-base">Make Public</FormLabel>

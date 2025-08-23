@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -178,7 +179,7 @@ const DailyReview: React.FC = () => {
     }
 
     if (currentCardIndex < (cards?.length || 0) - 1) {
-      setCurrentCardIndex(prevIndex => prevIndex + 1);
+      setCurrentCardIndex((prevIndex: number) => prevIndex + 1);
       setShowDefinition(preferences?.default_flashcard_side === 'definition'); // Reset to default side
     } else {
       setSessionFinished(true);

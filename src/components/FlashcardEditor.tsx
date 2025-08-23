@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'; // Explicitly import React
 import { UseFormReturn, useFieldArray } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -23,14 +23,14 @@ const FlashcardEditor: React.FC<FlashcardEditorProps> = ({ form }) => {
         <CardTitle>Flashcards</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {fields.map((field, index) => (
+        {fields.map((field: any, index: number) => (
           <div key={field.id} className="flex items-start gap-4 p-4 border rounded-md">
             <div className="font-bold text-gray-500 mt-2">{index + 1}</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
               <FormField
                 control={form.control}
                 name={`cards.${index}.term`}
-                render={({ field }) => (
+                render={({ field }: { field: any }) => (
                   <FormItem>
                     <FormLabel>Term</FormLabel>
                     <FormControl>
@@ -43,7 +43,7 @@ const FlashcardEditor: React.FC<FlashcardEditorProps> = ({ form }) => {
               <FormField
                 control={form.control}
                 name={`cards.${index}.definition`}
-                render={({ field }) => (
+                render={({ field }: { field: any }) => (
                   <FormItem>
                     <FormLabel>Definition</FormLabel>
                     <FormControl>

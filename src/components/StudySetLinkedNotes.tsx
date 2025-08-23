@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'; // Explicitly import React
 import { Link } from 'react-router-dom';
 import { CardContent, CardHeader, CardTitle, CardDescription, NotebookCard } from "@/components/NotebookCard";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,7 @@ const StudySetLinkedNotes: React.FC<StudySetLinkedNotesProps> = ({ linkedNotes, 
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {linkedNotes.map((note) => (
+          {linkedNotes.map((note: LinkedNote) => (
             <Link to={`/notes/${note.id}/edit`} key={note.id}>
               <NotebookCard className="hover:shadow-md transition-shadow h-full">
                 <CardHeader>

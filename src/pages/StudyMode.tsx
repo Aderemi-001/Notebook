@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
 import { Progress } from "@/components/ui/progress";
 import { useUserPreferences } from '@/hooks/use-user-preferences';
+import * as React from 'react'; // Explicitly import React
 import { useState, useEffect, useCallback } from 'react'; // Explicitly import React and hooks
 
 interface CardItem {
@@ -118,14 +119,14 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
         progress_user_id: progress?.user_id,
       };
     })
-    .filter(card => {
+    .filter((card: any) => {
       const cardNextReviewDate = new Date(card.next_review_at);
       const isNewCardForCurrentUser = !card.progress_user_id || card.progress_user_id !== user.id;
       const isDueForReview = cardNextReviewDate <= now;
 
       return isNewCardForCurrentUser || (card.progress_user_id === user.id && isDueForReview);
     })
-    .sort((a, b) => new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime());
+    .sort((a: any, b: any) => new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime());
 
   return dueCards;
 };

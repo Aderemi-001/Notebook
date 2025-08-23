@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface UseDrawingCanvasProps {
   isDrawingMode: boolean;
@@ -213,10 +214,10 @@ export const useDrawingCanvas = ({
         setZoomLevel(newZoom);
 
         // Calculate new pan offset to keep the oldCanvasPoint fixed relative to the screen
-        setPanOffset({
+        setPanOffset(prevPan => ({
           x: centerX - oldCanvasPointX * newZoom,
           y: centerY - oldCanvasPointY * newZoom,
-        });
+        }));
         
         setInitialPinchDistance(currentDist);
       }
@@ -233,7 +234,7 @@ export const useDrawingCanvas = ({
       const dx = clientX - lastPointerPosition.current.x;
       const dy = clientY - lastPointerPosition.current.y;
 
-      setPanOffset(prevPan => ({
+      setPanOffset((prevPan: { x: number; y: number }) => ({
         x: prevPan.x + dx,
         y: prevPan.y + dy,
       }));

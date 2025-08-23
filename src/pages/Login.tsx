@@ -8,6 +8,7 @@ import { CardContent, CardHeader, CardTitle, CardDescription } from '@/component
 import { NotebookCard } from '@/components/NotebookCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import * as React from 'react'; // Explicitly import React
 import { useEffect, useState } from 'react';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 
@@ -29,7 +30,7 @@ const Login = () => {
   });
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
       if (session) {
         navigate('/');
       }
@@ -110,7 +111,7 @@ const Login = () => {
                 <FormField
                   control={form.control}
                   name="email"
-                  render={({ field }) => (
+                  render={({ field }: { field: any }) => (
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
@@ -123,7 +124,7 @@ const Login = () => {
                 <FormField
                   control={form.control}
                   name="password"
-                  render={({ field }) => (
+                  render={({ field }: { field: any }) => (
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>

@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as React from 'react'; // Explicitly import React
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -29,7 +30,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
 
     checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
       if (!session) {
         navigate('/login');
       } else {

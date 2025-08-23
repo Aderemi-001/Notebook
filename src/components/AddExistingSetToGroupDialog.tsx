@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -64,13 +65,13 @@ const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = 
     enabled: open, // Only fetch when dialog is open
   });
 
-  const filteredSets = allUserSets?.filter(set =>
+  const filteredSets = allUserSets?.filter((set: StudySet) =>
     set.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (set.description && set.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleCheckboxChange = (setId: string, checked: boolean) => {
-    setSelectedSetIds(prev => {
+    setSelectedSetIds((prev: Set<string>) => {
       const newSet = new Set(prev);
       if (checked) {
         newSet.add(setId);
@@ -97,7 +98,7 @@ const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = 
       }
 
       const updates = Array.from(selectedSetIds).map(setId => {
-        const selectedSet = allUserSets?.find(set => set.id === setId);
+        const selectedSet = allUserSets?.find((set: StudySet) => set.id === setId);
         if (!selectedSet) {
           throw new Error(`Selected set with ID ${setId} not found in fetched data.`);
         }
@@ -151,7 +152,7 @@ const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = 
               type="text"
               placeholder="Search sets..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               className="w-full"
             />
           </div>
@@ -172,7 +173,7 @@ const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = 
               </div>
             ) : (
               <div className="space-y-2">
-                {filteredSets?.map(set => (
+                {filteredSets?.map((set: StudySet) => (
                   <div
                     key={set.id}
                     className={cn(

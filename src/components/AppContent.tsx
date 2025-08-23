@@ -28,13 +28,13 @@ import GroupDetail from "@/pages/GroupDetail";
 import Collaborations from "@/pages/Collaborations";
 import AuthLayout from "@/layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
-import * as React from "react";
+import * as React from "react"; // Explicitly import React
 import { useDueCardsCount } from "@/hooks/use-due-cards-count";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { toast } from "sonner";
 import { format } from 'date-fns';
-import Chatbot from "./Chatbot"; // Import the new Chatbot component
-import { supabase } from "@/integrations/supabase/client"; // Import supabase client
+import Chatbot from "./Chatbot";
+import { supabase } from "@/integrations/supabase/client";
 
 const AppContent: React.FC = () => {
   const { data: dueCardsCount, isLoading: isLoadingDueCards } = useDueCardsCount();
@@ -45,7 +45,7 @@ const AppContent: React.FC = () => {
     }
     return null;
   });
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false); // New state for login status
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
 
   React.useEffect(() => {
     const checkUser = async () => {
@@ -55,7 +55,7 @@ const AppContent: React.FC = () => {
 
     checkUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
       setIsLoggedIn(!!session);
     });
 
@@ -105,113 +105,85 @@ const AppContent: React.FC = () => {
             <Route
               path="/"
               element={
-                <AuthLayout>
-                  <Index />
-                </AuthLayout>
+                <AuthLayout><Index /></AuthLayout>
               }
             />
             <Route
               path="/create"
               element={
-                <AuthLayout>
-                  <CreateSet />
-                </AuthLayout>
+                <AuthLayout><CreateSet /></AuthLayout>
               }
             />
             <Route
               path="/sets/:setId"
               element={
-                <AuthLayout>
-                  <StudySetDetail />
-                </AuthLayout>
+                <AuthLayout><StudySetDetail /></AuthLayout>
               }
             />
             <Route
               path="/sets/:setId/study"
               element={
-                <AuthLayout>
-                  <StudyMode />
-                </AuthLayout>
+                <AuthLayout><StudyMode /></AuthLayout>
               }
             />
             <Route
               path="/sets/:setId/edit"
               element={
-                <AuthLayout>
-                  <EditSet />
-                </AuthLayout>
+                <AuthLayout><EditSet /></AuthLayout>
               }
             />
             <Route
               path="/profile"
               element={
-                <AuthLayout>
-                  <Profile />
-                </AuthLayout>
+                <AuthLayout><Profile /></AuthLayout>
               }
             />
             <Route
               path="/constellation"
               element={
-                <AuthLayout>
-                  <CognitiveConstellation />
-                </AuthLayout>
+                <AuthLayout><CognitiveConstellation /></AuthLayout>
               }
             />
             <Route
               path="/explore-public-sets"
               element={
-                <AuthLayout>
-                  <ExplorePublicSets />
-                </AuthLayout>
+                <AuthLayout><ExplorePublicSets /></AuthLayout>
               }
             />
             <Route
               path="/generate-exam"
               element={
-                <AuthLayout>
-                  <GenerateExam />
-                </AuthLayout>
+                <AuthLayout><GenerateExam /></AuthLayout>
               }
             />
             <Route
               path="/generate-essay-questions"
               element={
-                <AuthLayout>
-                  <GenerateEssayQuestions />
-                </AuthLayout>
+                <AuthLayout><GenerateEssayQuestions /></AuthLayout>
               }
             />
             <Route
               path="/past-essay-questions"
               element={
-                <AuthLayout>
-                  <PastEssayQuestions />
-                </AuthLayout>
+                <AuthLayout><PastEssayQuestions /></AuthLayout>
               }
             />
             <Route
               path="/essay-practice/:questionId"
               element={
-                <AuthLayout>
-                  <EssayPractice />
-                </AuthLayout>
+                <AuthLayout><EssayPractice /></AuthLayout>
               }
             />
             <Route
               path="/exams/:examId"
               element={
-                <AuthLayout>
-                  <TakeExam />
-                </AuthLayout>
+                <AuthLayout><TakeExam /></AuthLayout>
               }
             />
             <Route
               path="/past-exams"
               element={
-                <AuthLayout>
-                  <PastExams />
-                </AuthLayout>
+                <AuthLayout><PastExams /></AuthLayout>
               }
             />
             <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} />
@@ -219,87 +191,67 @@ const AppContent: React.FC = () => {
             <Route
               path="/notes"
               element={
-                <AuthLayout>
-                  <NotesIndex />
-                </AuthLayout>
+                <AuthLayout><NotesIndex /></AuthLayout>
               }
             />
             <Route
               path="/create-note"
               element={
-                <AuthLayout>
-                  <CreateNote />
-                </AuthLayout>
+                <AuthLayout><CreateNote /></AuthLayout>
               }
             />
             <Route
               path="/notes/:noteId/edit"
               element={
-                <AuthLayout>
-                  <EditNote />
-                </AuthLayout>
+                <AuthLayout><EditNote /></AuthLayout>
               }
             />
             <Route
               path="/dashboard"
               element={
-                <AuthLayout>
-                  <Statistics />
-                </AuthLayout>
+                <AuthLayout><Statistics /></AuthLayout>
               }
             />
             <Route
               path="/daily-review"
               element={
-                <AuthLayout>
-                  <DailyReview />
-                </AuthLayout>
+                <AuthLayout><DailyReview /></AuthLayout>
               }
             />
             <Route
               path="/groups"
               element={
-                <AuthLayout>
-                  <GroupsIndex />
-                </AuthLayout>
+                <AuthLayout><GroupsIndex /></AuthLayout>
               }
             />
             <Route
               path="/groups/create"
               element={
-                <AuthLayout>
-                  <CreateGroup />
-                </AuthLayout>
+                <AuthLayout><CreateGroup /></AuthLayout>
               }
             />
             <Route
               path="/groups/:groupId"
               element={
-                <AuthLayout>
-                  <GroupDetail />
-                </AuthLayout>
+                <AuthLayout><GroupDetail /></AuthLayout>
               }
             />
             <Route
               path="/groups/:groupId/edit"
               element={
-                <AuthLayout>
-                  <EditGroup />
-                </AuthLayout>
+                <AuthLayout><EditGroup /></AuthLayout>
               }
             />
             <Route
               path="/collaborations"
               element={
-                <AuthLayout>
-                  <Collaborations />
-                </AuthLayout>
+                <AuthLayout><Collaborations /></AuthLayout>
               }
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster richColors />
-          {isLoggedIn && <Chatbot />} {/* Conditionally render Chatbot */}
+          {isLoggedIn && <Chatbot />}
         </React.Fragment>
       </BrowserRouter>
     </>

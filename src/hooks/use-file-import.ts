@@ -49,7 +49,7 @@ export const useFileImport = () => {
       const reader = new FileReader();
       reader.readAsArrayBuffer(selectedFile);
       await new Promise<void>((resolve, reject) => {
-        reader.onload = async (e) => {
+        reader.onload = async (e: ProgressEvent<FileReader>) => {
           try {
             const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
             const loadingTask = pdfjsLib.getDocument({ data: pdfData });
@@ -58,7 +58,7 @@ export const useFileImport = () => {
             let pageTextPromises: Promise<string>[] = [];
             for (let i = 1; i <= pdf.numPages; i++) {
               pageTextPromises.push(
-                pdf.getPage(i).then(page => page.getTextContent()).then(textContent =>
+                pdf.getPage(i).then((page: any) => page.getTextContent()).then((textContent: any) =>
                   textContent.items.map((item: any) => item.str).join(' ')
                 )
               );
@@ -228,7 +228,7 @@ export const useFileImport = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) {
+          if (existsSync) {
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase

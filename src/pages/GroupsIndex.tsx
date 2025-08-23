@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,12 +26,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { Separator } from '@/components/ui/separator';
-import { Label } from "@/components/ui/label"; // Import Label
+import { Label } from "@/components/ui/label";
 
 interface StudySet {
   id: string;
@@ -87,7 +87,7 @@ const fetchStudySetGroups = async (): Promise<StudySetGroup[]> => {
 
   // Map sets to their respective groups
   const setsMap = new Map<string, StudySet[]>();
-  setsData?.forEach(set => {
+  setsData?.forEach((set: any) => {
     if (set.group_id) {
       const processedSet: StudySet = {
         id: set.id,
@@ -104,7 +104,7 @@ const fetchStudySetGroups = async (): Promise<StudySetGroup[]> => {
     }
   });
 
-  const processedGroups: StudySetGroup[] = groupsData.map(group => ({
+  const processedGroups: StudySetGroup[] = groupsData.map((group: any) => ({
     ...group,
     study_sets: setsMap.get(group.id) || [],
   }));
@@ -122,10 +122,10 @@ const GroupsIndex: React.FC = () => {
     queryFn: fetchStudySetGroups,
   });
 
-  const filteredGroups = groups?.filter(group =>
+  const filteredGroups = groups?.filter((group: StudySetGroup) =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (group.description && group.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    group.study_sets.some(set => set.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    group.study_sets.some((set: StudySet) => set.title.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleDeleteGroup = async (groupId: string, groupName: string) => {
@@ -216,7 +216,7 @@ const GroupsIndex: React.FC = () => {
           type="text"
           placeholder="Search groups by name, description, or contained sets..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
           className="w-full"
         />
       </div>
@@ -237,7 +237,7 @@ const GroupsIndex: React.FC = () => {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredGroups.map((group) => (
+          {filteredGroups.map((group: StudySetGroup) => (
             <NotebookCard key={group.id} className="h-full flex flex-col">
               <Link to={`/groups/${group.id}`} className="flex-grow">
                 <CardHeader>
@@ -261,12 +261,12 @@ const GroupsIndex: React.FC = () => {
                         <BookOpen className="mr-2 h-4 w-4" /> Sets in Group ({group.study_sets.length}):
                       </h3>
                       <div className="space-y-2 text-sm">
-                        {group.study_sets.slice(0, 2).map((set, setIdx) => (
+                        {group.study_sets.slice(0, 2).map((set: StudySet, setIdx: number) => (
                           <div key={set.id || setIdx} className="border-l-2 pl-2">
                             <p className="font-medium line-clamp-1">{set.title}</p>
                             {set.cards.length > 0 && (
                               <div className="space-y-1 text-xs text-muted-foreground mt-1">
-                                {set.cards.slice(0, 1).map((card, cardIdx) => (
+                                {set.cards.slice(0, 1).map((card: { id: string; term: string; definition: string }, cardIdx: number) => (
                                   <p key={card.id || cardIdx} className="line-clamp-1">
                                     {card.term}: {card.definition}
                                   </p>

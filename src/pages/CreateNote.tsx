@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import * as React from "react"; // Explicitly import React
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,7 +86,7 @@ export default function CreateNote() {
           <Input
             id="title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
             placeholder="Note Title"
             className="mt-1"
           />
@@ -99,7 +99,7 @@ export default function CreateNote() {
               <SelectValue placeholder="Select a study set" />
             </SelectTrigger>
             <SelectContent>
-              {studySets.map((set) => (
+              {studySets.map((set: { id: string; title: string }) => (
                 <SelectItem key={set.id} value={set.id}>
                   {set.title}
                 </SelectItem>

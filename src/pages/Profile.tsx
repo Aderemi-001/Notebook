@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import * as React from 'react'; // Explicitly import React
 import { useEffect } from 'react'; // Explicitly import useEffect
 
 const profileSchema = z.object({
@@ -186,7 +187,7 @@ const Profile = () => {
               <FormField
                 control={form.control}
                 name="display_name"
-                render={({ field }) => (
+                render={({ field }: { field: any }) => (
                   <FormItem>
                     <FormLabel>Display Name</FormLabel>
                     <FormControl>

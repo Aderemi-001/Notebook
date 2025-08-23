@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react"; // Explicitly import React
 import { type Editor } from "@tiptap/react";
 import {
   Bold,
@@ -7,7 +8,7 @@ import {
   Italic,
   List,
   ListOrdered,
-  Heading1, // Keep Heading1 for the icon in the SelectTrigger
+  Heading1,
   Quote,
   Code,
   Redo,
@@ -233,7 +234,7 @@ export const RichTextEditorToolbar = ({ editor }: Props) => {
             type="text"
             placeholder="Image URL"
             value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImageUrl(e.target.value)}
             className="flex-grow"
           />
           <Button onClick={handleAddImage}>Add Image</Button>
@@ -246,7 +247,7 @@ export const RichTextEditorToolbar = ({ editor }: Props) => {
             type="text"
             placeholder="Link URL"
             value={linkUrl}
-            onChange={(e) => setLinkUrl(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLinkUrl(e.target.value)}
             className="flex-grow"
           />
           <Button onClick={handleSetLink}>Add Link</Button>

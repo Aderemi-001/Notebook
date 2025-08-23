@@ -15,7 +15,7 @@ const toggleVariants = cva(
       },
       size: {
         default: "h-10 px-3",
-        sm: "h-9 px-2.5",
+        sm: "h-9 px-2",
         lg: "h-11 px-5",
       },
     },
@@ -23,7 +23,7 @@ const toggleVariants = cva(
       variant: "default",
       size: "default",
     },
-  },
+  }
 );
 
 const Toggle = React.forwardRef<
@@ -33,7 +33,7 @@ const Toggle = React.forwardRef<
 >(({ className, variant, size, ...props }, ref) => (
   <TogglePrimitive.Root
     ref={ref}
-    className={cn(toggleVariants({ variant, size, className }))}
+    className={cn(toggleVariants({ variant, size }), className)}
     {...props}
   />
 ));

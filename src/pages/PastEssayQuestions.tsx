@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { Label } from "@/components/ui/label"; // Import Label
+import { Label } from "@/components/ui/label";
 
 interface EssayQuestionSummary {
   id: string;
@@ -24,7 +25,7 @@ interface EssayQuestionSummary {
   suggested_points: string[] | null;
   created_at: string;
   study_set_id: string | null;
-  study_sets: { title: string }[] | null; // Changed to array
+  study_sets: { title: string }[] | null;
 }
 
 const fetchPastEssayQuestions = async (): Promise<EssayQuestionSummary[]> => {
@@ -62,9 +63,9 @@ const PastEssayQuestions: React.FC = () => {
     queryFn: fetchPastEssayQuestions,
   });
 
-  const filteredQuestions = pastEssayQuestions?.filter(q =>
+  const filteredQuestions = pastEssayQuestions?.filter((q: EssayQuestionSummary) =>
     q.question_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (q.study_sets?.[0]?.title && q.study_sets[0].title.toLowerCase().includes(searchTerm.toLowerCase())) // Access first element
+    (q.study_sets?.[0]?.title && q.study_sets[0].title.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (isError) {
@@ -106,7 +107,7 @@ const PastEssayQuestions: React.FC = () => {
           type="text"
           placeholder="Search essay questions by text or associated study set..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
           className="w-full"
         />
       </div>
@@ -135,11 +136,11 @@ const PastEssayQuestions: React.FC = () => {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-          {filteredQuestions.map((question) => (
+          {filteredQuestions.map((question: EssayQuestionSummary) => (
             <NotebookCard key={question.id} className="h-full">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold">{question.question_text}</CardTitle>
-                {question.study_sets?.[0]?.title && ( // Access first element
+                {question.study_sets?.[0]?.title && (
                   <CardDescription>From Set: {question.study_sets[0].title}</CardDescription>
                 )}
               </CardHeader>
@@ -155,7 +156,7 @@ const PastEssayQuestions: React.FC = () => {
                       <CheckCircle2 className="mr-2 h-4 w-4" /> Suggested Points:
                     </h3>
                     <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                      {question.suggested_points.map((point, pointIndex) => (
+                      {question.suggested_points.map((point: string, pointIndex: number) => (
                         <li key={pointIndex}>{point}</li>
                       ))}
                     </ul>

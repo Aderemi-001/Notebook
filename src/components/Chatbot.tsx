@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { MessageSquareText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
-import { useLocation } from 'react-router-dom'; // Added useLocation
+import { useLocation } from 'react-router-dom';
 
 // Import modular components and types/utils
 import ChatHeader from './chatbot/ChatHeader';
@@ -12,7 +13,7 @@ import ChatMessageList from './chatbot/ChatMessageList';
 import ChatInput from './chatbot/ChatInput';
 import SuggestedQuestions from './chatbot/SuggestedQuestions';
 import { ChatMessage } from './chatbot/types';
-import { parseAndRenderLinks, getDynamicSuggestions } from './chatbot/utils'; // Updated import path
+import { parseAndRenderLinks, getDynamicSuggestions } from './chatbot/utils';
 
 const INACTIVITY_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 const LOCAL_STORAGE_KEY = 'chatbotMessages';
@@ -89,7 +90,7 @@ const Chatbot: React.FC = () => {
       text: input,
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev: ChatMessage[]) => [...prev, userMessage]);
     setInput('');
     setIsSending(true);
 
@@ -121,7 +122,7 @@ const Chatbot: React.FC = () => {
         timestamp: new Date(),
         feedbackGiven: null,
       };
-      setMessages((prev) => [...prev, botMessage]);
+      setMessages((prev: ChatMessage[]) => [...prev, botMessage]);
     } catch (err: any) {
       showError(err.message || "An unexpected error occurred with the chatbot.");
       console.error("Chatbot error:", err);
@@ -132,7 +133,7 @@ const Chatbot: React.FC = () => {
         timestamp: new Date(),
         feedbackGiven: null,
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev: ChatMessage[]) => [...prev, errorMessage]);
     } finally {
       setIsSending(false);
     }
@@ -155,7 +156,7 @@ const Chatbot: React.FC = () => {
 
   const handleFeedback = (messageId: number, feedback: 'up' | 'down') => {
     setMessages(prevMessages =>
-      prevMessages.map(msg =>
+      prevMessages.map((msg: ChatMessage) =>
         msg.id === messageId ? { ...msg, feedbackGiven: feedback } : msg
       )
     );
@@ -167,7 +168,7 @@ const Chatbot: React.FC = () => {
   const showSuggestions = messages.length === 0 && !isSending && !input.trim();
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => {
+    <Sheet open={isOpen} onOpenChange={(open: boolean) => {
       setIsOpen(open);
       resetInactivityTimer();
     }}>

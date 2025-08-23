@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'; // Explicitly import React
 import { Button } from '@/components/ui/button';
 import { Lightbulb } from 'lucide-react';
 
@@ -14,7 +14,7 @@ const SuggestedQuestions: React.FC<SuggestedQuestionsProps> = ({ suggestions, on
         <Lightbulb className="h-4 w-4 mr-2" /> Suggested Questions:
       </p>
       <div className="flex flex-wrap gap-2">
-        {suggestions.map((question, index) => (
+        {suggestions.map((question: string, index: number) => (
           <Button
             key={index}
             variant="outline"

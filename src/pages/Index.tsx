@@ -5,8 +5,8 @@ import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Menu, B
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useState, useEffect } from "react";
+import * as React from "react"; // Explicitly import React
+import { useState, useEffect } from "react";
 import { formatDistanceToNowStrict, isPast } from 'date-fns';
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
-import { Label } from "@/components/ui/label"; // Import Label
+import { Label } from "@/components/ui/label";
 
 interface StudySet {
   id: string;
@@ -57,7 +57,7 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
 
   const studySets = rawStudySets || [];
 
-  const setsWithReviewData = await Promise.all(studySets.map(async (set: any) => { // Explicitly type 'set'
+  const setsWithReviewData = await Promise.all(studySets.map(async (set: any) => {
     const { data: cardsData, error: cardsError } = await supabase
       .from('cards')
       .select('id')
@@ -68,7 +68,7 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
       return { ...set, next_review_at: null, due_cards_count: 0 };
     }
 
-    const cardIds = cardsData ? cardsData.map(card => card.id) : [];
+    const cardIds = cardsData ? cardsData.map((card: { id: string }) => card.id) : [];
 
     let earliestReviewAt: string | null = null;
     let dueCardsCount = 0;
@@ -84,7 +84,7 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
         console.error(`Error fetching progress for set ${set.id}:`, progressError);
       }
 
-      const progressMap = new Map(progressData?.map(p => [p.card_id, p]));
+      const progressMap = new Map(progressData?.map((p: { card_id: string; next_review_at: string; status: string }) => [p.card_id, p]));
 
       let tempEarliestReviewAt: Date | null = null;
 
@@ -155,7 +155,6 @@ const fetchSearchResults = async (searchTerm: string): Promise<SearchResultCard[
 };
 
 const Index = () => {
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
@@ -181,11 +180,11 @@ const Index = () => {
     enabled: !!debouncedSearchTerm.trim(), // Only run query if debouncedSearchTerm is not empty
   });
 
-  React.useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['studySets'] });
-  }, [queryClient]);
+  // React.useEffect(() => { // Removed useQueryClient, not needed here
+  //   queryClient.invalidateQueries({ queryKey: ['studySets'] });
+  // }, [queryClient]);
 
-  const filteredStudySets = studySets?.filter(set =>
+  const filteredStudySets = studySets?.filter((set: StudySet) =>
     set.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (set.description && set.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -199,7 +198,7 @@ const Index = () => {
       }
       dismissToast(toastId);
       showSuccess('Signed out successfully!');
-      queryClient.clear();
+      // queryClient.clear(); // Removed useQueryClient, not needed here
       // AuthLayout will handle redirect to /login
     } catch (err: any) {
       dismissToast(toastId);
@@ -332,7 +331,7 @@ const Index = () => {
           type="text"
           placeholder="Search sets by title/description or cards by term/definition..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
           className="w-full"
         />
       </div>
@@ -363,7 +362,7 @@ const Index = () => {
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {searchResults?.map((card) => (
+              {searchResults?.map((card: SearchResultCard) => (
                 <Link to={`/sets/${card.set_id}`} key={card.card_id}>
                   <NotebookCard className="hover:shadow-md transition-shadow h-full">
                     <CardHeader>
@@ -408,7 +407,7 @@ const Index = () => {
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredStudySets.map((set) => (
+              {filteredStudySets.map((set: StudySet) => (
                 <Link to={`/sets/${set.id}`} key={set.id}>
                   <NotebookCard className="hover:shadow-md transition-shadow h-full">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

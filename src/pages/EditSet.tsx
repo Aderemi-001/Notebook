@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form } from "@/components/ui/form"; // Removed unused Form components
+import { Form } from "@/components/ui/form";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { ArrowLeft } from "lucide-react";
@@ -77,12 +78,6 @@ const EditSet = () => {
     },
   });
 
-  // Removed unused 'fields', 'append', 'remove' from useFieldArray
-  // const { fields, append, remove } = useFieldArray({ 
-  //   control: form.control,
-  //   name: "cards",
-  // });
-
   useEffect(() => {
     if (studySet) {
       form.reset({
@@ -90,7 +85,7 @@ const EditSet = () => {
         description: studySet.description || "",
         is_public: studySet.is_public,
         group_id: studySet.group_id,
-        cards: studySet.cards.map(card => ({
+        cards: studySet.cards.map((card: { id: string; term: string; definition: string }) => ({
           id: card.id,
           term: card.term,
           definition: card.definition,
@@ -133,8 +128,8 @@ const EditSet = () => {
 
       if (updateSetError) throw updateSetError;
 
-      const existingCards = values.cards.filter(card => card.id);
-      const newCards = values.cards.filter(card => !card.id);
+      const existingCards = values.cards.filter((card: { id?: string }) => card.id);
+      const newCards = values.cards.filter((card: { id?: string }) => !card.id);
 
       const { data: currentDbCards, error: fetchCardsError } = await supabase
         .from('cards')
@@ -143,8 +138,8 @@ const EditSet = () => {
 
       if (fetchCardsError) throw fetchCardsError;
 
-      const currentDbCardIds = new Set(currentDbCards.map(card => card.id));
-      const formCardIds = new Set(existingCards.map(card => card.id));
+      const currentDbCardIds = new Set(currentDbCards.map((card: { id: string }) => card.id));
+      const formCardIds = new Set(existingCards.map((card: { id?: string }) => card.id));
 
       const cardsToDelete = Array.from(currentDbCardIds).filter(dbId => !formCardIds.has(dbId));
 
@@ -160,13 +155,13 @@ const EditSet = () => {
         const { error: updateCardError } = await supabase
           .from('cards')
           .update({ term: card.term, definition: card.definition })
-          .eq('id', card.id);
+          .eq('id', card.id!);
         if (updateCardError) throw updateCardError;
       }
 
       let insertedNewCards: { id: string; term: string }[] | null = null;
       if (newCards.length > 0) {
-        const cardsToInsert = newCards.map(card => ({
+        const cardsToInsert = newCards.map((card: { term: string; definition: string }) => ({
           set_id: setId,
           term: card.term,
           definition: card.definition,
@@ -182,7 +177,7 @@ const EditSet = () => {
       // Process and insert card_concept_links
       if (generatedCardConceptLinks.length > 0) {
         const allCardsInSet = [...(studySet?.cards || []), ...(insertedNewCards || [])];
-        const cardTermToIdMap = new Map(allCardsInSet.map(card => [card.term, card.id]));
+        const cardTermToIdMap = new Map(allCardsInSet.map((card: { id: string; term: string }) => [card.term, card.id]));
         
         const { data: existingConcepts, error: fetchConceptsError } = await supabase
           .from('concepts')
@@ -194,7 +189,7 @@ const EditSet = () => {
           // Continue without linking if concepts can't be fetched
         }
 
-        const conceptNameToIdMap = new Map(existingConcepts?.map(c => [c.name, c.id]));
+        const conceptNameToIdMap = new Map(existingConcepts?.map((c: { id: string; name: string }) => [c.name, c.id]));
 
         const cardConceptsToInsert = [];
         for (const link of generatedCardConceptLinks) {
@@ -266,7 +261,7 @@ const EditSet = () => {
     setIsGenerating(false);
 
     if (result && result.cards.length > 0) {
-      form.setValue('cards', result.cards.map(card => ({ id: undefined, term: card.term, definition: card.definition }))); // Use setValue
+      form.setValue('cards', result.cards.map((card: { term: string; definition: string }) => ({ id: undefined, term: card.term, definition: card.definition }))); // Use setValue
       setGeneratedCardConceptLinks(result.card_concept_links || []); // Store the links
       setShowSuccessToastAfterRender(true);
     } else {
@@ -279,7 +274,7 @@ const EditSet = () => {
 
   if (!setId) {
     return (
-      <div className="container mx-auto py-10 animate-fade-in">
+      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         No study set ID provided for editing.
       </div>
     );
@@ -348,7 +343,7 @@ const EditSet = () => {
               <Input
                 type="file"
                 accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf"
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setFile(e.target.files ? e.target.files[0] : null);
                   setEstimatedOptimalCards(null);
                   setNumCardsToGenerate(undefined);
@@ -400,7 +395,7 @@ const EditSet = () => {
               min="1"
               max={estimatedOptimalCards !== null ? estimatedOptimalCards : undefined} // Set max attribute
               value={numCardsToGenerate || ''}
-              onChange={(e) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
               placeholder="Enter desired number"
             />
             {numCardsToGenerate !== undefined && estimatedOptimalCards !== null && numCardsToGenerate > estimatedOptimalCards && (

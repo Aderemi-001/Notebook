@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,7 +52,7 @@ const fetchUserStudySets = async (): Promise<StudySet[]> => {
     throw new Error("Failed to fetch your study sets.");
   }
 
-  const processedSets = data?.map(set => ({
+  const processedSets = data?.map((set: any) => ({
     id: set.id,
     title: set.title,
     description: set.description,
@@ -138,8 +139,8 @@ const GenerateExam: React.FC = () => {
   };
 
   const handleQuestionTypeChange = (type: string, checked: boolean) => {
-    setSelectedQuestionTypes(prev =>
-      checked ? [...prev, type] : prev.filter(t => t !== type)
+    setSelectedQuestionTypes((prev: string[]) =>
+      checked ? [...prev, type] : prev.filter((t: string) => t !== type)
     );
   };
 
@@ -191,7 +192,7 @@ const GenerateExam: React.FC = () => {
                 {userStudySets?.length === 0 ? (
                   <SelectItem disabled value="no-sets">No study sets available</SelectItem>
                 ) : (
-                  userStudySets?.map(set => (
+                  userStudySets?.map((set: StudySet) => (
                     <SelectItem key={set.id} value={set.id}>
                       {set.title} ({set.cards_count} cards)
                     </SelectItem>
@@ -209,7 +210,7 @@ const GenerateExam: React.FC = () => {
               type="number"
               min="1"
               value={numQuestions}
-              onChange={(e) => setNumQuestions(parseInt(e.target.value) || 0)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumQuestions(parseInt(e.target.value) || 0)}
               placeholder="e.g., 5"
             />
           </div>
@@ -276,13 +277,13 @@ const GenerateExam: React.FC = () => {
             )}
           </CardHeader>
           <CardContent className="space-y-6">
-            {generatedQuestions.map((q, index) => (
+            {generatedQuestions.map((q: GeneratedQuestion, index: number) => (
               <div key={q.id || index} className="border p-4 rounded-md bg-background">
                 <p className="text-sm text-muted-foreground mb-1">Question {index + 1} ({q.question_type.replace('_', ' ')})</p>
                 <p className="font-semibold text-lg mb-2">{q.question_text}</p>
                 {q.question_type === 'multiple_choice' && q.options && (
                   <div className="space-y-1">
-                    {q.options.map((option, optIndex) => (
+                    {q.options.map((option: string, optIndex: number) => (
                       <div key={optIndex} className="flex items-center">
                         <span className="mr-2 text-muted-foreground">{String.fromCharCode(65 + optIndex)}.</span>
                         <span>{option}</span>

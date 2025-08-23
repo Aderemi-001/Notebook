@@ -3,11 +3,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form } from "@/components/ui/form"; // Removed unused Form components
+import { Form } from "@/components/ui/form";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
+import * as React from "react"; // Explicitly import React
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -67,12 +68,6 @@ const CreateSet = () => {
     },
   });
 
-  // Removed unused 'fields', 'append', 'remove' from useFieldArray
-  // const { fields, append, remove } = useFieldArray({ 
-  //   control: form.control,
-  //   name: "cards",
-  // });
-
   useEffect(() => {
     if (showSuccessToastAfterRender && form.getValues('cards').length > 0) {
       showSuccess(`${form.getValues('cards').length} cards imported successfully!`);
@@ -103,7 +98,7 @@ const CreateSet = () => {
 
       if (setError) throw setError;
 
-      const cardsToInsert = values.cards.map(card => ({
+      const cardsToInsert = values.cards.map((card: { term: string; definition: string }) => ({
         set_id: set.id,
         term: card.term,
         definition: card.definition,
@@ -118,7 +113,7 @@ const CreateSet = () => {
 
       // Process and insert card_concept_links
       if (generatedCardConceptLinks.length > 0 && insertedCards) {
-        const cardTermToIdMap = new Map(insertedCards.map(card => [card.term, card.id]));
+        const cardTermToIdMap = new Map(insertedCards.map((card: { id: string; term: string }) => [card.term, card.id]));
         
         const { data: existingConcepts, error: fetchConceptsError } = await supabase
           .from('concepts')
@@ -130,7 +125,7 @@ const CreateSet = () => {
           // Continue without linking if concepts can't be fetched
         }
 
-        const conceptNameToIdMap = new Map(existingConcepts?.map(c => [c.name, c.id]));
+        const conceptNameToIdMap = new Map(existingConcepts?.map((c: { id: string; name: string }) => [c.name, c.id]));
 
         const cardConceptsToInsert = [];
         for (const link of generatedCardConceptLinks) {
@@ -201,7 +196,7 @@ const CreateSet = () => {
     setIsGenerating(false);
 
     if (result && result.cards.length > 0) {
-      form.setValue('cards', result.cards.map(card => ({ term: card.term, definition: card.definition })));
+      form.setValue('cards', result.cards.map((card: { term: string; definition: string }) => ({ term: card.term, definition: card.definition })));
       setGeneratedCardConceptLinks(result.card_concept_links || []); // Store the links
       setShowSuccessToastAfterRender(true);
     } else {
@@ -232,7 +227,7 @@ const CreateSet = () => {
               <Input 
                 type="file" 
                 accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf" 
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setFile(e.target.files ? e.target.files[0] : null);
                   setEstimatedOptimalCards(null); // Clear previous estimate
                   setNumCardsToGenerate(undefined); // Clear previous input
@@ -284,7 +279,7 @@ const CreateSet = () => {
               min="1"
               max={estimatedOptimalCards !== null ? estimatedOptimalCards : undefined} // Set max attribute
               value={numCardsToGenerate || ''}
-              onChange={(e) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
               placeholder="Enter desired number"
             />
             {numCardsToGenerate !== undefined && estimatedOptimalCards !== null && numCardsToGenerate > estimatedOptimalCards && (

@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from "react"; // Explicitly import React
 
 const MOBILE_BREAKPOINT = 768;
 

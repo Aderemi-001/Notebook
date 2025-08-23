@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'; // Explicitly import React
 // Removed unused imports: import { parseAndRenderLinks, getDynamicSuggestions } from './utils';
 
 export interface ChatMessage {
@@ -93,7 +93,6 @@ export const ROUTE_KEYWORDS: { [key: string]: string } = {
   "/generate-exam": "/generate-exam",
   "generate essay questions page": "/generate-essay-questions",
   "generate essay questions": "/generate-essay-questions",
-  "/generate-essay-questions": "/generate-essay-questions",
   "past essay questions page": "/past-essay-questions",
   "past essay questions": "/past-essay-questions",
   "/past-essay-questions": "/past-essay-questions",

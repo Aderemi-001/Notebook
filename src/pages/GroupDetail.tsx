@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +17,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import AddExistingSetToGroupDialog from '@/components/AddExistingSetToGroupDialog'; // Import the new component
-import { Separator } from '@/components/ui/separator'; // Import Separator
-import { Label } from "@/components/ui/label"; // Import Label
+import AddExistingSetToGroupDialog from '@/components/AddExistingSetToGroupDialog';
+import { Separator } from '@/components/ui/separator';
+import { Label } from "@/components/ui/label";
 
 interface StudySetGroup {
   id: string;
@@ -61,7 +62,7 @@ const fetchGroupDetails = async (groupId: string): Promise<StudySetGroup> => {
 };
 
 const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
-  const { data: { user } = { user: null } } = await supabase.auth.getUser(); // Ensure user is destructured safely
+  const { data: { user } = { user: null } } = await supabase.auth.getUser();
   if (!user) {
     throw new Error("User not authenticated.");
   }
@@ -87,8 +88,8 @@ const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
 
   const studySets = rawStudySets || [];
 
-  const setsWithReviewData = await Promise.all(studySets.map(async (set) => {
-    const cardIds = set.cards ? set.cards.map(card => card.id) : [];
+  const setsWithReviewData = await Promise.all(studySets.map(async (set: any) => {
+    const cardIds = set.cards ? set.cards.map((card: { id: string }) => card.id) : [];
 
     let earliestReviewAt: string | null = null;
     let dueCardsCount = 0;
@@ -104,7 +105,7 @@ const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
         console.error(`Error fetching progress for set ${set.id}:`, progressError);
       }
 
-      const progressMap = new Map(progressData?.map(p => [p.card_id, p]));
+      const progressMap = new Map(progressData?.map((p: { card_id: string; next_review_at: string; status: string }) => [p.card_id, p]));
 
       let tempEarliestReviewAt: Date | null = null;
 
@@ -163,7 +164,7 @@ const GroupDetail: React.FC = () => {
     enabled: !!groupId,
   });
 
-  const filteredStudySets = studySets?.filter(set =>
+  const filteredStudySets = studySets?.filter((set: StudySet) =>
     set.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (set.description && set.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -249,7 +250,7 @@ const GroupDetail: React.FC = () => {
             <AddExistingSetToGroupDialog
               groupId={groupId}
               trigger={
-                <DropdownMenuItem className="flex items-center cursor-pointer" onSelect={(e) => e.preventDefault()}>
+                <DropdownMenuItem className="flex items-center cursor-pointer" onSelect={(e: Event) => e.preventDefault()}>
                   <PlusCircle className="mr-2 h-4 w-4" /> Add Existing Set
                 </DropdownMenuItem>
               }
@@ -277,7 +278,7 @@ const GroupDetail: React.FC = () => {
           type="text"
           placeholder="Search sets in this group..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
           className="w-full"
         />
       </div>
@@ -309,7 +310,7 @@ const GroupDetail: React.FC = () => {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredStudySets.map((set) => (
+          {filteredStudySets.map((set: StudySet) => (
             <Link to={`/sets/${set.id}`} key={set.id}>
               <NotebookCard className="hover:shadow-md transition-shadow h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -347,7 +348,7 @@ const GroupDetail: React.FC = () => {
                       <Separator className="my-4" />
                       <h3 className="text-md font-semibold mb-2">Card Preview:</h3>
                       <div className="space-y-2 text-sm">
-                        {set.cards.slice(0, 2).map((card, cardIdx) => (
+                        {set.cards.slice(0, 2).map((card: { id: string; term: string; definition: string }, cardIdx: number) => (
                           <div key={card.id || cardIdx} className="border-l-2 pl-2">
                             <p className="font-medium line-clamp-1">{card.term}</p>
                             <p className="text-muted-foreground line-clamp-1">{card.definition}</p>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react'; // Explicitly import React
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -97,7 +98,7 @@ const CreateGroup: React.FC = () => {
               <FormField
                 control={form.control}
                 name="name"
-                render={({ field }) => (
+                render={({ field }: { field: any }) => (
                   <FormItem>
                     <FormLabel>Group Name</FormLabel>
                     <FormControl>
@@ -110,7 +111,7 @@ const CreateGroup: React.FC = () => {
               <FormField
                 control={form.control}
                 name="description"
-                render={({ field }) => (
+                render={({ field }: { field: any }) => (
                   <FormItem>
                     <FormLabel>Description (Optional)</FormLabel>
                     <FormControl>

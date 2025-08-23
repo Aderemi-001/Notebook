@@ -9,6 +9,8 @@ import Highlight from "@tiptap/extension-highlight";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { common, createLowlight } from "lowlight";
 import { RichTextEditorToolbar } from "./RichTextEditorToolbar";
+import * as React from "react"; // Explicitly import React
+import { useEffect } from "react"; // Explicitly import useEffect
 
 const lowlight = createLowlight(common);
 
