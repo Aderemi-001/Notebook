@@ -2,30 +2,22 @@ import * as React from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Brain, Loader2, Hammer } from 'lucide-react';
-// Removed unused imports: Slider, ToggleGroup, ToggleGroupItem, Pencil, Eraser, ZoomIn, ZoomOut, Move
 import { Editor } from "@tiptap/react";
-// Removed unused hook: useDrawingCanvas
 import { useAIDrawingAnalysis } from "@/hooks/use-ai-drawing-analysis";
-// Removed unused hook: useAuth
 import { showError } from '@/utils/toast';
 import AIExtractedTextDialog from './AIExtractedTextDialog';
 
 interface NoteDrawingSectionProps {
   editorRef: React.MutableRefObject<Editor | null>;
-  initialDrawingUrl?: string; // Still kept in interface for potential future use
-  onDrawingSaved: (dataUrl: string | undefined) => void; // Still kept in interface for potential future use
+  initialDrawingUrl?: string;
+  onDrawingSaved: (dataUrl: string | undefined) => void;
 }
 
 const NoteDrawingSection: React.FC<NoteDrawingSectionProps> = ({
   editorRef,
-  // Removed unused prop: initialDrawingUrl
-  // Removed unused prop: onDrawingSaved
+  // initialDrawingUrl, // Removed unused prop
+  // onDrawingSaved, // Removed unused prop
 }) => {
-  // Removed unused variable: user from useAuth()
-  // Removed unused state variables: toolMode, setToolMode, drawingColor, setDrawingColor, penSize, setPenSize, eraserSize, setEraserSize, zoomLevel, setZoomLevel, panOffset, setPanOffset
-
-  // Removed unused hook: useDrawingCanvas and its destructured values
-
   const insertTextIntoEditor = (text: string) => {
     if (editorRef.current) {
       editorRef.current.chain().focus().insertContent(text).run();
@@ -36,7 +28,7 @@ const NoteDrawingSection: React.FC<NoteDrawingSectionProps> = ({
     showReplaceDialog,
     setShowReplaceDialog,
     textToReplace,
-    // Removed unused variable: analyzeDrawing
+    // analyzeDrawing, // Removed unused variable
     handleConfirmReplace,
     handleCancelReplace,
     isAnalyzing,
@@ -59,31 +51,15 @@ const NoteDrawingSection: React.FC<NoteDrawingSectionProps> = ({
           <h2 className="text-xl font-semibold">Drawing Pad Under Construction!</h2>
           <p className="mt-2">We're working hard to bring you this feature. Please check back soon!</p>
         </div>
-        {/* The canvas and its controls are hidden when under construction */}
-        {/*
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 cursor-crosshair touch-none bg-white"
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={endDrawing}
-          onMouseLeave={endDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={endDrawing}
-          style={{
-            transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
-            transformOrigin: '0 0',
-            pointerEvents: toolMode !== 'pan' ? 'auto' : 'none',
-          }}
-        />
-        */}
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2 mt-4 p-2 border rounded-md bg-muted/20">
-        {/* Removed ToggleGroup and its items */}
-        {/* Removed conditional rendering for pen, eraser, and pan tools */}
         <Button onClick={handleClearCanvas} disabled>Clear Drawing</Button>
-        <Button onClick={handleAnalyzeDrawing} disabled={isAnalyzing}>
+        <Button
+          onClick={handleAnalyzeDrawing}
+          disabled={true} // Always disabled as feature is under construction
+          variant="outline" // Changed variant
+          className="text-muted-foreground" // Added class for blurred effect
+        >
           {isAnalyzing ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
