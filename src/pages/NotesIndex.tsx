@@ -100,6 +100,7 @@ const getPlainTextPreview = (jsonContent: JSONContent, maxLength: number = 150):
         orderedList: {},
         blockquote: {},
         codeBlock: false, // Disable default codeBlock to use CodeBlockLowlight
+        link: false, // Explicitly disable link from StarterKit
       }),
       Highlight,
       TaskList,

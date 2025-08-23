@@ -82,6 +82,7 @@ const EditNote: React.FC = () => {
               StarterKit.configure({
                 heading: { levels: [1, 2, 3] },
                 codeBlock: false,
+                link: false, // Explicitly disable link from StarterKit
               }),
               Image.configure({ inline: true, allowBase64: true }),
               LinkExtension.configure({ openOnClick: false, autolink: true }),
