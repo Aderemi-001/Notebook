@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import { ToastActionElement, ToastProps } from "@/components/ui/toast"; // Exported
 
 const TOAST_LIMIT = 1;

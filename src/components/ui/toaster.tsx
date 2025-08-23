@@ -1,7 +1,6 @@
 import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
 import * as React from "react";
-import { ToastProvider, ToastViewport } from "@/components/ui/toast"; // Import ToastProvider and ToastViewport
 
 type ToasterProps = React.ComponentPropsWithoutRef<typeof Sonner>;
 

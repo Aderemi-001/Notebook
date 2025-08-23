@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useState, useCallback } from 'react';
 import { Editor } from '@tiptap/react';
 import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
@@ -27,7 +26,7 @@ export const useAIDrawingAnalysis = ({ editor, insertTextIntoEditor }: UseAIDraw
 
       // 1. Upload image to Supabase Storage
       const fileName = `drawings/${session.user.id}/${uuidv4()}.png`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('notes_drawings') // Assuming a bucket named 'notes_drawings'
         .upload(fileName, decode(base64Image), {
           contentType: mimeType,

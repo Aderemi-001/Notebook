@@ -41,7 +41,7 @@ export interface ToastProps
   extends React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root>,
     VariantProps<typeof toastVariants> {}
 
-type ToastActionElement = React.ElementRef<typeof ToastPrimitives.Action>;
+export type ToastActionElement = React.ElementRef<typeof ToastPrimitives.Action>; // Exported
 
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,

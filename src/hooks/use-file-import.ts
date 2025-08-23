@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { showError, showLoading, dismissToast } from "@/utils/toast";
 import * as pdfjsLib from 'pdfjs-dist';
 import { useQueryClient } from "@tanstack/react-query";
-import * as React from 'react'; // Explicitly import React
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
@@ -229,7 +228,7 @@ export const useFileImport = () => {
           }
 
           let conceptId: string;
-          if (existsSync) { // Corrected from existsSync
+          if (existingConcept) { // Corrected from existsSync
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase

@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react"; // Added useMemo
 import { formatDistanceToNowStrict, isPast } from 'date-fns';
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -186,6 +186,14 @@ const Index = () => {
     queryFn: () => fetchSearchResults(debouncedSearchTerm),
     enabled: !!debouncedSearchTerm.trim(), // Only run query if debouncedSearchTerm is not empty
   });
+
+  const filteredStudySets = useMemo(() => {
+    if (!studySets) return [];
+    return studySets.filter((set: StudySet) =>
+      set.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (set.description && set.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [studySets, searchTerm]);
 
   const handleSignOut = async () => {
     const toastId = showLoading('Signing out...');

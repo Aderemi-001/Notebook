@@ -3,10 +3,11 @@
 import * as React from "react";
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Eraser, Pencil, Type, Save, Sparkles, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { Eraser, Pencil, Type, Save, Sparkles, ZoomIn, ZoomOut, RotateCcw, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useDrawingCanvas } from "@/hooks/use-drawing-canvas"; // Import the new hook
 import { Slider } from "@/components/ui/slider"; // Import Slider for pen/eraser size
+import { Label } from "@/components/ui/label"; // Import Label
 
 interface DrawingCanvasProps {
   initialDrawing?: string;
@@ -94,7 +95,7 @@ export function DrawingCanvas({
       ctx.restore();
       onDrawingChange(null);
     }
-  }, [initialDrawing, canvasRef, ctxRef]);
+  }, [initialDrawing, canvasRef, ctxRef, onDrawingChange, clearCanvas]);
 
 
   const handleClearCanvas = useCallback(() => {
@@ -185,9 +186,13 @@ export function DrawingCanvas({
             </Button>
             <Button variant="outline" onClick={handleAnalyzeDrawing} disabled={isAnalyzing}>
               {isAnalyzing ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                </>
               ) : (
-                <Sparkles className="mr-2 h-4 w-4" />
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                </>
               )}
               Analyze
             </Button>

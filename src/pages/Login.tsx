@@ -10,7 +10,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
-import * as React from 'react'; // Explicitly import React
 
 const authSchema = z.object({
   email: z.string().email('Invalid email address'),

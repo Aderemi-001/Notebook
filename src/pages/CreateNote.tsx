@@ -82,7 +82,7 @@ export default function CreateNote() {
         const mimeType = 'image/png'; // Assuming PNG for canvas output
         const fileName = `drawings/${user.data.user.id}/${uuidv4()}.png`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('notes_drawings')
           .upload(fileName, decode(base64Data), {
             contentType: mimeType,

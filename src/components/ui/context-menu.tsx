@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu";
-import { Check, ChevronRight, Circle } from "lucide-react";
+import { Check, Circle } from "lucide-react"; // Removed ChevronRight
 import { cn } from "@/lib/utils";
 
 const ContextMenu = ContextMenuPrimitive.Root;
@@ -11,6 +11,7 @@ const ContextMenuSubTrigger = ContextMenuPrimitive.SubTrigger;
 const ContextMenuSubContent = ContextMenuPrimitive.SubContent;
 const ContextMenuRadioGroup = ContextMenuPrimitive.RadioGroup;
 const ContextMenuPortal = ContextMenuPrimitive.Portal;
+const ContextMenuGroup = ContextMenuPrimitive.Group; // Defined and exported
 
 const ContextMenuLabel = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Label>,

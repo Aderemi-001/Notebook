@@ -91,15 +91,15 @@ const getPlainTextPreview = (jsonContent: JSONContent, maxLength: number = 150):
     const html = generateHTML(jsonContent, [
       StarterKit.configure({
         // Only include basic text-generating extensions
-        paragraph: true,
+        paragraph: {}, // Use empty object to enable
         heading: { levels: [1, 2, 3] },
-        bold: true,
-        italic: true,
-        strike: true,
-        bulletList: true,
-        orderedList: true,
-        blockquote: true,
-        codeBlock: true,
+        bold: {}, // Use empty object to enable
+        italic: {}, // Use empty object to enable
+        strike: {}, // Use empty object to enable
+        bulletList: {}, // Use empty object to enable
+        orderedList: {}, // Use empty object to enable
+        blockquote: {}, // Use empty object to enable
+        codeBlock: {}, // Use empty object to enable
       }),
       Highlight, // Include highlight if it might contain text
       TaskList,
