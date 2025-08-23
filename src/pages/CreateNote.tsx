@@ -32,8 +32,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import NoteDrawingSection from "@/components/notes/NoteDrawingSection"; // Import NoteDrawingSection
-import { Input } from "@/components/ui/input"; // Added missing import for Input
+import NoteDrawingSection from "@/components/notes/NoteDrawingSection";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils"; // Import cn utility
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -60,7 +61,7 @@ const CreateNote: React.FC = () => {
     },
   });
 
-  const [activeView, setActiveView] = useState<'editor' | 'drawing'>('editor'); // New state for active view
+  const [activeView, setActiveView] = useState<'editor' | 'drawing'>('editor');
 
   const insertTextIntoEditor = (text: string) => {
     if (editorRef.current) {
@@ -140,7 +141,7 @@ const CreateNote: React.FC = () => {
         .insert([{
           user_id: user.id,
           title: values.title,
-          content: editorRef.current?.getJSON(), // Save Tiptap JSON content
+          content: editorRef.current?.getJSON(),
           drawing_url: drawingUrl,
           study_set_id: values.study_set_id,
         }])
@@ -158,6 +159,8 @@ const CreateNote: React.FC = () => {
       setIsSaving(false);
     }
   };
+
+  const isDrawingFeatureUnderConstruction = true; // Flag to control drawing feature visibility
 
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
@@ -237,8 +240,15 @@ const CreateNote: React.FC = () => {
             <Button
               type="button"
               variant={activeView === 'drawing' ? 'default' : 'outline'}
-              onClick={() => setActiveView('drawing')}
-              className="flex-1"
+              onClick={() => {
+                if (!isDrawingFeatureUnderConstruction) {
+                  setActiveView('drawing');
+                } else {
+                  showError("The drawing pad is currently under construction.");
+                }
+              }}
+              disabled={isDrawingFeatureUnderConstruction}
+              className={cn("flex-1", isDrawingFeatureUnderConstruction && "text-muted-foreground cursor-not-allowed")}
             >
               <ImageIcon className="mr-2 h-4 w-4" /> Drawing Pad
             </Button>

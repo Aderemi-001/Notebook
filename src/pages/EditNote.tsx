@@ -25,6 +25,7 @@ import { common, createLowlight } from "lowlight";
 // New modular imports
 import NoteFormFields from "@/components/notes/NoteFormFields";
 import NoteDrawingSection from "@/components/notes/NoteDrawingSection";
+import { cn } from "@/lib/utils"; // Import cn utility
 
 const lowlight = createLowlight(common);
 
@@ -54,7 +55,7 @@ const EditNote: React.FC = () => {
     },
   });
 
-  const [activeView, setActiveView] = useState<'editor' | 'drawing'>('editor'); // New state for active view
+  const [activeView, setActiveView] = useState<'editor' | 'drawing'>('editor');
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -190,6 +191,8 @@ const EditNote: React.FC = () => {
     return <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center">Loading note...</div>;
   }
 
+  const isDrawingFeatureUnderConstruction = true; // Flag to control drawing feature visibility
+
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
@@ -217,8 +220,15 @@ const EditNote: React.FC = () => {
             <Button
               type="button"
               variant={activeView === 'drawing' ? 'default' : 'outline'}
-              onClick={() => setActiveView('drawing')}
-              className="flex-1"
+              onClick={() => {
+                if (!isDrawingFeatureUnderConstruction) {
+                  setActiveView('drawing');
+                } else {
+                  showError("The drawing pad is currently under construction.");
+                }
+              }}
+              disabled={isDrawingFeatureUnderConstruction}
+              className={cn("flex-1", isDrawingFeatureUnderConstruction && "text-muted-foreground cursor-not-allowed")}
             >
               <ImageIcon className="mr-2 h-4 w-4" /> Drawing Pad
             </Button>
