@@ -37,6 +37,7 @@ import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Image from '@tiptap/extension-image';
+import { useAuth } from '@/hooks/useAuth'; // Import useAuth
 
 interface Note {
   id: string;
@@ -50,14 +51,8 @@ interface Note {
   study_sets: { title: string }[] | null;
 }
 
-const fetchUserNotes = async (): Promise<Note[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    console.log("fetchUserNotes: No authenticated user found.");
-    return [];
-  }
-
-  console.log("fetchUserNotes: Attempting to fetch notes for user ID:", user.id);
+const fetchUserNotes = async (userId: string): Promise<Note[]> => {
+  console.log("fetchUserNotes: Attempting to fetch notes for user ID:", userId);
 
   const { data, error } = await supabase
     .from('notes')
@@ -72,7 +67,7 @@ const fetchUserNotes = async (): Promise<Note[]> => {
       study_set_id,
       study_sets (title)
     `)
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .order('updated_at', { ascending: false });
 
   if (error) {
@@ -80,7 +75,7 @@ const fetchUserNotes = async (): Promise<Note[]> => {
     throw new Error("Failed to fetch your notes.");
   }
   console.log("fetchUserNotes: Successfully fetched notes:", data);
-  return data as Note[] || []; // Explicitly cast data to Note[]
+  return data as Note[] || [];
 };
 
 // Function to convert JSON content to plain text preview
@@ -120,10 +115,15 @@ const NotesIndex: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
+  const { user, loading: isLoadingAuth } = useAuth(); // Get user from useAuth
+
+  console.log("NotesIndex: User from useAuth:", user);
+  console.log("NotesIndex: isLoadingAuth:", isLoadingAuth);
 
   const { data: notes, isLoading, isError, error } = useQuery<Note[], Error>({
-    queryKey: ['userNotes'],
-    queryFn: fetchUserNotes,
+    queryKey: ['userNotes', user?.id], // Include user.id in queryKey
+    queryFn: () => fetchUserNotes(user!.id), // Pass user.id to fetcher
+    enabled: !!user?.id && !isLoadingAuth, // Only run query if user is authenticated and auth is not loading
   });
 
   const filteredNotes = notes?.filter((note: Note) =>
@@ -181,7 +181,7 @@ const NotesIndex: React.FC = () => {
     }
   };
 
-  if (isLoading || isLoadingPreferences) {
+  if (isLoadingAuth || isLoading || isLoadingPreferences) {
     return (
       <div className="container mx-auto py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
