@@ -41,6 +41,7 @@ import { supabase } from "@/integrations/supabase/client";
 import CreateSet from "@/pages/CreateSet";
 import TakeExam from "@/pages/TakeExam";
 import NotesUnderConstruction from "@/pages/NotesUnderConstruction"; // Import the new component
+import PrivacyPolicy from "@/pages/PrivacyPolicy"; // Import the new PrivacyPolicy component
 
 const AppContent: React.FC = () => {
   const { data: dueCardsCount, isLoading: isLoadingDueCards } = useDueCardsCount();
@@ -271,6 +272,12 @@ const AppContent: React.FC = () => {
               path="/collaborations"
               element={
                 <AuthLayout><Collaborations /></AuthLayout>
+              }
+            />
+            <Route
+              path="/privacy"
+              element={
+                <AuthLayout><PrivacyPolicy /></AuthLayout>
               }
             />
             <Route path="*" element={<NotFound />} />
