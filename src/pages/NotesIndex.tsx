@@ -37,7 +37,12 @@ import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Image from '@tiptap/extension-image';
+import LinkExtension from '@tiptap/extension-link'; // Import LinkExtension
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'; // Import CodeBlockLowlight
+import { common, createLowlight } from "lowlight"; // Import lowlight dependencies
 import { useAuth } from '@/hooks/useAuth'; // Import useAuth
+
+const lowlight = createLowlight(common); // Initialize lowlight
 
 interface Note {
   id: string;
@@ -94,12 +99,14 @@ const getPlainTextPreview = (jsonContent: JSONContent, maxLength: number = 150):
         bulletList: {},
         orderedList: {},
         blockquote: {},
-        codeBlock: {},
+        codeBlock: false, // Disable default codeBlock to use CodeBlockLowlight
       }),
       Highlight,
       TaskList,
       TaskItem,
       Image,
+      LinkExtension.configure({ openOnClick: false, autolink: true }), // Added LinkExtension
+      CodeBlockLowlight.configure({ lowlight }), // Added CodeBlockLowlight
     ]);
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
