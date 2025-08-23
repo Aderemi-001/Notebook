@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, FileText, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, Save, Loader2, TextCursorInput, Image as ImageIcon } from "lucide-react";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { Editor } from "@tiptap/react";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -54,6 +53,8 @@ const EditNote: React.FC = () => {
       study_set_id: null,
     },
   });
+
+  const [activeView, setActiveView] = useState<'editor' | 'drawing'>('editor'); // New state for active view
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -204,12 +205,28 @@ const EditNote: React.FC = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <NoteFormFields form={form} />
 
-          <ResizablePanelGroup
-            direction="vertical" // Changed to vertical
-            className="min-h-[500px] rounded-lg border"
-          >
-            <ResizablePanel defaultSize={50}> {/* Adjusted default size for vertical */}
-              <div className="flex h-full flex-col p-4">
+          <div className="flex space-x-2 mb-4">
+            <Button
+              type="button"
+              variant={activeView === 'editor' ? 'default' : 'outline'}
+              onClick={() => setActiveView('editor')}
+              className="flex-1"
+            >
+              <TextCursorInput className="mr-2 h-4 w-4" /> Rich Text Content
+            </Button>
+            <Button
+              type="button"
+              variant={activeView === 'drawing' ? 'default' : 'outline'}
+              onClick={() => setActiveView('drawing')}
+              className="flex-1"
+            >
+              <ImageIcon className="mr-2 h-4 w-4" /> Drawing Canvas
+            </Button>
+          </div>
+
+          <div className="min-h-[500px] rounded-lg border p-4">
+            {activeView === 'editor' && (
+              <div className="flex h-full flex-col">
                 <Label htmlFor="content" className="text-lg mb-2 block">Rich Text Content</Label>
                 <RichTextEditor
                   content={richTextContent}
@@ -225,16 +242,16 @@ const EditNote: React.FC = () => {
                   <FileText className="mr-2 h-4 w-4" /> Summarize with AI
                 </Button>
               </div>
-            </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel defaultSize={50}> {/* Adjusted default size for vertical */}
+            )}
+
+            {activeView === 'drawing' && (
               <NoteDrawingSection
                 editorRef={editorRef}
                 initialDrawingUrl={drawingUrl}
                 onDrawingSaved={setDrawingUrl}
               />
-            </ResizablePanel>
-          </ResizablePanelGroup>
+            )}
+          </div>
 
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-6">
             <Button type="submit" className="flex-1" disabled={isSaving}>
