@@ -16,7 +16,7 @@ const TextEditorContent: React.FC<TextEditorContentProps> = ({ editor, editable,
   return (
     <div className={cn(
       "absolute inset-0",
-      isDrawingMode ? "pointer-events-none z-0 opacity-50" : "z-10 opacity-100",
+      isDrawingMode ? "pointer-events-none z-0 opacity-50" : "z-10 opacity-100", // Revert to original z-index logic
       "transition-opacity duration-300"
     )}>
       <EditorContent 

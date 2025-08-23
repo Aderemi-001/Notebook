@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useEditor, JSONContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Image from '@tiptap/extension-image';
-// import { cn } from '@/lib/utils'; // Removed unused import
 import RichTextEditorToolbar from './RichTextEditorToolbar';
 import {
   AlertDialog,
@@ -134,8 +133,15 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     onUpdate: ({ editor }) => {
       onContentChange(editor.getJSON());
     },
-    editable: editable && !isDrawingMode,
+    editable: editable && !isDrawingMode, // Editor is editable only if not in drawing mode
   });
+
+  const handleCanvasClickDetected = useCallback(() => {
+    if (editor && isDrawingMode) { // Only switch if currently in drawing mode
+      setIsDrawingMode(false);
+      editor.chain().focus().run();
+    }
+  }, [editor, isDrawingMode, setIsDrawingMode]);
 
   // Use the new drawing canvas hook
   const {
@@ -156,6 +162,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
     minZoom: MIN_ZOOM,
     maxZoom: MAX_ZOOM,
     baseLineWidth: BASE_LINE_WIDTH,
+    onCanvasClickDetected: handleCanvasClickDetected, // Pass the new callback
   });
 
   // Use the new AI drawing analysis hook
@@ -219,12 +226,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChang
             />
           )}
           <div className="relative border rounded-md overflow-hidden min-h-[300px] h-[300px]">
-            <TextEditorContent 
-              editor={editor} 
-              editable={editable} 
-              className={className} 
-              labelId={labelId} 
-              isDrawingMode={isDrawingMode} 
+            <TextEditorContent
+              editor={editor}
+              editable={editable} // Keep this as is, editor's editable state is managed by Tiptap
+              className={className}
+              labelId={labelId}
+              isDrawingMode={isDrawingMode}
             />
 
             <DrawingCanvas

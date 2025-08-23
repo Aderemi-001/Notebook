@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-// import { cn } from '@/lib/utils'; // Removed unused import
 
 interface UseDrawingCanvasProps {
   isDrawingMode: boolean;
@@ -13,6 +12,7 @@ interface UseDrawingCanvasProps {
   minZoom: number;
   maxZoom: number;
   baseLineWidth: number;
+  onCanvasClickDetected: () => void; // New callback prop
 }
 
 // Helper function to safely get clientX and clientY from mouse or touch events
@@ -37,6 +37,7 @@ export const useDrawingCanvas = ({
   minZoom,
   maxZoom,
   baseLineWidth,
+  onCanvasClickDetected, // Destructure new prop
 }: UseDrawingCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -46,6 +47,11 @@ export const useDrawingCanvas = ({
   // State for touch gestures
   const [initialPinchDistance, setInitialPinchDistance] = useState<number | null>(null);
   const [isPinching, setIsPinching] = useState(false);
+
+  // New state to track if a drag/move occurred during a potential click
+  const didMoveRef = useRef(false);
+  const initialPointerPosition = useRef<{ x: number; y: number } | null>(null);
+  const CLICK_MOVE_THRESHOLD = 5; // Pixels
 
   const clearCanvas = useCallback(() => {
     if (canvasRef.current && ctxRef.current) {
@@ -131,14 +137,19 @@ export const useDrawingCanvas = ({
     const offsetX = clientX - rect.left;
     const offsetY = clientY - rect.top;
 
-    const x = (offsetX / zoomLevel) - panOffset.x;
-    const y = (offsetY / zoomLevel) - panOffset.y;
+    // Adjust for panOffset and zoomLevel
+    const x = (offsetX - panOffset.x) / zoomLevel;
+    const y = (offsetY - panOffset.y) / zoomLevel;
     return { x, y };
   }, [zoomLevel, panOffset]);
 
   const startDrawing = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!ctxRef.current || !canvasRef.current) return;
     event.preventDefault();
+
+    const { clientX, clientY } = getEventClientCoords(event);
+    initialPointerPosition.current = { x: clientX, y: clientY };
+    didMoveRef.current = false; // Reset didMove flag
 
     if ('touches' in event.nativeEvent) {
       if (event.nativeEvent.touches.length === 2) {
@@ -151,7 +162,6 @@ export const useDrawingCanvas = ({
         setIsDrawing(false);
         return;
       } else if (event.nativeEvent.touches.length === 1) {
-        const { clientX, clientY } = getEventClientCoords(event);
         lastPointerPosition.current = { x: clientX, y: clientY };
         const { x, y } = getCanvasPoint(clientX, clientY);
         ctxRef.current.beginPath();
@@ -161,7 +171,6 @@ export const useDrawingCanvas = ({
         return;
       }
     } else {
-      const { clientX, clientY } = getEventClientCoords(event);
       lastPointerPosition.current = { x: clientX, y: clientY };
       const { x, y } = getCanvasPoint(clientX, clientY);
       ctxRef.current.beginPath();
@@ -174,6 +183,17 @@ export const useDrawingCanvas = ({
   const draw = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!ctxRef.current || !canvasRef.current) return;
     event.preventDefault();
+
+    const { clientX, clientY } = getEventClientCoords(event);
+
+    // Check for significant movement to set didMoveRef
+    if (initialPointerPosition.current && !didMoveRef.current) {
+      const dx = clientX - initialPointerPosition.current.x;
+      const dy = clientY - initialPointerPosition.current.y;
+      if (Math.hypot(dx, dy) > CLICK_MOVE_THRESHOLD) {
+        didMoveRef.current = true;
+      }
+    }
 
     if ('touches' in event.nativeEvent && event.nativeEvent.touches.length === 2 && isPinching) {
       const touch1 = event.nativeEvent.touches[0];
@@ -189,14 +209,16 @@ export const useDrawingCanvas = ({
           clientY: (touch1.clientY + touch2.clientY) / 2,
         };
 
-        const { x: oldCanvasX, y: oldCanvasY } = getCanvasPoint(centerX, centerY);
+        // Calculate the canvas point under the center of the pinch before zoom
+        const oldCanvasPointX = (centerX - panOffset.x) / zoomLevel;
+        const oldCanvasPointY = (centerY - panOffset.y) / zoomLevel;
 
         setZoomLevel(newZoom);
 
-        // Calculate new pan offset to keep the oldCanvasX/Y point fixed relative to the screen
-        setPanOffset({ // Directly set the new pan offset
-          x: oldCanvasX - (centerX / newZoom),
-          y: oldCanvasY - (centerY / newZoom),
+        // Calculate new pan offset to keep the oldCanvasPoint fixed relative to the screen
+        setPanOffset({
+          x: centerX - oldCanvasPointX * newZoom,
+          y: centerY - oldCanvasPointY * newZoom,
         });
         
         setInitialPinchDistance(currentDist);
@@ -205,13 +227,12 @@ export const useDrawingCanvas = ({
     }
 
     if (isDrawing) {
-      const { clientX, clientY } = getEventClientCoords(event);
       const { x, y } = getCanvasPoint(clientX, clientY);
       ctxRef.current.lineTo(x, y);
       ctxRef.current.stroke();
       lastPointerPosition.current = { x: clientX, y: clientY };
     } else if (lastPointerPosition.current && isDrawingMode && !isErasing && !isPinching) {
-      const { clientX, clientY } = getEventClientCoords(event);
+      // Panning logic
       const dx = clientX - lastPointerPosition.current.x;
       const dy = clientY - lastPointerPosition.current.y;
 
@@ -233,7 +254,14 @@ export const useDrawingCanvas = ({
     }
     setIsDrawing(false);
     lastPointerPosition.current = null;
-  }, [isPinching]);
+
+    // If it was a click (no significant move) and in drawing mode, trigger the callback
+    if (isDrawingMode && !didMoveRef.current && initialPointerPosition.current) {
+      onCanvasClickDetected();
+    }
+    initialPointerPosition.current = null; // Reset initial position
+    didMoveRef.current = false; // Reset didMove flag
+  }, [isPinching, isDrawingMode, onCanvasClickDetected]);
 
   return {
     canvasRef,
