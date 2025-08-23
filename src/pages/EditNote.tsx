@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react"; // Explicitly import React
+import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { DrawingCanvas } from "@/components/DrawingCanvas";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
-import { RichTextEditor } from '@/components/RichTextEditor'; // Corrected import to named import
-import { Editor } from "@tiptap/react"; // Import Editor type
+import { RichTextEditor } from '@/components/RichTextEditor';
+import { Editor } from "@tiptap/react";
 
 export default function EditNote() {
-  const { noteId } = useParams<{ noteId: string }>(); // Changed 'id' to 'noteId' for clarity
+  const { noteId } = useParams<{ noteId: string }>();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [studySets, setStudySets] = useState<any[]>([]);
@@ -23,7 +23,7 @@ export default function EditNote() {
   const [drawingData, setDrawingData] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const editorRef = useRef<Editor | null>(null); // Use Editor type
+  const editorRef = useRef<Editor | null>(null);
   const analyzeDrawingRef = useRef<((image: string) => Promise<string>) | null>(null);
   const insertTextIntoEditorRef = useRef<((text: string) => void) | null>(null);
 
@@ -34,7 +34,7 @@ export default function EditNote() {
         const { data: noteData, error: noteError } = await supabase
           .from("notes")
           .select("*")
-          .eq("id", noteId) // Use noteId here
+          .eq("id", noteId)
           .single();
 
         if (noteError) {
@@ -44,7 +44,7 @@ export default function EditNote() {
         setTitle(noteData.title);
         setContent(noteData.content || "");
         setSelectedStudySet(noteData.study_set_id);
-        setDrawingData(noteData.extracted_content_ai); // Assuming this stores drawing data
+        setDrawingData(noteData.extracted_content_ai);
 
         const { data: studySetsData, error: studySetsError } = await supabase
           .from("study_sets")
@@ -63,16 +63,15 @@ export default function EditNote() {
       }
     }
 
-    if (noteId) { // Only fetch if noteId is defined
+    if (noteId) {
       fetchNoteAndStudySets();
     } else {
-      // If noteId is undefined, an error message will be displayed by the conditional render below
       console.error("No note ID provided for editing.");
     }
   }, [noteId]);
 
   const handleSaveNote = async () => {
-    if (!noteId) { // Also check noteId before saving
+    if (!noteId) {
       showError("Cannot save: No note ID available.");
       return;
     }
@@ -90,9 +89,9 @@ export default function EditNote() {
           title,
           content: content || JSON.stringify({ type: "doc", content: [{ type: "paragraph" }] }),
           study_set_id: selectedStudySet,
-          extracted_content_ai: drawingData ? "AI analysis of drawing: " + drawingData : null, // Placeholder for actual AI analysis
+          extracted_content_ai: drawingData ? "AI analysis of drawing: " + drawingData : null,
         })
-        .eq("id", noteId); // Use noteId here
+        .eq("id", noteId);
 
       if (error) {
         throw error;
@@ -159,7 +158,7 @@ export default function EditNote() {
             onDrawingChange={handleDrawingChange}
             isDrawingMode={isDrawingMode}
             setIsDrawingMode={setIsDrawingMode}
-            onEditorReady={(instance: Editor, analyzeFn, insertFn) => { // Explicitly type instance
+            onEditorReady={(instance: Editor, analyzeFn, insertFn) => {
               editorRef.current = instance;
               analyzeDrawingRef.current = analyzeFn;
               insertTextIntoEditorRef.current = insertFn;
@@ -170,7 +169,7 @@ export default function EditNote() {
               content={content}
               onContentChange={setContent}
               placeholder="Start writing your note here..."
-              editorRef={editorRef} // Pass the ref to RichTextEditor
+              editorRef={editorRef}
             />
           )}
         </div>
