@@ -4,7 +4,7 @@ import * as RechartsPrimitive from "recharts";
 import { cn } from "@/lib/utils";
 
 // Helper to extract item config from a payload
-function get  (payload: any, options: { dataKey?: string; nameKey?: string; labelKey?: string }) {
+function get  (payload: any, _options: { dataKey?: string; nameKey?: string; labelKey?: string }) {
   if (payload.length === 0) {
     return null;
   }
@@ -42,7 +42,7 @@ type ChartProps = {
   className?: string;
   children?: React.ReactNode;
   config: Record<string, any>;
-} & React.ComponentProps<typeof RechartsPrimitive.ResponsiveContainer>;
+} & React.HTMLAttributes<HTMLDivElement> & React.ComponentProps<typeof RechartsPrimitive.ResponsiveContainer>; // Explicitly extend HTMLDivElement attributes
 
 const Chart = React.forwardRef<HTMLDivElement, ChartProps>(
   ({ id, className, children, config, ...props }, ref) => {
@@ -54,6 +54,7 @@ const Chart = React.forwardRef<HTMLDivElement, ChartProps>(
           data-chart={chartId}
           ref={ref}
           className={cn("flex h-full w-full flex-col", className)}
+          {...props} // Pass props to the outer div
         >
           <ChartStyle id={chartId} config={config} />
           <RechartsPrimitive.ResponsiveContainer {...props}>

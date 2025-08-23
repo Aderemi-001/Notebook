@@ -1,5 +1,6 @@
 import { useToast } from "@/hooks/use-toast";
-import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
+import { Toast, ToastAction, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast"; // Added ToastAction
+import * as React from "react";
 
 export function Toaster() {
   const { toasts } = useToast();
@@ -14,7 +15,7 @@ export function Toaster() {
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && <ToastDescription>{description}</ToastDescription>}
             </div>
-            {action}
+            {action && <ToastAction {...action} />} {/* Correctly render ToastAction */}
             <ToastClose />
           </Toast>
         );

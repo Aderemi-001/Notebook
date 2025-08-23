@@ -1,11 +1,11 @@
-import * as React from 'react'; // Explicitly import React
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, Loader2, ChevronRight, ChevronLeft, RefreshCw } from 'lucide-react'; // Removed CheckCircle2, XCircle
+import { ArrowLeft, Loader2, ChevronRight, ChevronLeft, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -351,8 +351,8 @@ const TakeExam: React.FC = () => {
             <div className="space-y-6">
               {questions.map((q: GeneratedQuestion, index: number) => {
                 const result = examResults?.find((r: ExamResponse) => r.question_id === q.id);
-                const _isCorrect = result?.is_correct; // Renamed to _isCorrect
-                const _userAnswer = result?.user_answer || 'No answer provided'; // Renamed to _userAnswer
+                // const _isCorrect = result?.is_correct; // Renamed to _isCorrect
+                // const _userAnswer = result?.user_answer || 'No answer provided'; // Renamed to _userAnswer
 
                 return (
                   <div key={q.id} className="border p-4 rounded-md">

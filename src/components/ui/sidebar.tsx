@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { cva } from "class-variance-authority"; // Removed VariantProps
 import { PanelLeft } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -129,7 +128,7 @@ type SidebarPanelProps = {
 
 const SidebarPanel = React.forwardRef<HTMLDivElement, SidebarPanelProps>(
   ({ className, children, ...props }, ref) => {
-    const { open } = useSidebar();
+    const { open, collapsible } = useSidebar(); // Destructure collapsible here
     return (
       <div
         ref={ref}
