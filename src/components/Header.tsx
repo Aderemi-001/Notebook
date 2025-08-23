@@ -131,16 +131,16 @@ export const Header: React.FC = () => {
                   <MenuIcon className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[250px] sm:w-[300px] flex flex-col">
+              <SheetContent side="right" className="w-[280px] sm:w-[320px] flex flex-col"> {/* Adjusted width */}
                 {/* User Info in Mobile Menu */}
                 <div className="flex items-center space-x-2 px-2 pt-6">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="User Avatar" />
                     <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col">
-                    <p className="text-sm font-medium leading-none">{user.user_metadata?.display_name || user.email}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                  <div className="flex flex-col overflow-hidden"> {/* Added overflow-hidden */}
+                    <p className="text-sm font-medium leading-none truncate">{user.user_metadata?.display_name || user.email}</p> {/* Added truncate */}
+                    <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p> {/* Added truncate */}
                   </div>
                 </div>
                 <Separator className="my-4" />
