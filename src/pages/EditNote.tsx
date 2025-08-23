@@ -268,7 +268,7 @@ const EditNote: React.FC = () => {
             <Label id="note-content-label">Content</Label>
             <RichTextEditor
               labelId="note-content-label"
-              content={content}
+              content={content || '<p></p>'} // Provide a default empty paragraph
               onContentChange={setContent}
               editable={!isSaving}
               onEditorReady={(instance) => (editorRef.current = instance)} // Pass editor instance
