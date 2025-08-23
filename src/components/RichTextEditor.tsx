@@ -1,84 +1,69 @@
-"use client";
-
-import { EditorContent, useEditor, Editor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
-import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
-import Highlight from "@tiptap/extension-highlight";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import React, { useEffect } from 'react';
+import { useEditor, EditorContent, Editor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
+import Highlight from '@tiptap/extension-highlight';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from "lowlight";
-import { RichTextEditorToolbar } from "./RichTextEditorToolbar";
-import * as React from "react";
-import { useEffect } from "react";
+import { RichTextEditorToolbar } from './RichTextEditorToolbar';
 
 const lowlight = createLowlight(common);
 
 interface RichTextEditorProps {
   content: string;
   onContentChange: (content: string) => void;
-  placeholder?: string;
-  editable?: boolean;
-  editorRef?: React.MutableRefObject<Editor | null>; // Add editorRef prop
+  editorRef: React.MutableRefObject<Editor | null>;
 }
 
-export function RichTextEditor({
-  content,
-  onContentChange,
-  placeholder = "Start writing...",
-  editable = true,
-  editorRef,
-}: RichTextEditorProps) {
+export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editorRef }) => {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3], // Only allow H1, H2, H3
-        },
+        heading: { levels: [1, 2, 3] },
         codeBlock: false, // Disable default codeBlock to use CodeBlockLowlight
       }),
-      Placeholder.configure({
-        placeholder,
-      }),
-      Image.configure({
-        inline: true,
-        allowBase64: true,
-      }),
-      Link.configure({
-        openOnClick: false,
-        autolink: true,
-      }),
-      Highlight.configure({
-        multicolor: true,
-      }),
-      CodeBlockLowlight.configure({
-        lowlight,
-      }),
+      Image.configure({ inline: true, allowBase64: true }),
+      Link.configure({ openOnClick: false, autolink: true }),
+      Highlight.configure({ multicolor: true }),
+      CodeBlockLowlight.configure({ lowlight }),
     ],
     content: content,
-    onUpdate: ({ editor: updatedEditor }) => {
-      onContentChange(updatedEditor.getHTML());
+    onUpdate: ({ editor }) => {
+      onContentChange(editor.getHTML());
     },
     editorProps: {
       attributes: {
-        class:
-          "prose dark:prose-invert max-w-none min-h-[150px] p-4 border rounded-md focus:outline-none",
+        class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4',
       },
     },
-    editable: editable,
   });
 
-  // Assign the editor instance to the ref if provided
   useEffect(() => {
-    if (editorRef) {
+    if (editor) {
       editorRef.current = editor;
+      // Explicitly focus the editor when it's ready and mounted
+      editor.commands.focus();
     }
+    return () => {
+      if (editorRef.current === editor) {
+        editorRef.current = null;
+      }
+    };
   }, [editor, editorRef]);
 
+  // This useEffect handles external content changes
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content, { emitUpdate: false }); // Fixed: Pass an options object
+    }
+  }, [content, editor]);
+
+
   return (
-    <div className="border rounded-md">
+    <div className="border rounded-md flex flex-col h-full">
       <RichTextEditorToolbar editor={editor} />
-      <EditorContent editor={editor} />
+      <EditorContent editor={editor} className="flex-grow overflow-y-auto" />
     </div>
   );
-}
+};
