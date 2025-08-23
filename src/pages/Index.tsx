@@ -205,9 +205,9 @@ const Index = () => {
   const showSearchResults = debouncedSearchTerm.trim() && (isLoadingSearchResults || (searchResults && searchResults.length > 0) || (searchResults && searchResults.length === 0));
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in">
+    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">My Study Sets</h1> {/* Changed from Home to My Study Sets */}
+        <h1 className="text-2xl sm:text-3xl font-bold">My Study Sets</h1>
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link to="/create" className="flex items-center">
@@ -215,7 +215,7 @@ const Index = () => {
             </Link>
           </Button>
           <Button asChild>
-            <Link to="/explore-public-sets" className="flex items-center"> {/* Added Explore Public Sets button */}
+            <Link to="/explore-public-sets" className="flex items-center">
               <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
             </Link>
           </Button>
@@ -310,7 +310,7 @@ const Index = () => {
                     </Link>
                   </Button>
                   <Button asChild variant="outline">
-                    <Link to="/explore-public-sets"> {/* Added Explore Public Sets button */}
+                    <Link to="/explore-public-sets">
                       <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
                     </Link>
                   </Button>
