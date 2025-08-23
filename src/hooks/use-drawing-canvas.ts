@@ -2,10 +2,9 @@ import * as React from 'react'; // Explicitly import React
 import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface UseDrawingCanvasProps {
-  isDrawingMode: boolean;
+  toolMode: 'pen' | 'eraser' | 'pan'; // New prop to directly control the active tool
   drawingColor: string;
-  penSize: number; // New prop
-  isErasing: boolean;
+  penSize: number;
   eraserSize: number;
   zoomLevel: number;
   setZoomLevel: (level: number | ((prev: number) => number)) => void;
@@ -13,7 +12,6 @@ interface UseDrawingCanvasProps {
   setPanOffset: (offset: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => void;
   minZoom: number;
   maxZoom: number;
-  // baseLineWidth: number; // Removed, now using penSize
   onCanvasClickDetected: () => void; // New callback prop
 }
 
@@ -28,10 +26,9 @@ const getEventClientCoords = (event: React.MouseEvent<HTMLCanvasElement> | React
 };
 
 export const useDrawingCanvas = ({
-  isDrawingMode,
+  toolMode, // Destructure new toolMode prop
   drawingColor,
-  penSize, // Destructure penSize
-  isErasing,
+  penSize,
   eraserSize,
   zoomLevel,
   setZoomLevel,
@@ -39,12 +36,11 @@ export const useDrawingCanvas = ({
   setPanOffset,
   minZoom,
   maxZoom,
-  // baseLineWidth, // Removed
-  onCanvasClickDetected, // Destructure new prop
+  onCanvasClickDetected,
 }: UseDrawingCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false); // True when actively drawing/erasing
   const lastPointerPosition = useRef<{ x: number; y: number } | null>(null); // For panning and drawing
 
   // State for touch gestures
@@ -55,6 +51,11 @@ export const useDrawingCanvas = ({
   const didMoveRef = useRef(false);
   const initialPointerPosition = useRef<{ x: number; y: number } | null>(null);
   const CLICK_MOVE_THRESHOLD = 5; // Pixels
+
+  // Derived states from toolMode
+  const isDrawingToolActive = toolMode === 'pen' || toolMode === 'eraser';
+  const isErasingToolActive = toolMode === 'eraser';
+  const isPanToolActive = toolMode === 'pan';
 
   const clearCanvas = useCallback(() => {
     if (canvasRef.current && ctxRef.current) {
@@ -120,11 +121,11 @@ export const useDrawingCanvas = ({
 
   useEffect(() => {
     if (ctxRef.current) {
-      ctxRef.current.strokeStyle = drawingColor;
-      ctxRef.current.lineWidth = isErasing ? eraserSize : penSize; // Use penSize here
-      ctxRef.current.globalCompositeOperation = isErasing ? 'destination-out' : 'source-over';
+      ctxRef.current.strokeStyle = isErasingToolActive ? '#FFFFFF' : drawingColor;
+      ctxRef.current.lineWidth = isErasingToolActive ? eraserSize : penSize;
+      ctxRef.current.globalCompositeOperation = isErasingToolActive ? 'destination-out' : 'source-over';
     }
-  }, [isDrawingMode, drawingColor, isErasing, eraserSize, penSize]); // Added penSize to dependencies
+  }, [toolMode, drawingColor, isErasingToolActive, eraserSize, penSize]);
 
   const getCanvasPoint = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -156,27 +157,35 @@ export const useDrawingCanvas = ({
         const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
         setInitialPinchDistance(dist);
         setIsPinching(true);
-        lastPointerPosition.current = null;
+        lastPointerPosition.current = null; // Stop any single-touch drawing/panning
         setIsDrawing(false);
         return;
       } else if (event.nativeEvent.touches.length === 1) {
         lastPointerPosition.current = { x: clientX, y: clientY };
+        if (isDrawingToolActive) { // Only start drawing if pen/eraser is active
+          const { x, y } = getCanvasPoint(clientX, clientY);
+          ctxRef.current.beginPath();
+          ctxRef.current.moveTo(x, y);
+          setIsDrawing(true);
+        } else if (isPanToolActive) { // Only start panning if pan is active
+          // No specific beginPath for panning, just track last position
+        }
+        setIsPinching(false);
+        return;
+      }
+    } else { // Mouse events
+      lastPointerPosition.current = { x: clientX, y: clientY };
+      if (isDrawingToolActive) { // Only start drawing if pen/eraser is active
         const { x, y } = getCanvasPoint(clientX, clientY);
         ctxRef.current.beginPath();
         ctxRef.current.moveTo(x, y);
         setIsDrawing(true);
-        setIsPinching(false);
-        return;
+      } else if (isPanToolActive) { // Only start panning if pan is active
+        // No specific beginPath for panning, just track last position
       }
-    } else {
-      lastPointerPosition.current = { x: clientX, y: clientY };
-      const { x, y } = getCanvasPoint(clientX, clientY);
-      ctxRef.current.beginPath();
-      ctxRef.current.moveTo(x, y);
-      setIsDrawing(true);
       setIsPinching(false);
     }
-  }, [getCanvasPoint]);
+  }, [getCanvasPoint, isDrawingToolActive, isPanToolActive]);
 
   const draw = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!ctxRef.current || !canvasRef.current) return;
@@ -214,7 +223,7 @@ export const useDrawingCanvas = ({
         setZoomLevel(newZoom);
 
         // Calculate new pan offset to keep the oldCanvasPoint fixed relative to the screen
-        setPanOffset((_prevPan: { x: number; y: number }) => ({ // Renamed prevPan to _prevPan
+        setPanOffset((_prevPan: { x: number; y: number }) => ({
           x: centerX - oldCanvasPointX * newZoom,
           y: centerY - oldCanvasPointY * newZoom,
         }));
@@ -224,13 +233,15 @@ export const useDrawingCanvas = ({
       return;
     }
 
-    if (isDrawing) {
+    // Only proceed if a pointer is down (isDrawing is true for pen/eraser, or lastPointerPosition.current for pan)
+    if (!isDrawing && !lastPointerPosition.current) return;
+
+    if (isDrawing && isDrawingToolActive) { // Drawing/Erasing
       const { x, y } = getCanvasPoint(clientX, clientY);
       ctxRef.current.lineTo(x, y);
       ctxRef.current.stroke();
       lastPointerPosition.current = { x: clientX, y: clientY };
-    } else if (lastPointerPosition.current && isDrawingMode && !isErasing && !isPinching) {
-      // Panning logic
+    } else if (lastPointerPosition.current && isPanToolActive && !isPinching) { // Panning
       const dx = clientX - lastPointerPosition.current.x;
       const dy = clientY - lastPointerPosition.current.y;
 
@@ -240,26 +251,26 @@ export const useDrawingCanvas = ({
       }));
       lastPointerPosition.current = { x: clientX, y: clientY };
     }
-  }, [isDrawing, isPinching, initialPinchDistance, zoomLevel, panOffset, isDrawingMode, isErasing, getCanvasPoint, minZoom, maxZoom, setZoomLevel, setPanOffset]);
+  }, [isDrawing, isPinching, initialPinchDistance, zoomLevel, panOffset, isDrawingToolActive, isPanToolActive, getCanvasPoint, minZoom, maxZoom, setZoomLevel, setPanOffset]);
 
   const endDrawing = useCallback(() => {
     if (isPinching) {
       setIsPinching(false);
       setInitialPinchDistance(null);
     }
-    if (ctxRef.current) {
+    if (ctxRef.current && isDrawingToolActive) { // Only close path if drawing tool was active
       ctxRef.current.closePath();
     }
     setIsDrawing(false);
     lastPointerPosition.current = null;
 
     // If it was a click (no significant move) and in drawing mode, trigger the callback
-    if (isDrawingMode && !didMoveRef.current && initialPointerPosition.current) {
+    if (isDrawingToolActive && !didMoveRef.current && initialPointerPosition.current) {
       onCanvasClickDetected();
     }
     initialPointerPosition.current = null; // Reset initial position
     didMoveRef.current = false; // Reset didMove flag
-  }, [isPinching, isDrawingMode, onCanvasClickDetected]);
+  }, [isPinching, isDrawingToolActive, onCanvasClickDetected]);
 
   return {
     canvasRef,

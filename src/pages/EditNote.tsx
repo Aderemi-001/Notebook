@@ -89,21 +89,16 @@ const EditNote: React.FC = () => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
-  const isDrawingMode = toolMode === 'pen' || toolMode === 'eraser';
-  const isErasing = toolMode === 'eraser';
-
   const {
     canvasRef,
-    // ctxRef, // Removed unused variable
     startDrawing,
     draw,
     endDrawing,
     clearCanvas,
   } = useDrawingCanvas({
-    isDrawingMode,
+    toolMode, // Pass toolMode directly
     drawingColor,
     penSize,
-    isErasing,
     eraserSize,
     zoomLevel,
     setZoomLevel,
@@ -385,7 +380,7 @@ const EditNote: React.FC = () => {
               <div className="flex h-full flex-col p-4">
                 <Label className="text-lg mb-2 block">Drawing Canvas</Label>
                 <div className="relative border rounded-md overflow-hidden flex-grow bg-white">
-                  <TextEditorContent editor={editorRef.current} editable={false} isDrawingMode={isDrawingMode} />
+                  <TextEditorContent editor={editorRef.current} editable={false} isDrawingMode={toolMode !== 'pan'} />
                   <canvas
                     ref={canvasRef}
                     className="absolute inset-0 cursor-crosshair touch-none"
@@ -399,7 +394,7 @@ const EditNote: React.FC = () => {
                     style={{
                       transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
                       transformOrigin: '0 0',
-                      pointerEvents: isDrawingMode ? 'auto' : 'none', // Only allow drawing/panning when in drawing mode
+                      pointerEvents: toolMode !== 'pan' ? 'auto' : 'none', // Only allow drawing/panning when in drawing mode
                     }}
                   />
                 </div>

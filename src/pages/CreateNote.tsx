@@ -72,9 +72,6 @@ const CreateNote: React.FC = () => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
-  const isDrawingMode = toolMode === 'pen' || toolMode === 'eraser';
-  const isErasing = toolMode === 'eraser';
-
   const {
     canvasRef,
     startDrawing,
@@ -82,10 +79,9 @@ const CreateNote: React.FC = () => {
     endDrawing,
     clearCanvas,
   } = useDrawingCanvas({
-    isDrawingMode,
+    toolMode, // Pass toolMode directly
     drawingColor,
     penSize,
-    isErasing,
     eraserSize,
     zoomLevel,
     setZoomLevel,
@@ -310,7 +306,7 @@ const CreateNote: React.FC = () => {
               <div className="flex h-full flex-col p-4">
                 <Label className="text-lg mb-2 block">Drawing Canvas</Label>
                 <div className="relative border rounded-md overflow-hidden flex-grow bg-white">
-                  <TextEditorContent editor={editorRef.current} editable={false} isDrawingMode={isDrawingMode} />
+                  <TextEditorContent editor={editorRef.current} editable={false} isDrawingMode={toolMode !== 'pan'} />
                   <canvas
                     ref={canvasRef}
                     className="absolute inset-0 cursor-crosshair touch-none"
@@ -324,7 +320,7 @@ const CreateNote: React.FC = () => {
                     style={{
                       transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
                       transformOrigin: '0 0',
-                      pointerEvents: isDrawingMode ? 'auto' : 'none',
+                      pointerEvents: toolMode !== 'pan' ? 'auto' : 'none',
                     }}
                   />
                 </div>
@@ -382,7 +378,6 @@ const CreateNote: React.FC = () => {
                       </Button>
                     </>
                   )}
-
                   <Button onClick={clearCanvas}>Clear Drawing</Button>
                   <Button onClick={() => handleSaveDrawing(canvasRef.current?.toDataURL('image/png') || '')} disabled={isAnalyzing}>
                     {isAnalyzing ? (
