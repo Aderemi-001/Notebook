@@ -9,12 +9,12 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "react-hot-toast";
-import { useUser } from "@/hooks/useUser";
+import { showLoading, showSuccess, showError, dismissToast } from "@/utils/toast"; // Corrected toast import
+import { useAuth } from "@/hooks/useAuth"; // Corrected user hook import
 
 export default function Contact() {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user } = useAuth(); // Using useAuth
   const [name, setName] = useState(user?.user_metadata?.display_name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [subject, setSubject] = useState("");
@@ -24,7 +24,7 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    toast.loading("Sending message...");
+    const toastId = showLoading("Sending message..."); // Using showLoading
 
     const { error } = await supabase.from("contact_messages").insert({
       user_id: user?.id || null,
@@ -35,12 +35,12 @@ export default function Contact() {
     });
 
     if (error) {
-      toast.dismiss();
-      toast.error("Failed to send message. Please try again.");
+      dismissToast(toastId); // Using dismissToast
+      showError("Failed to send message. Please try again."); // Using showError
       console.error("Error sending contact message:", error.message);
     } else {
-      toast.dismiss();
-      toast.success("Message sent successfully! We'll get back to you soon.");
+      dismissToast(toastId); // Using dismissToast
+      showSuccess("Message sent successfully! We'll get back to you soon."); // Using showSuccess
       setName(user?.user_metadata?.display_name || "");
       setEmail(user?.email || "");
       setSubject("");
