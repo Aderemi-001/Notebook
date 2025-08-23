@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useEditor, JSONContent } from '@tiptap/react';
+import { useEditor, JSONContent, Editor } from '@tiptap/react'; // Import Editor type
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Image from '@tiptap/extension-image';
-import Underline from '@tiptap/extension-underline'; // New: Import Underline extension
-import TextAlign from '@tiptap/extension-text-align'; // New: Import TextAlign extension
-import Link from '@tiptap/extension-link'; // New: Import Link extension
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import Link from '@tiptap/extension-link';
 import RichTextEditorToolbar from './RichTextEditorToolbar';
 import {
   AlertDialog,
@@ -20,7 +20,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Import new modular components and hooks
 import { useDrawingCanvas } from '@/hooks/use-drawing-canvas';
 import { useAIDrawingAnalysis } from '@/hooks/use-ai-drawing-analysis';
 import DrawingCanvas from './DrawingCanvas';
@@ -32,13 +31,13 @@ interface RichTextEditorProps {
   editable?: boolean;
   className?: string;
   labelId?: string;
-  isDrawingMode: boolean; // Now a prop
-  setIsDrawingMode: (mode: boolean) => void; // Now a prop
+  isDrawingMode: boolean;
+  setIsDrawingMode: (mode: boolean) => void;
   onEditorReady?: (
-    editor: any,
+    editor: Editor, // Use Editor type here
     analyzeDrawing: () => Promise<void>,
     insertDrawing: () => void
-  ) => void; // Updated callback signature
+  ) => void;
 }
 
 const MIN_ZOOM = 0.5;
@@ -79,8 +78,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   editable = true,
   className,
   labelId,
-  isDrawingMode, // Now a prop
-  setIsDrawingMode, // Now a prop
+  isDrawingMode,
+  setIsDrawingMode,
   onEditorReady,
 }) => {
   const [drawingColor, setDrawingColor] = useState('#000000');
@@ -146,11 +145,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         inline: true,
         allowBase64: true,
       }),
-      Underline, // New: Add Underline extension
-      TextAlign.configure({ // New: Add TextAlign extension
+      Underline,
+      TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
-      Link.configure({ // New: Add Link extension
+      Link.configure({
         openOnClick: false,
         autolink: true,
         HTMLAttributes: {
@@ -166,13 +165,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   });
 
   const handleCanvasClickDetected = useCallback(() => {
-    if (editor && isDrawingMode) { // Only switch if currently in drawing mode
+    if (editor && isDrawingMode) {
       setIsDrawingMode(false);
       editor.chain().focus().run();
     }
   }, [editor, isDrawingMode, setIsDrawingMode]);
 
-  // Use the new drawing canvas hook
   const {
     canvasRef,
     clearCanvas,
@@ -194,7 +192,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     onCanvasClickDetected: handleCanvasClickDetected,
   });
 
-  // Use the new AI drawing analysis hook
   const {
     showReplaceDialog,
     setShowReplaceDialog,
@@ -221,6 +218,18 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       setCustomCursorStyle('auto');
     }
   }, [isDrawingMode, isErasing, eraserSize]);
+
+  // Effect to explicitly set editor editable state and focus
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(editable && !isDrawingMode);
+      if (!isDrawingMode) {
+        // When exiting drawing mode, focus the editor
+        editor.chain().focus().run();
+      }
+    }
+  }, [editor, editable, isDrawingMode]);
+
 
   // Effect to expose editor instance and AI drawing functions
   useEffect(() => {
