@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { showError, showLoading, dismissToast } from "@/utils/toast"; // Removed showSuccess
+import { showError, showLoading, dismissToast } from "@/utils/toast";
 import * as pdfjsLib from 'pdfjs-dist';
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -204,7 +204,7 @@ export const useFileImport = () => {
       const newCards = data.cards;
       const newConcepts = data.concepts;
       const newRelationships = data.relationships;
-      const newCardConceptLinks = data.card_concept_links; // New: Get card-concept links
+      // const newCardConceptLinks = data.card_concept_links; // New: Get card-concept links - Removed as it's unused here
 
       if (!newCards || newCards.length === 0) {
         showError("The AI couldn't find any terms and definitions in the file.");
@@ -212,8 +212,8 @@ export const useFileImport = () => {
       }
 
       // Process concepts (upserting existing, inserting new)
-      const conceptNameToIdMap = new Map<string, string>();
       if (newConcepts && newConcepts.length > 0) {
+        const conceptNameToIdMap = new Map<string, string>();
         for (const concept of newConcepts) {
           const { data: existingConcept, error: fetchConceptError } = await supabase
             .from('concepts')
@@ -228,7 +228,7 @@ export const useFileImport = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) { // Corrected variable name from existsSync to existingConcept
+          if (existingConcept) {
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
@@ -274,19 +274,9 @@ export const useFileImport = () => {
       }
 
       // New: Process card-concept links
-      if (newCardConceptLinks && newCardConceptLinks.length > 0) {
-        const cardTermToIdMap = new Map<string, string>();
-        // Assuming cards are inserted and we have their IDs
-        // For now, we'll rely on the form's cards array to get terms,
-        // and the actual card IDs will be available after the main form submission.
-        // This means card_concepts will be inserted *after* the set and cards are saved.
-        // For the purpose of this hook, we'll prepare the data to be linked later.
-        // The current implementation of `generateCardsAndConcepts` only returns the AI data,
-        // it doesn't handle the actual DB insertion of cards.
-        // The actual card insertion happens in `CreateSet.tsx` and `EditSet.tsx`.
-        // So, this hook should *return* the links, and the pages will handle the final insertion.
-        // Let's adjust the return type to include these links.
-      }
+      // The actual card insertion happens in `CreateSet.tsx` and `EditSet.tsx`.
+      // So, this hook should *return* the links, and the pages will handle the final insertion.
+      // The `cardTermToIdMap` is not needed here.
       
       queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] });
       return data;
