@@ -9,17 +9,13 @@ import {
   BookOpen,
   LayoutDashboard,
   Settings,
-  Globe,
   NotebookPen,
   CalendarDays,
   Group,
   Handshake,
-  PlusCircle,
-  Brain,
-  Network,
-  History,
-  FileText,
-  CalendarCheck,
+  Network, // Kept for Cognitive Constellation
+  GraduationCap, // New icon for Exams hub
+  PenTool, // New icon for Essays hub
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -46,17 +42,13 @@ export const Header: React.FC = () => {
   const navItems = [
     { name: "My Study Sets", href: "/", icon: <BookOpen className="mr-2 h-4 w-4" /> },
     { name: "Daily Review", href: "/daily-review", icon: <CalendarDays className="mr-2 h-4 w-4" /> },
-    { name: "Create Set", href: "/create", icon: <PlusCircle className="mr-2 h-4 w-4" /> },
-    { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> },
-    { name: "Generate Exam", href: "/generate-exam", icon: <Brain className="mr-2 h-4 w-4" /> },
-    { name: "Generate Essay Questions", href: "/generate-essay-questions", icon: <FileText className="mr-2 h-4 w-4" /> },
-    { name: "Cognitive Constellation", href: "/constellation", icon: <Network className="mr-2 h-4 w-4" /> },
-    { name: "Past Exams", href: "/past-exams", icon: <CalendarCheck className="mr-2 h-4 w-4" /> },
-    { name: "Past Essay Questions", href: "/past-essay-questions", icon: <History className="mr-2 h-4 w-4" /> },
     { name: "My Notes", href: "/notes", icon: <NotebookPen className="mr-2 h-4 w-4" /> },
     { name: "My Groups", href: "/groups", icon: <Group className="mr-2 h-4 w-4" /> },
+    { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> }, // Consolidated link
+    { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> }, // Consolidated link
+    { name: "Cognitive Constellation", href: "/constellation", icon: <Network className="mr-2 h-4 w-4" /> },
     { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
-    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
+    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> }, // Renamed from Statistics to Dashboard for consistency
   ];
 
   return (
@@ -82,6 +74,12 @@ export const Header: React.FC = () => {
               </Button>
               <Button variant="ghost" asChild>
                 <Link to="/groups">My Groups</Link>
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link to="/exams">Exams</Link>
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link to="/essays">Essays</Link>
               </Button>
 
               {/* User Dropdown - now correctly inside the desktop-only div */}
@@ -132,7 +130,7 @@ export const Header: React.FC = () => {
                   <MenuIcon className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[250px] sm:w-[300px] flex flex-col"> {/* Added flex flex-col */}
+              <SheetContent side="right" className="w-[250px] sm:w-[300px] flex flex-col">
                 {/* User Info in Mobile Menu */}
                 <div className="flex items-center space-x-2 px-2 pt-6">
                   <Avatar className="h-8 w-8">
@@ -144,10 +142,10 @@ export const Header: React.FC = () => {
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
-                <Separator className="my-4" /> {/* Added margin to separator */}
+                <Separator className="my-4" />
                 
-                <ScrollArea className="flex-grow pr-4 -mr-4"> {/* Scrollable area */}
-                  <div className="flex flex-col space-y-2"> {/* Adjusted space-y */}
+                <ScrollArea className="flex-grow pr-4 -mr-4">
+                  <div className="flex flex-col space-y-2">
                     {/* Navigation Items */}
                     {navItems.map((item) => (
                       <Button key={item.name} variant="ghost" asChild className="justify-start">

@@ -12,7 +12,6 @@ import EditSet from "@/pages/EditSet";
 import Profile from "@/pages/Profile";
 import CognitiveConstellation from "@/pages/CognitiveConstellation";
 import GenerateExam from "@/pages/GenerateExam";
-import TakeExam from "@/pages/TakeExam";
 import PastExams from "@/pages/PastExams";
 import ExplorePublicSets from "@/pages/ExplorePublicSets";
 import GenerateEssayQuestions from "@/pages/GenerateEssayQuestions";
@@ -29,6 +28,8 @@ import GroupsIndex from "@/pages/GroupsIndex";
 import EditGroup from "@/pages/EditGroup";
 import GroupDetail from "@/pages/GroupDetail";
 import Collaborations from "@/pages/Collaborations";
+import ExamsIndex from "@/pages/ExamsIndex"; // New import
+import EssayIndex from "@/pages/EssayIndex"; // New import
 import AuthLayout from "@/layouts/AuthLayout";
 import * as React from "react";
 import { useDueCardsCount } from "@/hooks/use-due-cards-count";
@@ -38,6 +39,7 @@ import { format } from 'date-fns';
 import Chatbot from "./Chatbot";
 import { supabase } from "@/integrations/supabase/client";
 import CreateSet from "@/pages/CreateSet";
+import TakeExam from "@/pages/TakeExam"; // This import is actually used in the TakeExam route
 
 const AppContent: React.FC = () => {
   const { data: dueCardsCount, isLoading: isLoadingDueCards } = useDueCardsCount();
@@ -154,10 +156,36 @@ const AppContent: React.FC = () => {
                 <AuthLayout><ExplorePublicSets /></AuthLayout>
               }
             />
+            {/* New Exams Hub Route */}
+            <Route
+              path="/exams"
+              element={
+                <AuthLayout><ExamsIndex /></AuthLayout>
+              }
+            />
             <Route
               path="/generate-exam"
               element={
                 <AuthLayout><GenerateExam /></AuthLayout>
+              }
+            />
+            <Route
+              path="/past-exams"
+              element={
+                <AuthLayout><PastExams /></AuthLayout>
+              }
+            />
+            <Route
+              path="/exams/:examId"
+              element={
+                <AuthLayout><TakeExam /></AuthLayout>
+              }
+            />
+            {/* New Essays Hub Route */}
+            <Route
+              path="/essays"
+              element={
+                <AuthLayout><EssayIndex /></AuthLayout>
               }
             />
             <Route
@@ -176,18 +204,6 @@ const AppContent: React.FC = () => {
               path="/essay-practice/:questionId"
               element={
                 <AuthLayout><EssayPractice /></AuthLayout>
-              }
-            />
-            <Route
-              path="/exams/:examId"
-              element={
-                <AuthLayout><TakeExam /></AuthLayout>
-              }
-            />
-            <Route
-              path="/past-exams"
-              element={
-                <AuthLayout><PastExams /></AuthLayout>
               }
             />
             <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} />

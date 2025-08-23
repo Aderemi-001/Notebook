@@ -1,6 +1,5 @@
-import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { NotebookCard } from "@/components/NotebookCard";
-import { BookOpen, Clock, AlertCircle, Globe, PlusCircle, CalendarDays } from "lucide-react";
+import { NotebookCard, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/NotebookCard";
+import { BookOpen, Clock, AlertCircle, Globe, PlusCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -208,7 +207,7 @@ const Index = () => {
   return (
     <div className="container mx-auto py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Home</h1>
+        <h1 className="text-3xl font-bold">My Study Sets</h1> {/* Changed from Home to My Study Sets */}
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link to="/create" className="flex items-center">
@@ -216,8 +215,8 @@ const Index = () => {
             </Link>
           </Button>
           <Button asChild>
-            <Link to="/daily-review" className="flex items-center">
-              <CalendarDays className="mr-2 h-4 w-4" /> Daily Review
+            <Link to="/explore-public-sets" className="flex items-center"> {/* Added Explore Public Sets button */}
+              <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
             </Link>
           </Button>
         </div>
@@ -311,8 +310,8 @@ const Index = () => {
                     </Link>
                   </Button>
                   <Button asChild variant="outline">
-                    <Link to="/daily-review">
-                      <CalendarDays className="mr-2 h-4 w-4" /> Daily Review
+                    <Link to="/explore-public-sets"> {/* Added Explore Public Sets button */}
+                      <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
                     </Link>
                   </Button>
                 </div>
