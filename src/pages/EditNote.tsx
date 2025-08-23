@@ -12,14 +12,14 @@ import { RichTextEditor } from "@/components/RichTextEditor"; // Import RichText
 import { Editor } from "@tiptap/react"; // Import Editor type
 import { useAIDrawingAnalysis } from "@/hooks/use-ai-drawing-analysis"; // Import AI drawing analysis hook
 import {
-  // AlertDialog, // Removed
-  // AlertDialogAction, // Removed
-  // AlertDialogCancel, // Removed
-  // AlertDialogContent, // Removed
-  // AlertDialogDescription, // Removed
-  // AlertDialogFooter, // Removed
-  // AlertDialogHeader, // Removed
-  // AlertDialogTitle, // Removed
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 // import { useIsMobile } from "@/hooks/use-mobile"; // Removed unused import
 import TextEditorContent from "@/components/TextEditorContent"; // Import TextEditorContent
@@ -80,12 +80,12 @@ const EditNote: React.FC = () => {
   };
 
   const {
-    // showReplaceDialog, // Removed
-    // setShowReplaceDialog, // Removed
-    // textToReplace, // Removed
+    showReplaceDialog,
+    setShowReplaceDialog,
+    textToReplace,
     analyzeDrawing,
-    // handleConfirmReplace, // Removed
-    // handleCancelReplace, // Removed
+    handleConfirmReplace,
+    handleCancelReplace,
     isAnalyzing,
   } = useAIDrawingAnalysis({ editor: editorRef.current, insertTextIntoEditor });
 
@@ -334,7 +334,23 @@ const EditNote: React.FC = () => {
         </CardContent>
       </NotebookCard>
 
-      {/* Removed AlertDialog for AI Extracted Text */}
+      <AlertDialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>AI Extracted Text</AlertDialogTitle>
+            <AlertDialogDescription>
+              The AI extracted the following text from your drawing. Would you like to insert it into your note?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="max-h-[200px] overflow-y-auto p-4 border rounded-md bg-muted/50 text-sm">
+            <p className="whitespace-pre-wrap">{textToReplace}</p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelReplace}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmReplace}>Insert Text</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

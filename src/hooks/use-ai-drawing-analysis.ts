@@ -11,6 +11,21 @@ interface UseAIDrawingAnalysisProps {
 
 export const useAIDrawingAnalysis = ({ editor, insertTextIntoEditor }: UseAIDrawingAnalysisProps) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showReplaceDialog, setShowReplaceDialog] = useState(false);
+  const [textToReplace, setTextToReplace] = useState('');
+
+  const handleConfirmReplace = useCallback(() => {
+    insertTextIntoEditor(textToReplace);
+    setShowReplaceDialog(false);
+    setTextToReplace('');
+    showSuccess("AI transcription added to note content!");
+  }, [insertTextIntoEditor, textToReplace]);
+
+  const handleCancelReplace = useCallback(() => {
+    setShowReplaceDialog(false);
+    setTextToReplace('');
+    showError("AI transcription discarded.");
+  }, []);
 
   const analyzeDrawing = useCallback(async (base64Image: string, mimeType: string): Promise<string | null> => {
     setIsAnalyzing(true);
@@ -65,8 +80,8 @@ export const useAIDrawingAnalysis = ({ editor, insertTextIntoEditor }: UseAIDraw
       }
 
       if (result.extracted_content && result.extracted_content.trim() !== "") {
-        insertTextIntoEditor(result.extracted_content); // Directly insert into editor
-        showSuccess("AI transcription added to note content!");
+        setTextToReplace(result.extracted_content);
+        setShowReplaceDialog(true);
         return result.extracted_content; // Return the extracted content
       } else {
         showError("AI could not extract meaningful content from the drawing.");
@@ -80,10 +95,15 @@ export const useAIDrawingAnalysis = ({ editor, insertTextIntoEditor }: UseAIDraw
     } finally {
       setIsAnalyzing(false);
     }
-  }, [editor, insertTextIntoEditor]);
+  }, [editor]);
 
   return {
+    showReplaceDialog,
+    setShowReplaceDialog,
+    textToReplace,
     analyzeDrawing,
+    handleConfirmReplace,
+    handleCancelReplace,
     isAnalyzing,
   };
 };
