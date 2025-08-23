@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react'; // Import useCallback
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { MessageSquareText, Send, Loader2, Bot, User2, Lightbulb } from 'lucide-react'; // Import Lightbulb icon
+import { MessageSquareText, Send, Loader2, Bot, User2, Lightbulb } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
@@ -24,12 +24,15 @@ const SUGGESTED_QUESTIONS = [
   "How do I use the drawing tool in notes?",
 ];
 
+const INACTIVITY_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+
 const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const CHATBOT_API_URL = `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/chatbot-qa`;
 
@@ -37,10 +40,44 @@ const Chatbot: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Function to reset the inactivity timer
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+    inactivityTimerRef.current = setTimeout(() => {
+      setMessages([]); // Clear messages
+      setInput(''); // Clear input
+      setIsOpen(false); // Optionally close the sheet
+      console.log("Chatbot reset due to inactivity.");
+    }, INACTIVITY_TIMEOUT_MS);
+  }, []);
+
+  // Effect to manage the inactivity timer
+  useEffect(() => {
+    if (isOpen) {
+      resetInactivityTimer(); // Start/reset timer when chat is open
+    } else {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current); // Clear timer when chat is closed
+      }
+    }
+
+    // Clean up timer on component unmount
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [isOpen, resetInactivityTimer]);
+
+  // Scroll to bottom whenever messages change
   useEffect(scrollToBottom, [messages]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isSending) return;
+
+    resetInactivityTimer(); // Reset timer on user action
 
     const userMessage: ChatMessage = {
       id: messages.length + 1,
@@ -97,6 +134,7 @@ const Chatbot: React.FC = () => {
   };
 
   const handleSuggestedQuestionClick = (question: string) => {
+    resetInactivityTimer(); // Reset timer on user action
     setInput(question);
     // Automatically send the message after setting the input
     setTimeout(() => {
@@ -107,13 +145,17 @@ const Chatbot: React.FC = () => {
   const showSuggestions = messages.length === 0 && !isSending && !input.trim();
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet open={isOpen} onOpenChange={(open) => {
+      setIsOpen(open);
+      resetInactivityTimer(); // Reset timer when sheet is opened/closed
+    }}>
       <SheetTrigger asChild>
         <Button
           variant="default"
           size="icon"
           className="fixed bottom-4 right-4 rounded-full h-14 w-14 shadow-lg z-50"
           aria-label="Open Chatbot"
+          onClick={resetInactivityTimer} // Reset timer when trigger button is clicked
         >
           <MessageSquareText className="h-6 w-6" />
         </Button>
@@ -195,7 +237,10 @@ const Chatbot: React.FC = () => {
           <Input
             placeholder="Ask me a question..."
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              resetInactivityTimer(); // Reset timer on input change
+            }}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             disabled={isSending}
             className="flex-grow"
