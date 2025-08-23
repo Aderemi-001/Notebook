@@ -1,9 +1,44 @@
-import useEmblaCarousel, { type UseEmblaCarouselType, type EmblaOptionsType, type EmblaPluginType } from "embla-carousel-react";
+import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react";
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
+// Define local type interfaces for EmblaOptionsType and EmblaPluginType
+// This is a workaround if the types are not correctly exported by the package.
+interface EmblaOptionsType {
+  align?: 'start' | 'center' | 'end';
+  axis?: 'x' | 'y';
+  container?: HTMLElement;
+  direction?: 'ltr' | 'rtl';
+  dragFree?: boolean;
+  draggable?: boolean;
+  inViewThreshold?: number;
+  loop?: boolean;
+  skipSnaps?: boolean;
+  startIndex?: number;
+  watchDrag?: (emblaApi: any) => void;
+  watchResize?: (emblaApi: any) => void;
+  watchSlides?: (emblaApi: any) => void;
+  active?: boolean;
+  breakpoints?: { [key: string]: EmblaOptionsType };
+  duration?: number;
+  easing?: (progress: number) => number;
+  lazyLoad?: boolean;
+  slides?: HTMLElement[];
+  speed?: number;
+  updateOnResize?: boolean;
+  [key: string]: any; // Allow other properties
+}
+
+interface EmblaPluginType {
+  name: string;
+  options: Record<string, any>;
+  init: (embla: any, OptionsHandler: any) => void;
+  destroy: () => void;
+  [key: string]: any; // Allow other properties
+}
 
 type CarouselContextProps = {
   carouselRef: UseEmblaCarouselType[0];
