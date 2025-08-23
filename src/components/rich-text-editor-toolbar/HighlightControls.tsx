@@ -15,25 +15,24 @@ const HIGHLIGHT_COLORS = [
   { name: 'Green', hex: '#4ade80', dataColor: 'green' },
   { name: 'Blue', hex: '#60a5fa', dataColor: 'blue' },
   { name: 'Red', hex: '#ef4444', dataColor: 'red' },
-  { name: 'Purple', hex: '#a855f7', dataColor: 'purple' }, // Added purple
+  { name: 'Purple', hex: '#a855f7', dataColor: 'purple' },
 ];
 
 const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
-  // State to keep track of the currently selected highlight color
+  // State to keep track of the currently selected highlight color for applying
   const [activeHighlightColor, setActiveHighlightColor] = useState(HIGHLIGHT_COLORS[0].hex);
 
-  // Effect to update activeHighlightColor if the editor's current highlight changes
+  // Effect to update activeHighlightColor based on the current selection's highlight, if any
+  // This helps the UI reflect the color of an existing highlight when the cursor moves.
   useEffect(() => {
-    const currentHighlight = editor.getAttributes('highlight').color;
-    if (currentHighlight && HIGHLIGHT_COLORS.some(c => c.hex === currentHighlight)) {
-      setActiveHighlightColor(currentHighlight);
-    } else if (!currentHighlight && editor.isActive('highlight')) {
-      // If highlight is active but color is not one of ours (e.g., default Tiptap highlight),
-      // or if it's a multicolor highlight, we can't represent it with a single active color.
-      // For simplicity, we'll just keep the last selected color.
+    const currentHighlightAttrs = editor.getAttributes('highlight');
+    if (currentHighlightAttrs && currentHighlightAttrs.color) {
+      const matchedColor = HIGHLIGHT_COLORS.find(c => c.hex === currentHighlightAttrs.color);
+      if (matchedColor) {
+        setActiveHighlightColor(matchedColor.hex);
+      }
     }
-  }, [editor, editor.isActive('highlight')]);
-
+  }, [editor, editor.state.selection]); // Update when editor or selection changes
 
   const handleToggleHighlight = () => {
     editor.chain().focus().toggleHighlight({ color: activeHighlightColor }).run();
@@ -48,12 +47,8 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
     editor.chain().focus().unsetHighlight().run();
   };
 
-  // Determine if any highlight is active to set the main toggle's pressed state
-  const isAnyHighlightActive = editor.isActive('highlight');
-  // Determine the color of the active highlight for the indicator, if any
-  const currentEditorHighlightColor = editor.getAttributes('highlight').color;
-  const indicatorColor = isAnyHighlightActive && currentEditorHighlightColor ? currentEditorHighlightColor : activeHighlightColor;
-
+  // Determine if the *currently selected* active highlight color is applied to the selection
+  const isCurrentColorActive = editor.isActive('highlight', { color: activeHighlightColor });
 
   return (
     <Popover>
@@ -63,7 +58,7 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
             <PopoverTrigger asChild>
               <Toggle
                 size="sm"
-                pressed={isAnyHighlightActive}
+                pressed={isCurrentColorActive} // Reflect if the active color is currently applied
                 onPressedChange={handleToggleHighlight} // Toggle with the active color
                 aria-label="Toggle highlight"
                 className="px-2 relative"
@@ -72,13 +67,13 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
                 {/* Visual indicator for the active highlight color */}
                 <div
                   className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-foreground/20"
-                  style={{ backgroundColor: indicatorColor }}
+                  style={{ backgroundColor: activeHighlightColor }} // Always show the selected color
                 ></div>
               </Toggle>
             </PopoverTrigger>
           </TooltipTrigger>
           <TooltipContent>
-            {isAnyHighlightActive ? "Toggle Highlight Off" : "Toggle Highlight On"}
+            {isCurrentColorActive ? "Toggle Highlight Off" : "Toggle Highlight On"}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
