@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import * as React from 'react'; // Explicitly import React
+import * as React from 'react';
 import { useState } from 'react';
 
 interface Concept {
@@ -178,7 +178,7 @@ const CognitiveConstellation: React.FC = () => {
 
   const { concepts, relationships } = data;
 
-  const conceptMap = new Map(concepts.map((c: Concept) => [c.id, c]));
+  const conceptMap = new Map<string, Concept>(concepts.map((c: Concept) => [c.id, c]));
 
   return (
     <div className="container mx-auto py-10 animate-fade-in">

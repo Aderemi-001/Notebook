@@ -359,7 +359,7 @@ const TakeExam: React.FC = () => {
                     <p className="text-sm text-muted-foreground mb-1">Question {index + 1} ({q.question_type.replace('_', ' ')})</p>
                     <p className="font-semibold text-lg mb-2">{q.question_text}</p>
                     {q.question_type === 'multiple_choice' && q.options && (
-                      <div className="space-y-1 mb-2">
+                      <div className="space-y-1">
                         {q.options.map((option: string, optIndex: number) => (
                           <div key={optIndex} className="flex items-center">
                             <span className="mr-2 text-muted-foreground">{String.fromCharCode(65 + optIndex)}.</span>

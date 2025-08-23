@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as React from 'react'; // Explicitly import React
+import * as React from 'react';
 
 interface AuthLayoutProps {
   children: React.ReactNode;

@@ -1,4 +1,4 @@
-import * as React from 'react'; // Explicitly import React
+import * as React from 'react';
 import { Progress } from "@/components/ui/progress";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";

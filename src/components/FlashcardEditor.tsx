@@ -1,4 +1,4 @@
-import * as React from 'react'; // Explicitly import React
+import * as React from 'react';
 import { UseFormReturn, useFieldArray } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';

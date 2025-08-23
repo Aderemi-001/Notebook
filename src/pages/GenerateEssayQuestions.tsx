@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -184,7 +185,7 @@ const GenerateEssayQuestions: React.FC = () => {
                 {userConcepts?.length === 0 ? (
                   <SelectItem disabled value="no-concepts">No concepts available. Import files with AI to generate concepts.</SelectItem>
                 ) : (
-                  userConcepts?.map(concept => (
+                  userConcepts?.map((concept: Concept) => (
                     <SelectItem key={concept.id} value={concept.id}>
                       <div className="flex items-center">
                         <Network className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -205,7 +206,7 @@ const GenerateEssayQuestions: React.FC = () => {
               type="number"
               min="1"
               value={numQuestions}
-              onChange={(e) => setNumQuestions(parseInt(e.target.value) || 0)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumQuestions(parseInt(e.target.value) || 0)}
               placeholder="e.g., 3"
             />
           </div>
@@ -234,7 +235,7 @@ const GenerateEssayQuestions: React.FC = () => {
             <CardTitle>Generated Essay Questions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {generatedQuestions.map((q, index) => (
+            {generatedQuestions.map((q: GeneratedEssayQuestion, index: number) => (
               <div key={q.id || index} className="border p-4 rounded-md bg-background">
                 <p className="text-sm text-muted-foreground mb-1">Question {index + 1}</p>
                 <p className="font-semibold text-lg mb-2">{q.question_text}</p>
@@ -245,7 +246,7 @@ const GenerateEssayQuestions: React.FC = () => {
                       <CheckCircle2 className="mr-2 h-4 w-4" /> Suggested Points:
                     </h3>
                     <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                      {q.suggested_points.map((point, pointIndex) => (
+                      {q.suggested_points.map((point: string, pointIndex: number) => (
                         <li key={pointIndex}>{point}</li>
                       ))}
                     </ul>

@@ -5,7 +5,7 @@ import { PlusCircle, BookOpen, User, Clock, AlertCircle, Network, Globe, Menu, B
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import * as React from "react"; // Explicitly import React
+import * as React from "react";
 import { useState, useEffect } from "react";
 import { formatDistanceToNowStrict, isPast } from 'date-fns';
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Label } from "@/components/ui/label";
-import { useQuery } from "@tanstack/react-query"; // Added useQuery import
+import { useQuery } from "@tanstack/react-query";
 
 interface StudySet {
   id: string;
@@ -37,6 +37,12 @@ interface SearchResultCard {
   definition: string;
   set_id: string;
   set_title: string;
+}
+
+interface UserProgressData {
+  card_id: string;
+  next_review_at: string;
+  status: string;
 }
 
 const fetchStudySets = async (): Promise<StudySet[]> => {
@@ -85,7 +91,7 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
         console.error(`Error fetching progress for set ${set.id}:`, progressError);
       }
 
-      const progressMap = new Map(progressData?.map((p: { card_id: string; next_review_at: string; status: string }) => [p.card_id, p]));
+      const progressMap = new Map<string, UserProgressData>(progressData?.map((p: UserProgressData) => [p.card_id, p]));
 
       let tempEarliestReviewAt: Date | null = null;
 
@@ -181,15 +187,6 @@ const Index = () => {
     enabled: !!debouncedSearchTerm.trim(), // Only run query if debouncedSearchTerm is not empty
   });
 
-  // React.useEffect(() => { // Removed useQueryClient, not needed here
-  //   queryClient.invalidateQueries({ queryKey: ['studySets'] });
-  // }, [queryClient]);
-
-  const filteredStudySets = studySets?.filter((set: StudySet) =>
-    set.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (set.description && set.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
   const handleSignOut = async () => {
     const toastId = showLoading('Signing out...');
     try {
@@ -199,7 +196,6 @@ const Index = () => {
       }
       dismissToast(toastId);
       showSuccess('Signed out successfully!');
-      // queryClient.clear(); // Removed useQueryClient, not needed here
       // AuthLayout will handle redirect to /login
     } catch (err: any) {
       dismissToast(toastId);

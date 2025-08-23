@@ -1,4 +1,4 @@
-import * as React from 'react'; // Explicitly import React
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTE_KEYWORDS, ROUTE_SPECIFIC_SUGGESTIONS, DEFAULT_SUGGESTED_QUESTIONS } from './types';
 

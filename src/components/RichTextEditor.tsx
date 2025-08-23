@@ -1,6 +1,6 @@
 "use client";
 
-import { EditorContent, useEditor, Editor } from "@tiptap/react"; // Import Editor type
+import { EditorContent, useEditor, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
@@ -9,8 +9,8 @@ import Highlight from "@tiptap/extension-highlight";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { common, createLowlight } from "lowlight";
 import { RichTextEditorToolbar } from "./RichTextEditorToolbar";
-import * as React from "react"; // Explicitly import React
-import { useEffect } from "react"; // Explicitly import useEffect
+import * as React from "react";
+import { useEffect } from "react";
 
 const lowlight = createLowlight(common);
 
@@ -56,8 +56,8 @@ export function RichTextEditor({
       }),
     ],
     content: content,
-    onUpdate: ({ editor }) => {
-      onContentChange(editor.getHTML());
+    onUpdate: ({ editor: updatedEditor }) => {
+      onContentChange(updatedEditor.getHTML());
     },
     editorProps: {
       attributes: {

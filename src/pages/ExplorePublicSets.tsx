@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +47,7 @@ const ExplorePublicSets: React.FC = () => {
     queryFn: fetchPublicStudySets,
   });
 
-  const filteredPublicSets = publicStudySets?.filter(set =>
+  const filteredPublicSets = publicStudySets?.filter((set: PublicStudySet) =>
     set.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (set.description && set.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (set.display_name && set.display_name.toLowerCase().includes(searchTerm.toLowerCase()))

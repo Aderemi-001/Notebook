@@ -1,4 +1,4 @@
-import * as React from 'react'; // Explicitly import React
+import * as React from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";

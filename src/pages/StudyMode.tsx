@@ -9,7 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
 import { Progress } from "@/components/ui/progress";
 import { useUserPreferences } from '@/hooks/use-user-preferences';
-import { useState, useEffect, useCallback } from 'react'; // Explicitly import React and hooks
+import { useState, useEffect, useCallback } from 'react';
+import * as React from 'react'; // Explicitly import React
 
 interface CardItem {
   id: string;

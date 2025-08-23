@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import * as React from 'react'; // Explicitly import React
 
 interface StudySetData {
   id: string;

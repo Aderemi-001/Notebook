@@ -1,4 +1,4 @@
-import * as React from 'react'; // Explicitly import React
+import * as React from 'react';
 // Removed unused imports: import { parseAndRenderLinks, getDynamicSuggestions } from './utils';
 
 export interface ChatMessage {

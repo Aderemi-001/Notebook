@@ -1,40 +1,40 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "react-router-dom";
 
-const SidebarContext = React.createContext<{
+type SidebarContextProps = {
   open: boolean;
   toggleSidebar: () => void;
   closeSidebar: () => void;
-  variant: "default" | "ghost";
-}>({
-  open: false,
-  toggleSidebar: () => {},
-  closeSidebar: () => {},
-  variant: "default",
-});
+  variant: "default" | "compact";
+};
 
-export function useSidebar() {
-  return React.useContext(SidebarContext);
+const SidebarContext = React.createContext<SidebarContextProps | null>(null);
+
+function useSidebar() {
+  const context = React.useContext(SidebarContext);
+  if (!context) {
+    throw new Error("useSidebar must be used within a <Sidebar>");
+  }
+  return context;
 }
 
 const sidebarVariants = cva(
-  "flex h-full flex-col overflow-y-auto border-r bg-sidebar-background text-sidebar-foreground",
+  "flex flex-col h-full bg-sidebar-background text-sidebar-foreground border-r border-sidebar-border",
   {
     variants: {
       variant: {
         default: "w-64",
-        ghost: "w-16",
+        compact: "w-20",
       },
     },
     defaultVariants: {
       variant: "default",
     },
-  },
+  }
 );
 
 export interface SidebarProps
@@ -47,11 +47,26 @@ export interface SidebarProps
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
   ({ className, variant, open: openProp, onOpenChange, ...props }, ref) => {
     const isMobile = useIsMobile();
-    const [openState, setOpenState] = React.useState(false);
-    const open = openProp !== undefined ? openProp : openState;
+    const location = useLocation();
+
+    const [openState, setOpenState] = React.useState(openProp !== undefined ? openProp : !isMobile);
+
+    React.useEffect(() => {
+      if (openProp !== undefined) {
+        setOpenState(openProp);
+      }
+    }, [openProp]);
+
+    React.useEffect(() => {
+      if (isMobile) {
+        setOpenState(false);
+      } else {
+        setOpenState(true);
+      }
+    }, [isMobile, location.pathname]); // Close sidebar on mobile route change
 
     const toggleSidebar = React.useCallback(() => {
-      setOpenState((prev) => {
+      setOpenState((prev: boolean) => {
         const newState = !prev;
         onOpenChange?.(newState);
         return newState;
@@ -63,28 +78,28 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
       onOpenChange?.(false);
     }, [onOpenChange]);
 
-    // Close sidebar on route change if on mobile
-    const location = useLocation();
-    React.useEffect(() => {
-      if (isMobile && open) {
-        closeSidebar();
-      }
-    }, [location.pathname, isMobile, open, closeSidebar]);
+    const currentVariant = variant || "default";
 
     return (
       <SidebarContext.Provider
-        value={{ open, toggleSidebar, closeSidebar, variant: variant || "default" }}
+        value={{ open: openState, toggleSidebar, closeSidebar, variant: currentVariant }}
       >
         <aside
           ref={ref}
-          className={cn(sidebarVariants({ variant }), className)}
+          className={cn(
+            sidebarVariants({ variant: currentVariant }),
+            openState ? "translate-x-0" : "-translate-x-full",
+            "transition-transform duration-200 ease-in-out",
+            "fixed inset-y-0 left-0 z-40 md:relative md:translate-x-0", // Ensure it's fixed on mobile, relative on desktop
+            className
+          )}
           {...props}
         >
           {props.children}
         </aside>
       </SidebarContext.Provider>
     );
-  },
+  }
 );
 Sidebar.displayName = "Sidebar";
 
@@ -97,7 +112,7 @@ const SidebarToggle = React.forwardRef<
     <button
       ref={ref}
       className={cn("p-2", className)}
-      onClick={(e) => {
+      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
         toggleSidebar();
         onClick?.(e);
       }}
@@ -125,54 +140,44 @@ const SidebarFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("mt-auto p-4 border-t border-sidebar-border", className)}
+    className={cn("flex items-center justify-between p-4 border-t border-sidebar-border", className)}
     {...props}
   />
 ));
 SidebarFooter.displayName = "SidebarFooter";
 
-const SidebarBody = React.forwardRef<
+const SidebarContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("flex-grow p-4", className)} {...props} />
+  <div ref={ref} className={cn("flex-grow p-4 overflow-y-auto scrollbar-hide", className)} {...props} />
 ));
-SidebarBody.displayName = "SidebarBody";
+SidebarContent.displayName = "SidebarContent";
 
-const SidebarItem = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & {
-    asChild?: boolean;
-    active?: boolean;
+interface SidebarLinkProps extends React.HTMLAttributes<HTMLDivElement> {
+  asChild?: boolean;
+  active?: boolean;
+}
+
+const SidebarLink = React.forwardRef<HTMLDivElement, SidebarLinkProps>(
+  ({ className, asChild, active, ...props }, ref) => {
+    const Comp = asChild ? Slot : "div";
+    const { variant } = useSidebar();
+
+    return (
+      <Comp
+        ref={ref}
+        className={cn(
+          "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          active && "bg-sidebar-primary text-sidebar-primary-foreground",
+          variant === "compact" && "justify-center",
+          className
+        )}
+        {...props}
+      />
+    );
   }
->(({ className, asChild, active, ...props }, ref) => {
-  const Comp = asChild ? Slot : "div";
-  const { variant } = useSidebar();
-  return (
-    <Comp
-      ref={ref}
-      className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-        variant === "default"
-          ? "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          : "justify-center",
-        active &&
-          (variant === "default"
-            ? "bg-sidebar-primary text-sidebar-primary-foreground"
-            : "bg-sidebar-accent text-sidebar-accent-foreground"),
-        className,
-      )}
-      {...props}
-    />
-  );
-});
-SidebarItem.displayName = "SidebarItem";
+);
+SidebarLink.displayName = "SidebarLink";
 
-export {
-  Sidebar,
-  SidebarToggle,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarBody,
-  SidebarItem,
-};
+export { Sidebar, SidebarToggle, SidebarHeader, SidebarFooter, SidebarContent, SidebarLink };

@@ -1,4 +1,4 @@
-import * as React from 'react'; // Explicitly import React
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Lightbulb } from 'lucide-react';
 

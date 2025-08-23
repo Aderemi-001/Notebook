@@ -28,7 +28,7 @@ import GroupDetail from "@/pages/GroupDetail";
 import Collaborations from "@/pages/Collaborations";
 import AuthLayout from "@/layouts/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
-import * as React from "react"; // Explicitly import React
+import * as React from "react";
 import { useDueCardsCount } from "@/hooks/use-due-cards-count";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { toast } from "sonner";

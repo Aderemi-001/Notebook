@@ -2,7 +2,6 @@ import * as React from "react";
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import { cva } from "class-variance-authority";
 import { ChevronDown } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 
 const NavigationMenu = React.forwardRef<
@@ -18,7 +17,7 @@ const NavigationMenu = React.forwardRef<
     {...props}
   >
     {children}
-    <NavigationMenuIndicator />
+    <NavigationMenuViewport />
   </NavigationMenuPrimitive.Root>
 ));
 NavigationMenu.displayName = NavigationMenuPrimitive.Root.displayName;
@@ -65,15 +64,13 @@ const NavigationMenuContent = React.forwardRef<
   <NavigationMenuPrimitive.Content
     ref={ref}
     className={cn(
-      "left-0 top-0 w-full data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out data-[motion^=from-]:zoom-in-90 data-[motion^=to-]:zoom-out-90 data-[orientation=horizontal]:data-[motion^=from-]:slide-in-from-left-5 data-[orientation=horizontal]:data-[motion^=to-]:slide-out-to-right-5 data-[orientation=vertical]:data-[motion^=from-]:slide-in-from-top-5 data-[orientation=vertical]:data-[motion^=to-]:slide-out-to-bottom-5 md:absolute md:w-auto ",
+      "left-0 top-0 w-full data-[animate=in]:fade-in data-[animate=out]:fade-out data-[animate=in]:slide-in-from-top-[-10px] data-[animate=out]:zoom-out-95 data-[animate=out]:slide-out-to-top-[-10px] md:absolute md:w-auto ",
       className
     )}
     {...props}
   />
 ));
 NavigationMenuContent.displayName = NavigationMenuPrimitive.Content.displayName;
-
-const NavigationMenuLink = NavigationMenuPrimitive.Link;
 
 const NavigationMenuViewport = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
@@ -83,7 +80,7 @@ const NavigationMenuViewport = React.forwardRef<
     <NavigationMenuPrimitive.Viewport
       ref={ref}
       className={cn(
-        "relative mt-1 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover shadow data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 md:w-[var(--radix-navigation-menu-viewport-width)]",
         className
       )}
       {...props}
@@ -122,7 +119,6 @@ export {
   NavigationMenuItem,
   NavigationMenuContent,
   NavigationMenuTrigger,
-  NavigationMenuLink,
   NavigationMenuIndicator,
   NavigationMenuViewport,
 };

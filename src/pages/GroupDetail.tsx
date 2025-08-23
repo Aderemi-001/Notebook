@@ -1,4 +1,4 @@
-import * as React from 'react'; // Explicitly import React
+import * as React from 'react';
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,12 @@ interface StudySet {
   cards: { id: string; term: string; definition: string }[]; // Added cards array
   next_review_at?: string | null;
   due_cards_count?: number;
+}
+
+interface UserProgressData {
+  card_id: string;
+  next_review_at: string;
+  status: string;
 }
 
 const fetchGroupDetails = async (groupId: string): Promise<StudySetGroup> => {
@@ -105,7 +111,7 @@ const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
         console.error(`Error fetching progress for set ${set.id}:`, progressError);
       }
 
-      const progressMap = new Map(progressData?.map((p: { card_id: string; next_review_at: string; status: string }) => [p.card_id, p]));
+      const progressMap = new Map<string, UserProgressData>(progressData?.map((p: UserProgressData) => [p.card_id, p]));
 
       let tempEarliestReviewAt: Date | null = null;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react"; // Explicitly import React
+import * as React from "react";
 import { type Editor } from "@tiptap/react";
 import {
   Bold,
