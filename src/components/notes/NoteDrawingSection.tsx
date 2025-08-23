@@ -103,9 +103,10 @@ const NoteDrawingSection: React.FC<NoteDrawingSectionProps> = ({
       <Label className="text-lg mb-2 block">Drawing Canvas</Label>
       <div className="relative border rounded-md overflow-hidden flex-grow bg-white">
         <TextEditorContent editor={editorRef.current} editable={false} isDrawingMode={toolMode !== 'pan'} />
+        {/* Added bg-white here */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 cursor-crosshair touch-none"
+          className="absolute inset-0 cursor-crosshair touch-none bg-white"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={endDrawing}
