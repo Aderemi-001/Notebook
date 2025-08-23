@@ -1,57 +1,209 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+"use client";
+
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Eraser, Pencil, Type, Save, Sparkles, X } from "lucide-react";
+import { RichTextEditor } from "@/components/RichTextEditor";
+import { toast } from "sonner";
+import { Editor } from "@tiptap/react"; // Import Editor type
 
 interface DrawingCanvasProps {
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  initialDrawing?: string;
+  onDrawingChange: (drawing: string) => void;
   isDrawingMode: boolean;
-  customCursorStyle: string;
-  zoomLevel: number;
-  panOffset: { x: number; y: number };
-  onMouseDown: (event: React.MouseEvent<HTMLCanvasElement>) => void;
-  onMouseMove: (event: React.MouseEvent<HTMLCanvasElement>) => void;
-  onMouseUp: (event: React.MouseEvent<HTMLCanvasElement>) => void;
-  onMouseLeave: (event: React.MouseEvent<HTMLCanvasElement>) => void;
-  onTouchStart: (event: React.TouchEvent<HTMLCanvasElement>) => void;
-  onTouchMove: (event: React.TouchEvent<HTMLCanvasElement>) => void;
-  onTouchEnd: (event: React.TouchEvent<HTMLCanvasElement>) => void;
+  setIsDrawingMode: (isDrawing: boolean) => void;
+  onEditorReady: (
+    instance: Editor, // Correctly type the editor instance
+    analyzeFn: (image: string) => Promise<string>,
+    insertFn: (text: string) => void
+  ) => void;
 }
 
-const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
-  canvasRef,
+export function DrawingCanvas({
+  initialDrawing,
+  onDrawingChange,
   isDrawingMode,
-  customCursorStyle,
-  zoomLevel,
-  panOffset,
-  onMouseDown,
-  onMouseMove,
-  onMouseUp,
-  onMouseLeave,
-  onTouchStart,
-  onTouchMove,
-  onTouchEnd,
-}) => {
-  return (
-    <canvas
-      ref={canvasRef}
-      className={cn(
-        "absolute inset-0 bg-white dark:bg-gray-900 transition-opacity duration-300", // Absolute positioning
-        isDrawingMode ? "z-20 pointer-events-auto opacity-100" : "z-0 pointer-events-none opacity-0" // Control interaction and visibility
-      )}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseLeave}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      style={{ 
-        transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`, 
-        transformOrigin: '0 0',
-        touchAction: 'none', // Prevent default touch behaviors like scrolling/zooming
-        cursor: customCursorStyle,
-      }}
-    />
-  );
-};
+  setIsDrawingMode,
+  onEditorReady,
+}: DrawingCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [isErasing, setIsErasing] = useState(false);
+  const [drawingData, setDrawingData] = useState<string | null>(null);
+  const editorRef = useRef<Editor | null>(null);
 
-export default DrawingCanvas;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const context = canvas.getContext("2d");
+      if (context) {
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        context.lineWidth = 5;
+        context.strokeStyle = "black";
+        contextRef.current = context;
+
+        if (initialDrawing) {
+          const img = new Image();
+          img.onload = () => {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(img, 0, 0);
+            setDrawingData(initialDrawing);
+          };
+          img.src = initialDrawing;
+        }
+      }
+    }
+  }, [initialDrawing]);
+
+  const startDrawing = ({ nativeEvent }: React.MouseEvent) => {
+    if (!isDrawingMode) return;
+    const { offsetX, offsetY } = nativeEvent;
+    contextRef.current?.beginPath();
+    contextRef.current?.moveTo(offsetX, offsetY);
+    setIsDrawing(true);
+  };
+
+  const draw = ({ nativeEvent }: React.MouseEvent) => {
+    if (!isDrawing) return;
+    if (!isDrawingMode) return;
+    const { offsetX, offsetY } = nativeEvent;
+    contextRef.current?.lineTo(offsetX, offsetY);
+    contextRef.current?.stroke();
+  };
+
+  const stopDrawing = () => {
+    if (!isDrawingMode) return;
+    contextRef.current?.closePath();
+    setIsDrawing(false);
+    saveDrawing();
+  };
+
+  const startErasing = ({ nativeEvent }: React.MouseEvent) => {
+    if (!isDrawingMode) return;
+    const { offsetX, offsetY } = nativeEvent;
+    contextRef.current?.clearRect(offsetX, offsetY, 20, 20); // Eraser size
+    setIsErasing(true);
+  };
+
+  const erase = ({ nativeEvent }: React.MouseEvent) => {
+    if (!isErasing) return;
+    if (!isDrawingMode) return;
+    const { offsetX, offsetY } = nativeEvent;
+    contextRef.current?.clearRect(offsetX, offsetY, 20, 20); // Eraser size
+  };
+
+  const stopErasing = () => {
+    if (!isDrawingMode) return;
+    setIsErasing(false);
+    saveDrawing();
+  };
+
+  const saveDrawing = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const data = canvas.toDataURL();
+      setDrawingData(data);
+      onDrawingChange(data);
+    }
+  }, [onDrawingChange]);
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    const context = contextRef.current;
+    if (canvas && context) {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      setDrawingData(null);
+      onDrawingChange("");
+    }
+  };
+
+  const analyzeDrawing = useCallback(async (image: string) => {
+    toast.info("Analyzing drawing with AI...");
+    // Placeholder for AI analysis
+    return new Promise<string>((resolve) => {
+      setTimeout(() => {
+        resolve("AI analysis of drawing: This appears to be a diagram of a circuit board with several components.");
+      }, 2000);
+    });
+  }, []);
+
+  const insertTextIntoEditor = useCallback((text: string) => {
+    if (editorRef.current) {
+      editorRef.current.chain().focus().insertContent(text).run();
+      toast.success("AI analysis inserted into note!");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (editorRef.current) {
+      onEditorReady(editorRef.current, analyzeDrawing, insertTextIntoEditor);
+    }
+  }, [onEditorReady, analyzeDrawing, insertTextIntoEditor]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-2">
+        <Button
+          variant={isDrawingMode ? "secondary" : "outline"}
+          onClick={() => setIsDrawingMode(!isDrawingMode)}
+        >
+          {isDrawingMode ? <Type className="h-4 w-4 mr-2" /> : <Pencil className="h-4 w-4 mr-2" />}
+          {isDrawingMode ? "Switch to Text Mode" : "Switch to Drawing Mode"}
+        </Button>
+        {isDrawingMode && (
+          <>
+            <Button variant="outline" onClick={clearCanvas}>
+              <Eraser className="h-4 w-4 mr-2" /> Clear Drawing
+            </Button>
+            <Button variant="outline" onClick={saveDrawing}>
+              <Save className="h-4 w-4 mr-2" /> Save Drawing
+            </Button>
+            {drawingData && (
+              <Button variant="outline" onClick={async () => {
+                const analysis = await analyzeDrawing(drawingData);
+                insertTextIntoEditor(analysis);
+              }}>
+                <Sparkles className="h-4 w-4 mr-2" /> Analyze Drawing
+              </Button>
+            )}
+          </>
+        )}
+      </div>
+
+      {isDrawingMode ? (
+        <div className="relative border rounded-md overflow-hidden">
+          <canvas
+            ref={canvasRef}
+            width={800}
+            height={400}
+            className="bg-white cursor-crosshair"
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+          ></canvas>
+          {isErasing && (
+            <div
+              className="absolute bg-red-500 opacity-50 rounded-full"
+              style={{
+                width: 20,
+                height: 20,
+                pointerEvents: "none",
+                transform: `translate(${isErasing ? -10 : 0}px, ${isErasing ? -10 : 0}px)`,
+              }}
+            ></div>
+          )}
+        </div>
+      ) : (
+        <RichTextEditor
+          content={""} // Content will be managed by the parent component
+          onContentChange={() => {}} // Content change will be managed by the parent component
+          editable={true}
+          editorRef={editorRef} // Pass the ref to RichTextEditor
+        />
+      )}
+    </div>
+  );
+}

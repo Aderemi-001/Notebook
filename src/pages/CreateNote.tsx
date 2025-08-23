@@ -1,336 +1,140 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, Save, Loader2, Brain } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { DrawingCanvas } from "@/components/DrawingCanvas";
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
-import RichTextEditor from '@/components/RichTextEditor';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Editor, JSONContent } from '@tiptap/react'; // Import Editor and JSONContent
+import { RichTextEditor } from '@/components/RichTextEditor'; // Corrected import to named import
+import { Editor } from "@tiptap/react"; // Import Editor type
 
-interface StudySet {
-  id: string;
-  title: string;
-}
-
-const fetchUserStudySets = async (): Promise<StudySet[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("User not authenticated.");
-  }
-
-  const { data, error } = await supabase
-    .from('study_sets')
-    .select('id, title')
-    .eq('user_id', user.id)
-    .order('title', { ascending: true });
-
-  if (error) {
-    console.error("Error fetching user study sets:", error);
-    throw new Error("Failed to fetch your study sets.");
-  }
-  return data || [];
-};
-
-const CreateNote: React.FC = () => {
+export default function CreateNote() {
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [studySets, setStudySets] = useState<any[]>([]);
+  const [selectedStudySet, setSelectedStudySet] = useState<string | null>(null);
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [drawingData, setDrawingData] = useState<string | null>(null);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [title, setTitle] = useState<string>('');
-  const [content, setContent] = useState<JSONContent | string>('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
-  const [selectedStudySetId, setSelectedStudySetId] = useState<string | null>(null);
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
-  const [isSummarizing, setIsSummarizing] = useState(false);
-  const [isDrawingMode, setIsDrawingMode] = useState(false); // New state for drawing mode
-  const [isAnalyzing, setIsAnalyzing] = useState(false); // New state for AI analysis loading
 
-  const editorRef = useRef<Editor | null>(null);
-  const analyzeDrawingRef = useRef<(() => Promise<void>) | null>(null);
-  const insertDrawingRef = useRef<(() => void) | null>(null);
-
-  const { data: userStudySets, isLoading: isLoadingSets, isError: isErrorSets, error: errorSets } = useQuery<StudySet[], Error>({
-    queryKey: ['userStudySetsForNotes'],
-    queryFn: fetchUserStudySets,
-  });
+  const editorRef = useRef<Editor | null>(null); // Use Editor type
+  const analyzeDrawingRef = useRef<((image: string) => Promise<string>) | null>(null);
+  const insertTextIntoEditorRef = useRef<((text: string) => void) | null>(null);
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user);
-      setIsLoadingUser(false);
-    };
-    getUser();
+    async function fetchStudySets() {
+      const { data, error } = await supabase.from("study_sets").select("id, title");
+      if (error) {
+        console.error("Error fetching study sets:", error);
+      } else {
+        setStudySets(data);
+      }
+    }
+    fetchStudySets();
   }, []);
 
   const handleSaveNote = async () => {
-    if (!title.trim()) {
-      showError("Note title cannot be empty.");
-      return;
-    }
-    if (!currentUser) {
-      showError("You must be logged in to create a note.");
-      return;
-    }
-
-    setIsSaving(true);
-    const toastId = showLoading("Saving your note...");
-
+    const toastId = showLoading("Saving note...");
     try {
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) {
+        showError("You must be logged in to create a note.");
+        return;
+      }
+
       const { data, error } = await supabase
-        .from('notes')
+        .from("notes")
         .insert({
-          user_id: currentUser.id,
-          title: title.trim(),
-          content: content,
-          study_set_id: selectedStudySetId,
-          extracted_content_ai: null,
+          user_id: user.data.user.id,
+          title,
+          content: content || JSON.stringify({ type: "doc", content: [{ type: "paragraph" }] }),
+          study_set_id: selectedStudySet,
+          extracted_content_ai: drawingData ? "AI analysis of drawing: " + drawingData : null, // Placeholder for actual AI analysis
         })
-        .select()
-        .single();
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      dismissToast(toastId);
-      showSuccess("Note created successfully!");
-      queryClient.invalidateQueries({ queryKey: ['userNotes'] });
-      queryClient.invalidateQueries({ queryKey: ['studySet', selectedStudySetId] });
-      navigate(`/notes/${data.id}/edit`);
-    } catch (err: any) {
-      dismissToast(toastId);
-      showError(err.message || "Failed to save note.");
-      console.error("Save note error:", err);
+      showSuccess("Note saved successfully!");
+      navigate(`/notes/${data[0].id}`);
+    } catch (error: any) {
+      console.error("Error saving note:", error);
+      showError(`Error saving note: ${error.message}`);
     } finally {
-      setIsSaving(false);
+      dismissToast(toastId);
     }
   };
 
-  const handleSummarizeNote = async () => {
-    const editorInstance = editorRef.current;
-    if (!editorInstance) {
-      showError("Editor not ready. Please try again.");
-      return;
-    }
-    const noteContentText = editorInstance.getText();
-
-    if (!noteContentText.trim()) {
-      showError("Please write some content in the note before summarizing.");
-      return;
-    }
-
-    setIsSummarizing(true);
-    const toastId = showLoading("Generating summary with AI...");
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("Session not found. Please log in again.");
-      }
-
-      const response = await fetch(
-        `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/summarize-note`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ noteContent: noteContentText }),
-        }
-      );
-
-      const result = await response.json();
-      dismissToast(toastId);
-
-      if (!response.ok || result.error) {
-        throw new Error(result?.error || "Failed to generate summary.");
-      }
-
-      setAiSummary(result.summary);
-      showSuccess("Summary generated successfully!");
-    } catch (err: any) {
-      dismissToast(toastId);
-      showError(err.message || "An unexpected error occurred during summarization.");
-      console.error("AI summarization error:", err);
-    } finally {
-      setIsSummarizing(false);
-    }
-  };
-
-  const handleProcessAIContent = async () => {
-    if (isDrawingMode) {
-      if (analyzeDrawingRef.current) {
-        setIsAnalyzing(true);
-        try {
-          await analyzeDrawingRef.current();
-        } finally {
-          setIsAnalyzing(false);
-        }
-      } else {
-        showError("Drawing analysis function not available.");
-      }
-    } else {
-      await handleSummarizeNote();
-    }
+  const handleDrawingChange = (data: string) => {
+    setDrawingData(data);
   };
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Create New Note</h1>
-        <Button asChild variant="outline">
-          <Link to="/notes" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Notes
-          </Link>
-        </Button>
-      </div>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6">Create New Note</h1>
 
-      <NotebookCard className="mb-6">
-        <CardHeader>
-          <CardTitle>Note Details</CardTitle>
-          <CardDescription>Give your note a title and start writing.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="note-title">Title</Label>
-            <Input
-              id="note-title"
-              placeholder="e.g., Summary of Chapter 3"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={isSaving}
-            />
-          </div>
-          <div>
-            <Label id="note-content-label">Content</Label>
-            <RichTextEditor
-              labelId="note-content-label"
-              content={content || '<p></p>'}
-              onContentChange={setContent}
-              editable={!isSaving}
-              isDrawingMode={isDrawingMode}
-              setIsDrawingMode={setIsDrawingMode}
-              onEditorReady={(instance, analyzeFn, insertFn) => {
-                editorRef.current = instance;
-                analyzeDrawingRef.current = analyzeFn;
-                insertDrawingRef.current = insertFn;
-              }}
-            />
-          </div>
-          <div className="flex justify-end">
-            <Button
-              onClick={handleProcessAIContent}
-              disabled={isSummarizing || isAnalyzing || (!isDrawingMode && !editorRef.current?.getText().trim())}
-              variant="outline"
-            >
-              {isDrawingMode ? (
-                isAnalyzing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Brain className="mr-2 h-4 w-4" /> Analyze with AI
-                  </>
-                )
-              ) : (
-                isSummarizing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Summarizing...
-                  </>
-                ) : (
-                  <>
-                    <Brain className="mr-2 h-4 w-4" /> Summarize with AI
-                  </>
-                )
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </NotebookCard>
+      <div className="grid gap-4 max-w-2xl mx-auto">
+        <div>
+          <Label htmlFor="title">Title</Label>
+          <Input
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Note Title"
+            className="mt-1"
+          />
+        </div>
 
-      {aiSummary && (
-        <NotebookCard className="mb-6">
-          <CardHeader>
-            <CardTitle>AI Summary</CardTitle>
-            <CardDescription>Key takeaways from your note.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap text-muted-foreground">{aiSummary}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4"
-              onClick={() => {
-                if (editorRef.current) {
-                  editorRef.current.chain().focus().insertContentAt(editorRef.current.state.doc.content.size, '<p>---</p><p><b>AI Summary:</b></p><p>' + aiSummary + '</p>').run();
-                  setAiSummary(null);
-                  showSuccess("Summary added to note content!");
-                }
-              }}
-            >
-              Add to Note Content
-            </Button>
-          </CardContent>
-        </NotebookCard>
-      )}
-
-      <NotebookCard className="mb-6">
-        <CardHeader>
-          <CardTitle>Link to Study Set</CardTitle>
-          <CardDescription>Associate this note with a study set.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select onValueChange={setSelectedStudySetId} value={selectedStudySetId || ""}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a study set (optional)" />
+        <div>
+          <Label htmlFor="studySet">Link to Study Set (Optional)</Label>
+          <Select onValueChange={setSelectedStudySet} value={selectedStudySet || ""}>
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue placeholder="Select a study set" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="null">No linked set</SelectItem>
-              {isLoadingSets ? (
-                <SelectItem disabled value="loading">Loading study sets...</SelectItem>
-              ) : userStudySets?.length === 0 ? (
-                <SelectItem disabled value="no-sets">No study sets available</SelectItem>
-              ) : (
-                userStudySets?.map(set => (
-                  <SelectItem key={set.id} value={set.id}>
-                    {set.title}
-                  </SelectItem>
-                ))
-              )}
+              {studySets.map((set) => (
+                <SelectItem key={set.id} value={set.id}>
+                  {set.title}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          {isErrorSets && <p className="text-sm text-red-500 mt-1">Error loading sets: {errorSets?.message}</p>}
-        </CardContent>
-      </NotebookCard>
+        </div>
 
-      <div className="flex justify-end mt-8">
-        <Button onClick={handleSaveNote} disabled={isSaving || !title.trim() || isLoadingUser}>
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Save Note
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" /> Save Note
-            </>
+        <div className="flex flex-col gap-2">
+          <Label>Content</Label>
+          <DrawingCanvas
+            initialDrawing={drawingData || undefined}
+            onDrawingChange={handleDrawingChange}
+            isDrawingMode={isDrawingMode}
+            setIsDrawingMode={setIsDrawingMode}
+            onEditorReady={(instance: Editor, analyzeFn, insertFn) => { // Explicitly type instance
+              editorRef.current = instance;
+              analyzeDrawingRef.current = analyzeFn;
+              insertTextIntoEditorRef.current = insertFn;
+            }}
+          />
+          {!isDrawingMode && (
+            <RichTextEditor
+              content={content}
+              onContentChange={setContent}
+              placeholder="Start writing your note here..."
+              editorRef={editorRef} // Pass the ref to RichTextEditor
+            />
           )}
+        </div>
+
+        <Button onClick={handleSaveNote} className="w-full">
+          Save Note
         </Button>
       </div>
     </div>
   );
-};
-
-export default CreateNote;
+}
