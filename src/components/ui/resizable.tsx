@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   Panel as ResizablePrimitivePanel,
   PanelGroup as ResizablePrimitivePanelGroup,
   PanelResizeHandle as ResizablePrimitivePanelResizeHandle,
-} from "react-resizable-panels"
+} from "react-resizable-panels";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 const ResizablePanelGroup = ({
   className,
@@ -16,36 +16,44 @@ const ResizablePanelGroup = ({
   <ResizablePrimitivePanelGroup
     className={cn(
       "flex h-full w-full data-[panel-group-direction=vertical]:flex-col",
-      className
+      className,
     )}
     {...props}
   />
-)
+);
 
 const ResizablePanel = ({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<typeof ResizablePrimitivePanel>) => (
   <ResizablePrimitivePanel className={cn(className)} {...props} />
-)
+);
+
+// Create a type for the PanelResizeHandle that explicitly includes the ref prop
+type PanelResizeHandleComponent = React.ComponentType<
+  React.ComponentPropsWithoutRef<typeof ResizablePrimitivePanelResizeHandle> & {
+    ref?: React.Ref<HTMLDivElement>;
+  }
+>;
 
 const ResizableHandle = React.forwardRef<
-  React.ElementRef<typeof ResizablePrimitivePanelResizeHandle>,
+  HTMLDivElement,
   React.ComponentPropsWithoutRef<typeof ResizablePrimitivePanelResizeHandle>
 >(({ className, ...props }, ref) => {
-  // Cast the component itself to any to bypass the type checking for ref
-  const PanelResizeHandleAny = ResizablePrimitivePanelResizeHandle as any;
+  // Cast the component to the new type that explicitly includes the ref prop
+  const TypedPanelResizeHandle = ResizablePrimitivePanelResizeHandle as PanelResizeHandleComponent;
   return (
-    <PanelResizeHandleAny
+    <TypedPanelResizeHandle
       ref={ref}
       className={cn(
-        "flex w-px items-center justify-center bg-border after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:-translate-y-1/2 data-[panel-group-direction=vertical]:after:translate-x-0 [&[data-panel-group-direction=vertical]>div]:rotate-90",
-        className
+        "relative flex w-px items-center justify-center bg-border after:absolute after:left-1/2 after:-translate-x-1/2 after:w-1 data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:-translate-y-1/2 [&[data-panel-group-direction=vertical]>div]:w-full [&>div]:h-full",
+        "after:bg-border after:transition-all after:duration-300 after:hover:bg-primary after:data-[panel-group-direction=vertical]:hover:bg-primary after:data-[state=active]:bg-primary after:data-[state=active]:data-[panel-group-direction=vertical]:bg-primary",
+        className,
       )}
       {...props}
     />
   );
 });
-ResizableHandle.displayName = "ResizableHandle"
+ResizableHandle.displayName = "ResizableHandle";
 
-export { ResizablePanelGroup, ResizablePanel, ResizableHandle }
+export { ResizablePanelGroup, ResizablePanel, ResizableHandle };
