@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,6 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
 
 export const Header: React.FC = () => {
   const { user } = useAuth();
+  const [isSheetOpen, setIsSheetOpen] = useState(false); // State to control mobile menu
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -124,7 +125,7 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Mobile Sheet Menu - remains visible on mobile */}
-            <Sheet>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild className="md:hidden">
                 <Button variant="ghost" size="icon">
                   <MenuIcon className="h-6 w-6" />
@@ -148,7 +149,7 @@ export const Header: React.FC = () => {
                   <div className="flex flex-col space-y-2">
                     {/* Navigation Items */}
                     {navItems.map((item) => (
-                      <Button key={item.name} variant="ghost" asChild className="justify-start">
+                      <Button key={item.name} variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                         <Link to={item.href}>
                           {item.icon}
                           {item.name}
@@ -157,19 +158,19 @@ export const Header: React.FC = () => {
                     ))}
                     <Separator />
                     {/* Profile, Settings, Logout in Mobile Menu */}
-                    <Button variant="ghost" asChild className="justify-start">
+                    <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                       <Link to="/profile">
                         <User className="mr-2 h-4 w-4" />
                         Profile
                       </Link>
                     </Button>
-                    <Button variant="ghost" asChild className="justify-start">
+                    <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                       <Link to="/settings">
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
                       </Link>
                     </Button>
-                    <Button variant="ghost" onClick={handleLogout} className="justify-start text-red-500 hover:text-red-600">
+                    <Button variant="ghost" onClick={() => { handleLogout(); setIsSheetOpen(false); }} className="justify-start text-red-500 hover:text-red-600">
                       <LogOut className="mr-2 h-4 w-4" />
                       Log out
                     </Button>
