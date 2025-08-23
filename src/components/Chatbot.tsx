@@ -3,18 +3,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { MessageSquareText, Send, Loader2, Bot, User2, Lightbulb, ThumbsUp, ThumbsDown, XCircle } from 'lucide-react'; // Added ThumbsUp, ThumbsDown, XCircle
+import { MessageSquareText, Send, Loader2, Bot, User2, Lightbulb, ThumbsUp, ThumbsDown, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
-import { useLocation } from 'react-router-dom'; // Import useLocation
+import { useLocation, Link } from 'react-router-dom'; // Import useLocation and Link
 
 interface ChatMessage {
   id: number;
   sender: 'user' | 'bot';
-  text: string;
+  text: string | React.ReactNode; // Allow React.ReactNode for links
   timestamp: Date;
-  feedbackGiven?: 'up' | 'down' | null; // New property for feedback
+  feedbackGiven?: 'up' | 'down' | null;
 }
 
 const DEFAULT_SUGGESTED_QUESTIONS = [
@@ -81,22 +81,133 @@ const ROUTE_SPECIFIC_SUGGESTIONS: { [key: string]: string[] } = {
   ],
 };
 
+// Map of keywords/phrases to their corresponding static routes
+const ROUTE_KEYWORDS: { [key: string]: string } = {
+  "home page": "/",
+  "my study sets": "/",
+  "/": "/",
+  "create set page": "/create",
+  "new study set": "/create",
+  "/create": "/create",
+  "profile page": "/profile",
+  "user profile": "/profile",
+  "/profile": "/profile",
+  "cognitive constellation page": "/constellation",
+  "cognitive constellation": "/constellation",
+  "/constellation": "/constellation",
+  "explore public sets page": "/explore-public-sets",
+  "explore public sets": "/explore-public-sets",
+  "/explore-public-sets": "/explore-public-sets",
+  "generate exam page": "/generate-exam",
+  "generate exam": "/generate-exam",
+  "/generate-exam": "/generate-exam",
+  "generate essay questions page": "/generate-essay-questions",
+  "generate essay questions": "/generate-essay-questions",
+  "/generate-essay-questions": "/generate-essay-questions",
+  "past essay questions page": "/past-essay-questions",
+  "past essay questions": "/past-essay-questions",
+  "/past-essay-questions": "/past-essay-questions",
+  "past exams page": "/past-exams",
+  "past exams": "/past-exams",
+  "/past-exams": "/past-exams",
+  "settings page": "/settings",
+  "app settings": "/settings",
+  "/settings": "/settings",
+  "my notes page": "/notes",
+  "my notes": "/notes",
+  "/notes": "/notes",
+  "create note page": "/create-note",
+  "new note": "/create-note",
+  "/create-note": "/create-note",
+  "statistics page": "/dashboard",
+  "statistics": "/dashboard",
+  "/dashboard": "/dashboard",
+  "daily review page": "/daily-review",
+  "daily review": "/daily-review",
+  "/daily-review": "/daily-review",
+  "my groups page": "/groups",
+  "my groups": "/groups",
+  "/groups": "/groups",
+  "create group page": "/groups/create",
+  "new group": "/groups/create",
+  "/groups/create": "/groups/create",
+  "collaborations page": "/collaborations",
+  "collaborations": "/collaborations",
+  "/collaborations": "/collaborations",
+};
+
 const INACTIVITY_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+const LOCAL_STORAGE_KEY = 'chatbotMessages';
 
 const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedMessages = localStorage.getItem(LOCAL_STORAGE_KEY);
+      return savedMessages ? JSON.parse(savedMessages).map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp),
+      })) : [];
+    }
+    return [];
+  });
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const location = useLocation(); // Get current location
+  const location = useLocation();
 
   const CHATBOT_API_URL = `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/chatbot-qa`;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // Function to parse text and insert React Router Links
+  const parseAndRenderLinks = useCallback((text: string): React.ReactNode => {
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+
+    // Sort keywords by length descending to match longer phrases first
+    const sortedKeywords = Object.keys(ROUTE_KEYWORDS).sort((a, b) => b.length - a.length);
+
+    let currentText = text;
+    let matchFound = true;
+
+    while (matchFound) {
+      matchFound = false;
+      let bestMatch: { keyword: string; route: string; index: number; length: number } | null = null;
+
+      for (const keyword of sortedKeywords) {
+        const index = currentText.toLowerCase().indexOf(keyword.toLowerCase());
+        if (index !== -1) {
+          if (!bestMatch || index < bestMatch.index || (index === bestMatch.index && keyword.length > bestMatch.length)) {
+            bestMatch = { keyword, route: ROUTE_KEYWORDS[keyword], index, length: keyword.length };
+            matchFound = true;
+          }
+        }
+      }
+
+      if (bestMatch) {
+        const beforeMatch = currentText.substring(0, bestMatch.index);
+        if (beforeMatch.length > 0) {
+          parts.push(beforeMatch);
+        }
+        parts.push(
+          <Link key={lastIndex++} to={bestMatch.route} className="text-blue-500 hover:underline font-medium">
+            {currentText.substring(bestMatch.index, bestMatch.index + bestMatch.length)}
+          </Link>
+        );
+        currentText = currentText.substring(bestMatch.index + bestMatch.length);
+      }
+    }
+
+    if (currentText.length > 0) {
+      parts.push(currentText);
+    }
+
+    return <>{parts}</>;
+  }, []);
 
   // Function to reset the inactivity timer
   const resetInactivityTimer = useCallback(() => {
@@ -106,6 +217,7 @@ const Chatbot: React.FC = () => {
     inactivityTimerRef.current = setTimeout(() => {
       setMessages([]); // Clear messages
       setInput(''); // Clear input
+      localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear local storage on inactivity
       // setIsOpen(false); // Optionally close the sheet, but user might prefer it open
       console.log("Chatbot reset due to inactivity.");
     }, INACTIVITY_TIMEOUT_MS);
@@ -131,6 +243,15 @@ const Chatbot: React.FC = () => {
 
   // Scroll to bottom whenever messages change
   useEffect(scrollToBottom, [messages]);
+
+  // Save messages to local storage whenever they change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(messages));
+    } else {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    }
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isSending) return;
@@ -172,9 +293,9 @@ const Chatbot: React.FC = () => {
       const botMessage: ChatMessage = {
         id: messages.length + 2,
         sender: 'bot',
-        text: result.chatbot_response,
+        text: parseAndRenderLinks(result.chatbot_response), // Parse and render links here
         timestamp: new Date(),
-        feedbackGiven: null, // Initialize feedback for new bot messages
+        feedbackGiven: null,
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (err: any) {
@@ -194,9 +315,8 @@ const Chatbot: React.FC = () => {
   };
 
   const handleSuggestedQuestionClick = (question: string) => {
-    resetInactivityTimer(); // Reset timer on user action
+    resetInactivityTimer();
     setInput(question);
-    // Automatically send the message after setting the input
     setTimeout(() => {
       handleSendMessage();
     }, 0);
@@ -205,7 +325,8 @@ const Chatbot: React.FC = () => {
   const handleClearChat = () => {
     setMessages([]);
     setInput('');
-    resetInactivityTimer(); // Reset timer after clearing chat
+    localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear local storage
+    resetInactivityTimer();
   };
 
   const handleFeedback = (messageId: number, feedback: 'up' | 'down') => {
@@ -222,19 +343,16 @@ const Chatbot: React.FC = () => {
     const currentPath = location.pathname;
     let suggestions = DEFAULT_SUGGESTED_QUESTIONS;
 
-    // Check for direct path matches first
-    if (ROUTE_SPECIFIC_SUGGESTIONS[currentPath]) {
-      suggestions = ROUTE_SPECIFIC_SUGGESTIONS[currentPath];
-    } else {
-      // Check for dynamic path matches (e.g., /sets/:setId)
-      for (const routePattern in ROUTE_SPECIFIC_SUGGESTIONS) {
-        if (routePattern.includes(':')) {
-          const regex = new RegExp(`^${routePattern.replace(/:\w+/g, '[^/]+')}$`);
-          if (regex.test(currentPath)) {
-            suggestions = ROUTE_SPECIFIC_SUGGESTIONS[routePattern];
-            break;
-          }
+    for (const routePattern in ROUTE_SPECIFIC_SUGGESTIONS) {
+      if (routePattern.includes(':')) {
+        const regex = new RegExp(`^${routePattern.replace(/:\w+/g, '[^/]+')}$`);
+        if (regex.test(currentPath)) {
+          suggestions = ROUTE_SPECIFIC_SUGGESTIONS[routePattern];
+          break;
         }
+      } else if (routePattern === currentPath) {
+        suggestions = ROUTE_SPECIFIC_SUGGESTIONS[routePattern];
+        break;
       }
     }
     return suggestions;
@@ -246,7 +364,7 @@ const Chatbot: React.FC = () => {
   return (
     <Sheet open={isOpen} onOpenChange={(open) => {
       setIsOpen(open);
-      resetInactivityTimer(); // Reset timer when sheet is opened/closed
+      resetInactivityTimer();
     }}>
       <SheetTrigger asChild>
         <Button
@@ -254,7 +372,7 @@ const Chatbot: React.FC = () => {
           size="icon"
           className="fixed bottom-4 right-4 rounded-full h-14 w-14 shadow-lg z-50"
           aria-label="Open Chatbot"
-          onClick={resetInactivityTimer} // Reset timer when trigger button is clicked
+          onClick={resetInactivityTimer}
         >
           <MessageSquareText className="h-6 w-6" />
         </Button>
@@ -364,7 +482,7 @@ const Chatbot: React.FC = () => {
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
-              resetInactivityTimer(); // Reset timer on input change
+              resetInactivityTimer();
             }}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             disabled={isSending}
