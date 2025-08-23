@@ -35,12 +35,8 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
   }, [editor, editor.isActive('highlight')]);
 
 
-  const handleToggleHighlight = (checked: boolean) => {
-    if (checked) {
-      editor.chain().focus().setHighlight({ color: activeHighlightColor }).run();
-    } else {
-      editor.chain().focus().unsetHighlight().run();
-    }
+  const handleToggleHighlight = () => {
+    editor.chain().focus().toggleHighlight({ color: activeHighlightColor }).run();
   };
 
   const handleSelectColor = (colorHex: string) => {
@@ -68,7 +64,7 @@ const HighlightControls: React.FC<HighlightControlsProps> = ({ editor }) => {
               <Toggle
                 size="sm"
                 pressed={isAnyHighlightActive}
-                onPressedChange={handleToggleHighlight} // Now correctly uses 'checked' state
+                onPressedChange={handleToggleHighlight} // Toggle with the active color
                 aria-label="Toggle highlight"
                 className="px-2 relative"
               >
