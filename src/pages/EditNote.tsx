@@ -12,14 +12,14 @@ import { RichTextEditor } from "@/components/RichTextEditor"; // Import RichText
 import { Editor } from "@tiptap/react"; // Import Editor type
 import { useAIDrawingAnalysis } from "@/hooks/use-ai-drawing-analysis"; // Import AI drawing analysis hook
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  // AlertDialog, // Removed
+  // AlertDialogAction, // Removed
+  // AlertDialogCancel, // Removed
+  // AlertDialogContent, // Removed
+  // AlertDialogDescription, // Removed
+  // AlertDialogFooter, // Removed
+  // AlertDialogHeader, // Removed
+  // AlertDialogTitle, // Removed
 } from "@/components/ui/alert-dialog";
 // import { useIsMobile } from "@/hooks/use-mobile"; // Removed unused import
 import TextEditorContent from "@/components/TextEditorContent"; // Import TextEditorContent
@@ -80,12 +80,12 @@ const EditNote: React.FC = () => {
   };
 
   const {
-    showReplaceDialog,
-    setShowReplaceDialog,
-    textToReplace,
+    // showReplaceDialog, // Removed
+    // setShowReplaceDialog, // Removed
+    // textToReplace, // Removed
     analyzeDrawing,
-    handleConfirmReplace,
-    handleCancelReplace,
+    // handleConfirmReplace, // Removed
+    // handleCancelReplace, // Removed
     isAnalyzing,
   } = useAIDrawingAnalysis({ editor: editorRef.current, insertTextIntoEditor });
 
@@ -134,15 +134,10 @@ const EditNote: React.FC = () => {
       // Call AI analysis and get extracted content
       const extractedContent = await analyzeDrawing(base64Image, mimeType);
 
-      // If analysis was successful and user confirms, the text will be inserted by handleConfirmReplace
-      // The drawing URL is handled by the useAIDrawingAnalysis hook internally for storage.
-      // We just need to update the local state here if the drawing was successfully uploaded.
+      // If analysis was successful, the text is already inserted by analyzeDrawing.
+      // We just need to update the local drawingUrl state here if the drawing was successfully uploaded.
       if (extractedContent) {
-        // Assuming analyzeDrawing also handles the storage and returns the URL or we get it from the hook
-        // For now, we'll just update the drawingUrl state if analysis was successful.
-        // The actual URL from storage is managed within useAIDrawingAnalysis.
-        // For simplicity, we'll just use the dataUrl for preview here.
-        setDrawingUrl(dataUrl);
+        setDrawingUrl(dataUrl); // Update drawingUrl for preview
       }
       dismissToast(toastId);
       showSuccess("Drawing processed!");
@@ -339,23 +334,7 @@ const EditNote: React.FC = () => {
         </CardContent>
       </NotebookCard>
 
-      <AlertDialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>AI Extracted Text</AlertDialogTitle>
-            <AlertDialogDescription>
-              The AI extracted the following text from your drawing. Would you like to insert it into your note?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="max-h-[200px] overflow-y-auto p-4 border rounded-md bg-muted/50 text-sm">
-            <p className="whitespace-pre-wrap">{textToReplace}</p>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelReplace}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmReplace}>Insert Text</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Removed AlertDialog for AI Extracted Text */}
     </div>
   );
 };
