@@ -132,8 +132,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         },
       }),
       Highlight.configure({
-        // Temporarily remove multicolor to diagnose the error
-        // multicolor: true,
+        multicolor: true, // Re-enabled multicolor
       }),
       TaskList,
       TaskItem.configure({
