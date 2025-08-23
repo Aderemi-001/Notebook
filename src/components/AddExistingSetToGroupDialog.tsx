@@ -29,8 +29,10 @@ interface StudySet {
 
 interface AddExistingSetToGroupDialogProps {
   groupId: string;
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode; // Make trigger optional as it might be controlled externally
   onSetAdded?: () => void;
+  open?: boolean; // New prop for controlled state
+  onOpenChange?: (open: boolean) => void; // New prop for controlled state
 }
 
 const fetchAllUserStudySets = async (): Promise<StudySet[]> => {
@@ -52,9 +54,12 @@ const fetchAllUserStudySets = async (): Promise<StudySet[]> => {
   return data || [];
 };
 
-const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = ({ groupId, trigger, onSetAdded }) => {
+const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = ({ groupId, trigger, onSetAdded, open: controlledOpen, onOpenChange: controlledOnOpenChange }) => {
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
+  const setOpen = controlledOnOpenChange !== undefined ? controlledOnOpenChange : setUncontrolledOpen;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSetIds, setSelectedSetIds] = useState<Set<string>>(new Set());
   const [isUpdating, setIsUpdating] = useState(false);
@@ -136,7 +141,7 @@ const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>} {/* Only render trigger if provided */}
       <DialogContent className="sm:max-w-[425px] md:max-w-lg lg:max-w-xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add Existing Sets to Group</DialogTitle>

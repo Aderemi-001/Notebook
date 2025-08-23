@@ -18,7 +18,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Globe, Plus, MoreVertical, Folder } from 'lucide-react';
 import { UserPreferences } from '@/hooks/use-user-preferences';
@@ -48,6 +47,10 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
   handleResetProgress,
   handleAddToMySets,
 }) => {
+  // State to control the open state of the AlertDialogs
+  const [isResetProgressDialogOpen, setIsResetProgressDialogOpen] = React.useState(false);
+  const [isDeleteSetDialogOpen, setIsDeleteSetDialogOpen] = React.useState(false);
+
   return (
     <div className="flex justify-between items-center mb-8">
       <div className="flex items-center gap-4">
@@ -92,67 +95,23 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
                   <Pencil className="mr-2 h-4 w-4" /> Edit Set
                 </Link>
               </DropdownMenuItem>
-              {/* Reset Progress */}
-              <AlertDialog>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()} asChild>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="flex items-center w-full justify-start px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                    >
-                      <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
-                    </Button>
-                  </AlertDialogTrigger>
-                </DropdownMenuItem>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleResetProgress}>
-                      Reset Progress
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+
+              {/* Reset Progress Trigger */}
+              <DropdownMenuItem onSelect={() => setIsResetProgressDialogOpen(true)} className="flex items-center text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
+              </DropdownMenuItem>
             </>
           )}
           {isOwner && (
             <>
               <DropdownMenuSeparator />
               {preferences?.confirm_deletion ? (
-                <AlertDialog>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} asChild>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="flex items-center w-full justify-start px-2 py-1.5 text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete Set
-                      </Button>
-                    </AlertDialogTrigger>
-                  </DropdownMenuItem>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete your
-                        "{studySet.title}" study set and all its associated cards.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDeleteSet}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                // Delete Set Trigger (conditional based on preferences)
+                <DropdownMenuItem onSelect={() => setIsDeleteSetDialogOpen(true)} className="flex items-center text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                  <Trash2 className="h-4 w-4" /> Delete Set
+                </DropdownMenuItem>
               ) : (
+                // Direct delete if no confirmation needed
                 <DropdownMenuItem onClick={handleDeleteSet} className="flex items-center text-destructive">
                   <Trash2 className="h-4 w-4" /> Delete Set
                 </DropdownMenuItem>
@@ -166,6 +125,44 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* AlertDialogs rendered outside DropdownMenuContent */}
+      <AlertDialog open={isResetProgressDialogOpen} onOpenChange={setIsResetProgressDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetProgress}>
+              Reset Progress
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {preferences?.confirm_deletion && (
+        <AlertDialog open={isDeleteSetDialogOpen} onOpenChange={setIsDeleteSetDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete your
+                "{studySet.title}" study set and all its associated cards.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteSet}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 };

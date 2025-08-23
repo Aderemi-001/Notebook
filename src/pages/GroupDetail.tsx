@@ -157,6 +157,7 @@ const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
 const GroupDetail: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddSetDialogOpen, setIsAddSetDialogOpen] = useState(false); // New state for dialog
 
   const { data: group, isLoading: isLoadingGroup, isError: isErrorGroup, error: errorGroup } = useQuery<StudySetGroup, Error>({
     queryKey: ['studySetGroup', groupId],
@@ -253,16 +254,9 @@ const GroupDetail: React.FC = () => {
                 <Pencil className="mr-2 h-4 w-4" /> Edit Group
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} asChild> {/* Prevent dropdown from closing */}
-              <AddExistingSetToGroupDialog
-                groupId={groupId}
-                trigger={
-                  <Button variant="ghost" className="flex items-center w-full justify-start">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Existing Set
-                  </Button>
-                }
-                onSetAdded={() => refetchStudySetsInGroup()} // Refetch sets in group after adding
-              />
+            {/* Add Existing Set Trigger */}
+            <DropdownMenuItem onSelect={() => setIsAddSetDialogOpen(true)} className="flex items-center w-full justify-start">
+              <PlusCircle className="mr-2 h-4 w-4" /> Add Existing Set
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/create" state={{ groupId: groupId }} className="flex items-center">
@@ -304,15 +298,9 @@ const GroupDetail: React.FC = () => {
                   <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
                 </Link>
               </Button>
-              <AddExistingSetToGroupDialog
-                groupId={groupId}
-                trigger={
-                  <Button variant="outline">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Existing Set
-                  </Button>
-                }
-                onSetAdded={() => refetchStudySetsInGroup()}
-              />
+              <Button variant="outline" onClick={() => setIsAddSetDialogOpen(true)}> {/* Use state to open dialog */}
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Existing Set
+              </Button>
             </div>
           )}
         </div>
@@ -376,6 +364,15 @@ const GroupDetail: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* AddExistingSetToGroupDialog rendered outside DropdownMenuContent */}
+      <AddExistingSetToGroupDialog
+        groupId={groupId!}
+        trigger={null}
+        onSetAdded={() => refetchStudySetsInGroup()}
+        open={isAddSetDialogOpen}
+        onOpenChange={setIsAddSetDialogOpen}
+      />
     </div>
   );
 };
