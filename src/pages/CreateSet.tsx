@@ -53,6 +53,8 @@ const CreateSet = () => {
   const [isEstimating, setIsEstimating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccessToastAfterRender, setShowSuccessToastAfterRender] = useState(false);
+  const [generatedCardConceptLinks, setGeneratedCardConceptLinks] = useState<{ card_term: string; concept_name: string }[]>([]);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -96,7 +98,7 @@ const CreateSet = () => {
           is_public: values.is_public,
           group_id: values.group_id,
         })
-        .select()
+        .select('id') // Select the ID to use for card insertion
         .single();
 
       if (setError) throw setError;
@@ -107,11 +109,57 @@ const CreateSet = () => {
         definition: card.definition,
       }));
 
-      const { error: cardsError } = await supabase
+      const { data: insertedCards, error: cardsError } = await supabase
         .from('cards')
-        .insert(cardsToInsert);
+        .insert(cardsToInsert)
+        .select('id, term'); // Select ID and term to map for card_concept_links
 
       if (cardsError) throw cardsError;
+
+      // Process and insert card_concept_links
+      if (generatedCardConceptLinks.length > 0 && insertedCards) {
+        const cardTermToIdMap = new Map(insertedCards.map(card => [card.term, card.id]));
+        
+        const { data: existingConcepts, error: fetchConceptsError } = await supabase
+          .from('concepts')
+          .select('id, name')
+          .eq('user_id', currentUser.id);
+
+        if (fetchConceptsError) {
+          console.error("Error fetching existing concepts for linking:", fetchConceptsError);
+          // Continue without linking if concepts can't be fetched
+        }
+
+        const conceptNameToIdMap = new Map(existingConcepts?.map(c => [c.name, c.id]));
+
+        const cardConceptsToInsert = [];
+        for (const link of generatedCardConceptLinks) {
+          const cardId = cardTermToIdMap.get(link.card_term);
+          const conceptId = conceptNameToIdMap.get(link.concept_name);
+
+          if (cardId && conceptId) {
+            cardConceptsToInsert.push({
+              user_id: currentUser.id,
+              card_id: cardId,
+              concept_id: conceptId,
+            });
+          } else {
+            console.warn(`Could not find ID for card term "${link.card_term}" or concept name "${link.concept_name}" for linking.`);
+          }
+        }
+
+        if (cardConceptsToInsert.length > 0) {
+          const { error: insertCardConceptsError } = await supabase
+            .from('card_concepts')
+            .insert(cardConceptsToInsert);
+          
+          if (insertCardConceptsError) {
+            console.error("Error inserting card-concept links:", insertCardConceptsError);
+          } else {
+            queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] });
+          }
+        }
+      }
 
       dismissToast(toastId);
       showSuccess("Set created successfully!");
@@ -154,6 +202,7 @@ const CreateSet = () => {
 
     if (result && result.cards.length > 0) {
       form.setValue('cards', result.cards.map(card => ({ term: card.term, definition: card.definition })));
+      setGeneratedCardConceptLinks(result.card_concept_links || []); // Store the links
       setShowSuccessToastAfterRender(true);
     } else {
       form.setValue('cards', [{ term: "", definition: "" }]); // Clear all and add one empty card
@@ -187,6 +236,7 @@ const CreateSet = () => {
                   setFile(e.target.files ? e.target.files[0] : null);
                   setEstimatedOptimalCards(null); // Clear previous estimate
                   setNumCardsToGenerate(undefined); // Clear previous input
+                  setGeneratedCardConceptLinks([]); // Clear previous links
                 }}
                 className="w-full"
               />

@@ -56,7 +56,7 @@ serve(async (req) => {
       prompt = `
         You are an expert at creating flashcard study sets and identifying key concepts and their relationships within a given text.
         Based on the following content (which may include text and/or images), generate a list of key terms and their definitions,
-        a list of core concepts, and a list of relationships between these concepts.
+        a list of core concepts, a list of relationships between these concepts, and links between cards and concepts.
         If images are provided, perform OCR to extract text from them and integrate that text into your analysis.
 
         **Flashcard Generation Guidelines:**
@@ -66,14 +66,16 @@ serve(async (req) => {
             ${numCards ? `Generate ${numCards} flashcards. Aim to produce a number of cards that is within one (plus or minus) of the requested quantity. Only generate fewer if the content is truly insufficient to create distinct and high-quality cards without redundancy. Do not generate more than ${numCards + 1} cards.` : `Generate an optimal number of high-quality flashcards.`}
 
         The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
-        The JSON object should have four top-level keys: "cards", "concepts", "relationships", and "optimal_max_cards".
+        The JSON object should have four top-level keys: "cards", "concepts", "relationships", "card_concept_links", and "optimal_max_cards".
 
         "cards" should be an array of objects, each with "term" and "definition" properties.
         "concepts" should be an array of objects, each with a "name" (string) and an optional "description" (string, a brief summary of the concept).
         "relationships" should be an array of objects, each with "source_name" (string, name of the source concept), "target_name" (string, name of the target concept), "type" (string, e.g., "related_to", "is_prerequisite_for", "is_part_of", "causes", "explains"), and "strength" (number, 0.0 to 1.0, indicating confidence or relevance).
+        "card_concept_links" should be an array of objects, each with "card_term" (string, the term of the flashcard) and "concept_name" (string, the name of the concept it relates to).
         "optimal_max_cards" should be an integer representing the maximum number of high-quality flashcards you estimate could be generated from the provided content.
 
         Ensure that all "source_name" and "target_name" in "relationships" refer to "name" values present in the "concepts" array.
+        Ensure that all "card_term" in "card_concept_links" refer to "term" values present in the "cards" array, and all "concept_name" refer to "name" values present in the "concepts" array.
         Keep the concepts and relationships concise and directly derived from the content.
 
         Example format:
@@ -88,6 +90,10 @@ serve(async (req) => {
           ],
           "relationships": [
             { "source_name": "Concept A", "target_name": "Concept B", "type": "related_to", "strength": 0.9 }
+          ],
+          "card_concept_links": [
+            { "card_term": "Example Term 1", "concept_name": "Concept A" },
+            { "card_term": "Example Term 2", "concept_name": "Concept B" }
           ],
           "optimal_max_cards": 15
         }
@@ -174,6 +180,10 @@ serve(async (req) => {
       }
       if (!parsedData.relationships || !Array.isArray(parsedData.relationships)) {
         throw new Error("AI response missing 'relationships' array.");
+      }
+      if (!parsedData.card_concept_links || !Array.isArray(parsedData.card_concept_links)) {
+        console.warn("AI response missing 'card_concept_links' array. Proceeding without them.");
+        parsedData.card_concept_links = []; // Default to empty array
       }
       if (typeof parsedData.optimal_max_cards !== 'number') {
         console.warn("AI response missing 'optimal_max_cards' or it's not a number. Defaulting to 0.");

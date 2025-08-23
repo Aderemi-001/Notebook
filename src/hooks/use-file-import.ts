@@ -10,6 +10,7 @@ interface ProcessedAIData {
   cards: { term: string; definition: string }[];
   concepts: { name: string; description?: string }[];
   relationships: { source_name: string; target_name: string; type: string; strength?: number }[];
+  card_concept_links: { card_term: string; concept_name: string }[]; // New field
   optimal_max_cards?: number;
 }
 
@@ -203,15 +204,16 @@ export const useFileImport = () => {
       const newCards = data.cards;
       const newConcepts = data.concepts;
       const newRelationships = data.relationships;
+      const newCardConceptLinks = data.card_concept_links; // New: Get card-concept links
 
       if (!newCards || newCards.length === 0) {
         showError("The AI couldn't find any terms and definitions in the file.");
         return null;
       }
 
+      // Process concepts (upserting existing, inserting new)
+      const conceptNameToIdMap = new Map<string, string>();
       if (newConcepts && newConcepts.length > 0) {
-        const conceptNameToIdMap = new Map<string, string>();
-
         for (const concept of newConcepts) {
           const { data: existingConcept, error: fetchConceptError } = await supabase
             .from('concepts')
@@ -226,7 +228,7 @@ export const useFileImport = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) { // Corrected variable name
+          if (existsSync) { // Corrected variable name
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
@@ -243,13 +245,14 @@ export const useFileImport = () => {
           conceptNameToIdMap.set(concept.name, conceptId);
         }
 
+        // Process relationships (upserting)
         if (newRelationships && newRelationships.length > 0) {
-          const relationshipsToInsert = [];
+          const relationshipsToUpsert = [];
           for (const rel of newRelationships) {
             const sourceId = conceptNameToIdMap.get(rel.source_name);
             const targetId = conceptNameToIdMap.get(rel.target_name);
             if (sourceId && targetId) {
-              relationshipsToInsert.push({
+              relationshipsToUpsert.push({
                 user_id: currentUser.id,
                 source_concept_id: sourceId,
                 target_concept_id: targetId,
@@ -259,19 +262,33 @@ export const useFileImport = () => {
             }
           }
 
-          if (relationshipsToInsert.length > 0) {
+          if (relationshipsToUpsert.length > 0) {
             const { error: insertRelError } = await supabase
               .from('concept_relationships')
-              .upsert(relationshipsToInsert, { onConflict: 'user_id,source_concept_id,target_concept_id,type' });
+              .upsert(relationshipsToUpsert, { onConflict: 'user_id,source_concept_id,target_concept_id,type' });
             if (insertRelError) {
               console.error("Error inserting relationships:", insertRelError);
-            } else {
-              // No success toast here, as the main success toast will cover it.
             }
           }
         }
-        queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] });
       }
+
+      // New: Process card-concept links
+      if (newCardConceptLinks && newCardConceptLinks.length > 0) {
+        const cardTermToIdMap = new Map<string, string>();
+        // Assuming cards are inserted and we have their IDs
+        // For now, we'll rely on the form's cards array to get terms,
+        // and the actual card IDs will be available after the main form submission.
+        // This means card_concepts will be inserted *after* the set and cards are saved.
+        // For the purpose of this hook, we'll prepare the data to be linked later.
+        // The current implementation of `generateCardsAndConcepts` only returns the AI data,
+        // it doesn't handle the actual DB insertion of cards.
+        // The actual card insertion happens in `CreateSet.tsx` and `EditSet.tsx`.
+        // So, this hook should *return* the links, and the pages will handle the final insertion.
+        // Let's adjust the return type to include these links.
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] });
       return data;
 
     } catch (error: any) {
