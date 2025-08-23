@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Pencil, Eraser, ZoomIn, ZoomOut, Move, Brain, Loader2 } from 'lucide-react';
-// import TextEditorContent from "@/components/TextEditorContent"; // This import is no longer needed here
+// The TextEditorContent component is not needed here as the parent handles view switching.
+// import TextEditorContent from "@/components/TextEditorContent"; 
 import { Editor } from "@tiptap/react";
 import { useDrawingCanvas } from "@/hooks/use-drawing-canvas";
 import { useAIDrawingAnalysis } from "@/hooks/use-ai-drawing-analysis";
@@ -102,7 +103,6 @@ const NoteDrawingSection: React.FC<NoteDrawingSectionProps> = ({
     <div className="flex h-full flex-col p-4">
       <Label className="text-lg mb-2 block">Drawing Canvas</Label>
       <div className="relative border rounded-md overflow-hidden flex-grow bg-white">
-        {/* TextEditorContent was removed from here as it was obscuring the canvas */}
         <canvas
           ref={canvasRef}
           className="absolute inset-0 cursor-crosshair touch-none bg-white"
@@ -194,6 +194,7 @@ const NoteDrawingSection: React.FC<NoteDrawingSectionProps> = ({
         </div>
       )}
 
+      {/* AIExtractedTextDialog moved inside the main div */}
       <AIExtractedTextDialog
         open={showReplaceDialog}
         onOpenChange={setShowReplaceDialog}
