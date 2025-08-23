@@ -228,7 +228,7 @@ export const useFileImport = () => {
           }
 
           let conceptId: string;
-          if (existsSync) { // Corrected variable name
+          if (existingConcept) { // Corrected variable name from existsSync to existingConcept
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
