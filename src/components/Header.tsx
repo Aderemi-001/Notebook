@@ -39,8 +39,7 @@ export const Header: React.FC = () => {
     <header className="sticky top-0 z-40 w-full border-b bg-background">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center space-x-2 font-bold text-lg">
-          {/* Using a generic placeholder for the logo */}
-          <img src="/placeholder.svg" alt="My Notebook Logo" className="h-8 w-8" />
+          <img src="/my-notebook-logo.svg" alt="My Notebook Logo" className="h-8 w-8" />
           <span>My Notebook</span>
         </Link>
 
