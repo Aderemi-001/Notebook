@@ -227,7 +227,7 @@ const EditNote: React.FC = () => {
                   showError("The drawing pad is currently under construction.");
                 }
               }}
-              disabled={isDrawingFeatureUnderConstruction}
+              // disabled={isDrawingFeatureUnderConstruction} // Removed disabled prop
               className={cn("flex-1", isDrawingFeatureUnderConstruction && "text-muted-foreground cursor-not-allowed")}
             >
               <ImageIcon className="mr-2 h-4 w-4" /> Drawing Pad
