@@ -71,7 +71,7 @@
     @apply border-border;
   }
 
-  body {
+  html, body {
     @apply bg-background text-foreground;
     /* Notebook paper background */
     background-color: hsl(30, 100%, 98%); /* Light cream background */
@@ -80,7 +80,7 @@
     background-repeat: repeat-y;
   }
 
-  .dark body {
+  .dark html, .dark body {
     background-color: hsl(220, 10%, 15%); /* Dark gray background */
     background-image: linear-gradient(to bottom, hsl(220, 10%, 25%) 1px, transparent 1px); /* Slightly lighter dark gray lines */
   }
