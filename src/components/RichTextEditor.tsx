@@ -35,7 +35,7 @@ interface RichTextEditorProps {
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2.0;
 const ZOOM_STEP = 0.1;
-const BASE_LINE_WIDTH = 3;
+const BASE_LINE_WIDTH = 5; // Increased from 3 to 5 for smoother appearance
 const BASE_ERASER_SIZE = 15;
 
 const generateEraserCursor = (size: number) => {
