@@ -94,9 +94,13 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
               </DropdownMenuItem>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="flex items-center w-full text-left px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                  {/* Changed DropdownMenuItem to Button to satisfy React.Children.only */}
+                  <Button
+                    variant="ghost"
+                    className="flex items-center w-full justify-start px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                  >
                     <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
-                  </DropdownMenuItem>
+                  </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -121,9 +125,13 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
               {preferences?.confirm_deletion ? (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <DropdownMenuItem className="flex items-center w-full text-left px-2 py-1.5 text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                    {/* Changed DropdownMenuItem to Button to satisfy React.Children.only */}
+                    <Button
+                      variant="ghost"
+                      className="flex items-center w-full justify-start px-2 py-1.5 text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                    >
                       <Trash2 className="mr-2 h-4 w-4" /> Delete Set
-                    </DropdownMenuItem>
+                    </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
