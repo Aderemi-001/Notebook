@@ -206,17 +206,12 @@ const Index = () => {
 
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4"> {/* Adjusted for responsiveness */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">My Study Sets</h1>
-        <div className="flex flex-wrap gap-2 justify-end"> {/* Added flex-wrap and justify-end */}
+        <div className="flex flex-wrap gap-2 justify-end">
           <Button asChild variant="outline">
             <Link to="/create" className="flex items-center">
               <PlusCircle className="mr-2 h-4 w-4" /> Create Set
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link to="/explore-public-sets" className="flex items-center">
-              <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
             </Link>
           </Button>
         </div>
@@ -307,11 +302,6 @@ const Index = () => {
                   <Button asChild>
                     <Link to="/create">
                       <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <Link to="/explore-public-sets">
-                      <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
                     </Link>
                   </Button>
                 </div>
