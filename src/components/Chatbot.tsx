@@ -4,7 +4,7 @@ import { MessageSquare, X, Send, Loader2, Bot, User2, ThumbsUp, ThumbsDown, Ligh
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/useAuth';
-import { ChatMessage, DEFAULT_SUGGESTED_QUESTIONS } from '@/components/chatbot/types';
+import { ChatMessage } from '@/components/chatbot/types'; // Removed DEFAULT_SUGGESTED_QUESTIONS
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';

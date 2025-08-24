@@ -97,7 +97,7 @@ const CreateNote: React.FC = () => {
         title: values.title,
         content: values.content,
         study_set_id: values.study_set_id,
-        drawing_url: null, // Explicitly set to null as drawing is removed
+        // Removed: drawing_url: null,
       })
       .select();
 
