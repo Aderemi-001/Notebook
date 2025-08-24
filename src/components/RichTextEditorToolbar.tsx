@@ -46,7 +46,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <ToggleGroupItem
           value="bold"
           aria-label="Toggle bold"
-          onClick={() => editor.chain().focus().toggleBold().run()}
+          onClick={() => editor.chain().toggleBold().run()}
           disabled={!editor.can().toggleBold()}
           className={editor.isActive('bold') ? 'is-active' : ''}
         >
@@ -55,7 +55,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <ToggleGroupItem
           value="italic"
           aria-label="Toggle italic"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
+          onClick={() => editor.chain().toggleItalic().run()}
           disabled={!editor.can().toggleItalic()}
           className={editor.isActive('italic') ? 'is-active' : ''}
         >
@@ -64,7 +64,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <ToggleGroupItem
           value="strike"
           aria-label="Toggle strike"
-          onClick={() => editor.chain().focus().toggleStrike().run()}
+          onClick={() => editor.chain().toggleStrike().run()}
           disabled={!editor.can().toggleStrike()}
           className={editor.isActive('strike') ? 'is-active' : ''}
         >
@@ -73,7 +73,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <ToggleGroupItem
           value="code"
           aria-label="Toggle code"
-          onClick={() => editor.chain().focus().toggleCode().run()}
+          onClick={() => editor.chain().toggleCode().run()}
           disabled={!editor.can().toggleCode()}
           className={editor.isActive('code') ? 'is-active' : ''}
         >
@@ -82,7 +82,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <ToggleGroupItem
           value="bulletList"
           aria-label="Toggle bullet list"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          onClick={() => editor.chain().toggleBulletList().run()}
           disabled={!editor.can().toggleBulletList()}
           className={editor.isActive('bulletList') ? 'is-active' : ''}
         >
@@ -91,7 +91,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <ToggleGroupItem
           value="orderedList"
           aria-label="Toggle ordered list"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          onClick={() => editor.chain().toggleOrderedList().run()}
           disabled={!editor.can().toggleOrderedList()}
           className={editor.isActive('orderedList') ? 'is-active' : ''}
         >
@@ -100,7 +100,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <ToggleGroupItem
           value="blockquote"
           aria-label="Toggle blockquote"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          onClick={() => editor.chain().toggleBlockquote().run()}
           disabled={!editor.can().toggleBlockquote()}
           className={editor.isActive('blockquote') ? 'is-active' : ''}
         >
@@ -109,7 +109,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <ToggleGroupItem
           value="horizontalRule"
           aria-label="Insert horizontal rule"
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          onClick={() => editor.chain().setHorizontalRule().run()}
           disabled={!editor.can().setHorizontalRule()}
         >
           <Minus className="h-4 w-4" />
@@ -122,7 +122,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
               variant="outline"
               size="sm"
               className={`h-8 px-2 rounded-lg ${editor.isActive('highlight') ? 'is-active' : ''}`}
-              disabled={!editor.can().toggleHighlight()} // Added disabled prop
+              disabled={!editor.can().toggleHighlight()}
             >
               <Highlighter className="h-4 w-4" />
             </Button>
@@ -131,9 +131,9 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
             {highlightColors.map((color) => (
               <DropdownMenuItem
                 key={color.name}
-                onClick={() => editor.chain().focus().toggleHighlight({ color: color.value }).run()}
+                onClick={() => editor.chain().toggleHighlight({ color: color.value }).run()}
                 className="flex items-center cursor-pointer"
-                disabled={!editor.can().toggleHighlight({ color: color.value })} // Added disabled prop
+                disabled={!editor.can().toggleHighlight({ color: color.value })}
               >
                 <span
                   className="w-4 h-4 rounded-full mr-2 border"
@@ -143,9 +143,9 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
               </DropdownMenuItem>
             ))}
             <DropdownMenuItem
-              onClick={() => editor.chain().focus().unsetHighlight().run()}
+              onClick={() => editor.chain().unsetHighlight().run()}
               className="flex items-center cursor-pointer"
-              disabled={!editor.can().unsetHighlight()} // Added disabled prop
+              disabled={!editor.can().unsetHighlight()}
             >
               <Eraser className="h-4 w-4 mr-2" /> Clear Highlight
             </DropdownMenuItem>
@@ -155,7 +155,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <Button
           variant="outline"
           size="sm"
-          onClick={() => editor.chain().focus().undo().run()}
+          onClick={() => editor.chain().undo().run()}
           disabled={!editor.can().undo()}
           className="h-8 px-2 rounded-lg"
         >
@@ -164,7 +164,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <Button
           variant="outline"
           size="sm"
-          onClick={() => editor.chain().focus().redo().run()}
+          onClick={() => editor.chain().redo().run()}
           disabled={!editor.can().redo()}
           className="h-8 px-2 rounded-lg"
         >
