@@ -48,14 +48,27 @@ interface StudySet {
   cards_count: number;
   is_public: boolean;
   user_id: string;
-  display_name: string;
-  is_owner: boolean;
+  display_name: string; // This will now always be the current user's display name or null
+  is_owner: boolean; // This will now always be true for sets on this page
 }
 
 const fetchStudySets = async (): Promise<StudySet[]> => {
-  const { data, error } = await supabase.rpc('get_all_visible_study_sets_with_card_count');
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return []; // No user, no personal study sets
+  }
+
+  // Use get_study_sets_with_card_count to fetch only the current user's sets
+  const { data, error } = await supabase.rpc('get_study_sets_with_card_count');
   if (error) throw error;
-  return data;
+
+  // For consistency with the previous interface, we'll map the data.
+  // Since these are user's own sets, is_owner will be true and display_name will be null (or fetched separately if needed).
+  return data.map(set => ({
+    ...set,
+    display_name: null, // Not directly available from this RPC, or can be fetched from profiles if needed
+    is_owner: true, // All sets fetched here are owned by the current user
+  }));
 };
 
 const deleteStudySet = async (setId: string) => {
@@ -81,6 +94,7 @@ const Index: React.FC = () => {
   const { data: studySets, isLoading, isError, error } = useQuery<StudySet[], Error>({
     queryKey: ['studySets'],
     queryFn: fetchStudySets,
+    enabled: !!user && !isLoadingAuth, // Only fetch if user is logged in
   });
 
   const deleteMutation = useMutation<void, Error, string>({
@@ -116,8 +130,7 @@ const Index: React.FC = () => {
 
   const filteredStudySets = studySets?.filter(set =>
     set.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    set.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    set.display_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    set.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleDeleteClick = (setId: string) => {
@@ -283,29 +296,23 @@ const Index: React.FC = () => {
                           <Eye className="mr-2 h-4 w-4" /> Study
                         </Link>
                       </DropdownMenuItem>
-                      {set.is_owner && (
-                        <>
-                          <DropdownMenuItem onClick={() => handleEditClick(set)}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit Set
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleShareClick(set.id)}>
-                            <Share2 className="mr-2 h-4 w-4" /> Share
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteClick(set.id)} className="text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                      {!set.is_owner && (
-                        <DropdownMenuItem onClick={() => showSuccess("Feature coming soon!")}>
-                          <Copy className="mr-2 h-4 w-4" /> Duplicate Set
+                      {/* Since we are only showing owned sets, is_owner will always be true here */}
+                      <>
+                        <DropdownMenuItem onClick={() => handleEditClick(set)}>
+                          <Edit className="mr-2 h-4 w-4" /> Edit Set
                         </DropdownMenuItem>
-                      )}
+                        <DropdownMenuItem onClick={() => handleShareClick(set.id)}>
+                          <Share2 className="mr-2 h-4 w-4" /> Share
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDeleteClick(set.id)} className="text-red-600">
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardTitle>
                 <CardDescription className="flex items-center text-sm text-muted-foreground">
-                  <Users className="mr-1 h-3 w-3" /> {set.is_owner ? 'My Set' : `By ${set.display_name || 'Anonymous'}`}
+                  <Users className="mr-1 h-3 w-3" /> My Set
                   {set.is_public && <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full dark:bg-blue-900 dark:text-blue-200">Public</span>}
                 </CardDescription>
               </CardHeader>
