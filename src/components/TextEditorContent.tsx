@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 interface TextEditorContentProps {
   editor: Editor | null;
-  editable: boolean;
+  editable: boolean; // New prop
   className?: string;
   labelId?: string;
   isDrawingMode: boolean;
@@ -26,9 +26,9 @@ const TextEditorContent: React.FC<TextEditorContentProps> = ({ editor, editable,
       <EditorContent
         editor={editor}
         className={cn(
-          'prose dark:prose-invert max-w-none focus:outline-none p-4 h-full overflow-y-auto w-full', // Added w-full here
+          'prose dark:prose-invert max-w-none focus:outline-none p-4 h-full overflow-y-auto w-full',
           'user-select-text touch-action-auto',
-          !editable && 'bg-muted/50 cursor-not-allowed',
+          !editable && 'bg-muted/50 cursor-not-allowed', // Apply disabled styling based on editable prop
           className
         )}
         aria-labelledby={labelId || ''}

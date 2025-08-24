@@ -4,6 +4,8 @@ import React, { useRef, useEffect, useState, useCallback, useImperativeHandle } 
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Eraser, Pencil, Redo, Undo, Download, Trash2 } from 'lucide-react';
+import { HexColorPicker } from 'react-colorful'; // Import HexColorPicker
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'; // Import Popover components
 
 export interface DrawingCanvasRef {
   clearCanvas: () => void;
@@ -13,10 +15,11 @@ export interface DrawingCanvasRef {
 interface DrawingCanvasProps {
   initialImage?: string;
   onSave?: (dataUrl: string) => void;
+  editable?: boolean; // New prop
 }
 
 const DrawingCanvas = React.forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
-  ({ initialImage, onSave }, ref) => {
+  ({ initialImage, onSave, editable = true }, ref) => { // Default editable to true
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
@@ -121,7 +124,7 @@ const DrawingCanvas = React.forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
     }, [brushSize, color, context, tool]);
 
     const startDrawing = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-      if (!context || !canvasRef.current) return;
+      if (!editable || !context || !canvasRef.current) return;
 
       setIsDrawing(true);
       context.beginPath();
@@ -131,10 +134,10 @@ const DrawingCanvas = React.forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
 
       const rect = canvasRef.current.getBoundingClientRect();
       context.moveTo(clientX - rect.left, clientY - rect.top);
-    }, [context]);
+    }, [context, editable]);
 
     const draw = useCallback((event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-      if (!isDrawing || !context || !canvasRef.current) return;
+      if (!editable || !isDrawing || !context || !canvasRef.current) return;
 
       const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
       const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY;
@@ -142,14 +145,14 @@ const DrawingCanvas = React.forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
       const rect = canvasRef.current.getBoundingClientRect();
       context.lineTo(clientX - rect.left, clientY - rect.top);
       context.stroke();
-    }, [isDrawing, context]);
+    }, [isDrawing, context, editable]);
 
     const endDrawing = useCallback(() => {
-      if (!context) return;
+      if (!editable || !context) return;
       setIsDrawing(false);
       context.closePath();
       saveState();
-    }, [context, saveState]);
+    }, [context, saveState, editable]);
 
     const undo = useCallback(() => {
       if (historyPointer > 0) {
@@ -194,19 +197,22 @@ const DrawingCanvas = React.forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
     return (
       <div className="flex flex-col items-center space-y-4 p-4">
         <div className="flex space-x-2">
-          <Button variant={tool === 'pencil' ? 'default' : 'outline'} onClick={() => setTool('pencil')}>
+          <Button variant={tool === 'pencil' ? 'default' : 'outline'} onClick={() => setTool('pencil')} disabled={!editable}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button variant={tool === 'eraser' ? 'default' : 'outline'} onClick={() => setTool('eraser')}>
+          <Button variant={tool === 'eraser' ? 'default' : 'outline'} onClick={() => setTool('eraser')} disabled={!editable}>
             <Eraser className="h-4 w-4" />
           </Button>
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            className="w-10 h-10 p-1 border rounded-md cursor-pointer"
-            title="Select brush color"
-          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-10 h-10 p-1 border rounded-md cursor-pointer" disabled={!editable}>
+                <div className="w-full h-full rounded-sm" style={{ backgroundColor: color }} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <HexColorPicker color={color} onChange={setColor} />
+            </PopoverContent>
+          </Popover>
           <Slider
             min={1}
             max={20}
@@ -214,21 +220,22 @@ const DrawingCanvas = React.forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
             value={[brushSize]}
             onValueChange={(val) => setBrushSize(val[0])}
             className="w-[100px]"
+            disabled={!editable}
           />
-          <Button onClick={undo} disabled={historyPointer <= 0}>
+          <Button onClick={undo} disabled={historyPointer <= 0 || !editable}>
             <Undo className="h-4 w-4" />
           </Button>
-          <Button onClick={redo} disabled={historyPointer >= history.length - 1}>
+          <Button onClick={redo} disabled={historyPointer >= history.length - 1 || !editable}>
             <Redo className="h-4 w-4" />
           </Button>
-          <Button onClick={clearCanvas}>
+          <Button onClick={clearCanvas} disabled={!editable}>
             <Trash2 className="h-4 w-4" />
           </Button>
-          <Button onClick={downloadDrawing}>
+          <Button onClick={downloadDrawing} disabled={!editable}>
             <Download className="h-4 w-4" />
           </Button>
           {onSave && (
-            <Button onClick={handleSave}>Save Drawing</Button>
+            <Button onClick={handleSave} disabled={!editable}>Save Drawing</Button>
           )}
         </div>
         <div ref={containerRef} className="relative border rounded-md overflow-hidden w-full h-[400px]">
