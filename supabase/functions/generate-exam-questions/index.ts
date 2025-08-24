@@ -1,4 +1,6 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+// @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
@@ -7,9 +9,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// @ts-ignore
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -26,7 +29,9 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     const supabase = createClient(
+      // @ts-ignore
       Deno.env.get('SUPABASE_URL') ?? '',
+      // @ts-ignore
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
@@ -76,7 +81,7 @@ serve(async (req) => {
       contentToProcess = studySet.source_text;
     } else if (studySet.cards && studySet.cards.length > 0) {
       // If no source_text, compile content from cards
-      contentToProcess = studySet.cards.map(card => `Term: ${card.term}\nDefinition: ${card.definition}`).join('\n\n');
+      contentToProcess = studySet.cards.map((card: { term: string; definition: string }) => `Term: ${card.term}\nDefinition: ${card.definition}`).join('\n\n');
       if (!contentToProcess.trim()) {
         return new Response(JSON.stringify({ error: "Study set has no source text and no valid cards to generate questions from." }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -229,9 +234,9 @@ serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in generate-exam-questions function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

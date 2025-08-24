@@ -1,4 +1,6 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+// @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
@@ -7,9 +9,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// @ts-ignore
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -26,7 +29,9 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     const supabase = createClient(
+      // @ts-ignore
       Deno.env.get('SUPABASE_URL') ?? '',
+      // @ts-ignore
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
@@ -46,6 +51,12 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
+    }
+
+    interface Concept {
+      id: string;
+      name: string;
+      description: string | null;
     }
 
     // Fetch the selected concepts
@@ -79,14 +90,14 @@ serve(async (req) => {
       throw new Error(`Failed to fetch card-concept links: ${fetchCardConceptLinksError.message}`);
     }
 
-    const uniqueCardIds = Array.from(new Set(cardConceptLinks?.map(link => link.card_id) || []));
+    const uniqueCardIds = Array.from(new Set(cardConceptLinks?.map((link: { card_id: string }) => link.card_id) || []));
 
     let combinedContent = "";
-    let combinedConceptNames = concepts.map(c => c.name).join(', ');
+    let combinedConceptNames = concepts.map((c: Concept) => c.name).join(', ');
     let uniqueStudySetIds = new Set<string>(); // Declared here, outside the conditional block
 
     // Add concept descriptions to content
-    concepts.forEach(c => {
+    concepts.forEach((c: Concept) => {
       if (c.description) {
         combinedContent += `Concept: ${c.name}\nDescription: ${c.description}\n\n`;
       }
@@ -104,7 +115,7 @@ serve(async (req) => {
         throw new Error(`Failed to fetch cards with sets: ${fetchCardsError.message}`);
       }
 
-      cardsWithSets?.forEach(card => {
+      cardsWithSets?.forEach((card: { term: string; definition: string; study_sets: { id: string; title: string; source_text: string | null } | null }) => {
         combinedContent += `Term: ${card.term}\nDefinition: ${card.definition}\n\n`;
         if (card.study_sets?.id) {
           uniqueStudySetIds.add(card.study_sets.id);
@@ -121,7 +132,7 @@ serve(async (req) => {
         if (fetchSourceError) {
           console.error("Error fetching study set source text:", fetchSourceError);
         } else {
-          studySetsWithSource?.forEach(set => {
+          studySetsWithSource?.forEach((set: { id: string; title: string; source_text: string | null }) => {
             if (set.source_text) {
               combinedContent += `\n--- Content from Set: ${set.title} ---\n${set.source_text}\n\n`;
             }
@@ -256,9 +267,9 @@ serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in generate-essay-questions function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

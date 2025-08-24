@@ -1,4 +1,6 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+// @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
@@ -7,9 +9,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// @ts-ignore
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -26,7 +29,9 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     const supabase = createClient(
+      // @ts-ignore
       Deno.env.get('SUPABASE_URL') ?? '',
+      // @ts-ignore
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
@@ -58,6 +63,12 @@ serve(async (req) => {
       });
     }
 
+    interface Concept {
+      id: string;
+      name: string;
+      description: string | null;
+    }
+
     // Fetch existing concepts for the user to provide context to the AI
     const { data: existingConcepts, error: fetchConceptsError } = await supabase
       .from('concepts')
@@ -69,8 +80,8 @@ serve(async (req) => {
       // Continue without existing concepts if there's an error, or throw
     }
 
-    const existingConceptMap = new Map(existingConcepts?.map(c => [c.name, c.id]));
-    const existingConceptNames = existingConcepts ? existingConcepts.map(c => c.name) : [];
+    const existingConceptMap = new Map<string, string>(existingConcepts?.map((c: Concept) => [c.name, c.id]) || []);
+    // Removed: const existingConceptNames = existingConcepts ? existingConcepts.map(c => c.name) : [];
 
     let totalConceptsProcessed = 0;
     let totalRelationshipsProcessed = 0;
@@ -82,7 +93,7 @@ serve(async (req) => {
       const prompt = `
         You are an expert at identifying key concepts and their relationships within a given text.
         Based on the following text, re-evaluate and generate a list of core concepts, and a list of relationships between these concepts.
-        Consider the following existing concepts for context, but also identify new ones if present: ${existingConceptNames.join(', ')}.
+        Consider the following existing concepts for context, but also identify new ones if present: ${Array.from(existingConceptMap.keys()).join(', ')}.
 
         The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
         The JSON object should have two top-level keys: "concepts" and "relationships".
@@ -181,7 +192,10 @@ serve(async (req) => {
             continue;
           }
           conceptId = insertedConcept.id;
-          existingConceptMap.set(concept.name, conceptId); // Add to map for subsequent relationships
+          // Now conceptId is definitely a string, so we can safely set it
+          if (conceptId) { // Double check to satisfy TypeScript
+            existingConceptMap.set(concept.name, conceptId); // Add to map for subsequent relationships
+          }
           totalConceptsProcessed++;
         }
       }
@@ -225,9 +239,9 @@ serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in re-evaluate-constellation function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
