@@ -82,7 +82,10 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <ToggleGroupItem
           value="bulletList"
           aria-label="Toggle bullet list"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          onClick={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleBulletList().run();
+          }}
           disabled={!editor.can().toggleBulletList()}
           className={editor.isActive('bulletList') ? 'is-active' : ''}
         >
@@ -91,7 +94,10 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
         <ToggleGroupItem
           value="orderedList"
           aria-label="Toggle ordered list"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          onClick={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleOrderedList().run();
+          }}
           disabled={!editor.can().toggleOrderedList()}
           className={editor.isActive('orderedList') ? 'is-active' : ''}
         >
