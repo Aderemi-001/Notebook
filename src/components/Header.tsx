@@ -6,19 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   LogOut,
   User,
-  BookOpen,
-  LayoutDashboard,
   Settings,
-  NotebookPen,
-  CalendarDays,
-  Group,
-  Handshake,
-  GraduationCap,
-  PenTool,
-  BookText,
-  Globe,
-  MenuIcon, // Import MenuIcon for the new dropdown trigger
-  Network, // For Cognitive Constellation
+  MenuIcon,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,12 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-interface NavItem {
-  name: string;
-  href: string;
-  icon: React.ReactNode;
-}
+import { navItems } from '@/config/navigation'; // Import navItems from the new config file
 
 export const Header: React.FC = () => {
   const { user } = useAuth();
@@ -48,20 +32,6 @@ export const Header: React.FC = () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
   };
-
-  const navItems: NavItem[] = [
-    { name: "Daily Review", href: "/daily-review", icon: <CalendarDays className="mr-2 h-4 w-4" /> },
-    { name: "My Study Sets", href: "/", icon: <BookOpen className="mr-2 h-4 w-4" /> },
-    { name: "My Notes", href: "/notes", icon: <NotebookPen className="mr-2 h-4 w-4" /> },
-    { name: "My Groups", href: "/groups", icon: <Group className="mr-2 h-4 w-4" /> },
-    { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> },
-    { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> },
-    { name: "Textbook Finder", href: "/textbook-finder", icon: <BookText className="mr-2 h-4 w-4" /> },
-    { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> },
-    { name: "Cognitive Constellation", href: "/constellation", icon: <Network className="mr-2 h-4 w-4" /> },
-    { name: "Statistics", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
-    { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
-  ];
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
