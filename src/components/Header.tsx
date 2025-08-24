@@ -13,10 +13,9 @@ import {
   CalendarDays,
   Group,
   Handshake,
-  Network,
   GraduationCap,
   PenTool,
-  BookText, // Changed from SearchBook to BookText
+  BookText,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,6 +31,12 @@ import { MenuIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ReactNode;
+}
+
 export const Header: React.FC = () => {
   const { user } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -41,14 +46,14 @@ export const Header: React.FC = () => {
     window.location.href = "/login";
   };
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { name: "Daily Review", href: "/daily-review", icon: <CalendarDays className="mr-2 h-4 w-4" /> },
     { name: "My Study Sets", href: "/", icon: <BookOpen className="mr-2 h-4 w-4" /> },
     { name: "My Notes", href: "/notes-under-construction", icon: <NotebookPen className="mr-2 h-4 w-4" /> },
     { name: "My Groups", href: "/groups", icon: <Group className="mr-2 h-4 w-4" /> },
     { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> },
     { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> },
-    { name: "Textbook Finder", href: "/textbook-finder", icon: <BookText className="mr-2 h-4 w-4" /> }, {/* Updated icon */}
+    { name: "Textbook Finder", href: "/textbook-finder", icon: <BookText className="mr-2 h-4 w-4" /> },
     { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
     { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
   ];
@@ -84,7 +89,7 @@ export const Header: React.FC = () => {
                 <Link to="/essays">Essays</Link>
               </Button>
               <Button variant="ghost" asChild>
-                <Link to="/textbook-finder">Textbook Finder</Link> {/* New desktop link */}
+                <Link to="/textbook-finder">Textbook Finder</Link>
               </Button>
 
               {/* User Dropdown - now correctly inside the desktop-only div */}
