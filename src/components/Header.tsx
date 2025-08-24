@@ -113,20 +113,20 @@ export const Header: React.FC = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild data-disabled={false} onClick={() => console.log('Profile link clicked')}> {/* Added data-disabled and log */}
+                  <DropdownMenuItem asChild>
                     <Link to="/profile">
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild data-disabled={false} onClick={() => console.log('Settings link clicked')}> {/* Added data-disabled and log */}
+                  <DropdownMenuItem asChild>
                     <Link to="/settings">
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} data-disabled={false}> {/* Added data-disabled and log */}
+                  <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>
@@ -159,7 +159,7 @@ export const Header: React.FC = () => {
                   <div className="flex flex-col space-y-2">
                     {/* Navigation Items */}
                     {navItems.map((item) => (
-                      <Button key={item.name} variant="ghost" asChild className="justify-start" onClick={() => { console.log(`${item.name} clicked (mobile)`); setIsSheetOpen(false); }}>
+                      <Button key={item.name} variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                         <Link to={item.href}>
                           {item.icon}
                           {item.name}
@@ -168,13 +168,13 @@ export const Header: React.FC = () => {
                     ))}
                     <Separator />
                     {/* Profile, Settings, Logout in Mobile Menu */}
-                    <Button variant="ghost" asChild className="justify-start" onClick={() => { console.log('Profile clicked (mobile)'); setIsSheetOpen(false); }}>
+                    <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                       <Link to="/profile">
                         <User className="mr-2 h-4 w-4" />
                         Profile
                       </Link>
                     </Button>
-                    <Button variant="ghost" asChild className="justify-start" onClick={() => { console.log('Settings clicked (mobile)'); setIsSheetOpen(false); }}>
+                    <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                       <Link to="/settings">
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
