@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AppContent from "@/components/AppContent";
 import * as React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom"; // Import Routes and Route
+import { BrowserRouter } from "react-router-dom"; // Removed Routes and Route from here as they will be inside AppContent
 import { AuthProvider } from "@/hooks/useAuth";
-// Removed: import { ThemeProvider } from "./components/ThemeProvider.tsx";
+import AuthLayout from "@/layouts/AuthLayout"; // Import AuthLayout
 
 const queryClient = new QueryClient();
 
@@ -12,14 +12,9 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <Routes> {/* Add Routes here for the direct test */}
-            <Route path="/direct-test" element={
-              <div className="min-h-screen flex items-center justify-center bg-blue-100 text-blue-800 text-2xl font-bold">
-                Direct Test Page Works!
-              </div>
-            } />
-            <Route path="*" element={<AppContent />} /> {/* Render AppContent for all other routes */}
-          </Routes>
+          <AuthLayout> {/* AuthLayout now wraps AppContent */}
+            <AppContent />
+          </AuthLayout>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

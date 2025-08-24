@@ -31,60 +31,64 @@ import PastEssayQuestions from "@/pages/PastEssayQuestions";
 import EssayPractice from "@/pages/EssayPractice";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/NotFound";
-import AuthLayout from "@/layouts/AuthLayout";
-import TextbookFinder from "@/pages/TextbookFinder"; // Import the new page
+// Removed: import AuthLayout from "@/layouts/AuthLayout"; // AuthLayout is now in App.tsx
+import TextbookFinder from "@/pages/TextbookFinder";
+import TestPage from "@/pages/TestPage";
+import EmailConfirmation from "@/pages/EmailConfirmation";
+import PasswordReset from "@/pages/PasswordReset";
 
 const AppContent = () => {
   return (
-    <AuthLayout>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/dashboard" element={<Statistics />} />
-        <Route path="/daily-review" element={<DailyReview />} />
-        <Route path="/constellation" element={<CognitiveConstellation />} />
-        <Route path="/collaborations" element={<Collaborations />} />
-        <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
-        <Route path="/textbook-finder" element={<TextbookFinder />} /> {/* New route */}
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/dashboard" element={<Statistics />} />
+      <Route path="/daily-review" element={<DailyReview />} />
+      <Route path="/constellation" element={<CognitiveConstellation />} />
+      <Route path="/collaborations" element={<Collaborations />} />
+      <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
+      <Route path="/textbook-finder" element={<TextbookFinder />} />
+      <Route path="/test" element={<TestPage />} />
+      <Route path="/confirm-email" element={<EmailConfirmation />} />
+      <Route path="/reset-password" element={<PasswordReset />} />
 
-        {/* Study Sets */}
-        <Route path="/create" element={<CreateStudySet />} />
-        <Route path="/sets/:setId" element={<StudySetDetail />} />
-        <Route path="/sets/:setId/edit" element={<EditSet />} />
-        <Route path="/sets/:setId/study" element={<StudyMode />} />
+      {/* Study Sets */}
+      <Route path="/create" element={<CreateStudySet />} />
+      <Route path="/sets/:setId" element={<StudySetDetail />} />
+      <Route path="/sets/:setId/edit" element={<EditSet />} />
+      <Route path="/sets/:setId/study" element={<StudyMode />} />
 
-        {/* Notes */}
-        <Route path="/notes" element={<NotesIndex />} />
-        <Route path="/create-note" element={<CreateNote />} />
-        <Route path="/notes/:noteId/edit" element={<EditNote />} />
+      {/* Notes */}
+      <Route path="/notes" element={<NotesIndex />} />
+      <Route path="/create-note" element={<CreateNote />} />
+      <Route path="/notes/:noteId/edit" element={<EditNote />} />
 
-        {/* Study Set Groups */}
-        <Route path="/groups" element={<GroupsIndex />} />
-        <Route path="/groups/create" element={<CreateGroup />} />
-        <Route path="/groups/:groupId" element={<GroupDetail />} />
-        <Route path="/groups/:groupId/edit" element={<EditGroup />} />
+      {/* Study Set Groups */}
+      <Route path="/groups" element={<GroupsIndex />} />
+      <Route path="/groups/create" element={<CreateGroup />} />
+      <Route path="/groups/:groupId" element={<GroupDetail />} />
+      <Route path="/groups/:groupId/edit" element={<EditGroup />} />
 
-        {/* Exams */}
-        <Route path="/exams" element={<ExamsIndex />} />
-        <Route path="/generate-exam" element={<GenerateExam />} />
-        <Route path="/past-exams" element={<PastExams />} />
-        <Route path="/exams/:examId" element={<TakeExam />} />
+      {/* Exams */}
+      <Route path="/exams" element={<ExamsIndex />} />
+      <Route path="/generate-exam" element={<GenerateExam />} />
+      <Route path="/past-exams" element={<PastExams />} />
+      <Route path="/exams/:examId" element={<TakeExam />} />
 
-        {/* Essays */}
-        <Route path="/essays" element={<EssayIndex />} />
-        <Route path="/generate-essay-questions" element={<GenerateEssayQuestions />} />
-        <Route path="/past-essay-questions" element={<PastEssayQuestions />} />
-        <Route path="/essay-practice/:questionId" element={<EssayPractice />} />
+      {/* Essays */}
+      <Route path="/essays" element={<EssayIndex />} />
+      <Route path="/generate-essay-questions" element={<GenerateEssayQuestions />} />
+      <Route path="/past-essay-questions" element={<PastEssayQuestions />} />
+      <Route path="/essay-practice/:questionId" element={<EssayPractice />} />
 
-        {/* Catch-all for 404 */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AuthLayout>
+      {/* Catch-all for 404 */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 
