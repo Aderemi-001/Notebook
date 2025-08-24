@@ -107,6 +107,22 @@
   .prose :where(p:last-child, ul:last-child, ol:last-child, h1:last-child, h2:last-child, h3:last-child, h4:last-child, h5:last-child, h6:last-child):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
     margin-bottom: 0;
   }
+
+  /* Ensure list styles are visible within prose */
+  .prose ul,
+  .prose ol {
+    list-style-position: outside;
+    padding-left: 1.5em; /* Adjust as needed */
+  }
+
+  .prose ul li::marker {
+    content: '• '; /* Explicit bullet for ul */
+    color: var(--foreground); /* Ensure marker color matches text */
+  }
+
+  .prose ol li::marker {
+    color: var(--foreground); /* Ensure marker color matches text */
+  }
 }
 
 /* Custom scrollbar styling */
