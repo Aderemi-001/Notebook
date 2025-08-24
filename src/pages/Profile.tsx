@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowLeft, LogOut, Menu, Settings as SettingsIcon, BarChart2 } from 'lucide-react';
+import { ArrowLeft, LogOut, Menu, Settings as SettingsIcon, BarChart2, Trash2, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
@@ -19,7 +19,18 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useEffect } from 'react'; // Explicitly import useEffect
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useEffect, useState } from 'react'; // Explicitly import useEffect and useState
 
 const profileSchema = z.object({
   display_name: z.string().min(1, 'Display name is required').max(50, 'Display name cannot exceed 50 characters'),
@@ -59,6 +70,7 @@ const fetchUserProfile = async (): Promise<UserProfile | null> => {
 const Profile = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -122,6 +134,35 @@ const Profile = () => {
       dismissToast(toastId);
       showError(err.message || 'Failed to sign out.');
       console.error('Sign out error:', err);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    const toastId = showLoading('Deleting account...');
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('User not authenticated.');
+      }
+
+      // Delete the user from auth.users table
+      const { error } = await supabase.rpc('delete_user_and_data'); // Using an RPC for full data deletion
+
+      if (error) {
+        throw error;
+      }
+
+      dismissToast(toastId);
+      showSuccess('Your account and all associated data have been deleted.');
+      queryClient.clear(); // Clear all cached data
+      navigate('/login');
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message || 'Failed to delete account.');
+      console.error('Account deletion error:', err);
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -213,6 +254,67 @@ const Profile = () => {
               </Button>
             </Link>
           </div>
+        </CardContent>
+      </NotebookCard>
+
+      <NotebookCard className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardDescription>
+            Irreversible actions that will affect your account and data.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="w-full" disabled={isDeletingAccount}>
+                {isDeletingAccount ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="mr-2 h-4 w-4" />
+                )}
+                Delete My Account
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your account,
+                  all your study sets, notes, progress, and any other associated data.
+                  Please type "DELETE" to confirm.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="grid gap-4 py-4">
+                <Input
+                  id="confirm-delete-input"
+                  placeholder="Type DELETE to confirm"
+                  onChange={(e) => {
+                    const confirmButton = document.getElementById('confirm-delete-button') as HTMLButtonElement;
+                    if (confirmButton) {
+                      confirmButton.disabled = e.target.value !== 'DELETE';
+                    }
+                  }}
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  id="confirm-delete-button"
+                  onClick={handleDeleteAccount}
+                  disabled={true} // Disabled by default, enabled by typing "DELETE"
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {isDeletingAccount ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="mr-2 h-4 w-4" />
+                  )}
+                  Confirm Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </NotebookCard>
     </div>
