@@ -72,7 +72,11 @@ const Login = () => {
       dismissToast(toastId);
     } catch (error: any) {
       dismissToast(toastId);
-      showError(error.message || 'An unexpected error occurred.');
+      let userFriendlyMessage = error.message || 'An unexpected error occurred.';
+      if (error.message.includes('Email rate limit exceeded')) {
+        userFriendlyMessage = "Too many requests. Please wait a few minutes before trying again.";
+      }
+      showError(userFriendlyMessage);
       console.error('Auth error:', error);
     }
   };
@@ -94,7 +98,11 @@ const Login = () => {
       dismissToast(toastId);
     } catch (error: any) {
       dismissToast(toastId);
-      showError(error.message || 'Failed to send reset email.');
+      let userFriendlyMessage = error.message || 'Failed to send reset email.';
+      if (error.message.includes('Email rate limit exceeded')) {
+        userFriendlyMessage = "Too many password reset requests. Please wait a few minutes before trying again.";
+      }
+      showError(userFriendlyMessage);
       console.error('Password reset error:', error);
     }
   };
