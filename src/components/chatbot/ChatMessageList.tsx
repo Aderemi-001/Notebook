@@ -2,8 +2,8 @@ import * as React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Bot, User2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ChatMessage } from './types';
 import { Button } from '@/components/ui/button';
+import { ChatMessage } from './types'; // Import ChatMessage from types.ts
 
 interface ChatMessageListProps {
   messages: ChatMessage[];
@@ -32,6 +32,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, isSending, 
                 )}
               >
                 {msg.sender === 'bot' && <Bot className="h-6 w-6 text-primary flex-shrink-0" />}
+                {msg.sender === 'system' && <Bot className="h-6 w-6 text-gray-500 flex-shrink-0" />} {/* Added system icon */}
                 <div
                   className={cn(
                     "max-w-[70%] p-3 rounded-lg shadow-sm",

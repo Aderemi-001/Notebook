@@ -1,9 +1,8 @@
 import * as React from 'react';
-// Removed unused imports: import { parseAndRenderLinks, getDynamicSuggestions } from './utils';
 
 export interface ChatMessage {
   id: number;
-  sender: 'user' | 'bot';
+  sender: 'user' | 'bot' | 'system'; // Added 'system' to the sender types
   text: string | React.ReactNode;
   timestamp: Date;
   feedbackGiven?: 'up' | 'down' | null;

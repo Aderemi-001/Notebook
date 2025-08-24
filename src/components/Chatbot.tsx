@@ -5,13 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ChatMessageList from '@/components/chatbot/ChatMessageList';
 import { useAuth } from '@/hooks/useAuth';
-
-interface ChatMessage {
-  id: number; // Changed from string to number
-  text: string;
-  sender: 'user' | 'ai' | 'system';
-  timestamp: Date;
-}
+import { ChatMessage } from '@/components/chatbot/types'; // Import ChatMessage from types.ts
 
 const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,7 +26,7 @@ const Chatbot: React.FC = () => {
     if (input.trim() === '' || isLoading) return;
 
     const userMessage: ChatMessage = {
-      id: Date.now(), // Assign Date.now() directly as a number
+      id: Date.now(),
       text: input,
       sender: 'user',
       timestamp: new Date(),
@@ -44,7 +38,7 @@ const Chatbot: React.FC = () => {
 
     if (!user) {
       const loginPromptMessage: ChatMessage = {
-        id: Date.now() + 1, // Assign Date.now() directly as a number
+        id: Date.now() + 1,
         text: "It looks like you're not logged in. Please log in to use the chatbot and get personalized assistance!",
         sender: 'system',
         timestamp: new Date(),
@@ -56,9 +50,9 @@ const Chatbot: React.FC = () => {
 
     try {
       const aiResponse: ChatMessage = {
-        id: Date.now() + 1, // Assign Date.now() directly as a number
+        id: Date.now() + 1,
         text: `Hello ${user.email}! You asked: "${userMessage.text}". I'm still under development, but I'm learning!`,
-        sender: 'ai',
+        sender: 'bot',
         timestamp: new Date(),
       };
       setTimeout(() => {
@@ -68,9 +62,9 @@ const Chatbot: React.FC = () => {
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: ChatMessage = {
-        id: Date.now() + 1, // Assign Date.now() directly as a number
+        id: Date.now() + 1,
         text: 'Oops! Something went wrong. Please try again.',
-        sender: 'ai',
+        sender: 'bot',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
