@@ -16,6 +16,7 @@ import {
   GraduationCap,
   PenTool,
   BookText,
+  Globe, // Added Globe icon for Explore Public Sets
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -55,6 +56,7 @@ export const Header: React.FC = () => {
     { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> },
     { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> },
     { name: "Textbook Finder", href: "/textbook-finder", icon: <BookText className="mr-2 h-4 w-4" /> },
+    { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> }, // Added back
     { name: "Statistics", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
     { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
   ];
@@ -91,6 +93,9 @@ export const Header: React.FC = () => {
               </Button>
               <Button variant="ghost" asChild>
                 <Link to="/textbook-finder">Textbook Finder</Link>
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link to="/explore-public-sets">Explore Public Sets</Link> {/* Added back */}
               </Button>
 
               {/* User Dropdown - now correctly inside the desktop-only div */}
