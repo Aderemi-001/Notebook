@@ -122,6 +122,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
               variant="outline"
               size="sm"
               className={`h-8 px-2 rounded-lg ${editor.isActive('highlight') ? 'is-active' : ''}`}
+              disabled={!editor.can().toggleHighlight()} // Added disabled prop
             >
               <Highlighter className="h-4 w-4" />
             </Button>
@@ -132,6 +133,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
                 key={color.name}
                 onClick={() => editor.chain().focus().toggleHighlight({ color: color.value }).run()}
                 className="flex items-center cursor-pointer"
+                disabled={!editor.can().toggleHighlight({ color: color.value })} // Added disabled prop
               >
                 <span
                   className="w-4 h-4 rounded-full mr-2 border"
@@ -143,6 +145,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
             <DropdownMenuItem
               onClick={() => editor.chain().focus().unsetHighlight().run()}
               className="flex items-center cursor-pointer"
+              disabled={!editor.can().unsetHighlight()} // Added disabled prop
             >
               <Eraser className="h-4 w-4 mr-2" /> Clear Highlight
             </DropdownMenuItem>
