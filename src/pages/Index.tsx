@@ -214,6 +214,11 @@ const Index = () => {
               <PlusCircle className="mr-2 h-4 w-4" /> Create Set
             </Link>
           </Button>
+          <Button asChild variant="outline">
+            <Link to="/explore-public-sets" className="flex items-center">
+              <Globe className="mr-2 h-4 w-4" /> Explore Public Sets
+            </Link>
+          </Button>
         </div>
       </div>
 
