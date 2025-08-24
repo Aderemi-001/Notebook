@@ -121,7 +121,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
             <Button
               variant="outline"
               size="sm"
-              className={`h-8 px-2 rounded-lg ${editor.isActive('highlight') ? 'is-active' : ''}`}
+              className="h-8 px-2 rounded-lg"
             >
               <Highlighter className="h-4 w-4" />
             </Button>
@@ -130,7 +130,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
             {highlightColors.map((color) => (
               <DropdownMenuItem
                 key={color.name}
-                onClick={() => editor.chain().focus().toggleHighlight({ color: color.value }).run()}
+                onClick={() => editor.chain().focus().setHighlight({ color: color.value }).run()}
                 className="flex items-center cursor-pointer"
               >
                 <span
