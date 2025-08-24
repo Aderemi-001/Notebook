@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CalendarDays, LayoutDashboard, Menu, ArrowLeft, BookOpen } from 'lucide-react'; // Removed Loader2, Added BookOpen
+import { CalendarDays, LayoutDashboard, Menu, ArrowLeft, BookOpen, NotebookPen, GraduationCap, PenTool } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,8 +17,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { format, isSameDay, subDays } from 'date-fns';
 import { Calendar } from "@/components/ui/calendar";
-// Removed unused Popover imports
-// Removed unused cn import
 
 interface StudyStatistics {
   total_cards: number;
@@ -29,6 +27,14 @@ interface StudyStatistics {
 
 interface StudyDay {
   study_date: string;
+}
+
+interface DailySummaryStatistics {
+  cards_reviewed: number;
+  cards_mastered_today: number;
+  notes_created_today: number;
+  exams_taken_today: number;
+  essay_responses_today: number;
 }
 
 const fetchStudyStatistics = async (userId: string): Promise<StudyStatistics> => {
@@ -49,6 +55,15 @@ const fetchStudyDays = async (userId: string): Promise<StudyDay[]> => {
   return data;
 };
 
+const fetchDailySummaryStatistics = async (userId: string, date: Date): Promise<DailySummaryStatistics> => {
+  const { data, error } = await supabase.rpc('get_daily_summary_statistics', { p_user_id: userId, p_date: format(date, 'yyyy-MM-dd') });
+  if (error) {
+    console.error("Error fetching daily summary statistics:", error);
+    throw error;
+  }
+  return data[0];
+};
+
 const Statistics: React.FC = () => {
   const { user, loading: isLoadingAuth } = useAuth();
   const [viewMode, setViewMode] = useState<'allTime' | 'studyDays'>('allTime');
@@ -64,6 +79,12 @@ const Statistics: React.FC = () => {
     queryKey: ['studyDays', user?.id],
     queryFn: () => fetchStudyDays(user!.id),
     enabled: !!user && !isLoadingAuth,
+  });
+
+  const { data: dailySummary, isLoading: isLoadingDailySummary, isError: isErrorDailySummary, error: dailySummaryError } = useQuery<DailySummaryStatistics, Error>({
+    queryKey: ['dailySummary', user?.id, selectedDate],
+    queryFn: () => fetchDailySummaryStatistics(user!.id, selectedDate!),
+    enabled: !!user && !isLoadingAuth && !!selectedDate && viewMode === 'studyDays',
   });
 
   useEffect(() => {
@@ -155,7 +176,7 @@ const Statistics: React.FC = () => {
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline"> {/* Removed size="icon" */}
+              <Button variant="outline">
                 <Menu className="mr-2 h-4 w-4" /> Display Options
               </Button>
             </DropdownMenuTrigger>
@@ -275,16 +296,44 @@ const Statistics: React.FC = () => {
               <CardHeader>
                 <CardTitle>Daily Summary</CardTitle>
                 <CardDescription>
-                  {selectedDate ? `Statistics for ${format(selectedDate, 'PPP')}` : "Select a day to see its summary."}
+                  {selectedDate ? `Activity for ${format(selectedDate, 'PPP')}` : "Select a day to see its summary."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {selectedDate ? (
-                  <p>
-                    {/* Placeholder for daily summary. Actual data fetching for a specific day would go here. */}
-                    Detailed statistics for {format(selectedDate, 'PPP')} would be displayed here.
-                    This feature is under development.
-                  </p>
+                  isLoadingDailySummary ? (
+                    <div className="space-y-4">
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-6 w-1/2" />
+                      <Skeleton className="h-6 w-full" />
+                      <Skeleton className="h-6 w-2/3" />
+                    </div>
+                  ) : isErrorDailySummary ? (
+                    <p className="text-red-500">Error loading daily summary: {dailySummaryError?.message}</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <CalendarDays className="h-5 w-5 text-muted-foreground" />
+                        <p className="text-lg font-medium">Cards Reviewed: {dailySummary?.cards_reviewed ?? 0}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <GraduationCap className="h-5 w-5 text-muted-foreground" />
+                        <p className="text-lg font-medium">Cards Mastered: {dailySummary?.cards_mastered_today ?? 0}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <NotebookPen className="h-5 w-5 text-muted-foreground" />
+                        <p className="text-lg font-medium">Notes Created: {dailySummary?.notes_created_today ?? 0}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <BookOpen className="h-5 w-5 text-muted-foreground" />
+                        <p className="text-lg font-medium">Exams Taken: {dailySummary?.exams_taken_today ?? 0}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <PenTool className="h-5 w-5 text-muted-foreground" />
+                        <p className="text-lg font-medium">Essay Responses: {dailySummary?.essay_responses_today ?? 0}</p>
+                      </div>
+                    </div>
+                  )
                 ) : (
                   <p className="text-muted-foreground">No day selected.</p>
                 )}
@@ -303,6 +352,7 @@ const Statistics: React.FC = () => {
           <li><span className="font-medium">Total Cards:</span> The cumulative count of all flashcards across all your study sets.</li>
           <li><span className="font-medium">Mastered Cards:</span> Cards that you have successfully reviewed multiple times and are considered "mastered" by the spaced repetition algorithm.</li>
           <li><span className="font-medium">Current Streak:</span> The number of consecutive days you have engaged in study activity. Keep it going!</li>
+          <li><span className="font-medium">Daily Summary:</span> Provides a breakdown of your activity on a specific day, including cards reviewed, cards mastered, notes created, exams taken, and essay responses submitted.</li>
         </ul>
       </div>
     </div>
