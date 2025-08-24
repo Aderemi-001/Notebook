@@ -47,7 +47,6 @@ const Login = () => {
           password: values.password,
         });
         if (error) {
-          // Directly throw the Supabase error message
           throw new Error(error.message);
         }
         showSuccess('Signed in successfully!');
@@ -57,22 +56,20 @@ const Login = () => {
           password: values.password,
           options: {
             data: {
-              display_name: values.email.split('@')[0], // Default display name
+              name: values.email.split('@')[0], // Changed from 'display_name' to 'name'
             },
-            emailRedirectTo: `${window.location.origin}/login`, // Redirect to login page after email confirmation
+            emailRedirectTo: `${window.location.origin}/login`,
           },
         });
         if (error) {
-          // Directly throw the Supabase error message
           throw new Error(error.message);
         }
         showSuccess('Account created! Please check your email to confirm.');
-        setIsLogin(true); // Switch back to login after signup
+        setIsLogin(true);
       }
       dismissToast(toastId);
     } catch (error: any) {
       dismissToast(toastId);
-      // Display the raw error message directly
       showError(error.message || 'An unexpected error occurred.');
       console.error('Auth error:', error);
     }
@@ -88,17 +85,15 @@ const Login = () => {
     const toastId = showLoading('Sending password reset email...');
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login?reset=true`, // Redirect back to login page with reset flag
+        redirectTo: `${window.location.origin}/login?reset=true`,
       });
       if (error) {
-        // Directly throw the Supabase error message
         throw new Error(error.message);
       }
       showSuccess('Password reset email sent! Check your inbox.');
       dismissToast(toastId);
     } catch (error: any) {
       dismissToast(toastId);
-      // Display the raw error message directly
       showError(error.message || 'Failed to send reset email.');
       console.error('Password reset error:', error);
     }
