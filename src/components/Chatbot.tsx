@@ -1,211 +1,123 @@
-import * as React from 'react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { MessageSquareText } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { showError } from '@/utils/toast';
-import { useLocation } from 'react-router-dom';
+import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import ChatMessageList from '@/components/chatbot/ChatMessageList';
+import { useAuth } from '@/hooks/useAuth';
 
-// Import modular components and types/utils
-import ChatHeader from './chatbot/ChatHeader';
-import ChatMessageList from './chatbot/ChatMessageList';
-import ChatInput from './chatbot/ChatInput';
-import SuggestedQuestions from './chatbot/SuggestedQuestions';
-import { ChatMessage } from './chatbot/types';
-import { parseAndRenderLinks, getDynamicSuggestions } from './chatbot/utils';
-
-const INACTIVITY_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
-const LOCAL_STORAGE_KEY = 'chatbotMessages';
+interface ChatMessage {
+  id: number; // Changed from string to number
+  text: string;
+  sender: 'user' | 'ai' | 'system';
+  timestamp: Date;
+}
 
 const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    if (typeof window !== 'undefined') {
-      const savedMessages = localStorage.getItem(LOCAL_STORAGE_KEY);
-      return savedMessages ? JSON.parse(savedMessages).map((msg: any) => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp),
-      })) : [];
-    }
-    return [];
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
-  const [isSending, setIsSending] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const location = useLocation();
-
-  const CHATBOT_API_URL = `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/chatbot-qa`;
+  const { user, loading: isLoadingAuth } = useAuth();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const resetInactivityTimer = useCallback(() => {
-    if (inactivityTimerRef.current) {
-      clearTimeout(inactivityTimerRef.current);
-    }
-    inactivityTimerRef.current = setTimeout(() => {
-      setMessages([]);
-      setInput('');
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-      console.log("Chatbot reset due to inactivity.");
-    }, INACTIVITY_TIMEOUT_MS);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      resetInactivityTimer();
-    } else {
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
-      }
-    }
-    return () => {
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
-      }
-    };
-  }, [isOpen, resetInactivityTimer]);
-
   useEffect(scrollToBottom, [messages]);
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(messages));
-    } else {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-    }
-  }, [messages]);
-
-  const handleSendMessage = async () => {
-    if (!input.trim() || isSending) return;
-
-    resetInactivityTimer();
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (input.trim() === '' || isLoading) return;
 
     const userMessage: ChatMessage = {
-      id: messages.length + 1,
-      sender: 'user',
+      id: Date.now(), // Assign Date.now() directly as a number
       text: input,
+      sender: 'user',
       timestamp: new Date(),
     };
-    setMessages((prev: ChatMessage[]) => [...prev, userMessage]);
+
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
-    setIsSending(true);
+    setIsLoading(true);
+
+    if (!user) {
+      const loginPromptMessage: ChatMessage = {
+        id: Date.now() + 1, // Assign Date.now() directly as a number
+        text: "It looks like you're not logged in. Please log in to use the chatbot and get personalized assistance!",
+        sender: 'system',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, loginPromptMessage]);
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("User not authenticated. Please log in to use the chatbot.");
-      }
-
-      const response = await fetch(CHATBOT_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ user_query: input }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || result.error) {
-        throw new Error(result?.error || "Failed to get response from chatbot.");
-      }
-
-      const botMessage: ChatMessage = {
-        id: messages.length + 2,
-        sender: 'bot',
-        text: parseAndRenderLinks(result.chatbot_response),
+      const aiResponse: ChatMessage = {
+        id: Date.now() + 1, // Assign Date.now() directly as a number
+        text: `Hello ${user.email}! You asked: "${userMessage.text}". I'm still under development, but I'm learning!`,
+        sender: 'ai',
         timestamp: new Date(),
-        feedbackGiven: null,
       };
-      setMessages((prev: ChatMessage[]) => [...prev, botMessage]);
-    } catch (err: any) {
-      showError(err.message || "An unexpected error occurred with the chatbot.");
-      console.error("Chatbot error:", err);
+      setTimeout(() => {
+        setMessages((prev) => [...prev, aiResponse]);
+        setIsLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error sending message:', error);
       const errorMessage: ChatMessage = {
-        id: messages.length + 2,
-        sender: 'bot',
-        text: "Sorry, I'm having trouble connecting right now. Please try again later.",
+        id: Date.now() + 1, // Assign Date.now() directly as a number
+        text: 'Oops! Something went wrong. Please try again.',
+        sender: 'ai',
         timestamp: new Date(),
-        feedbackGiven: null,
       };
-      setMessages((prev: ChatMessage[]) => [...prev, errorMessage]);
-    } finally {
-      setIsSending(false);
+      setMessages((prev) => [...prev, errorMessage]);
+      setIsLoading(false);
     }
   };
 
-  const handleSuggestedQuestionClick = (question: string) => {
-    resetInactivityTimer();
-    setInput(question);
-    setTimeout(() => {
-      handleSendMessage();
-    }, 0);
-  };
-
-  const handleClearChat = () => {
-    setMessages([]);
-    setInput('');
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-    resetInactivityTimer();
-  };
-
-  const handleFeedback = (messageId: number, feedback: 'up' | 'down') => {
-    setMessages(prevMessages =>
-      prevMessages.map((msg: ChatMessage) =>
-        msg.id === messageId ? { ...msg, feedbackGiven: feedback } : msg
-      )
-    );
-    console.log(`Feedback for message ${messageId}: ${feedback}`);
-    // Here you could send this feedback to a backend service
-  };
-
-  const currentSuggestions = getDynamicSuggestions(location.pathname);
-  const showSuggestions = messages.length === 0 && !isSending && !input.trim();
-
   return (
-    <Sheet open={isOpen} onOpenChange={(open: boolean) => {
-      setIsOpen(open);
-      resetInactivityTimer();
-    }}>
-      <SheetTrigger asChild>
+    <>
+      {!isOpen && (
         <Button
-          variant="default"
-          size="icon"
-          className="fixed bottom-4 right-4 rounded-full h-14 w-14 shadow-lg z-50"
-          aria-label="Open Chatbot"
-          onClick={resetInactivityTimer}
+          className="fixed bottom-4 right-4 rounded-full p-3 shadow-lg"
+          onClick={() => setIsOpen(true)}
+          aria-label="Open chatbot"
         >
-          <MessageSquareText className="h-6 w-6" />
+          <MessageSquare className="h-6 w-6" />
         </Button>
-      </SheetTrigger>
-      <SheetContent className="flex flex-col w-full sm:max-w-md">
-        <ChatHeader onClearChat={handleClearChat} />
-        <ChatMessageList
-          messages={messages}
-          isSending={isSending}
-          messagesEndRef={messagesEndRef}
-          onFeedback={handleFeedback}
-        />
-        {showSuggestions && (
-          <SuggestedQuestions
-            suggestions={currentSuggestions}
-            onQuestionClick={handleSuggestedQuestionClick}
-          />
-        )}
-        <ChatInput
-          input={input}
-          setInput={setInput}
-          onSendMessage={handleSendMessage}
-          isSending={isSending}
-          resetInactivityTimer={resetInactivityTimer}
-        />
-      </SheetContent>
-    </Sheet>
+      )}
+
+      {isOpen && (
+        <div className="fixed bottom-4 right-4 w-80 h-[500px] bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col border border-gray-200 dark:border-gray-700 z-50">
+          <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold">How-To Chatbot</h2>
+            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} aria-label="Close chatbot">
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          <ScrollArea className="flex-grow p-4">
+            <ChatMessageList messages={messages} />
+            <div ref={messagesEndRef} />
+          </ScrollArea>
+          <form onSubmit={handleSendMessage} className="flex p-4 border-t border-gray-200 dark:border-gray-700">
+            <Input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={user ? "Ask me anything..." : "Log in to chat..."}
+              className="flex-grow mr-2"
+              disabled={isLoading || isLoadingAuth}
+            />
+            <Button type="submit" disabled={isLoading || isLoadingAuth}>
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </form>
+        </div>
+      )}
+    </>
   );
 };
 
