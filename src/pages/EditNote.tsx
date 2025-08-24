@@ -14,7 +14,7 @@ import Image from '@tiptap/extension-image';
 import LinkExtension from '@tiptap/extension-link';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from "lowlight";
-import { RichTextEditorToolbar } from '@/components/RichTextEditorToolbar';
+// Removed: import { RichTextEditorToolbar } from '@/components/RichTextEditorToolbar';
 import { ArrowLeft, Save, Loader2, Trash2, PenTool, FileText } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -36,7 +36,8 @@ import NoteFormFields from '@/components/notes/NoteFormFields';
 import NoteDrawingSection from '@/components/notes/NoteDrawingSection';
 import { useQueryClient } from '@tanstack/react-query';
 // Removed: import { Separator } from '@/components/ui/separator';
-import TextEditorContent from '@/components/TextEditorContent'; // Import TextEditorContent
+// Removed: import TextEditorContent from '@/components/TextEditorContent'; // Import TextEditorContent
+import { RichTextEditor } from '@/components/RichTextEditor'; // Import RichTextEditor
 
 const lowlight = createLowlight(common);
 
@@ -318,12 +319,11 @@ const EditNote: React.FC = () => {
             </CardHeader>
             <CardContent className="relative min-h-[300px] border rounded-md">
               <div className="absolute inset-0 flex flex-col">
-                <RichTextEditorToolbar editor={editor} />
-                <TextEditorContent
-                  editor={editor}
-                  editable={!isDrawingMode}
-                  isDrawingMode={isDrawingMode}
-                  className="flex-grow"
+                <RichTextEditor
+                  editorRef={editorRef}
+                  content={form.watch('content') || ''}
+                  onContentChange={(newContent: string) => form.setValue('content', newContent, { shouldDirty: true })}
+                  editable={!isDrawingMode} // Pass editable prop
                 />
               </div>
               <div className="absolute inset-0">
