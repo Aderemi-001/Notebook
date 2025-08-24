@@ -56,7 +56,7 @@ export const Header: React.FC = () => {
     { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> },
     { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> },
     { name: "Textbook Finder", href: "/textbook-finder", icon: <BookText className="mr-2 h-4 w-4" /> },
-    { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> }, // Added back
+    { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> },
     { name: "Statistics", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
     { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
   ];
@@ -95,7 +95,7 @@ export const Header: React.FC = () => {
                 <Link to="/textbook-finder">Textbook Finder</Link>
               </Button>
               <Button variant="ghost" asChild>
-                <Link to="/explore-public-sets">Explore Public Sets</Link> {/* Added back */}
+                <Link to="/explore-public-sets">Explore Public Sets</Link>
               </Button>
 
               {/* User Dropdown - now correctly inside the desktop-only div */}
@@ -108,7 +108,7 @@ export const Header: React.FC = () => {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 z-[999]" align="end" forceMount> {/* Added z-index */}
+                <DropdownMenuContent className="w-56 z-[999]" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{user.user_metadata?.display_name || user.email}</p>
@@ -166,7 +166,7 @@ export const Header: React.FC = () => {
                     {navItems.map((item) => (
                       <Button key={item.name} variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                         <Link to={item.href}>
-                          <span className="flex items-center"> {/* Wrapped children in a span */}
+                          <span className="flex items-center">
                             {item.icon}
                             {item.name}
                           </span>
@@ -177,7 +177,7 @@ export const Header: React.FC = () => {
                     {/* Profile, Settings, Logout in Mobile Menu */}
                     <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                       <Link to="/profile">
-                        <span className="flex items-center"> {/* Wrapped children in a span */}
+                        <span className="flex items-center">
                           <User className="mr-2 h-4 w-4" />
                           <span>Profile</span>
                         </span>
@@ -185,14 +185,14 @@ export const Header: React.FC = () => {
                     </Button>
                     <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                       <Link to="/settings">
-                        <span className="flex items-center"> {/* Wrapped children in a span */}
+                        <span className="flex items-center">
                           <Settings className="mr-2 h-4 w-4" />
                           <span>Settings</span>
                         </span>
                       </Link>
                     </Button>
                     <Button variant="ghost" onClick={() => { handleLogout(); setIsSheetOpen(false); }} className="justify-start text-red-500 hover:text-red-600">
-                      <span className="flex items-center"> {/* Wrapped children in a span */}
+                      <span className="flex items-center">
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Log out</span>
                       </span>
