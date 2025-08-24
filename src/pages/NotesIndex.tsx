@@ -46,8 +46,6 @@ interface Note {
   id: string;
   title: string;
   content: JSONContent;
-  // Removed: extracted_content_ai: string | null;
-  // Removed: drawing_url: string | null;
   created_at: string;
   updated_at: string;
   study_set_id: string | null;
@@ -128,7 +126,6 @@ const NotesIndex: React.FC = () => {
   const handleDeleteNote = async (noteId: string) => {
     const toastId = showLoading("Deleting note...");
     try {
-      // No drawing_url to delete from storage anymore
       const { error } = await supabase
         .from('notes')
         .delete()

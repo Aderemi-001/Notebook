@@ -141,7 +141,6 @@ const EditNote: React.FC = () => {
         title: values.title,
         content: values.content,
         study_set_id: values.study_set_id,
-        // Removed: drawing_url: null,
         updated_at: new Date().toISOString(), // Trigger will handle this, but explicit is fine
       })
       .eq('id', noteId)
@@ -165,7 +164,6 @@ const EditNote: React.FC = () => {
     setIsDeleting(true);
 
     try {
-      // No drawing to delete from storage anymore
       const { error } = await supabase
         .from('notes')
         .delete()
@@ -263,7 +261,6 @@ const EditNote: React.FC = () => {
                 editorRef={editorRef}
                 content={form.watch('content') || ''}
                 onContentChange={(newContent: string) => form.setValue('content', newContent, { shouldDirty: true })}
-                // Removed: editable={true}
               />
             </CardContent>
           </Card>

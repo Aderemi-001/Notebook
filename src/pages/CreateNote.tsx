@@ -97,7 +97,6 @@ const CreateNote: React.FC = () => {
         title: values.title,
         content: values.content,
         study_set_id: values.study_set_id,
-        // Removed: drawing_url: null,
       })
       .select();
 
@@ -145,7 +144,6 @@ const CreateNote: React.FC = () => {
                 editorRef={editorRef}
                 content={form.watch('content') || ''}
                 onContentChange={(newContent: string) => form.setValue('content', newContent, { shouldDirty: true })}
-                // Removed: editable={true}
               />
             </CardContent>
           </Card>
