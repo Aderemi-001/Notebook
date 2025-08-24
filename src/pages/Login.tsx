@@ -47,6 +47,10 @@ const Login = () => {
           password: values.password,
         });
         if (error) {
+          // Provide a more specific error message for login failures
+          if (error.message.includes('Invalid login credentials') || error.message.includes('Email not confirmed')) {
+            throw new Error("Invalid email or password. If you don't have an account, please sign up.");
+          }
           throw new Error(error.message);
         }
         showSuccess('Signed in successfully!');
