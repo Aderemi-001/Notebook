@@ -13,6 +13,13 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Settings: React.FC = () => {
   const { preferences, isLoading, isError, error, updatePreferences } = useUserPreferences();
@@ -24,7 +31,10 @@ const Settings: React.FC = () => {
   const [defaultExamQuestionTypes, setDefaultExamQuestionTypes] = React.useState<string[]>(['multiple_choice', 'short_answer']);
   const [dailyCardsGoal, setDailyCardsGoal] = React.useState<number>(20);
   const [enableReviewReminders, setEnableReviewReminders] = React.useState<boolean>(true);
-  const [defaultStudySessionCardsCount, setDefaultStudySessionCardsCount] = React.useState<number>(20); // New state
+  const [defaultStudySessionCardsCount, setDefaultStudySessionCardsCount] = React.useState<number>(20);
+  const [defaultCardSortOrder, setDefaultCardSortOrder] = React.useState<'next_review_at_asc' | 'alphabetical_term_asc' | 'random' | 'created_at_asc'>('next_review_at_asc'); // New state
+  const [hideMasteredFromDailyReview, setHideMasteredFromDailyReview] = React.useState<boolean>(false); // New state
+  const [fontSizePreference, setFontSizePreference] = React.useState<'small' | 'medium' | 'large'>('medium'); // New state
 
   useEffect(() => {
     if (preferences) {
@@ -34,9 +44,18 @@ const Settings: React.FC = () => {
       setDefaultExamQuestionTypes(preferences.default_exam_question_types || []);
       setDailyCardsGoal(preferences.daily_cards_goal);
       setEnableReviewReminders(preferences.enable_review_reminders);
-      setDefaultStudySessionCardsCount(preferences.default_study_session_cards_count); // Set new state
+      setDefaultStudySessionCardsCount(preferences.default_study_session_cards_count);
+      setDefaultCardSortOrder(preferences.default_card_sort_order); // Set new state
+      setHideMasteredFromDailyReview(preferences.hide_mastered_from_daily_review); // Set new state
+      setFontSizePreference(preferences.font_size_preference); // Set new state
     }
   }, [preferences]);
+
+  // Apply font size class to HTML element
+  useEffect(() => {
+    document.documentElement.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
+    document.documentElement.classList.add(`font-size-${fontSizePreference}`);
+  }, [fontSizePreference]);
 
   const handleFlashcardSideChange = (value: 'term' | 'definition') => {
     setDefaultFlashcardSide(value);
@@ -77,6 +96,21 @@ const Settings: React.FC = () => {
     const value = parseInt(e.target.value) || 0;
     setDefaultStudySessionCardsCount(value);
     updatePreferences({ default_study_session_cards_count: value });
+  };
+
+  const handleDefaultCardSortOrderChange = (value: 'next_review_at_asc' | 'alphabetical_term_asc' | 'random' | 'created_at_asc') => {
+    setDefaultCardSortOrder(value);
+    updatePreferences({ default_card_sort_order: value });
+  };
+
+  const handleHideMasteredFromDailyReviewChange = (checked: boolean) => {
+    setHideMasteredFromDailyReview(checked);
+    updatePreferences({ hide_mastered_from_daily_review: checked });
+  };
+
+  const handleFontSizePreferenceChange = (value: 'small' | 'medium' | 'large') => {
+    setFontSizePreference(value);
+    updatePreferences({ font_size_preference: value });
   };
 
   if (isLoading) {
@@ -125,8 +159,24 @@ const Settings: React.FC = () => {
           <CardTitle>Appearance</CardTitle>
           <CardDescription>Customize the look and feel of the application.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <ThemeToggle />
+          <div>
+            <Label htmlFor="font-size-preference">Font Size</Label>
+            <Select onValueChange={handleFontSizePreferenceChange} value={fontSizePreference}>
+              <SelectTrigger id="font-size-preference" className="w-full">
+                <SelectValue placeholder="Select font size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="small">Small</SelectItem>
+                <SelectItem value="medium">Medium (Default)</SelectItem>
+                <SelectItem value="large">Large</SelectItem>
+              </SelectContent>
+            </Select>
+            <CardDescription className="mt-2">
+              Adjust the base font size of the application.
+            </CardDescription>
+          </div>
         </CardContent>
       </NotebookCard>
 
@@ -167,6 +217,36 @@ const Settings: React.FC = () => {
             <CardDescription className="mt-2">
               Set the default number of cards to load for a study session.
             </CardDescription>
+          </div>
+          <div>
+            <Label htmlFor="default-card-sort-order">Default Card Sorting Order</Label>
+            <Select onValueChange={handleDefaultCardSortOrderChange} value={defaultCardSortOrder}>
+              <SelectTrigger id="default-card-sort-order" className="w-full">
+                <SelectValue placeholder="Select sorting order" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="next_review_at_asc">Next Review Date (Recommended)</SelectItem>
+                <SelectItem value="alphabetical_term_asc">Alphabetical (Term)</SelectItem>
+                <SelectItem value="random">Random</SelectItem>
+                <SelectItem value="created_at_asc">Creation Date (Oldest First)</SelectItem>
+              </SelectContent>
+            </Select>
+            <CardDescription className="mt-2">
+              Choose the default order for cards in study sessions.
+            </CardDescription>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <Label className="text-base">Hide Mastered Cards from Daily Review</Label>
+              <CardDescription>
+                If enabled, cards marked as 'mastered' will not appear in your daily review queue.
+              </CardDescription>
+            </div>
+            <Switch
+              checked={hideMasteredFromDailyReview}
+              onCheckedChange={handleHideMasteredFromDailyReviewChange}
+              id="hide-mastered"
+            />
           </div>
         </CardContent>
       </NotebookCard>

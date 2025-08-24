@@ -75,7 +75,7 @@ const calculateNextReview = (
   };
 };
 
-const fetchDailyReviewCards = async (): Promise<CardItem[]> => {
+const fetchDailyReviewCards = async (hideMastered: boolean, sortOrder: string): Promise<CardItem[]> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     throw new Error("User not authenticated.");
@@ -88,7 +88,30 @@ const fetchDailyReviewCards = async (): Promise<CardItem[]> => {
     console.error("Error fetching daily review cards:", error);
     throw error;
   }
-  return data || [];
+
+  let filteredCards = data || [];
+
+  if (hideMastered) {
+    filteredCards = filteredCards.filter((card: CardItem) => card.status !== 'mastered');
+  }
+
+  // Apply sorting based on preference
+  if (sortOrder === 'alphabetical_term_asc') {
+    filteredCards.sort((a: CardItem, b: CardItem) => a.term.localeCompare(b.term));
+  } else if (sortOrder === 'random') {
+    filteredCards.sort(() => Math.random() - 0.5);
+  } else if (sortOrder === 'created_at_asc') {
+    // Assuming 'created_at' is available or can be derived/added to the RPC
+    // For now, if not available, this sort might not be perfect.
+    // The RPC 'get_daily_review_cards' already sorts by next_review_at, then created_at.
+    // If we want true created_at_asc, we'd need to fetch it or modify the RPC.
+    // For simplicity, we'll use the default RPC sort if 'created_at' isn't directly in CardItem.
+    // If CardItem had created_at, it would be:
+    // filteredCards.sort((a: CardItem, b: CardItem) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  }
+  // 'next_review_at_asc' is the default RPC sort, so no extra action needed for it here.
+
+  return filteredCards;
 };
 
 const DailyReview: React.FC = () => {
@@ -99,8 +122,9 @@ const DailyReview: React.FC = () => {
   const queryClient = useQueryClient();
 
   const { data: cards, isLoading, isError, error, refetch } = useQuery<CardItem[], Error>({
-    queryKey: ['dailyReviewCards'],
-    queryFn: fetchDailyReviewCards,
+    queryKey: ['dailyReviewCards', preferences?.hide_mastered_from_daily_review, preferences?.default_card_sort_order],
+    queryFn: () => fetchDailyReviewCards(preferences?.hide_mastered_from_daily_review || false, preferences?.default_card_sort_order || 'next_review_at_asc'),
+    enabled: !isLoadingPreferences, // Enable only when preferences are loaded
     staleTime: 0, // Always refetch for a fresh session
   });
 

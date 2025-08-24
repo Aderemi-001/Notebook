@@ -10,7 +10,10 @@ export interface UserPreferences {
   default_exam_question_types: string[];
   daily_cards_goal: number;
   enable_review_reminders: boolean;
-  default_study_session_cards_count: number; // New field
+  default_study_session_cards_count: number;
+  default_card_sort_order: 'next_review_at_asc' | 'alphabetical_term_asc' | 'random' | 'created_at_asc'; // New field
+  hide_mastered_from_daily_review: boolean; // New field
+  font_size_preference: 'small' | 'medium' | 'large'; // New field
 }
 
 const fetchUserPreferences = async (): Promise<UserPreferences | null> => {

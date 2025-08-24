@@ -20,6 +20,7 @@ interface CardItem {
   ease_factor: number;
   next_review_at: string;
   status: 'learning' | 'mastered';
+  created_at?: string; // Added for sorting
 }
 
 interface UserProgress {
@@ -72,7 +73,7 @@ const calculateNextReview = (
   };
 };
 
-const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
+const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortOrder: string, cardsCountGoal: number): Promise<CardItem[]> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     // If user is not authenticated, return an empty array instead of throwing an error.
@@ -88,6 +89,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
       id,
       term,
       definition,
+      created_at,
       user_progress!user_progress_card_id_fkey(
         repetition_level,
         ease_factor,
@@ -107,13 +109,14 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
     return [];
   }
 
-  const dueCards = data
+  let processedCards = data
     .map((card: any) => { // Explicitly type 'card'
       const progress = card.user_progress?.[0];
       return {
         id: card.id,
         term: card.term,
         definition: card.definition,
+        created_at: card.created_at, // Include created_at
         repetition_level: progress?.repetition_level ?? 0,
         ease_factor: progress?.ease_factor ?? 2.5,
         next_review_at: progress?.next_review_at ?? now.toISOString(),
@@ -126,11 +129,27 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
       const isNewCardForCurrentUser = !card.progress_user_id || card.progress_user_id !== user.id;
       const isDueForReview = cardNextReviewDate <= now;
 
-      return isNewCardForCurrentUser || (card.progress_user_id === user.id && isDueForReview);
-    })
-    .sort((a: any, b: any) => new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime());
+      // Apply hideMastered filter
+      if (hideMastered && card.status === 'mastered') {
+        return false;
+      }
 
-  return dueCards;
+      return isNewCardForCurrentUser || (card.progress_user_id === user.id && isDueForReview);
+    });
+
+  // Apply sorting based on preference
+  if (sortOrder === 'alphabetical_term_asc') {
+    processedCards.sort((a: CardItem, b: CardItem) => a.term.localeCompare(b.term));
+  } else if (sortOrder === 'random') {
+    processedCards.sort(() => Math.random() - 0.5);
+  } else if (sortOrder === 'created_at_asc') {
+    processedCards.sort((a: CardItem, b: CardItem) => new Date(a.created_at!).getTime() - new Date(b.created_at!).getTime());
+  } else { // Default to 'next_review_at_asc'
+    processedCards.sort((a: CardItem, b: CardItem) => new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime());
+  }
+
+  // Limit the number of cards based on the user's preference
+  return processedCards.slice(0, cardsCountGoal);
 };
 
 const StudyMode = () => {
@@ -143,9 +162,15 @@ const StudyMode = () => {
   const queryClient = useQueryClient();
 
   const { data: cards, isLoading, isError, error, refetch } = useQuery<CardItem[], Error>({
-    queryKey: ['studyCards', setId],
-    queryFn: () => fetchCardsForStudySet(setId!),
-    enabled: !!setId && !isLoadingAuth, // Only enable query when auth state is known
+    queryKey: ['studyCards', setId, preferences?.hide_mastered_from_daily_review, preferences?.default_card_sort_order, preferences?.default_study_session_cards_count],
+    queryFn: () => fetchCardsForStudySet(
+      setId!,
+      preferences?.hide_mastered_from_daily_review || false,
+      preferences?.default_card_sort_order || 'next_review_at_asc',
+      preferences?.default_study_session_cards_count || 20 // Use default from preferences
+    ),
+    enabled: !!setId && !isLoadingAuth && !isLoadingPreferences, // Only enable query when auth and preferences are known
+    staleTime: 0, // Always refetch for a fresh session
   });
 
   // Set initial showDefinition based on preferences once loaded
@@ -223,7 +248,7 @@ const StudyMode = () => {
     }
 
     if (currentCardIndex < (cards?.length || 0) - 1) {
-      setCurrentCardIndex((prevIndex: number) => prevIndex + 1); // Corrected from 'prev' to 'prevIndex'
+      setCurrentCardIndex((prevIndex: number) => prevIndex + 1);
       setShowDefinition(preferences?.default_flashcard_side === 'definition');
     } else {
       setStudyFinished(true);
