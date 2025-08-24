@@ -75,6 +75,8 @@ const Login = () => {
       let userFriendlyMessage = error.message || 'An unexpected error occurred.';
       if (error.message.includes('Email rate limit exceeded')) {
         userFriendlyMessage = "Too many requests. Please wait a few minutes before trying again.";
+      } else if (error.message.includes('error sending email confirmation')) {
+        userFriendlyMessage = "Failed to send confirmation email. Please check your email address or try again later.";
       }
       showError(userFriendlyMessage);
       console.error('Auth error:', error);
