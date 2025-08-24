@@ -54,7 +54,7 @@ export const Header: React.FC = () => {
     { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> },
     { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> },
     { name: "Textbook Finder", href: "/textbook-finder", icon: <BookText className="mr-2 h-4 w-4" /> },
-    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
+    { name: "Statistics", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
     { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
   ];
 

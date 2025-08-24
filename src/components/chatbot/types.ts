@@ -110,7 +110,7 @@ export const ROUTE_KEYWORDS: { [key: string]: string } = {
   "/create-note": "/create-note",
   "statistics page": "/dashboard",
   "statistics": "/dashboard",
-  "/dashboard": "/dashboard",
+  "/dashboard": "/dashboard", // Keep this for the route path
   "daily review page": "/daily-review",
   "daily review": "/daily-review",
   "/daily-review": "/daily-review",
