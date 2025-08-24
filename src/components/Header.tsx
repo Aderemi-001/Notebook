@@ -16,6 +16,7 @@ import {
   GraduationCap,
   PenTool,
   BookText,
+  Globe, // Added Globe icon
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -49,6 +50,7 @@ export const Header: React.FC = () => {
   const navItems: NavItem[] = [
     { name: "Daily Review", href: "/daily-review", icon: <CalendarDays className="mr-2 h-4 w-4" /> },
     { name: "My Study Sets", href: "/", icon: <BookOpen className="mr-2 h-4 w-4" /> },
+    { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> }, // Added Public Sets
     { name: "My Notes", href: "/notes-under-construction", icon: <NotebookPen className="mr-2 h-4 w-4" /> },
     { name: "My Groups", href: "/groups", icon: <Group className="mr-2 h-4 w-4" /> },
     { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> },
@@ -75,6 +77,9 @@ export const Header: React.FC = () => {
               </Button>
               <Button variant="ghost" asChild>
                 <Link to="/">My Study Sets</Link>
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link to="/explore-public-sets">Explore Public Sets</Link> {/* Added Public Sets */}
               </Button>
               <Button variant="ghost" asChild>
                 <Link to="/notes-under-construction">My Notes</Link>
