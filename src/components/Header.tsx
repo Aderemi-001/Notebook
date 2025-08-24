@@ -42,6 +42,7 @@ export const Header: React.FC = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleLogout = async () => {
+    console.log('Logout clicked'); // Debugging log
     await supabase.auth.signOut();
     window.location.href = "/login";
   };
@@ -102,7 +103,7 @@ export const Header: React.FC = () => {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuContent className="w-56 z-[999]" align="end" forceMount> {/* Added z-index */}
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{user.user_metadata?.display_name || user.email}</p>
@@ -112,20 +113,20 @@ export const Header: React.FC = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem asChild data-disabled={false} onClick={() => console.log('Profile link clicked')}> {/* Added data-disabled and log */}
                     <Link to="/profile">
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem asChild data-disabled={false} onClick={() => console.log('Settings link clicked')}> {/* Added data-disabled and log */}
                     <Link to="/settings">
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
+                  <DropdownMenuItem onClick={handleLogout} data-disabled={false}> {/* Added data-disabled and log */}
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>
@@ -158,7 +159,7 @@ export const Header: React.FC = () => {
                   <div className="flex flex-col space-y-2">
                     {/* Navigation Items */}
                     {navItems.map((item) => (
-                      <Button key={item.name} variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
+                      <Button key={item.name} variant="ghost" asChild className="justify-start" onClick={() => { console.log(`${item.name} clicked (mobile)`); setIsSheetOpen(false); }}>
                         <Link to={item.href}>
                           {item.icon}
                           {item.name}
@@ -167,13 +168,13 @@ export const Header: React.FC = () => {
                     ))}
                     <Separator />
                     {/* Profile, Settings, Logout in Mobile Menu */}
-                    <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
+                    <Button variant="ghost" asChild className="justify-start" onClick={() => { console.log('Profile clicked (mobile)'); setIsSheetOpen(false); }}>
                       <Link to="/profile">
                         <User className="mr-2 h-4 w-4" />
                         Profile
                       </Link>
                     </Button>
-                    <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
+                    <Button variant="ghost" asChild className="justify-start" onClick={() => { console.log('Settings clicked (mobile)'); setIsSheetOpen(false); }}>
                       <Link to="/settings">
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
