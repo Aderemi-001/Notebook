@@ -21,10 +21,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { navItems } from '@/config/navigation'; // Import navItems from the new config file
+import { navItems } from '@/config/navigation';
+import { Badge } from '@/components/ui/badge'; // Import Badge
 
 export const Header: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth(); // Get profile from useAuth
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -78,7 +79,10 @@ export const Header: React.FC = () => {
                 <DropdownMenuContent className="w-56 z-[999]" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.user_metadata?.display_name || user.email}</p>
+                      <p className="text-sm font-medium leading-none flex items-center gap-2">
+                        {profile?.display_name || user.email}
+                        {profile?.is_admin && <Badge variant="secondary" className="text-xs">Admin</Badge>}
+                      </p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user.email}
                       </p>
@@ -121,7 +125,10 @@ export const Header: React.FC = () => {
                     <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col overflow-hidden">
-                    <p className="text-sm font-medium leading-none truncate">{user.user_metadata?.display_name || user.email}</p>
+                    <p className="text-sm font-medium leading-none truncate flex items-center gap-2">
+                      {profile?.display_name || user.email}
+                      {profile?.is_admin && <Badge variant="secondary" className="text-xs">Admin</Badge>}
+                    </p>
                     <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </div>
