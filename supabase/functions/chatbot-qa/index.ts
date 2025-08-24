@@ -144,15 +144,31 @@ serve(async (req: Request) => {
 
     if (!geminiResponse.ok) {
       const errorBody = await geminiResponse.json();
-      console.error("Gemini API Error:", errorBody);
-      throw new Error(`Gemini API request failed: ${errorBody.error?.message || 'Unknown error'}`);
+      console.error("Gemini API Error:", geminiResponse.status, geminiResponse.statusText, errorBody);
+      throw new Error(`Gemini API request failed with status ${geminiResponse.status}: ${errorBody.error?.message || JSON.stringify(errorBody)}`);
     }
 
     const geminiData = await geminiResponse.json();
+
+    // Check for safety ratings that might block content
+    if (geminiData.promptFeedback && geminiData.promptFeedback.safetyRatings) {
+      const blockedSafetyRatings = geminiData.promptFeedback.safetyRatings.filter((r: any) => r.blocked);
+      if (blockedSafetyRatings.length > 0) {
+        console.warn("Gemini API response blocked due to safety concerns:", blockedSafetyRatings);
+        throw new Error(`AI response blocked due to safety concerns.`);
+      }
+    }
+
+    if (!geminiData.candidates || geminiData.candidates.length === 0) {
+      console.error("Gemini API returned no candidates:", JSON.stringify(geminiData));
+      throw new Error("AI failed to generate a response (no candidates). This might be due to content policy violations or an empty response.");
+    }
+
     const chatbot_response = geminiData.candidates[0].content.parts[0].text;
 
     if (!chatbot_response) {
-      throw new Error("AI failed to generate a response.");
+      console.error("Gemini API returned empty response text:", JSON.stringify(geminiData));
+      throw new Error("AI response content is empty. Please try rephrasing your question.");
     }
 
     return new Response(JSON.stringify({ chatbot_response }), {
