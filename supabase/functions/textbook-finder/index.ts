@@ -55,20 +55,20 @@ serve(async (req: Request) => { // Explicitly type 'req' as Request
     }
 
     const prompt = `
-      You are an expert at finding legitimate and ethical access options for textbooks.
-      Based on the user's query "${query}", generate a list of plausible, ethical access options for a textbook.
-      Focus on academic library access, open educational resources (OER), and official purchase/rental links.
-      Do NOT suggest illegal or unauthorized download sites.
+      You are an expert at finding legitimate and ethical access options for **full textbooks**.
+      Based on the user's query "${query}", generate a list of plausible, ethical access options for **complete textbooks**.
+      Focus exclusively on academic library access, open educational resources (OER) that are full textbooks, and official purchase/rental links.
+      **Only provide results that are full textbooks.** Do NOT include general resource databases, articles, supplementary materials, or individual chapters.
 
       For each result, provide:
-      - "title": The title of the textbook or a relevant OER.
+      - "title": The title of the textbook.
       - "author": The author(s) of the textbook.
-      - "description": A brief description of the textbook or resource.
-      - "access_method": How the user can access it (e.g., "University Library", "Open Educational Resource", "Purchase/Rent Online").
-      - "link": A plausible, example URL for access (e.g., a library catalog search URL, an OER repository URL, an Amazon/publisher URL).
+      - "description": A brief description of the textbook.
+      - "access_method": How the user can access it (e.g., "University Library", "Open Educational Resource (Full Textbook)", "Purchase/Rent Online").
+      - "link": A plausible, example URL for access (e.g., a library catalog search URL, an OER platform URL for a full textbook, an Amazon/publisher URL).
       - "cost_implication": "Free", "Purchase", "Rental", or "Subscription Required".
 
-      Generate between 5 and 10 relevant results.
+      Generate between 3 and 7 relevant results.
       The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
       The JSON object should have one top-level key: "results".
 
@@ -76,20 +76,28 @@ serve(async (req: Request) => { // Explicitly type 'req' as Request
       {
         "results": [
           {
-            "title": "Introduction to Biology",
-            "author": "Jane Doe",
-            "description": "A comprehensive introduction to biological concepts.",
+            "title": "Lippincott's Illustrated Reviews: Pharmacology",
+            "author": "Karen Whalen, Richard Finkel, Thomas A. Panavelil",
+            "description": "A highly visual and concise review of pharmacology, ideal for medical and health science students.",
             "access_method": "University Library",
-            "link": "https://library.example.edu/search?q=Introduction+to+Biology",
+            "link": "https://library.example.edu/search?q=Lippincott%27s+Pharmacology+8th+edition",
             "cost_implication": "Free (with library access)"
           },
           {
-            "title": "Calculus I: Open Textbook",
+            "title": "OpenStax Anatomy and Physiology",
             "author": "OpenStax",
-            "description": "An openly licensed textbook for first-year calculus.",
-            "access_method": "Open Educational Resource",
-            "link": "https://openstax.org/details/books/calculus-volume-1",
+            "description": "A comprehensive, peer-reviewed, openly licensed textbook covering human anatomy and physiology.",
+            "access_method": "Open Educational Resource (Full Textbook)",
+            "link": "https://openstax.org/details/books/anatomy-and-physiology",
             "cost_implication": "Free"
+          },
+          {
+            "title": "Goodman & Gilman's The Pharmacological Basis of Therapeutics",
+            "author": "Laurence L. Brunton, Björn C. Knollmann, Randa Hilal-Dandan",
+            "description": "The definitive textbook on pharmacology, covering the full scope of drug action and therapeutic uses.",
+            "access_method": "Purchase/Rent Online",
+            "link": "https://www.amazon.com/Goodman-Gilmans-Pharmacological-Therapeutics-Brunton/dp/1259584735",
+            "cost_implication": "Purchase"
           }
         ]
       }
