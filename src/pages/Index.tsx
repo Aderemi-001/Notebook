@@ -51,7 +51,6 @@ interface RpcStudySetResult {
   is_public: boolean;
   user_id: string;
   display_name: string | null;
-  is_owner: boolean; // Now included in the RPC
 }
 
 interface StudySet {
@@ -71,8 +70,8 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
     return []; // No user, no personal study sets
   }
 
-  // Use get_all_visible_study_sets_with_card_count to fetch sets based on user/admin status
-  const { data, error } = await supabase.rpc('get_all_visible_study_sets_with_card_count');
+  // Use get_study_sets_with_card_count to fetch only the user's own sets
+  const { data, error } = await supabase.rpc('get_study_sets_with_card_count');
   if (error) throw error;
 
   // Explicitly cast data to the expected array type
@@ -80,7 +79,7 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
 
   return rpcResults.map((set: RpcStudySetResult) => ({
     ...set,
-    is_owner: set.user_id === user.id, // Determine ownership based on current user ID
+    is_owner: true, // All sets returned by this RPC are owned by the current user
   }));
 };
 
@@ -105,7 +104,7 @@ const Index: React.FC = () => {
   const [isLoginPromptOpen, setIsLoginPromptOpen] = React.useState(false); // State for login prompt
 
   const { data: studySets, isLoading, isError, error } = useQuery<StudySet[], Error>({
-    queryKey: ['studySets', profile?.is_admin], // Invalidate query if admin status changes
+    queryKey: ['studySets', user?.id], // Removed profile?.is_admin from queryKey as filtering is now user-specific
     queryFn: fetchStudySets,
     enabled: !!user && !isLoadingAuth, // Only fetch if user is logged in
   });
@@ -220,7 +219,7 @@ const Index: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
           <BookOpen className="mr-3 h-7 w-7" />
-          {profile?.is_admin ? "All Study Sets (Admin View)" : "My Study Sets"}
+          My Study Sets
         </h1>
         {user ? (
           <Button asChild>
@@ -260,7 +259,7 @@ const Index: React.FC = () => {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="text"
-          placeholder={profile?.is_admin ? "Search all study sets by title, description, or owner..." : "Search your study sets..."}
+          placeholder="Search your study sets..."
           value={searchQuery}
           onChange={handleSearchChange}
           className="w-full pl-10" // Added left padding for the icon
