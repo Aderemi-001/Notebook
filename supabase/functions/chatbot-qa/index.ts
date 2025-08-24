@@ -30,7 +30,6 @@ The application is a study tool designed to help users learn and organize their 
 *   **Notes:**
     *   **Creation:** Users can create rich text notes, which can optionally be linked to a specific study set.
     *   **Editing:** Existing notes can be edited.
-    *   **AI Summarization:** Notes can be summarized using AI to extract key takeaways.
     *   **Deletion:** Notes can be deleted.
 *   **Exams:**
     *   **Generation:** Users can generate custom exams from a selected study set. They can specify the number of questions and choose from various question types (multiple choice, short answer, true/false).
