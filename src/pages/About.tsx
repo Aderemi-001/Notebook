@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, BookOpen, Brain, LayoutDashboard, Users, Lightbulb, GraduationCap, PenTool, NotebookPen, Mail, Phone } from "lucide-react"; // Added Mail and Phone icons
+import { ChevronLeft, BookOpen, Brain, LayoutDashboard, Users, Lightbulb, GraduationCap, PenTool, NotebookPen } from "lucide-react"; // Removed Mail and Phone icons
 
 const About: React.FC = () => {
   const navigate = useNavigate();
@@ -111,18 +111,6 @@ const About: React.FC = () => {
           <p className="mt-8">
             My Notebook is continuously evolving to provide the best learning experience. We are committed to helping you achieve your academic and personal growth goals.
           </p>
-
-          <h2 className="flex items-center gap-2 text-2xl font-semibold mt-8 mb-4">
-            <Mail className="h-6 w-6 text-primary" /> Contact Information
-          </h2>
-          <div className="space-y-2">
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Mail className="h-4 w-4 flex-shrink-0" /> Email: <a href="mailto:my.notebook.by.remi@gmail.com" className="text-blue-500 hover:underline">my.notebook.by.remi@gmail.com</a>
-            </p>
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Phone className="h-4 w-4 flex-shrink-0" /> Tel: <a href="tel:+27697641352" className="text-blue-500 hover:underline">+27 69 764 1352</a>
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
