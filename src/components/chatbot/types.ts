@@ -14,7 +14,7 @@ export const DEFAULT_SUGGESTED_QUESTIONS = [
   "What is the Cognitive Constellation?",
   "How do I reset my study progress?",
   "Can I share my study sets?",
-  "How do I use the drawing tool in notes?",
+  // Removed: "How do I use the drawing tool in notes?",
 ];
 
 export const ROUTE_SPECIFIC_SUGGESTIONS: { [key: string]: string[] } = {
@@ -37,7 +37,7 @@ export const ROUTE_SPECIFIC_SUGGESTIONS: { [key: string]: string[] } = {
   '/notes': [
     "How do I create a new note?",
     "How do I summarize a note with AI?",
-    "How do I use the drawing tool in notes?",
+    // Removed: "How do I use the drawing tool in notes?",
   ],
   '/generate-exam': [
     "What types of questions can AI generate?",
