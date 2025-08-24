@@ -46,7 +46,13 @@ const Login = () => {
           email: values.email,
           password: values.password,
         });
-        if (error) throw error;
+        if (error) {
+          // Check for specific error message indicating user not found
+          if (error.message.includes('Invalid login credentials') || error.message.includes('User not found')) {
+            throw new Error("It looks like you don't have an account. Please sign up!");
+          }
+          throw error;
+        }
         showSuccess('Signed in successfully!');
       } else {
         const { error } = await supabase.auth.signUp({
