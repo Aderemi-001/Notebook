@@ -47,11 +47,8 @@ const Login = () => {
           password: values.password,
         });
         if (error) {
-          // Check for specific error message indicating user not found
-          if (error.message.includes('Invalid login credentials') || error.message.includes('User not found')) {
-            throw new Error("It looks like you don't have an account. Please sign up!");
-          }
-          throw error;
+          // Directly throw the Supabase error message
+          throw new Error(error.message);
         }
         showSuccess('Signed in successfully!');
       } else {
@@ -65,20 +62,18 @@ const Login = () => {
             emailRedirectTo: `${window.location.origin}/login`, // Redirect to login page after email confirmation
           },
         });
-        if (error) throw error;
+        if (error) {
+          // Directly throw the Supabase error message
+          throw new Error(error.message);
+        }
         showSuccess('Account created! Please check your email to confirm.');
         setIsLogin(true); // Switch back to login after signup
       }
       dismissToast(toastId);
     } catch (error: any) {
       dismissToast(toastId);
-      let userFriendlyMessage = error.message || 'An unexpected error occurred.';
-      if (error.message.includes('Email rate limit exceeded')) {
-        userFriendlyMessage = "Too many requests. Please wait a few minutes before trying again.";
-      } else if (error.message.includes('error sending email confirmation')) {
-        userFriendlyMessage = "Failed to send confirmation email. Please check your email address or try again later.";
-      }
-      showError(userFriendlyMessage);
+      // Display the raw error message directly
+      showError(error.message || 'An unexpected error occurred.');
       console.error('Auth error:', error);
     }
   };
@@ -95,16 +90,16 @@ const Login = () => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/login?reset=true`, // Redirect back to login page with reset flag
       });
-      if (error) throw error;
+      if (error) {
+        // Directly throw the Supabase error message
+        throw new Error(error.message);
+      }
       showSuccess('Password reset email sent! Check your inbox.');
       dismissToast(toastId);
     } catch (error: any) {
       dismissToast(toastId);
-      let userFriendlyMessage = error.message || 'Failed to send reset email.';
-      if (error.message.includes('Email rate limit exceeded')) {
-        userFriendlyMessage = "Too many password reset requests. Please wait a few minutes before trying again.";
-      }
-      showError(userFriendlyMessage);
+      // Display the raw error message directly
+      showError(error.message || 'Failed to send reset email.');
       console.error('Password reset error:', error);
     }
   };
