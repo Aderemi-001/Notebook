@@ -68,7 +68,8 @@ const Login = () => {
         if (error) {
           throw new Error(error.message);
         }
-        showSuccess('Account created! Please check your email to confirm.');
+        // Updated success message with spam warning
+        showSuccess('Account created! Please check your email to confirm. If you don\'t see it, please check your spam or junk folder.');
         setIsLogin(true);
       }
       dismissToast(toastId);
