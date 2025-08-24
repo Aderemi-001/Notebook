@@ -1,9 +1,10 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom'; // Added Link import
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { useState, useEffect } from "react";
+import { Button } from '@/components/ui/button'; // Import Button for the login prompt
 
 // Import new modular components
 import StudySetHeader from '@/components/StudySetHeader';
@@ -318,7 +319,7 @@ const StudySetDetail = () => {
     );
   }
 
-  if (isLoading || isLoadingPreferences || isLoadingAuth || (user && isLoadingLinkedNotes)) {
+  if (isLoadingAuth || isLoading || isLoadingPreferences || (user && isLoadingLinkedNotes)) {
     return (
       <div className="container mx-auto py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
@@ -344,7 +345,17 @@ const StudySetDetail = () => {
   if (!studySet) {
     return (
       <div className="container mx-auto py-10 text-center animate-fade-in">
-        Study set not found.
+        <div className="text-center py-10 border-2 border-dashed rounded-lg">
+          <p className="text-muted-foreground">Study set not found or you do not have permission to view it.</p>
+          {!user && (
+            <div className="mt-4">
+              <p className="text-sm text-muted-foreground mb-2">Please log in to view private sets or add public sets to your collection.</p>
+              <Button asChild>
+                <Link to="/login">Log In / Sign Up</Link>
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

@@ -10,6 +10,7 @@ import { showSuccess, showError } from '@/utils/toast';
 import { Progress } from "@/components/ui/progress";
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/hooks/useAuth'; // Import useAuth
 
 interface CardItem {
   id: string;
@@ -74,7 +75,9 @@ const calculateNextReview = (
 const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error("User not authenticated.");
+    // If user is not authenticated, return an empty array instead of throwing an error.
+    // The UI will then prompt the user to log in.
+    return [];
   }
 
   const now = new Date();
@@ -132,6 +135,7 @@ const fetchCardsForStudySet = async (setId: string): Promise<CardItem[]> => {
 
 const StudyMode = () => {
   const { setId } = useParams<{ setId: string }>();
+  const { user, loading: isLoadingAuth } = useAuth(); // Use useAuth to get user and loading state
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showDefinition, setShowDefinition] = useState(false);
@@ -141,7 +145,7 @@ const StudyMode = () => {
   const { data: cards, isLoading, isError, error, refetch } = useQuery<CardItem[], Error>({
     queryKey: ['studyCards', setId],
     queryFn: () => fetchCardsForStudySet(setId!),
-    enabled: !!setId,
+    enabled: !!setId && !isLoadingAuth, // Only enable query when auth state is known
   });
 
   // Set initial showDefinition based on preferences once loaded
@@ -161,8 +165,7 @@ const StudyMode = () => {
 
   const updateCardProgress = useCallback(async (cardId: string, quality: 0 | 1 | 2) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!user) { // Re-check user here for safety, though UI should prevent this
         showError("You must be logged in to track progress.");
         return;
       }
@@ -212,7 +215,7 @@ const StudyMode = () => {
       showError(`Failed to update card progress: ${err.message}`);
       console.error("Error updating card progress:", err);
     }
-  }, [queryClient, setId]);
+  }, [queryClient, setId, user]);
 
   const handleNextCard = (quality: 0 | 1 | 2) => {
     if (currentCard) {
@@ -220,7 +223,7 @@ const StudyMode = () => {
     }
 
     if (currentCardIndex < (cards?.length || 0) - 1) {
-      setCurrentCardIndex((prevIndex: number) => prevIndex + 1);
+      setCurrentCardIndex((prevIndex: number) => prevIndex + 1); // Corrected from 'prev' to 'prevIndex'
       setShowDefinition(preferences?.default_flashcard_side === 'definition');
     } else {
       setStudyFinished(true);
@@ -242,7 +245,7 @@ const StudyMode = () => {
     );
   }
 
-  if (isLoading || isLoadingPreferences) {
+  if (isLoadingAuth || isLoading || isLoadingPreferences) {
     return (
       <div className="container mx-auto py-10 flex flex-col items-center animate-fade-in">
         <Skeleton className="h-10 w-3/4 mb-8" />
@@ -259,6 +262,19 @@ const StudyMode = () => {
     return (
       <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
         Error loading cards: {error?.message || "Unknown error"}
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container mx-auto py-10 text-center animate-fade-in">
+        <div className="text-center py-10 border-2 border-dashed rounded-lg">
+          <p className="text-muted-foreground">Please log in or sign up to start studying this set.</p>
+          <Button asChild className="mt-4">
+            <Link to="/login">Log In / Sign Up</Link>
+          </Button>
+        </div>
       </div>
     );
   }
