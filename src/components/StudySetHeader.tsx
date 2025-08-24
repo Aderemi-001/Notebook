@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Globe, Plus, MoreVertical, Folder } from 'lucide-react';
+import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Globe, Plus, MoreVertical, Folder, ShieldCheck } from 'lucide-react';
 import { UserPreferences } from '@/hooks/use-user-preferences';
 
 interface StudySetHeaderProps {
@@ -33,7 +33,8 @@ interface StudySetHeaderProps {
     cards: any[]; // Simplified for now, actual type is in StudySetDetail
   };
   isOwner: boolean;
-  isLoggedIn: boolean; // New prop
+  isLoggedIn: boolean;
+  isAdmin: boolean; // New prop for admin status
   preferences: UserPreferences | null | undefined;
   handleDeleteSet: () => void;
   handleResetProgress: () => void;
@@ -43,7 +44,8 @@ interface StudySetHeaderProps {
 const StudySetHeader: React.FC<StudySetHeaderProps> = ({
   studySet,
   isOwner,
-  isLoggedIn, // Use isLoggedIn
+  isLoggedIn,
+  isAdmin, // Use isAdmin
   preferences,
   handleDeleteSet,
   handleResetProgress,
@@ -61,6 +63,11 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
           <Globe className="h-3 w-3" />
           {studySet.is_public ? "Public" : "Private"}
         </Badge>
+        {isAdmin && !isOwner && ( // Show admin badge if admin but not owner
+          <Badge variant="outline" className="flex items-center gap-1 text-blue-600 border-blue-600">
+            <ShieldCheck className="h-3 w-3" /> Admin View
+          </Badge>
+        )}
         {studySet.group_id && studySet.study_set_groups?.[0]?.name && (
           <Link to={`/groups/${studySet.group_id}`}>
             <Badge variant="outline" className="flex items-center gap-1 cursor-pointer hover:bg-accent">
@@ -89,7 +96,7 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
               </Link>
             </DropdownMenuItem>
           )}
-          {isOwner && (
+          {(isOwner || isAdmin) && ( // Allow edit if owner OR admin
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
@@ -98,13 +105,15 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
                 </Link>
               </DropdownMenuItem>
 
-              {/* Reset Progress Trigger */}
-              <DropdownMenuItem onSelect={() => setIsResetProgressDialogOpen(true)} className="flex items-center text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
-              </DropdownMenuItem>
+              {/* Reset Progress Trigger - only for owner */}
+              {isOwner && (
+                <DropdownMenuItem onSelect={() => setIsResetProgressDialogOpen(true)} className="flex items-center text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                  <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
+                </DropdownMenuItem>
+              )}
             </>
           )}
-          {isOwner && (
+          {(isOwner || isAdmin) && ( // Allow delete if owner OR admin
             <>
               <DropdownMenuSeparator />
               {preferences?.confirm_deletion ? (
@@ -121,8 +130,8 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
             </>
           )}
           {studySet.is_public && !isOwner && (
-            <DropdownMenuItem 
-              onClick={handleAddToMySets} 
+            <DropdownMenuItem
+              onClick={handleAddToMySets}
               disabled={!isLoggedIn} // Disable if not logged in
               className="flex items-center"
             >

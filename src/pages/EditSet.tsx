@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Loader2, Brain } from "lucide-react";
 import * as React from 'react'; // Explicitly import React
+import { useAuth } from '@/hooks/useAuth'; // Import useAuth
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -52,6 +53,7 @@ const EditSet = () => {
   const { setId } = useParams<{ setId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { profile } = useAuth(); // Get profile for admin check, 'user' is not directly used here
 
   const { data: studySet, isLoading, isError, error } = useStudySetData(setId);
   const { file, setFile, sourceTextContent, setSourceTextContent, estimateOptimalCards, generateCardsAndConcepts, currentUser, isLoadingUser } = useFileImport();
@@ -124,7 +126,7 @@ const EditSet = () => {
           is_public: values.is_public,
           group_id: values.group_id,
         })
-        .eq('id', setId);
+        .eq('id', setId); // Admin RLS policy will allow this update
 
       if (updateSetError) throw updateSetError;
 
@@ -244,6 +246,11 @@ const EditSet = () => {
       showError("Please select a file first.");
       return;
     }
+    if (!currentUser) {
+      showError("Please sign up or log in first to use AI features.");
+      navigate('/login');
+      return;
+    }
     setIsEstimating(true);
     const optimalCount = await estimateOptimalCards();
     setIsEstimating(false);
@@ -274,7 +281,7 @@ const EditSet = () => {
 
   if (!setId) {
     return (
-      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center text-red-500 animate-fade-in">
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
         No study set ID provided for editing.
       </div>
     );
@@ -315,6 +322,18 @@ const EditSet = () => {
     return (
       <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center animate-fade-in">
         Study set not found.
+      </div>
+    );
+  }
+
+  // Restrict access if not owner and not admin
+  if (!studySet.is_owner && !profile?.is_admin) {
+    return (
+      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center text-red-500 animate-fade-in">
+        You do not have permission to edit this study set.
+        <Button asChild className="mt-4">
+          <Link to={`/sets/${setId}`}>Back to Set Details</Link>
+        </Button>
       </div>
     );
   }

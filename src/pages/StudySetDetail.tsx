@@ -1,10 +1,10 @@
-import { useParams, useNavigate, Link } from 'react-router-dom'; // Added Link import
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { useState, useEffect } from "react";
-import { Button } from '@/components/ui/button'; // Import Button for the login prompt
+import { Button } from '@/components/ui/button';
 
 // Import new modular components
 import StudySetHeader from '@/components/StudySetHeader';
@@ -45,12 +45,24 @@ interface LinkedNote {
 }
 
 const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
-  // The RLS policies now handle access for unauthenticated users to public sets.
-  // We will fetch the user later to determine ownership and progress.
-
   const now = new Date();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const { data, error } = await supabase
+  // Fetch user profile to check for admin status
+  let isAdmin = false;
+  if (user) {
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.error("Error fetching user profile for admin check:", profileError);
+    }
+    isAdmin = profile?.is_admin || false;
+  }
+
+  let query = supabase
     .from('study_sets')
     .select(`
       id,
@@ -73,8 +85,14 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
         )
       )
     `)
-    .eq('id', setId)
-    .single();
+    .eq('id', setId);
+
+  // If not admin, apply RLS-like conditions for fetching
+  if (!isAdmin) {
+    query = query.or(`user_id.eq.${user?.id},is_public.eq.true`);
+  }
+
+  const { data, error } = await query.single();
 
   if (error) {
     console.error("Error fetching study set details:", error);
@@ -83,9 +101,6 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
   if (!data) {
     throw new Error("Study set not found or you do not have permission to view it.");
   }
-
-  // Fetch current user to determine progress and ownership
-  const { data: { user } } = await supabase.auth.getUser();
 
   let masteredCount = 0;
   let dueCount = 0;
@@ -146,19 +161,19 @@ const StudySetDetail = () => {
   const { setId } = useParams<{ setId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user, loading: isLoadingAuth } = useAuth(); // Use useAuth to get user and loading state
+  const { user, profile, loading: isLoadingAuth } = useAuth(); // Use useAuth to get user, profile, and loading state
 
   const [isOwner, setIsOwner] = useState(false);
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
 
   const { data: studySet, isLoading, isError, error } = useQuery<StudySet, Error>({
-    queryKey: ['studySet', setId],
+    queryKey: ['studySet', setId, user?.id, profile?.is_admin], // Add profile.is_admin to query key
     queryFn: () => fetchStudySetDetails(setId!),
     enabled: !!setId && !isLoadingAuth, // Enable only when auth state is known
   });
 
   const { data: linkedNotes, isLoading: isLoadingLinkedNotes } = useQuery<LinkedNote[], Error>({
-    queryKey: ['linkedNotes', setId],
+    queryKey: ['linkedNotes', setId, user?.id],
     queryFn: () => fetchLinkedNotes(setId!),
     enabled: !!setId && !isLoadingAuth && !!user, // Only fetch linked notes if authenticated
   });
@@ -365,7 +380,8 @@ const StudySetDetail = () => {
       <StudySetHeader
         studySet={studySet}
         isOwner={isOwner}
-        isLoggedIn={!!user} // Pass isLoggedIn status
+        isLoggedIn={!!user}
+        isAdmin={profile?.is_admin || false} // Pass isAdmin status
         preferences={preferences}
         handleDeleteSet={handleDeleteSet}
         handleResetProgress={handleResetProgress}

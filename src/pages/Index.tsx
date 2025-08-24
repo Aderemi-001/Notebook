@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, Search, Loader2, BookOpen, Users, Settings, Trash2, Edit, Eye, Share2, Copy, ArrowRight } from 'lucide-react';
+import { PlusCircle, Search, Loader2, BookOpen, Users, Settings, Trash2, Edit, Eye, Share2, Copy, ArrowRight, ShieldCheck, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +40,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from '@/components/ui/badge';
 
 // Define the interface for the data returned by the RPC
 interface RpcStudySetResult {
@@ -50,16 +51,17 @@ interface RpcStudySetResult {
   is_public: boolean;
   user_id: string;
   display_name: string | null;
+  is_owner: boolean; // Now included in the RPC
 }
 
 interface StudySet {
   id: string;
   title: string;
-  description: string | null; // Changed to nullable
+  description: string | null;
   cards_count: number;
   is_public: boolean;
   user_id: string;
-  display_name: string | null; // Changed to nullable
+  display_name: string | null;
   is_owner: boolean;
 }
 
@@ -69,18 +71,16 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
     return []; // No user, no personal study sets
   }
 
-  // Use get_study_sets_with_card_count to fetch only the current user's sets
-  const { data, error } = await supabase.rpc('get_study_sets_with_card_count');
+  // Use get_all_visible_study_sets_with_card_count to fetch sets based on user/admin status
+  const { data, error } = await supabase.rpc('get_all_visible_study_sets_with_card_count');
   if (error) throw error;
 
   // Explicitly cast data to the expected array type
   const rpcResults = data as RpcStudySetResult[];
 
-  // For consistency with the previous interface, we'll map the data.
-  // Since these are user's own sets, is_owner will be true.
-  return rpcResults.map((set: RpcStudySetResult) => ({ // Explicitly type 'set'
+  return rpcResults.map((set: RpcStudySetResult) => ({
     ...set,
-    is_owner: true, // All sets fetched here are owned by the current user
+    is_owner: set.user_id === user.id, // Determine ownership based on current user ID
   }));
 };
 
@@ -91,7 +91,7 @@ const deleteStudySet = async (setId: string) => {
 
 const Index: React.FC = () => {
   const queryClient = useQueryClient();
-  const { user, loading: isLoadingAuth } = useAuth();
+  const { user, profile, loading: isLoadingAuth } = useAuth(); // Get profile for admin check
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [setToDelete, setSetToDelete] = React.useState<string | null>(null);
@@ -105,7 +105,7 @@ const Index: React.FC = () => {
   const [isLoginPromptOpen, setIsLoginPromptOpen] = React.useState(false); // State for login prompt
 
   const { data: studySets, isLoading, isError, error } = useQuery<StudySet[], Error>({
-    queryKey: ['studySets'],
+    queryKey: ['studySets', profile?.is_admin], // Invalidate query if admin status changes
     queryFn: fetchStudySets,
     enabled: !!user && !isLoadingAuth, // Only fetch if user is logged in
   });
@@ -143,7 +143,8 @@ const Index: React.FC = () => {
 
   const filteredStudySets = studySets?.filter(set =>
     set.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    set.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    set.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    set.display_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleDeleteClick = (setId: string) => {
@@ -218,7 +219,8 @@ const Index: React.FC = () => {
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
-          <BookOpen className="mr-3 h-7 w-7" /> My Study Sets
+          <BookOpen className="mr-3 h-7 w-7" />
+          {profile?.is_admin ? "All Study Sets (Admin View)" : "My Study Sets"}
         </h1>
         {user ? (
           <Button asChild>
@@ -258,7 +260,7 @@ const Index: React.FC = () => {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="Search your study sets..."
+          placeholder={profile?.is_admin ? "Search all study sets by title, description, or owner..." : "Search your study sets..."}
           value={searchQuery}
           onChange={handleSearchChange}
           className="w-full pl-10" // Added left padding for the icon
@@ -309,24 +311,41 @@ const Index: React.FC = () => {
                           <Eye className="mr-2 h-4 w-4" /> Study
                         </Link>
                       </DropdownMenuItem>
-                      {/* Since we are only showing owned sets, is_owner will always be true here */}
-                      <>
-                        <DropdownMenuItem onClick={() => handleEditClick(set)}>
-                          <Edit className="mr-2 h-4 w-4" /> Edit Set
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleShareClick(set.id)}>
-                          <Share2 className="mr-2 h-4 w-4" /> Share
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDeleteClick(set.id)} className="text-red-600">
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </>
+                      {(set.is_owner || profile?.is_admin) && ( // Allow edit/delete if owner OR admin
+                        <>
+                          <DropdownMenuItem onClick={() => handleEditClick(set)}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit Set
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleShareClick(set.id)}>
+                            <Share2 className="mr-2 h-4 w-4" /> Share
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDeleteClick(set.id)} className="text-red-600">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardTitle>
                 <CardDescription className="flex items-center text-sm text-muted-foreground">
-                  <Users className="mr-1 h-3 w-3" /> My Set
-                  {set.is_public && <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full dark:bg-blue-900 dark:text-blue-200">Public</span>}
+                  {set.is_owner ? (
+                    <span className="flex items-center">
+                      <Users className="mr-1 h-3 w-3" /> My Set
+                    </span>
+                  ) : (
+                    <span className="flex items-center">
+                      <Users className="mr-1 h-3 w-3" /> By: {set.display_name || 'Anonymous'}
+                    </span>
+                  )}
+                  {set.is_public ? (
+                    <Badge variant="secondary" className="ml-2 flex items-center gap-1">
+                      <Globe className="h-3 w-3" /> Public
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="ml-2 flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3" /> Private
+                    </Badge>
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -372,7 +391,7 @@ const Index: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your study set and all associated cards.
+              This action cannot be undone. This will permanently delete this study set and all associated cards.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
