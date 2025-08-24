@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import Chatbot from "@/components/Chatbot"; // Import the Chatbot component
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -9,6 +10,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
         {children}
       </div>
       <Footer />
+      <Chatbot /> {/* Render the Chatbot here */}
     </div>
   );
 };
