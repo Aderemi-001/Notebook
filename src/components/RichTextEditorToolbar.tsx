@@ -47,7 +47,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
           value="bold"
           aria-label="Toggle bold"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          disabled={!editor.can().chain().focus().toggleBold().run()}
+          disabled={!editor.can().toggleBold()}
           className={editor.isActive('bold') ? 'is-active' : ''}
         >
           <Bold className="h-4 w-4" />
@@ -56,7 +56,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
           value="italic"
           aria-label="Toggle italic"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          disabled={!editor.can().chain().focus().toggleItalic().run()}
+          disabled={!editor.can().toggleItalic()}
           className={editor.isActive('italic') ? 'is-active' : ''}
         >
           <Italic className="h-4 w-4" />
@@ -65,7 +65,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
           value="strike"
           aria-label="Toggle strike"
           onClick={() => editor.chain().focus().toggleStrike().run()}
-          disabled={!editor.can().chain().focus().toggleStrike().run()}
+          disabled={!editor.can().toggleStrike()}
           className={editor.isActive('strike') ? 'is-active' : ''}
         >
           <Strikethrough className="h-4 w-4" />
@@ -74,7 +74,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
           value="code"
           aria-label="Toggle code"
           onClick={() => editor.chain().focus().toggleCode().run()}
-          disabled={!editor.can().chain().focus().toggleCode().run()}
+          disabled={!editor.can().toggleCode()}
           className={editor.isActive('code') ? 'is-active' : ''}
         >
           <Code className="h-4 w-4" />
@@ -83,7 +83,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
           value="bulletList"
           aria-label="Toggle bullet list"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          disabled={!editor.can().chain().focus().toggleBulletList().run()}
+          disabled={!editor.can().toggleBulletList()}
           className={editor.isActive('bulletList') ? 'is-active' : ''}
         >
           <List className="h-4 w-4" />
@@ -92,7 +92,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
           value="orderedList"
           aria-label="Toggle ordered list"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          disabled={!editor.can().chain().focus().toggleOrderedList().run()}
+          disabled={!editor.can().toggleOrderedList()}
           className={editor.isActive('orderedList') ? 'is-active' : ''}
         >
           <ListOrdered className="h-4 w-4" />
@@ -101,7 +101,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
           value="blockquote"
           aria-label="Toggle blockquote"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          disabled={!editor.can().chain().focus().toggleBlockquote().run()}
+          disabled={!editor.can().toggleBlockquote()}
           className={editor.isActive('blockquote') ? 'is-active' : ''}
         >
           <Quote className="h-4 w-4" />
@@ -110,7 +110,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
           value="horizontalRule"
           aria-label="Insert horizontal rule"
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
-          disabled={!editor.can().chain().focus().setHorizontalRule().run()}
+          disabled={!editor.can().setHorizontalRule()}
         >
           <Minus className="h-4 w-4" />
         </ToggleGroupItem>
@@ -153,7 +153,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
           variant="outline"
           size="sm"
           onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().chain().focus().undo().run()}
+          disabled={!editor.can().undo()}
           className="h-8 px-2 rounded-lg"
         >
           <Undo className="h-4 w-4" />
@@ -162,7 +162,7 @@ export const RichTextEditorToolbar: React.FC<RichTextEditorToolbarProps> = ({ ed
           variant="outline"
           size="sm"
           onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().chain().focus().redo().run()}
+          disabled={!editor.can().redo()}
           className="h-8 px-2 rounded-lg"
         >
           <Redo className="h-4 w-4" />
