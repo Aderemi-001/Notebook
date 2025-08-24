@@ -7,8 +7,6 @@ import ChatMessageList from '@/components/chatbot/ChatMessageList';
 import { useAuth } from '@/hooks/useAuth';
 import { ChatMessage } from '@/components/chatbot/types'; // Import ChatMessage from types.ts
 
-// Removed: interface ChatMessage { ... } - This local definition was causing the conflict.
-
 const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -74,6 +72,16 @@ const Chatbot: React.FC = () => {
     }
   };
 
+  const handleFeedback = (messageId: number, feedback: 'up' | 'down') => {
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg.id === messageId ? { ...msg, feedbackGiven: feedback } : msg
+      )
+    );
+    // In a real application, you would send this feedback to your backend
+    console.log(`Feedback for message ${messageId}: ${feedback}`);
+  };
+
   return (
     <>
       {!isOpen && (
@@ -95,7 +103,12 @@ const Chatbot: React.FC = () => {
             </Button>
           </div>
           <ScrollArea className="flex-grow p-4">
-            <ChatMessageList messages={messages} />
+            <ChatMessageList
+              messages={messages}
+              isSending={isLoading}
+              messagesEndRef={messagesEndRef}
+              onFeedback={handleFeedback}
+            />
             <div ref={messagesEndRef} />
           </ScrollArea>
           <form onSubmit={handleSendMessage} className="flex p-4 border-t border-gray-200 dark:border-gray-700">
