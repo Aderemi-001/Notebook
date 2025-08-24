@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, Brain, Loader2, CheckCircle2, Network } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client'; // Fixed: Added 'from'
+import { ArrowLeft, Brain, Loader2, CheckCircle2, Menu, Network } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton'; // Fixed: Added 'from'
+import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import {
   Select,
@@ -19,6 +19,12 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Concept {
   id: string;
@@ -143,11 +149,20 @@ const GenerateEssayQuestions: React.FC = () => {
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">Generate Essay Questions</h1>
-        <Button asChild variant="outline">
-          <Link to="/" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
-          </Link>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Menu className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/" className="flex items-center">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <p className="text-muted-foreground mb-6">

@@ -5,11 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, PlusCircle, Folder, Pencil, Trash2, BookOpen } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client'; // Fixed: Added 'from'
+import { ArrowLeft, PlusCircle, Folder, Menu, Pencil, Trash2, BookOpen } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton'; // Fixed: Added 'from'
+import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -177,18 +184,26 @@ const GroupsIndex: React.FC = () => {
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">My Study Set Groups</h1>
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link to="/" className="flex items-center">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link to="/groups/create" className="flex items-center">
-              <PlusCircle className="mr-2 h-4 w-4" /> Create New Group
-            </Link>
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Menu className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/groups/create" className="flex items-center">
+                <PlusCircle className="mr-2 h-4 w-4" /> Create New Group
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/" className="flex items-center">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <p className="text-muted-foreground mb-6">

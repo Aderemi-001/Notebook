@@ -1,12 +1,18 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client'; // Fixed: Added 'from'
+import { ArrowLeft, RefreshCw, Menu } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton'; // Fixed: Added 'from'
+import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import * as React from 'react';
 import { useState } from 'react';
 
@@ -142,16 +148,23 @@ const CognitiveConstellation: React.FC = () => {
       <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center animate-fade-in">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
           <h1 className="text-2xl sm:text-3xl font-bold">Cognitive Constellation</h1>
-          <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link to="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
-              </Link>
-            </Button>
-            <Button onClick={handleRefreshConstellation} variant="outline" className="flex items-center">
-              <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link to="/" className="flex items-center">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleRefreshConstellation} className="flex items-center">
+                <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="text-center py-20 border-2 border-dashed rounded-lg">
           <h2 className="text-xl font-semibold">No concepts found yet!</h2>
@@ -171,16 +184,23 @@ const CognitiveConstellation: React.FC = () => {
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">Cognitive Constellation</h1>
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link to="/" className="flex items-center">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
-            </Link>
-          </Button>
-          <Button onClick={handleRefreshConstellation} variant="outline" className="flex items-center">
-            <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Menu className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/" className="flex items-center">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleRefreshConstellation} className="flex items-center">
+              <RefreshCw className="mr-2 h-4 w-4" /> Refresh Constellation
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <p className="text-muted-foreground mb-6">

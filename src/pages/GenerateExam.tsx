@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
 import { ArrowLeft, Brain, Loader2, PlayCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client'; // Fixed: Added 'from'
+import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
@@ -167,7 +167,7 @@ const GenerateExam: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-bold">Generate Exam</h1>
         <Button asChild variant="outline">
           <Link to="/" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Study Sets
           </Link>
         </Button>
       </div>

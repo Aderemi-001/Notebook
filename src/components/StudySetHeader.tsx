@@ -70,69 +70,67 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
           </Link>
         )}
       </div>
-      <div className="flex gap-2">
-        <Button asChild variant="outline">
-          <Link to="/" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
-          </Link>
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {isLoggedIn && studySet.cards.length > 0 && ( // Only show "Start Study" if logged in and has cards
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link to="/" className="flex items-center">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
+            </Link>
+          </DropdownMenuItem>
+          {isLoggedIn && studySet.cards.length > 0 && ( // Only show "Start Study" if logged in and has cards
+            <DropdownMenuItem asChild>
+              <Link to={`/sets/${studySet.id}/study`} className="flex items-center">
+                <PlayCircle className="mr-2 h-4 w-4" /> Start Study
+              </Link>
+            </DropdownMenuItem>
+          )}
+          {isOwner && (
+            <>
+              <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to={`/sets/${studySet.id}/study`} className="flex items-center">
-                  <PlayCircle className="mr-2 h-4 w-4" /> Start Study
+                <Link to={`/sets/${studySet.id}/edit`} className="flex items-center">
+                  <Pencil className="mr-2 h-4 w-4" /> Edit Set
                 </Link>
               </DropdownMenuItem>
-            )}
-            {isOwner && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to={`/sets/${studySet.id}/edit`} className="flex items-center">
-                    <Pencil className="mr-2 h-4 w-4" /> Edit Set
-                  </Link>
-                </DropdownMenuItem>
 
-                {/* Reset Progress Trigger */}
-                <DropdownMenuItem onSelect={() => setIsResetProgressDialogOpen(true)} className="flex items-center text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                  <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
-                </DropdownMenuItem>
-              </>
-            )}
-            {isOwner && (
-              <>
-                <DropdownMenuSeparator />
-                {preferences?.confirm_deletion ? (
-                  // Delete Set Trigger (conditional based on preferences)
-                  <DropdownMenuItem onSelect={() => setIsDeleteSetDialogOpen(true)} className="flex items-center text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                    <Trash2 className="h-4 w-4" /> Delete Set
-                  </DropdownMenuItem>
-                ) : (
-                  // Direct delete if no confirmation needed
-                  <DropdownMenuItem onClick={handleDeleteSet} className="flex items-center text-destructive">
-                    <Trash2 className="h-4 w-4" /> Delete Set
-                  </DropdownMenuItem>
-                )}
-              </>
-            )}
-            {studySet.is_public && !isOwner && (
-              <DropdownMenuItem 
-                onClick={handleAddToMySets} 
-                disabled={!isLoggedIn} // Disable if not logged in
-                className="flex items-center"
-              >
-                <Plus className="mr-2 h-4 w-4" /> Add to My Sets
+              {/* Reset Progress Trigger */}
+              <DropdownMenuItem onSelect={() => setIsResetProgressDialogOpen(true)} className="flex items-center text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
               </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+            </>
+          )}
+          {isOwner && (
+            <>
+              <DropdownMenuSeparator />
+              {preferences?.confirm_deletion ? (
+                // Delete Set Trigger (conditional based on preferences)
+                <DropdownMenuItem onSelect={() => setIsDeleteSetDialogOpen(true)} className="flex items-center text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                  <Trash2 className="h-4 w-4" /> Delete Set
+                </DropdownMenuItem>
+              ) : (
+                // Direct delete if no confirmation needed
+                <DropdownMenuItem onClick={handleDeleteSet} className="flex items-center text-destructive">
+                  <Trash2 className="h-4 w-4" /> Delete Set
+                </DropdownMenuItem>
+              )}
+            </>
+          )}
+          {studySet.is_public && !isOwner && (
+            <DropdownMenuItem 
+              onClick={handleAddToMySets} 
+              disabled={!isLoggedIn} // Disable if not logged in
+              className="flex items-center"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add to My Sets
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* AlertDialogs rendered outside DropdownMenuContent */}
       <AlertDialog open={isResetProgressDialogOpen} onOpenChange={setIsResetProgressDialogOpen}>
