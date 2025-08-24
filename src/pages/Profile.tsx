@@ -10,15 +10,8 @@ import { Input } from '@/components/ui/input';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowLeft, LogOut, Menu, Settings as SettingsIcon, BarChart2 } from 'lucide-react';
+import { ArrowLeft, LogOut, Settings as SettingsIcon, BarChart2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 import { useEffect } from 'react'; // Explicitly import useEffect
 
 const profileSchema = z.object({
@@ -155,24 +148,16 @@ const Profile = () => {
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">User Profile</h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link to="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="flex items-center text-destructive">
-              <LogOut className="mr-2 h-4 w-4" /> Sign Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/" className="flex items-center">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
+            </Link>
+          </Button>
+          <Button onClick={handleSignOut} variant="outline" className="flex items-center text-destructive">
+            <LogOut className="mr-2 h-4 w-4" /> Sign Out
+          </Button>
+        </div>
       </div>
 
       <NotebookCard className="mb-6">

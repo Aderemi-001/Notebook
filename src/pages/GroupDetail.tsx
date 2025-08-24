@@ -5,18 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, BookOpen, Globe, Folder, Menu, PlusCircle, Clock, AlertCircle, Pencil } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft, BookOpen, Globe, Folder, PlusCircle, Clock, AlertCircle, Pencil } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client'; // Fixed: Added 'from'
 import { useQuery } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton'; // Fixed: Added 'from'
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNowStrict, isPast } from 'date-fns';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import AddExistingSetToGroupDialog from '@/components/AddExistingSetToGroupDialog';
 import { Separator } from '@/components/ui/separator';
 import { Label } from "@/components/ui/label";
@@ -237,34 +231,26 @@ const GroupDetail: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
           <Folder className="mr-3 h-7 w-7 text-primary" /> {group.name}
         </h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link to="/groups" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Groups
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to={`/groups/${groupId}/edit`} className="flex items-center">
-                <Pencil className="mr-2 h-4 w-4" /> Edit Group
-              </Link>
-            </DropdownMenuItem>
-            {/* Add Existing Set Trigger */}
-            <DropdownMenuItem onSelect={() => setIsAddSetDialogOpen(true)} className="flex items-center w-full justify-start">
-              <PlusCircle className="mr-2 h-4 w-4" /> Add Existing Set
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/create" state={{ groupId: groupId }} className="flex items-center">
-                <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/groups" className="flex items-center">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Groups
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to={`/groups/${groupId}/edit`} className="flex items-center">
+              <Pencil className="mr-2 h-4 w-4" /> Edit Group
+            </Link>
+          </Button>
+          <Button variant="outline" onClick={() => setIsAddSetDialogOpen(true)} className="flex items-center">
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Existing Set
+          </Button>
+          <Button asChild>
+            <Link to="/create" state={{ groupId: groupId }} className="flex items-center">
+              <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {group.description && (

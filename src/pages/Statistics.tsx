@@ -2,23 +2,14 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CalendarDays, LayoutDashboard, Menu, ArrowLeft, BookOpen } from 'lucide-react'; // Removed Loader2, Added BookOpen
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Removed CardDescription
+import { CalendarDays, LayoutDashboard, ArrowLeft, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { format, isSameDay, subDays } from 'date-fns';
-import { Calendar } from "@/components/ui/calendar";
-// Removed unused Popover imports
-// Removed unused cn import
+import { isSameDay, subDays } from 'date-fns'; // Removed format
 
 interface StudyStatistics {
   total_cards: number;
@@ -51,7 +42,7 @@ const fetchStudyDays = async (userId: string): Promise<StudyDay[]> => {
 
 const Statistics: React.FC = () => {
   const { user, loading: isLoadingAuth } = useAuth();
-  const [viewMode, setViewMode] = useState<'allTime' | 'studyDays'>('allTime');
+  // Removed viewMode and setViewMode as they are no longer used for toggling display
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   const { data: statistics, isLoading: isLoadingStats, isError: isErrorStats, error: statsError } = useQuery<StudyStatistics, Error>({
@@ -153,146 +144,78 @@ const Statistics: React.FC = () => {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
             </Link>
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline"> {/* Removed size="icon" */}
-                <Menu className="mr-2 h-4 w-4" /> Display Options
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setViewMode('allTime')}>
-                View All Time Statistics
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setViewMode('studyDays')}>
-                View Study Days
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Removed DropdownMenu for consistency */}
         </div>
       </div>
 
-      {viewMode === 'allTime' && (
-        <>
-          <p className="text-muted-foreground mb-6">
-            An overview of your entire study journey.
-          </p>
-          {(isLoadingStats || isLoadingStudyDays) ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-32 w-full" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Study Sets
-                  </CardTitle>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{statistics?.total_study_sets ?? 0}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Sets created or added by you
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Cards
-                  </CardTitle>
-                  <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{statistics?.total_cards ?? 0}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Cards across all your sets
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Mastered Cards</CardTitle>
-                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{statistics?.total_mastered_cards ?? 0}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Cards you've successfully learned
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Current Streak</CardTitle>
-                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{streak} days</div>
-                  <p className="text-xs text-muted-foreground">
-                    Consecutive days of study
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </>
-      )}
-
-      {viewMode === 'studyDays' && (
-        <>
-          <p className="text-muted-foreground mb-6">
-            Explore your study activity on specific days.
-          </p>
-          <div className="flex flex-col md:flex-row gap-6">
-            <Card className="md:w-1/2 lg:w-1/3">
-              <CardHeader>
-                <CardTitle>Select a Study Day</CardTitle>
-                <CardDescription>Days with study activity are highlighted.</CardDescription>
+      {/* Always render 'All Time Statistics' as the view mode toggle was removed */}
+      <>
+        <p className="text-muted-foreground mb-6">
+          An overview of your entire study journey.
+        </p>
+        {(isLoadingStats || isLoadingStudyDays) ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-32 w-full" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Study Sets
+                </CardTitle>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {isLoadingStudyDays ? (
-                  <Skeleton className="h-[290px] w-full" />
-                ) : (
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    className="rounded-md border shadow"
-                    modifiers={{
-                      studyDay: studyDays?.map(d => new Date(d.study_date)) || [],
-                    }}
-                    modifiersClassNames={{
-                      studyDay: "bg-primary text-primary-foreground rounded-full",
-                    }}
-                  />
-                )}
+                <div className="text-2xl font-bold">{statistics?.total_study_sets ?? 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Sets created or added by you
+                </p>
               </CardContent>
             </Card>
-            <Card className="md:w-1/2 lg:w-2/3">
-              <CardHeader>
-                <CardTitle>Daily Summary</CardTitle>
-                <CardDescription>
-                  {selectedDate ? `Statistics for ${format(selectedDate, 'PPP')}` : "Select a day to see its summary."}
-                </CardDescription>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Cards
+                </CardTitle>
+                <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {selectedDate ? (
-                  <p>
-                    {/* Placeholder for daily summary. Actual data fetching for a specific day would go here. */}
-                    Detailed statistics for {format(selectedDate, 'PPP')} would be displayed here.
-                    This feature is under development.
-                  </p>
-                ) : (
-                  <p className="text-muted-foreground">No day selected.</p>
-                )}
+                <div className="text-2xl font-bold">{statistics?.total_cards ?? 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Cards across all your sets
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Mastered Cards</CardTitle>
+                <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{statistics?.total_mastered_cards ?? 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Cards you've successfully learned
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Current Streak</CardTitle>
+                <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{streak} days</div>
+                <p className="text-xs text-muted-foreground">
+                  Consecutive days of study
+                </p>
               </CardContent>
             </Card>
           </div>
-        </>
-      )}
+        )}
+      </>
 
       <Separator className="my-8" />
 
