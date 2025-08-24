@@ -8,6 +8,7 @@ import {
   User,
   Settings,
   MenuIcon,
+  ShieldCheck, // Import ShieldCheck icon
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -101,6 +102,14 @@ export const Header: React.FC = () => {
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
+                  {profile?.is_admin && ( // Conditionally render Admin Dashboard link
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/dashboard">
+                        <ShieldCheck className="mr-2 h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -165,6 +174,16 @@ export const Header: React.FC = () => {
                         </span>
                       </Link>
                     </Button>
+                    {profile?.is_admin && ( // Conditionally render Admin Dashboard link in mobile menu
+                      <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
+                        <Link to="/admin/dashboard">
+                          <span className="flex items-center">
+                            <ShieldCheck className="mr-2 h-4 w-4" />
+                            <span>Admin Dashboard</span>
+                          </span>
+                        </Link>
+                      </Button>
+                    )}
                     <Button variant="ghost" onClick={() => { handleLogout(); setIsSheetOpen(false); }} className="justify-start text-red-500 hover:text-red-600">
                       <span className="flex items-center">
                         <LogOut className="mr-2 h-4 w-4" />

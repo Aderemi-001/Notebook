@@ -32,7 +32,8 @@ import EssayPractice from "@/pages/EssayPractice";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/NotFound";
 import AuthLayout from "@/layouts/AuthLayout";
-import TextbookFinder from "@/pages/TextbookFinder"; // Import the new page
+import TextbookFinder from "@/pages/TextbookFinder";
+import AdminDashboard from "@/pages/AdminDashboard"; // Import the new AdminDashboard page
 
 const AppContent = () => {
   return (
@@ -50,7 +51,8 @@ const AppContent = () => {
         <Route path="/constellation" element={<CognitiveConstellation />} />
         <Route path="/collaborations" element={<Collaborations />} />
         <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
-        <Route path="/textbook-finder" element={<TextbookFinder />} /> {/* New route */}
+        <Route path="/textbook-finder" element={<TextbookFinder />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} /> {/* New route for Admin Dashboard */}
 
         {/* Study Sets */}
         <Route path="/create" element={<CreateStudySet />} />
