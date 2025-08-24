@@ -16,7 +16,9 @@ import {
   GraduationCap,
   PenTool,
   BookText,
-  Globe, // Added Globe icon for Explore Public Sets
+  Globe,
+  MenuIcon, // Import MenuIcon for the new dropdown trigger
+  Network, // For Cognitive Constellation
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,7 +30,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -57,6 +58,7 @@ export const Header: React.FC = () => {
     { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> },
     { name: "Textbook Finder", href: "/textbook-finder", icon: <BookText className="mr-2 h-4 w-4" /> },
     { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> },
+    { name: "Cognitive Constellation", href: "/constellation", icon: <Network className="mr-2 h-4 w-4" /> },
     { name: "Statistics", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
     { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
   ];
@@ -71,34 +73,29 @@ export const Header: React.FC = () => {
 
         {user ? (
           <div className="flex items-center space-x-4">
-            {/* Desktop Navigation & User Dropdown */}
-            <div className="hidden md:flex items-center space-x-4">
-              <Button variant="ghost" asChild>
-                <Link to="/daily-review">Daily Review</Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link to="/">My Study Sets</Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link to="/notes">My Notes</Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link to="/groups">My Groups</Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link to="/exams">Exams</Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link to="/essays">Essays</Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link to="/textbook-finder">Textbook Finder</Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link to="/explore-public-sets">Explore Public Sets</Link>
-              </Button>
+            {/* Desktop Navigation Dropdown */}
+            <div className="hidden md:flex items-center space-x-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MenuIcon className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 z-[999]" align="end" forceMount>
+                  <DropdownMenuLabel>Navigation</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {navItems.map((item) => (
+                    <DropdownMenuItem key={item.name} asChild>
+                      <Link to={item.href}>
+                        {item.icon}
+                        <span>{item.name}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-              {/* User Dropdown - now correctly inside the desktop-only div */}
+              {/* User Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
