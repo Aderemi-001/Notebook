@@ -166,8 +166,10 @@ export const Header: React.FC = () => {
                     {navItems.map((item) => (
                       <Button key={item.name} variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                         <Link to={item.href}>
-                          {item.icon}
-                          {item.name}
+                          <span className="flex items-center"> {/* Wrapped children in a span */}
+                            {item.icon}
+                            {item.name}
+                          </span>
                         </Link>
                       </Button>
                     ))}
@@ -175,19 +177,25 @@ export const Header: React.FC = () => {
                     {/* Profile, Settings, Logout in Mobile Menu */}
                     <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                       <Link to="/profile">
-                        <User className="mr-2 h-4 w-4" />
-                        Profile
+                        <span className="flex items-center"> {/* Wrapped children in a span */}
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Profile</span>
+                        </span>
                       </Link>
                     </Button>
                     <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
                       <Link to="/settings">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Settings
+                        <span className="flex items-center"> {/* Wrapped children in a span */}
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>Settings</span>
+                        </span>
                       </Link>
                     </Button>
                     <Button variant="ghost" onClick={() => { handleLogout(); setIsSheetOpen(false); }} className="justify-start text-red-500 hover:text-red-600">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Log out
+                      <span className="flex items-center"> {/* Wrapped children in a span */}
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </span>
                     </Button>
                   </div>
                 </ScrollArea>
