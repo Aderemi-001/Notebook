@@ -1,91 +1,54 @@
-import { Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "@/pages/Index";
-import About from "@/pages/About";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Dashboard from "@/pages/Dashboard";
+import StudySets from "@/pages/StudySets";
+import StudySet from "@/pages/StudySet";
+import Cards from "@/pages/Cards";
+import Account from "@/pages/Account";
+import Settings from "@/pages/Settings";
+import Notes from "@/pages/Notes";
+import Note from "@/pages/Note";
+import Concepts from "@/pages/Concepts";
+import Concept from "@/pages/Concept";
+import Exams from "@/pages/Exams";
+import Exam from "@/pages/Exam";
+import EssayQuestions from "@/pages/EssayQuestions";
+import EssayQuestion from "@/pages/EssayQuestion";
 import Contact from "@/pages/Contact";
 import Login from "@/pages/Login";
-import StudySetDetail from "@/pages/StudySetDetail";
-import CreateStudySet from "@/pages/CreateStudySet";
-import EditSet from "@/pages/EditSet";
-import StudyMode from "@/pages/StudyMode";
-import NotesIndex from "@/pages/NotesIndex";
-import CreateNote from "@/pages/CreateNote";
-import EditNote from "@/pages/EditNote";
-import Profile from "@/pages/Profile";
-import GroupsIndex from "@/pages/GroupsIndex";
-import CreateGroup from "@/pages/CreateGroup";
-import GroupDetail from "@/pages/GroupDetail";
-import EditGroup from "@/pages/EditGroup";
-import ExplorePublicSets from "@/pages/ExplorePublicSets";
-import DailyReview from "@/pages/DailyReview";
-import Settings from "@/pages/Settings";
-import Statistics from "@/pages/Statistics";
-import CognitiveConstellation from "@/pages/CognitiveConstellation";
-import Collaborations from "@/pages/Collaborations";
-import ExamsIndex from "@/pages/ExamsIndex";
-import GenerateExam from "@/pages/GenerateExam";
-import PastExams from "@/pages/PastExams";
-import TakeExam from "@/pages/TakeExam";
-import EssayIndex from "@/pages/EssayIndex";
-import GenerateEssayQuestions from "@/pages/GenerateEssayQuestions";
-import PastEssayQuestions from "@/pages/PastEssayQuestions";
-import EssayPractice from "@/pages/EssayPractice";
-import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/NotFound";
-import AuthLayout from "@/layouts/AuthLayout";
+import { AuthLayout } from "@/layouts/AuthLayout"; // Corrected import
 import TextbookFinder from "@/pages/TextbookFinder"; // Import the new page
 
-const AppContent = () => {
+export default function AppContent() {
   return (
-    <AuthLayout>
+    <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/dashboard" element={<Statistics />} />
-        <Route path="/daily-review" element={<DailyReview />} />
-        <Route path="/constellation" element={<CognitiveConstellation />} />
-        <Route path="/collaborations" element={<Collaborations />} />
-        <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
-        <Route path="/textbook-finder" element={<TextbookFinder />} /> {/* New route */}
-
-        {/* Study Sets */}
-        <Route path="/create" element={<CreateStudySet />} />
-        <Route path="/sets/:setId" element={<StudySetDetail />} />
-        <Route path="/sets/:setId/edit" element={<EditSet />} />
-        <Route path="/sets/:setId/study" element={<StudyMode />} />
-
-        {/* Notes */}
-        <Route path="/notes" element={<NotesIndex />} />
-        <Route path="/create-note" element={<CreateNote />} />
-        <Route path="/notes/:noteId/edit" element={<EditNote />} />
-
-        {/* Study Set Groups */}
-        <Route path="/groups" element={<GroupsIndex />} />
-        <Route path="/groups/create" element={<CreateGroup />} />
-        <Route path="/groups/:groupId" element={<GroupDetail />} />
-        <Route path="/groups/:groupId/edit" element={<EditGroup />} />
-
-        {/* Exams */}
-        <Route path="/exams" element={<ExamsIndex />} />
-        <Route path="/generate-exam" element={<GenerateExam />} />
-        <Route path="/past-exams" element={<PastExams />} />
-        <Route path="/exams/:examId" element={<TakeExam />} />
-
-        {/* Essays */}
-        <Route path="/essays" element={<EssayIndex />} />
-        <Route path="/generate-essay-questions" element={<GenerateEssayQuestions />} />
-        <Route path="/past-essay-questions" element={<PastEssayQuestions />} />
-        <Route path="/essay-practice/:questionId" element={<EssayPractice />} />
-
-        {/* Catch-all for 404 */}
-        <Route path="*" element={<NotFound />} />
+        <Route path="/" element={<AuthLayout />}>
+          <Route index element={<Index />} />
+          <Route path="login" element={<Login />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="textbook-finder" element={<TextbookFinder />} /> {/* Add the new route */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="study-sets" element={<StudySets />} />
+            <Route path="study-sets/:id" element={<StudySet />} />
+            <Route path="study-sets/:setId/cards" element={<Cards />} />
+            <Route path="notes" element={<Notes />} />
+            <Route path="notes/:id" element={<Note />} />
+            <Route path="concepts" element={<Concepts />} />
+            <Route path="concepts/:id" element={<Concept />} />
+            <Route path="exams" element={<Exams />} />
+            <Route path="exams/:id" element={<Exam />} />
+            <Route path="essay-questions" element={<EssayQuestions />} />
+            <Route path="essay-questions/:id" element={<EssayQuestion />} />
+            <Route path="account" element={<Account />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Route>
       </Routes>
-    </AuthLayout>
+    </BrowserRouter>
   );
-};
-
-export default AppContent;
+}
