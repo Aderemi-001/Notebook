@@ -89,7 +89,7 @@ const Login = () => {
     const toastId = showLoading('Sending password reset email...');
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/confirm-email#type=recovery`, // Changed to use hash fragment for type
+        redirectTo: `${window.location.origin}/confirm-email`, // Simplified redirectTo URL
       });
       if (error) {
         throw new Error(error.message);

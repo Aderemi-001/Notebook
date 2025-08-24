@@ -11,6 +11,7 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { showError, showSuccess } from '@/utils/toast';
+import { useAuth } from '@/hooks/useAuth'; // Import useAuth
 
 // Schema for password reset form
 const passwordResetSchema = z.object({
@@ -29,6 +30,7 @@ const EmailConfirmation: React.FC = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'password_reset'>('loading');
   const [message, setMessage] = useState('Confirming your email...');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const { user: authUser, loading: isLoadingAuth } = useAuth(); // Get user from AuthContext
 
   const form = useForm<PasswordResetFormValues>({
     resolver: zodResolver(passwordResetSchema),
@@ -39,46 +41,47 @@ const EmailConfirmation: React.FC = () => {
   });
 
   useEffect(() => {
+    if (isLoadingAuth) return; // Wait for auth to load
+
     const confirmSession = async () => {
-      // Parse hash fragment for tokens and type
-      const hash = window.location.hash.substring(1); // Remove the '#'
+      // Parse tokens and type from both hash and query parameters
+      const hash = window.location.hash.substring(1);
       const hashParams = new URLSearchParams(hash);
 
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-      const type = hashParams.get('type'); // Get type from hash
+      const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
+      const type = hashParams.get('type') || searchParams.get('type');
 
-      // Fallback to query params if not found in hash (less likely with new redirectTo)
-      const queryType = searchParams.get('type'); // Keep this for robustness
+      // If user is already logged in and not in a recovery flow, redirect to home
+      if (authUser && type !== 'recovery') {
+        console.log("Already logged in and not in recovery flow. Redirecting to home.");
+        navigate('/');
+        return;
+      }
 
-      const finalType = type || queryType;
+      if (type === 'recovery' && accessToken && refreshToken) {
+        console.log("Entering password reset flow.");
+        try {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
 
-      if (finalType === 'recovery') {
-        if (accessToken && refreshToken) {
-          try {
-            const { error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-
-            if (error) {
-              console.error("Error setting session for recovery:", error);
-              setStatus('error');
-              setMessage(`Failed to process password reset link: ${error.message}`);
-              return;
-            }
-            setStatus('password_reset');
-            setMessage('Please enter your new password.');
-          } catch (err: any) {
-            console.error("Unexpected error during recovery session setting:", err);
+          if (error) {
+            console.error("Error setting session for recovery:", error);
             setStatus('error');
-            setMessage(`An unexpected error occurred: ${err.message}`);
+            setMessage(`Failed to process password reset link: ${error.message}`);
+            return;
           }
-        } else {
+          setStatus('password_reset');
+          setMessage('Please enter your new password.');
+        } catch (err: any) {
+          console.error("Unexpected error during recovery session setting:", err);
           setStatus('error');
-          setMessage('Invalid password reset link. Missing tokens.');
+          setMessage(`An unexpected error occurred: ${err.message}`);
         }
-      } else if (accessToken && refreshToken) {
+      } else if (accessToken && refreshToken) { // This is for email confirmation (if not recovery but has tokens)
+        console.log("Entering email confirmation flow.");
         try {
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -108,13 +111,14 @@ const EmailConfirmation: React.FC = () => {
           setMessage(`An unexpected error occurred: ${err.message}`);
         }
       } else {
+        console.log("Neither recovery nor email confirmation flow. Missing tokens or type.");
         setStatus('error');
-        setMessage('Invalid confirmation link. Missing access or refresh tokens.');
+        setMessage('Invalid confirmation link. Missing access or refresh tokens, or unknown type.');
       }
     };
 
     confirmSession();
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, authUser, isLoadingAuth]); // Add authUser and isLoadingAuth to dependencies
 
   const handlePasswordReset = async (values: PasswordResetFormValues) => {
     setIsUpdatingPassword(true);
