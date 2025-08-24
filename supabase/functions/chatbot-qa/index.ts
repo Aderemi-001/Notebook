@@ -45,6 +45,7 @@ The application is a study tool designed to help users learn and organize their 
 *   **User Profile & Settings:**
     *   **Profile:** Users can update their display name.
     *   **Settings:** Users can configure application preferences, including:
+        *   **Dark Mode:** Toggle between light and dark themes.
         *   Default flashcard side (term first or definition first).
         *   Confirmation prompt for deleting items.
         *   Default number of exam questions.
@@ -65,6 +66,7 @@ The application is a study tool designed to help users learn and organize their 
 *   **To view your cognitive constellation:** Navigate to the "Cognitive Constellation" page.
 *   **To manage groups:** Go to "My Groups."
 *   **To change settings:** Go to "Profile" then "App Settings."
+*   **To change the theme (Dark Mode):** Go to "Profile" then "App Settings" and use the "Dark Mode" toggle.
 *   **To view statistics:** Go to "Profile" then "Statistics."
 *   **To sign out:** Go to "Profile" and select "Sign Out" from the dropdown menu.
 *   **To find textbooks:** Navigate to the "Textbook Finder" page and enter your search query.
