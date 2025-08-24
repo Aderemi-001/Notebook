@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Loader2, Brain } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -217,6 +218,22 @@ const CreateSet = () => {
   };
 
   const isGenerateButtonDisabled = !numCardsToGenerate || numCardsToGenerate <= 0 || isGenerating || (estimatedOptimalCards !== null && numCardsToGenerate > estimatedOptimalCards) || !currentUser;
+
+  // Add this loading state check
+  if (isLoadingUser || isLoadingGroups) {
+    return (
+      <div className="container mx-auto py-10 animate-fade-in">
+        <Skeleton className="h-8 w-1/2 mb-8" />
+        <Skeleton className="h-6 w-1/3 mb-4" />
+        <Skeleton className="h-4 w-full mb-6" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-48 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
