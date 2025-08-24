@@ -3,7 +3,7 @@ import AppContent from "@/components/AppContent";
 import * as React from "react";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import AuthLayout from "@/layouts/AuthLayout"; // Import AuthLayout
+// Removed: import { ThemeProvider } from "./components/ThemeProvider.tsx";
 
 const queryClient = new QueryClient();
 
@@ -12,9 +12,7 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <AuthLayout> {/* Wrap AppContent with AuthLayout */}
-            <AppContent />
-          </AuthLayout>
+          <AppContent />
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
