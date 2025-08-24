@@ -41,15 +41,26 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 
-interface StudySet {
+// Define the interface for the data returned by the RPC
+interface RpcStudySetResult {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   cards_count: number;
   is_public: boolean;
   user_id: string;
-  display_name: string; // This will now always be the current user's display name or null
-  is_owner: boolean; // This will now always be true for sets on this page
+  display_name: string | null;
+}
+
+interface StudySet {
+  id: string;
+  title: string;
+  description: string | null; // Changed to nullable
+  cards_count: number;
+  is_public: boolean;
+  user_id: string;
+  display_name: string | null; // Changed to nullable
+  is_owner: boolean;
 }
 
 const fetchStudySets = async (): Promise<StudySet[]> => {
@@ -62,11 +73,13 @@ const fetchStudySets = async (): Promise<StudySet[]> => {
   const { data, error } = await supabase.rpc('get_study_sets_with_card_count');
   if (error) throw error;
 
+  // Explicitly cast data to the expected array type
+  const rpcResults = data as RpcStudySetResult[];
+
   // For consistency with the previous interface, we'll map the data.
-  // Since these are user's own sets, is_owner will be true and display_name will be null (or fetched separately if needed).
-  return data.map(set => ({
+  // Since these are user's own sets, is_owner will be true.
+  return rpcResults.map((set: RpcStudySetResult) => ({ // Explicitly type 'set'
     ...set,
-    display_name: null, // Not directly available from this RPC, or can be fetched from profiles if needed
     is_owner: true, // All sets fetched here are owned by the current user
   }));
 };
@@ -109,7 +122,7 @@ const Index: React.FC = () => {
     },
   });
 
-  const updateSetMutation = useMutation<void, Error, { id: string; title: string; description: string; is_public: boolean }>({
+  const updateSetMutation = useMutation<void, Error, { id: string; title: string; description: string | null; is_public: boolean }>({
     mutationFn: async ({ id, title, description, is_public }) => {
       const { error } = await supabase.from('study_sets').update({ title, description, is_public }).eq('id', id);
       if (error) throw error;
