@@ -263,12 +263,14 @@ const StudySetDetail = () => {
   const handleAddToMySets = async () => {
     if (!studySet) return;
 
+    if (!user) {
+      showError("Please sign up or log in first to add this set to your collection.");
+      navigate('/login'); // Redirect to login page
+      return;
+    }
+
     const toastId = showLoading(`Adding "${studySet.title}" to your sets...`);
     try {
-      if (!user) {
-        throw new Error("User not authenticated. Please log in to add sets.");
-      }
-
       const { data: newSet, error: newSetError } = await supabase
         .from('study_sets')
         .insert({
