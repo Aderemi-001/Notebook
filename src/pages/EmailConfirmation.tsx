@@ -5,46 +5,20 @@ import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { showError, showSuccess } from '@/utils/toast';
-import { useAuth } from '@/hooks/useAuth'; // Import useAuth
-
-// Schema for password reset form
-const passwordResetSchema = z.object({
-  newPassword: z.string().min(6, 'Password must be at least 6 characters long'),
-  confirmNewPassword: z.string(),
-}).refine((data) => data.newPassword === data.confirmNewPassword, {
-  message: "Passwords don't match",
-  path: ["confirmNewPassword"],
-});
-
-type PasswordResetFormValues = z.infer<typeof passwordResetSchema>;
+import { useAuth } from '@/hooks/useAuth';
+import { showSuccess } from '@/utils/toast';
 
 const EmailConfirmation: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'password_reset'>('loading');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Confirming your email...');
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const { user: authUser, loading: isLoadingAuth } = useAuth(); // Get user from AuthContext
-
-  const form = useForm<PasswordResetFormValues>({
-    resolver: zodResolver(passwordResetSchema),
-    defaultValues: {
-      newPassword: '',
-      confirmNewPassword: '',
-    },
-  });
+  const { user: authUser, loading: isLoadingAuth } = useAuth();
 
   useEffect(() => {
     if (isLoadingAuth) return; // Wait for auth to load
 
-    const confirmSession = async () => {
-      // Parse tokens and type from both hash and query parameters
+    const confirmEmail = async () => {
       const hash = window.location.hash.substring(1);
       const hashParams = new URLSearchParams(hash);
 
@@ -52,36 +26,15 @@ const EmailConfirmation: React.FC = () => {
       const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
       const type = hashParams.get('type') || searchParams.get('type');
 
-      // If user is already logged in and not in a recovery flow, redirect to home
-      if (authUser && type !== 'recovery') {
-        console.log("Already logged in and not in recovery flow. Redirecting to home.");
+      // If user is already logged in, redirect to home
+      if (authUser) {
+        console.log("Already logged in. Redirecting to home.");
         navigate('/');
         return;
       }
 
-      if (type === 'recovery' && accessToken && refreshToken) {
-        console.log("Entering password reset flow.");
-        try {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (error) {
-            console.error("Error setting session for recovery:", error);
-            setStatus('error');
-            setMessage(`Failed to process password reset link: ${error.message}`);
-            return;
-          }
-          setStatus('password_reset');
-          setMessage('Please enter your new password.');
-        } catch (err: any) {
-          console.error("Unexpected error during recovery session setting:", err);
-          setStatus('error');
-          setMessage(`An unexpected error occurred: ${err.message}`);
-        }
-      } else if (accessToken && refreshToken) { // This is for email confirmation (if not recovery but has tokens)
-        console.log("Entering email confirmation flow.");
+      // This page should only handle 'signup' confirmation
+      if (type === 'signup' && accessToken && refreshToken) {
         try {
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -89,7 +42,7 @@ const EmailConfirmation: React.FC = () => {
           });
 
           if (error) {
-            console.error("Error setting session:", error);
+            console.error("Error setting session for email confirmation:", error);
             setStatus('error');
             setMessage(`Failed to confirm email: ${error.message}`);
             return;
@@ -98,6 +51,7 @@ const EmailConfirmation: React.FC = () => {
           if (data.user) {
             setStatus('success');
             setMessage('Your email has been successfully confirmed! Redirecting to home...');
+            showSuccess('Email confirmed successfully!');
             setTimeout(() => {
               navigate('/');
             }, 3000);
@@ -111,37 +65,13 @@ const EmailConfirmation: React.FC = () => {
           setMessage(`An unexpected error occurred: ${err.message}`);
         }
       } else {
-        console.log("Neither recovery nor email confirmation flow. Missing tokens or type.");
         setStatus('error');
-        setMessage('Invalid confirmation link. Missing access or refresh tokens, or unknown type.');
+        setMessage('Invalid email confirmation link. Missing access or refresh tokens, or incorrect type.');
       }
     };
 
-    confirmSession();
-  }, [navigate, searchParams, authUser, isLoadingAuth]); // Add authUser and isLoadingAuth to dependencies
-
-  const handlePasswordReset = async (values: PasswordResetFormValues) => {
-    setIsUpdatingPassword(true);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: values.newPassword,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      showSuccess('Your password has been reset successfully! Redirecting to login...');
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
-    } catch (err: any) {
-      showError(err.message || 'Failed to reset password.');
-      console.error('Password reset error:', err);
-    } finally {
-      setIsUpdatingPassword(false);
-    }
-  };
+    confirmEmail();
+  }, [navigate, searchParams, authUser, isLoadingAuth]);
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
@@ -149,7 +79,7 @@ const EmailConfirmation: React.FC = () => {
         <NotebookCard className="p-8 text-center">
           <CardHeader>
             <CardTitle className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">
-              {status === 'password_reset' ? 'Reset Your Password' : 'Email Confirmation'}
+              Email Confirmation
             </CardTitle>
             <CardDescription className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               {message}
@@ -164,47 +94,6 @@ const EmailConfirmation: React.FC = () => {
             )}
             {status === 'error' && (
               <XCircle className="h-12 w-12 text-red-500" />
-            )}
-            {status === 'password_reset' && (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handlePasswordReset)} className="w-full space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="newPassword"
-                    render={({ field }: { field: any }) => (
-                      <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="confirmNewPassword"
-                    render={({ field }: { field: any }) => (
-                      <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={isUpdatingPassword}>
-                    {isUpdatingPassword ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resetting...
-                      </>
-                    ) : (
-                      'Reset Password'
-                    )}
-                  </Button>
-                </form>
-              </Form>
             )}
             {(status === 'error' || status === 'success') && (
               <Button asChild className="mt-4">

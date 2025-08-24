@@ -34,7 +34,8 @@ import NotFound from "@/pages/NotFound";
 import AuthLayout from "@/layouts/AuthLayout";
 import TextbookFinder from "@/pages/TextbookFinder";
 import TestPage from "@/pages/TestPage";
-import EmailConfirmation from "@/pages/EmailConfirmation"; // Import the new EmailConfirmation page
+import EmailConfirmation from "@/pages/EmailConfirmation";
+import PasswordReset from "@/pages/PasswordReset"; // Import the new PasswordReset page
 
 const AppContent = () => {
   return (
@@ -54,7 +55,8 @@ const AppContent = () => {
         <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
         <Route path="/textbook-finder" element={<TextbookFinder />} />
         <Route path="/test" element={<TestPage />} />
-        <Route path="/confirm-email" element={<EmailConfirmation />} /> {/* New route for email confirmation */}
+        <Route path="/confirm-email" element={<EmailConfirmation />} />
+        <Route path="/reset-password" element={<PasswordReset />} /> {/* New route for password reset */}
 
         {/* Study Sets */}
         <Route path="/create" element={<CreateStudySet />} />

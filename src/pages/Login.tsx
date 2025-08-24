@@ -90,7 +90,7 @@ const Login = () => {
     const toastId = showLoading('Sending password reset email...');
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/confirm-email`, // Simplified redirectTo URL
+        redirectTo: `${window.location.origin}/reset-password`, // Redirect to the new password reset page
       });
       if (error) {
         throw new Error(error.message);
@@ -122,7 +122,7 @@ const Login = () => {
                 <FormField
                   control={form.control}
                   name="email"
-                  render={({ field }: { field: any }) => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
@@ -135,7 +135,7 @@ const Login = () => {
                 <FormField
                   control={form.control}
                   name="password"
-                  render={({ field }: { field: any }) => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
