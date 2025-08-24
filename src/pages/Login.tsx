@@ -4,7 +4,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/NotebookCard';
 import { NotebookCard } from '@/components/NotebookCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -89,7 +89,7 @@ const Login = () => {
     const toastId = showLoading('Sending password reset email...');
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/confirm-email?type=recovery`, // Redirect to confirmation page with type
+        redirectTo: `${window.location.origin}/confirm-email#type=recovery`, // Changed to use hash fragment for type
       });
       if (error) {
         throw new Error(error.message);

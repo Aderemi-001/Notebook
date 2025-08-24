@@ -40,12 +40,20 @@ const EmailConfirmation: React.FC = () => {
 
   useEffect(() => {
     const confirmSession = async () => {
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
-      const type = searchParams.get('type'); // e.g., 'signup', 'invite', 'magiclink', 'recovery'
+      // Parse hash fragment for tokens and type
+      const hash = window.location.hash.substring(1); // Remove the '#'
+      const hashParams = new URLSearchParams(hash);
 
-      if (type === 'recovery') {
-        // For password recovery, we need to set the session first
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      const type = hashParams.get('type'); // Get type from hash
+
+      // Fallback to query params if not found in hash (less likely with new redirectTo)
+      const queryType = searchParams.get('type'); // Keep this for robustness
+
+      const finalType = type || queryType;
+
+      if (finalType === 'recovery') {
         if (accessToken && refreshToken) {
           try {
             const { error } = await supabase.auth.setSession({
@@ -59,7 +67,6 @@ const EmailConfirmation: React.FC = () => {
               setMessage(`Failed to process password reset link: ${error.message}`);
               return;
             }
-            // If session is set, user can now update their password
             setStatus('password_reset');
             setMessage('Please enter your new password.');
           } catch (err: any) {
@@ -72,7 +79,6 @@ const EmailConfirmation: React.FC = () => {
           setMessage('Invalid password reset link. Missing tokens.');
         }
       } else if (accessToken && refreshToken) {
-        // For email confirmation (signup, magiclink, etc.)
         try {
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -91,7 +97,7 @@ const EmailConfirmation: React.FC = () => {
             setMessage('Your email has been successfully confirmed! Redirecting to home...');
             setTimeout(() => {
               navigate('/');
-            }, 3000); // Redirect after 3 seconds
+            }, 3000);
           } else {
             setStatus('error');
             setMessage('Email confirmation failed. No user data found.');
@@ -108,7 +114,7 @@ const EmailConfirmation: React.FC = () => {
     };
 
     confirmSession();
-  }, [searchParams, navigate]);
+  }, [navigate, searchParams]);
 
   const handlePasswordReset = async (values: PasswordResetFormValues) => {
     setIsUpdatingPassword(true);
