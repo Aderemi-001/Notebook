@@ -68,7 +68,7 @@ serve(async (req: Request) => { // Explicitly type 'req' as Request
       - "link": A plausible, example URL for access (e.g., a library catalog search URL, an OER repository URL, an Amazon/publisher URL).
       - "cost_implication": "Free", "Purchase", "Rental", or "Subscription Required".
 
-      Generate between 1 and 3 relevant results.
+      Generate between 5 and 10 relevant results.
       The output must be a single, valid JSON object. Do not wrap it in markdown backticks or add any other text.
       The JSON object should have one top-level key: "results".
 
