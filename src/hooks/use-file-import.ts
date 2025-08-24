@@ -19,7 +19,6 @@ interface EstimationResult {
 }
 
 const MAX_FILE_SIZE_MB = 10; // Define a max file size
-// Removed: const MIN_MEANINGFUL_TEXT_LENGTH = 50; // Heuristic for "meaningful text"
 
 export const useFileImport = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -39,7 +38,6 @@ export const useFileImport = () => {
 
   const extractFileContent = useCallback(async (selectedFile: File) => {
     let extractedFileContent = "";
-    // Removed: let imageParts: { data: string; mimeType: string }[] = [];
 
     if (selectedFile.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
       throw new Error(`File size exceeds the limit of ${MAX_FILE_SIZE_MB}MB.`);
@@ -65,7 +63,6 @@ export const useFileImport = () => {
             }
             extractedFileContent = (await Promise.all(pageTextPromises)).join('\n');
 
-            // Removed: PDF image extraction logic
             resolve();
           } catch (pdfError) {
             console.error("Error parsing PDF:", pdfError);
@@ -89,16 +86,16 @@ export const useFileImport = () => {
         throw new Error(`Unsupported file type: ${selectedFile.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.`);
     }
 
-    if (!extractedFileContent.trim()) { // Simplified check
+    if (!extractedFileContent.trim()) {
         throw new Error("Could not extract any meaningful text from the file. Please ensure the file contains readable content.");
     }
-    return { extractedFileContent /* Removed: , imageParts */ };
+    return { extractedFileContent };
   }, []);
 
   const callAIProcessFile = useCallback(async (
     textContent: string,
     mode: 'estimate' | 'generate',
-    numCards?: number // numCards is optional and only relevant for 'generate' mode
+    numCards?: number
   ): Promise<ProcessedAIData | EstimationResult | null> => {
     if (!currentUser) {
       throw new Error("You must be logged in to use AI features.");
@@ -116,13 +113,12 @@ export const useFileImport = () => {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
-          'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJis_publicsIjoiInN1cGFiYXNlIiwicmVmIjoianVvc2RtZWNwZHV6bHZyaW5uendmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjA1MTAsImV4cCI6MjA2MjkzNjUxMH0.xvg8a1qa6WBuWY9VDLNtQxjnL5VmylefmfchofI1mJU",
+          // Removed redundant 'apikey' header
         },
         body: JSON.stringify({ 
           textContent: textContent,
-          // Removed: imageParts: imageParts,
           numCards: numCards,
-          mode: mode, // Pass the mode to the edge function
+          mode: mode,
         }),
       }
     );
@@ -147,8 +143,8 @@ export const useFileImport = () => {
 
     const toastId = showLoading("AI is estimating optimal card count...");
     try {
-      const { extractedFileContent /* Removed: , imageParts */ } = await extractFileContent(file);
-      setSourceTextContent(extractedFileContent); // Store for later full generation
+      const { extractedFileContent } = await extractFileContent(file);
+      setSourceTextContent(extractedFileContent);
 
       const result = await callAIProcessFile(extractedFileContent, 'estimate') as EstimationResult;
       dismissToast(toastId);
@@ -173,15 +169,11 @@ export const useFileImport = () => {
 
     const toastId = showLoading("AI is generating your flashcards, concepts, and relationships...");
     try {
-      // Re-extract image parts if needed, or pass an empty array if only text was extracted initially
-      // Removed: const { imageParts } = await extractFileContent(file); // Re-extract to ensure imageParts are fresh
-
       const data = await callAIProcessFile(sourceTextContent, 'generate', numCardsToGenerate) as ProcessedAIData;
 
       const newCards = data.cards;
       const newConcepts = data.concepts;
       const newRelationships = data.relationships;
-      // const newCardConceptLinks = data.card_concept_links; // New: Get card-concept links - Removed as it's unused here
 
       if (!newCards || newCards.length === 0) {
         showError("The AI couldn't find any terms and definitions in the file.");
@@ -205,7 +197,7 @@ export const useFileImport = () => {
           }
 
           let conceptId: string;
-          if (existingConcept) { // Corrected from existsSync
+          if (existingConcept) {
             conceptId = existingConcept.id;
           } else {
             const { data: insertedConcept, error: insertConceptError } = await supabase
@@ -249,11 +241,6 @@ export const useFileImport = () => {
           }
         }
       }
-
-      // New: Process card-concept links
-      // The actual card insertion happens in `CreateSet.tsx` and `EditSet.tsx`.
-      // So, this hook should *return* the links, and the pages will handle the final insertion.
-      // The `cardTermToIdMap` is not needed here.
       
       queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] });
       return data;
@@ -263,7 +250,7 @@ export const useFileImport = () => {
       console.error(error);
       return null;
     } finally {
-      dismissToast(toastId); // Dismiss the toast here, after all operations
+      dismissToast(toastId);
     }
   }, [file, sourceTextContent, currentUser, queryClient, extractFileContent, callAIProcessFile]);
 
@@ -272,8 +259,8 @@ export const useFileImport = () => {
     setFile,
     sourceTextContent,
     setSourceTextContent,
-    estimateOptimalCards, // New function
-    generateCardsAndConcepts, // New function
+    estimateOptimalCards,
+    generateCardsAndConcepts,
     currentUser,
     isLoadingUser,
   };
