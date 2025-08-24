@@ -31,11 +31,12 @@ import PastEssayQuestions from "@/pages/PastEssayQuestions";
 import EssayPractice from "@/pages/EssayPractice";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/NotFound";
-import AuthLayout from "@/layouts/AuthLayout"; // Import AuthLayout
+import AuthLayout from "@/layouts/AuthLayout";
+import TextbookFinder from "@/pages/TextbookFinder"; // Import the new page
 
 const AppContent = () => {
   return (
-    <AuthLayout> {/* AuthLayout now wraps the Routes */}
+    <AuthLayout>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/about" element={<About />} />
@@ -49,6 +50,7 @@ const AppContent = () => {
         <Route path="/constellation" element={<CognitiveConstellation />} />
         <Route path="/collaborations" element={<Collaborations />} />
         <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
+        <Route path="/textbook-finder" element={<TextbookFinder />} /> {/* New route */}
 
         {/* Study Sets */}
         <Route path="/create" element={<CreateStudySet />} />

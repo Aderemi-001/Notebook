@@ -13,9 +13,10 @@ import {
   CalendarDays,
   Group,
   Handshake,
-  Network, // Kept for Cognitive Constellation
-  GraduationCap, // New icon for Exams hub
-  PenTool, // New icon for Essays hub
+  Network,
+  GraduationCap,
+  PenTool,
+  BookText, // Changed from SearchBook to BookText
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -29,11 +30,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MenuIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const Header: React.FC = () => {
   const { user } = useAuth();
-  const [isSheetOpen, setIsSheetOpen] = useState(false); // State to control mobile menu
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -43,11 +44,11 @@ export const Header: React.FC = () => {
   const navItems = [
     { name: "Daily Review", href: "/daily-review", icon: <CalendarDays className="mr-2 h-4 w-4" /> },
     { name: "My Study Sets", href: "/", icon: <BookOpen className="mr-2 h-4 w-4" /> },
-    { name: "My Notes", href: "/notes-under-construction", icon: <NotebookPen className="mr-2 h-4 w-4" /> }, // Updated link
+    { name: "My Notes", href: "/notes-under-construction", icon: <NotebookPen className="mr-2 h-4 w-4" /> },
     { name: "My Groups", href: "/groups", icon: <Group className="mr-2 h-4 w-4" /> },
     { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> },
     { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> },
-    { name: "Cognitive Constellation", href: "/constellation", icon: <Network className="mr-2 h-4 w-4" /> },
+    { name: "Textbook Finder", href: "/textbook-finder", icon: <BookText className="mr-2 h-4 w-4" /> }, {/* Updated icon */}
     { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
     { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
   ];
@@ -71,7 +72,7 @@ export const Header: React.FC = () => {
                 <Link to="/">My Study Sets</Link>
               </Button>
               <Button variant="ghost" asChild>
-                <Link to="/notes-under-construction">My Notes</Link> {/* Updated link */}
+                <Link to="/notes-under-construction">My Notes</Link>
               </Button>
               <Button variant="ghost" asChild>
                 <Link to="/groups">My Groups</Link>
@@ -81,6 +82,9 @@ export const Header: React.FC = () => {
               </Button>
               <Button variant="ghost" asChild>
                 <Link to="/essays">Essays</Link>
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link to="/textbook-finder">Textbook Finder</Link> {/* New desktop link */}
               </Button>
 
               {/* User Dropdown - now correctly inside the desktop-only div */}
@@ -131,16 +135,16 @@ export const Header: React.FC = () => {
                   <MenuIcon className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[280px] sm:w-[320px] flex flex-col"> {/* Adjusted width */}
+              <SheetContent side="right" className="w-[280px] sm:w-[320px] flex flex-col">
                 {/* User Info in Mobile Menu */}
                 <div className="flex items-center space-x-2 px-2 pt-6">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="User Avatar" />
                     <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col overflow-hidden"> {/* Added overflow-hidden */}
-                    <p className="text-sm font-medium leading-none truncate">{user.user_metadata?.display_name || user.email}</p> {/* Added truncate */}
-                    <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p> {/* Added truncate */}
+                  <div className="flex flex-col overflow-hidden">
+                    <p className="text-sm font-medium leading-none truncate">{user.user_metadata?.display_name || user.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </div>
                 <Separator className="my-4" />
