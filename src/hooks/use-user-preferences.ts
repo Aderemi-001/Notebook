@@ -10,6 +10,7 @@ export interface UserPreferences {
   default_exam_question_types: string[];
   daily_cards_goal: number;
   enable_review_reminders: boolean;
+  default_study_session_cards_count: number; // New field
 }
 
 const fetchUserPreferences = async (): Promise<UserPreferences | null> => {

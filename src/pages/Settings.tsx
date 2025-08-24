@@ -24,6 +24,7 @@ const Settings: React.FC = () => {
   const [defaultExamQuestionTypes, setDefaultExamQuestionTypes] = React.useState<string[]>(['multiple_choice', 'short_answer']);
   const [dailyCardsGoal, setDailyCardsGoal] = React.useState<number>(20);
   const [enableReviewReminders, setEnableReviewReminders] = React.useState<boolean>(true);
+  const [defaultStudySessionCardsCount, setDefaultStudySessionCardsCount] = React.useState<number>(20); // New state
 
   useEffect(() => {
     if (preferences) {
@@ -33,6 +34,7 @@ const Settings: React.FC = () => {
       setDefaultExamQuestionTypes(preferences.default_exam_question_types || []);
       setDailyCardsGoal(preferences.daily_cards_goal);
       setEnableReviewReminders(preferences.enable_review_reminders);
+      setDefaultStudySessionCardsCount(preferences.default_study_session_cards_count); // Set new state
     }
   }, [preferences]);
 
@@ -69,6 +71,12 @@ const Settings: React.FC = () => {
   const handleEnableReviewRemindersChange = (checked: boolean) => {
     setEnableReviewReminders(checked);
     updatePreferences({ enable_review_reminders: checked });
+  };
+
+  const handleDefaultStudySessionCardsCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0;
+    setDefaultStudySessionCardsCount(value);
+    updatePreferences({ default_study_session_cards_count: value });
   };
 
   if (isLoading) {
@@ -145,6 +153,20 @@ const Settings: React.FC = () => {
                 <Label htmlFor="definition-first">Definition First</Label>
               </div>
             </RadioGroup>
+          </div>
+          <div>
+            <Label htmlFor="default-study-session-cards-count">Default Cards per Study Session</Label>
+            <Input
+              id="default-study-session-cards-count"
+              type="number"
+              min="1"
+              value={defaultStudySessionCardsCount}
+              onChange={handleDefaultStudySessionCardsCountChange}
+              placeholder="e.g., 20"
+            />
+            <CardDescription className="mt-2">
+              Set the default number of cards to load for a study session.
+            </CardDescription>
           </div>
         </CardContent>
       </NotebookCard>
