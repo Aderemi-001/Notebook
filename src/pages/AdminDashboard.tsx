@@ -20,7 +20,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger, // <-- Added this import
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 
@@ -29,7 +29,7 @@ interface UserProfile {
   display_name: string | null;
   avatar_url: string | null;
   is_admin: boolean;
-  email: string; // Added email for display
+  email: string;
 }
 
 interface StudySet {
@@ -54,7 +54,6 @@ const fetchAdminDashboardData = async (): Promise<{ users: UserProfile[], studyS
     throw new Error("User not authenticated.");
   }
 
-  // Fetch all profiles and join with auth.users for email
   const { data: profilesData, error: profilesError } = await supabase
     .from('profiles')
     .select(`
@@ -78,7 +77,6 @@ const fetchAdminDashboardData = async (): Promise<{ users: UserProfile[], studyS
     email: p.auth_users?.email || 'N/A',
   }));
 
-  // Fetch all study sets (admin RPC already handles this)
   const { data: studySetsData, error: studySetsError } = await supabase.rpc('get_all_visible_study_sets_with_card_count');
   if (studySetsError) {
     console.error("Error fetching study sets:", studySetsError);
@@ -101,6 +99,7 @@ const fetchAdminDashboardData = async (): Promise<{ users: UserProfile[], studyS
 };
 
 const AdminDashboard: React.FC = () => {
+  console.log("AdminDashboard component is rendering."); // Added console log
   const queryClient = useQueryClient();
   const { user: currentUser, profile, loading: isLoadingAuth } = useAuth();
 
@@ -123,7 +122,7 @@ const AdminDashboard: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminDashboardData'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] }); // Invalidate profile to update header badge
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       showSuccess("Admin status updated successfully!");
     },
     onError: (err) => {
@@ -133,7 +132,6 @@ const AdminDashboard: React.FC = () => {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      // Use the RPC function to delete user and all associated data
       const { error } = await supabase.rpc('delete_user_and_data_by_admin', { p_user_id: userId });
       if (error) throw error;
     },
@@ -252,7 +250,7 @@ const AdminDashboard: React.FC = () => {
                       id={`admin-switch-${userItem.id}`}
                       checked={userItem.is_admin}
                       onCheckedChange={(checked: boolean) => toggleAdminStatusMutation.mutate({ userId: userItem.id, isAdmin: checked })}
-                      disabled={toggleAdminStatusMutation.isPending || userItem.id === currentUser?.id} // Prevent changing own admin status
+                      disabled={toggleAdminStatusMutation.isPending || userItem.id === currentUser?.id}
                     />
                     <Label htmlFor={`admin-switch-${userItem.id}`}>Admin</Label>
                   </div>
@@ -260,7 +258,7 @@ const AdminDashboard: React.FC = () => {
                     <Button
                       variant="destructive"
                       size="icon"
-                      disabled={deleteUserMutation.isPending || userItem.id === currentUser?.id} // Prevent deleting own account
+                      disabled={deleteUserMutation.isPending || userItem.id === currentUser?.id}
                       onClick={() => setUserToDelete(userItem)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -305,7 +303,6 @@ const AdminDashboard: React.FC = () => {
                       <Settings className="h-4 w-4" />
                     </Link>
                   </Button>
-                  {/* Delete button is handled by StudySetDetail's header for consistency */}
                 </div>
               </div>
             ))}
@@ -313,7 +310,6 @@ const AdminDashboard: React.FC = () => {
         </CardContent>
       </NotebookCard>
 
-      {/* Delete User Confirmation Dialog (moved outside map for single instance) */}
       <AlertDialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
