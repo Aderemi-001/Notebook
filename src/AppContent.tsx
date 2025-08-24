@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Index from "@/pages/Index";
+// Removed: import ProtectedRoute from "@/components/ProtectedRoute"; // This component is not used in the current routing structure
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import Login from "@/pages/Login";
@@ -18,7 +19,7 @@ import EditGroup from "@/pages/EditGroup";
 import ExplorePublicSets from "@/pages/ExplorePublicSets";
 import DailyReview from "@/pages/DailyReview";
 import Settings from "@/pages/Settings";
-import Statistics from "@/pages/Statistics";
+import Statistics from "@/pages/Statistics"; // This is the new Dashboard
 import CognitiveConstellation from "@/pages/CognitiveConstellation";
 import Collaborations from "@/pages/Collaborations";
 import ExamsIndex from "@/pages/ExamsIndex";
@@ -31,8 +32,8 @@ import PastEssayQuestions from "@/pages/PastEssayQuestions";
 import EssayPractice from "@/pages/EssayPractice";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/NotFound";
-import AuthLayout from "@/layouts/AuthLayout";
-import TextbookFinder from "@/pages/TextbookFinder"; // Import the new page
+import { AuthLayout } from "@/layouts/AuthLayout"; // Corrected to named import
+import TextbookFinder from "@/pages/TextbookFinder";
 
 const AppContent = () => {
   return (
@@ -50,7 +51,7 @@ const AppContent = () => {
         <Route path="/constellation" element={<CognitiveConstellation />} />
         <Route path="/collaborations" element={<Collaborations />} />
         <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
-        <Route path="/textbook-finder" element={<TextbookFinder />} /> {/* New route */}
+        <Route path="/textbook-finder" element={<TextbookFinder />} />
 
         {/* Study Sets */}
         <Route path="/create" element={<CreateStudySet />} />

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import AppContent from "@/components/AppContent";
+import AppContent from "@/AppContent"; // Corrected import path
 import * as React from "react";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
