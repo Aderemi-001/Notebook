@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { PlusCircle, Search, Loader2, BookOpen, Users, Settings, Trash2, Edit, Eye, Share2, Copy, ArrowRight, ShieldCheck, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -327,7 +327,8 @@ const Index: React.FC = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardTitle>
-                <CardDescription className="flex items-center text-sm text-muted-foreground">
+                {/* Changed <p> to <div> here to fix DOM nesting warning */}
+                <div className="flex items-center text-sm text-muted-foreground">
                   {set.is_owner ? (
                     <span className="flex items-center">
                       <Users className="mr-1 h-3 w-3" /> My Set
@@ -346,7 +347,7 @@ const Index: React.FC = () => {
                       <ShieldCheck className="h-3 w-3" /> Private
                     </Badge>
                   )}
-                </CardDescription>
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground text-sm line-clamp-2">{set.description || 'No description provided.'}</p>
