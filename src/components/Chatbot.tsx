@@ -7,6 +7,8 @@ import ChatMessageList from '@/components/chatbot/ChatMessageList';
 import { useAuth } from '@/hooks/useAuth';
 import { ChatMessage } from '@/components/chatbot/types'; // Import ChatMessage from types.ts
 
+// Removed: interface ChatMessage { ... } - This local definition was causing the conflict.
+
 const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
