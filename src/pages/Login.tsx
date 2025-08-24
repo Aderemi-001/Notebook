@@ -62,7 +62,7 @@ const Login = () => {
             data: {
               name: values.email.split('@')[0], // Changed from 'display_name' to 'name'
             },
-            emailRedirectTo: `${window.location.origin}/login`,
+            emailRedirectTo: `${window.location.origin}/confirm-email`, // Redirect to the new confirmation page
           },
         });
         if (error) {
@@ -89,7 +89,7 @@ const Login = () => {
     const toastId = showLoading('Sending password reset email...');
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login?reset=true`,
+        redirectTo: `${window.location.origin}/confirm-email?type=recovery`, // Redirect to confirmation page with type
       });
       if (error) {
         throw new Error(error.message);

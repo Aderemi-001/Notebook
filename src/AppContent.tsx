@@ -33,7 +33,8 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/NotFound";
 import AuthLayout from "@/layouts/AuthLayout";
 import TextbookFinder from "@/pages/TextbookFinder";
-import TestPage from "@/pages/TestPage"; // Import the new TestPage
+import TestPage from "@/pages/TestPage";
+import EmailConfirmation from "@/pages/EmailConfirmation"; // Import the new EmailConfirmation page
 
 const AppContent = () => {
   return (
@@ -52,8 +53,8 @@ const AppContent = () => {
         <Route path="/collaborations" element={<Collaborations />} />
         <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
         <Route path="/textbook-finder" element={<TextbookFinder />} />
-        {/* Removed: <Route path="/admin/dashboard" element={<AdminDashboard />} /> */}
-        <Route path="/test" element={<TestPage />} /> {/* New test route */}
+        <Route path="/test" element={<TestPage />} />
+        <Route path="/confirm-email" element={<EmailConfirmation />} /> {/* New route for email confirmation */}
 
         {/* Study Sets */}
         <Route path="/create" element={<CreateStudySet />} />
