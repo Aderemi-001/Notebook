@@ -75,13 +75,15 @@ const CreateSet = () => {
   }, [form.watch('cards'), showSuccessToastAfterRender]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!currentUser) {
+      showError("Please sign up or log in first to save your study set.");
+      navigate('/login');
+      return;
+    }
+
     const toastId = showLoading("Saving your study set...");
 
     try {
-      if (!currentUser) {
-        throw new Error("You must be logged in to create a set.");
-      }
-
       const { data: set, error: setError } = await supabase
         .from('study_sets')
         .insert({
@@ -178,6 +180,11 @@ const CreateSet = () => {
       showError("Please select a file first.");
       return;
     }
+    if (!currentUser) {
+      showError("Please sign up or log in first to use AI features.");
+      navigate('/login');
+      return;
+    }
     setIsEstimating(true);
     const optimalCount = await estimateOptimalCards();
     setIsEstimating(false);
@@ -189,6 +196,11 @@ const CreateSet = () => {
   };
 
   const handleConfirmGenerate = async () => {
+    if (!currentUser) {
+      showError("Please sign up or log in first to use AI features.");
+      navigate('/login');
+      return;
+    }
     setShowEstimationDialog(false);
     setIsGenerating(true);
     const result = await generateCardsAndConcepts(numCardsToGenerate);
@@ -204,7 +216,7 @@ const CreateSet = () => {
     }
   };
 
-  const isGenerateButtonDisabled = !numCardsToGenerate || numCardsToGenerate <= 0 || isGenerating || (estimatedOptimalCards !== null && numCardsToGenerate > estimatedOptimalCards);
+  const isGenerateButtonDisabled = !numCardsToGenerate || numCardsToGenerate <= 0 || isGenerating || (estimatedOptimalCards !== null && numCardsToGenerate > estimatedOptimalCards) || !currentUser;
 
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
@@ -237,7 +249,7 @@ const CreateSet = () => {
               <Button 
                 type="button" 
                 onClick={handleEstimateCards} 
-                disabled={!file || isLoadingUser || !currentUser || isEstimating || isGenerating} 
+                disabled={!file || isLoadingUser || isEstimating || isGenerating || !currentUser} 
                 className="w-full"
               >
                 {isEstimating ? (
@@ -256,7 +268,17 @@ const CreateSet = () => {
           <FlashcardEditor form={form} />
 
           <div className="flex justify-end">
-            <Button type="submit">Create Set</Button>
+            <Button type="submit" disabled={isLoadingUser || !currentUser}>
+              {isLoadingUser ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading User...
+                </>
+              ) : !currentUser ? (
+                "Sign In to Create Set"
+              ) : (
+                "Create Set"
+              )}
+            </Button>
           </div>
         </form>
       </Form>
