@@ -10,7 +10,7 @@ interface ProcessedAIData {
   cards: { term: string; definition: string }[];
   concepts: { name: string; description?: string }[];
   relationships: { source_name: string; target_name: string; type: string; strength?: number }[];
-  card_concept_links: { card_term: string; concept_name: string }[]; // New field
+  card_concept_links: { card_term: string; concept_name: string }[];
   optimal_max_cards?: number;
 }
 
@@ -19,7 +19,7 @@ interface EstimationResult {
 }
 
 const MAX_FILE_SIZE_MB = 10; // Define a max file size
-const MIN_MEANINGFUL_TEXT_LENGTH = 50; // Heuristic for "meaningful text"
+// Removed: const MIN_MEANINGFUL_TEXT_LENGTH = 50; // Heuristic for "meaningful text"
 
 export const useFileImport = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -39,7 +39,7 @@ export const useFileImport = () => {
 
   const extractFileContent = useCallback(async (selectedFile: File) => {
     let extractedFileContent = "";
-    let imageParts: { data: string; mimeType: string }[] = [];
+    // Removed: let imageParts: { data: string; mimeType: string }[] = [];
 
     if (selectedFile.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
       throw new Error(`File size exceeds the limit of ${MAX_FILE_SIZE_MB}MB.`);
@@ -65,29 +65,7 @@ export const useFileImport = () => {
             }
             extractedFileContent = (await Promise.all(pageTextPromises)).join('\n');
 
-            if (!extractedFileContent.trim() || extractedFileContent.trim().length < MIN_MEANINGFUL_TEXT_LENGTH) {
-              for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 2 });
-                const canvas = document.createElement('canvas');
-                const canvasContext = canvas.getContext('2d');
-                
-                if (!canvasContext) {
-                  console.error("Could not get 2D rendering context for canvas.");
-                  continue;
-                }
-
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-
-                await page.render({ canvasContext, viewport, canvas }).promise;
-                imageParts.push({
-                  data: canvas.toDataURL('image/png').split(',')[1],
-                  mimeType: 'image/png',
-                });
-                canvas.remove();
-              }
-            }
+            // Removed: PDF image extraction logic
             resolve();
           } catch (pdfError) {
             console.error("Error parsing PDF:", pdfError);
@@ -111,17 +89,16 @@ export const useFileImport = () => {
         throw new Error(`Unsupported file type: ${selectedFile.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.`);
     }
 
-    if (!extractedFileContent.trim() && imageParts.length === 0) {
-        throw new Error("Could not extract any meaningful text or images from the file. Please ensure the file contains readable content.");
+    if (!extractedFileContent.trim()) { // Simplified check
+        throw new Error("Could not extract any meaningful text from the file. Please ensure the file contains readable content.");
     }
-    return { extractedFileContent, imageParts };
+    return { extractedFileContent /* Removed: , imageParts */ };
   }, []);
 
   const callAIProcessFile = useCallback(async (
     textContent: string,
-    imageParts: { data: string; mimeType: string }[],
     mode: 'estimate' | 'generate',
-    numCards?: number
+    numCards?: number // numCards is optional and only relevant for 'generate' mode
   ): Promise<ProcessedAIData | EstimationResult | null> => {
     if (!currentUser) {
       throw new Error("You must be logged in to use AI features.");
@@ -143,7 +120,7 @@ export const useFileImport = () => {
         },
         body: JSON.stringify({ 
           textContent: textContent,
-          imageParts: imageParts,
+          // Removed: imageParts: imageParts,
           numCards: numCards,
           mode: mode, // Pass the mode to the edge function
         }),
@@ -170,10 +147,10 @@ export const useFileImport = () => {
 
     const toastId = showLoading("AI is estimating optimal card count...");
     try {
-      const { extractedFileContent, imageParts } = await extractFileContent(file);
+      const { extractedFileContent /* Removed: , imageParts */ } = await extractFileContent(file);
       setSourceTextContent(extractedFileContent); // Store for later full generation
 
-      const result = await callAIProcessFile(extractedFileContent, imageParts, 'estimate') as EstimationResult;
+      const result = await callAIProcessFile(extractedFileContent, 'estimate') as EstimationResult;
       dismissToast(toastId);
       return result.optimal_max_cards;
     } catch (error: any) {
@@ -197,9 +174,9 @@ export const useFileImport = () => {
     const toastId = showLoading("AI is generating your flashcards, concepts, and relationships...");
     try {
       // Re-extract image parts if needed, or pass an empty array if only text was extracted initially
-      const { imageParts } = await extractFileContent(file); // Re-extract to ensure imageParts are fresh
+      // Removed: const { imageParts } = await extractFileContent(file); // Re-extract to ensure imageParts are fresh
 
-      const data = await callAIProcessFile(sourceTextContent, imageParts, 'generate', numCardsToGenerate) as ProcessedAIData;
+      const data = await callAIProcessFile(sourceTextContent, 'generate', numCardsToGenerate) as ProcessedAIData;
 
       const newCards = data.cards;
       const newConcepts = data.concepts;

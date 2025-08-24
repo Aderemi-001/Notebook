@@ -14,10 +14,10 @@ interface RichTextEditorProps {
   content: string;
   onContentChange: (content: string) => void;
   editorRef: React.MutableRefObject<Editor | null>;
-  editable?: boolean; // New prop
+  // Removed: editable?: boolean;
 }
 
-export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editorRef, editable = true }) => {
+export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onContentChange, editorRef }) => {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -38,7 +38,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onConte
         class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4',
       },
     },
-    editable: editable, // Pass editable state to the editor instance
+    editable: true, // Always editable in basic mode
   });
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onConte
 
   return (
     <div className="border rounded-md flex flex-col h-full">
-      <RichTextEditorToolbar editor={editor} editable={editable} />
+      <RichTextEditorToolbar editor={editor} />
       <EditorContent editor={editor} className="flex-grow overflow-y-auto" />
     </div>
   );

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, PlusCircle, Menu, Trash2, Pencil, BookOpen, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Menu, Trash2, Pencil, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,8 +46,8 @@ interface Note {
   id: string;
   title: string;
   content: JSONContent;
-  extracted_content_ai: string | null;
-  drawing_url: string | null;
+  // Removed: extracted_content_ai: string | null;
+  // Removed: drawing_url: string | null;
   created_at: string;
   updated_at: string;
   study_set_id: string | null;
@@ -63,8 +63,6 @@ const fetchUserNotes = async (userId: string): Promise<Note[]> => {
       id,
       title,
       content,
-      extracted_content_ai,
-      drawing_url,
       created_at,
       updated_at,
       study_set_id,
@@ -124,36 +122,13 @@ const NotesIndex: React.FC = () => {
   const filteredNotes = notes?.filter((note: Note) =>
     note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     getPlainTextPreview(note.content, 500).toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (note.extracted_content_ai && note.extracted_content_ai.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (note.study_sets?.[0]?.title && note.study_sets[0].title.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleDeleteNote = async (noteId: string) => {
     const toastId = showLoading("Deleting note...");
     try {
-      const { data: noteToDelete, error: fetchNoteError } = await supabase
-        .from('notes')
-        .select('drawing_url')
-        .eq('id', noteId)
-        .single();
-
-      if (fetchNoteError && fetchNoteError.code !== 'PGRST116') {
-        throw fetchNoteError;
-      }
-
-      if (noteToDelete?.drawing_url) {
-        const urlParts = noteToDelete.drawing_url.split('/');
-        const fileName = urlParts.slice(urlParts.indexOf('drawings')).join('/');
-        
-        const { error: deleteStorageError } = await supabase.storage
-          .from('notes_drawings')
-          .remove([fileName]);
-
-        if (deleteStorageError) {
-          console.warn("Failed to delete drawing from storage:", deleteStorageError.message);
-        }
-      }
-
+      // No drawing_url to delete from storage anymore
       const { error } = await supabase
         .from('notes')
         .delete()
@@ -235,7 +210,7 @@ const NotesIndex: React.FC = () => {
       <div className="mb-6">
         <Input
           type="text"
-          placeholder="Search notes by title, content, or AI extracted text..."
+          placeholder="Search notes by title or content..."
           value={searchTerm}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
           className="w-full"
@@ -270,19 +245,9 @@ const NotesIndex: React.FC = () => {
                 <CardDescription className="text-sm text-muted-foreground mt-1">
                   Last updated: {format(new Date(note.updated_at), 'PPP')}
                 </CardDescription>
-                {note.drawing_url && (
-                  <div className="flex items-center text-sm text-blue-500 mt-2 italic">
-                    <ImageIcon className="mr-1 h-3 w-3" /> Contains a drawing
-                  </div>
-                )}
                 {note.content && (
                   <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
                     {getPlainTextPreview(note.content)}
-                  </p>
-                )}
-                {note.extracted_content_ai && (
-                  <p className="text-xs text-blue-500 mt-1 italic line-clamp-2">
-                    AI extracted: "{note.extracted_content_ai.substring(0, 100)}..."
                   </p>
                 )}
               </CardHeader>
