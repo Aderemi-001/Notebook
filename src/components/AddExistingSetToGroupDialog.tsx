@@ -129,7 +129,7 @@ const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = 
       queryClient.invalidateQueries({ queryKey: ['allUserStudySets'] }); // Invalidate this dialog's data
       setSelectedSetIds(new Set()); // Clear selection
       setOpen(false); // Close dialog
-      onSetAdded?.(); // Callback if provided
+      onSetAdded?.(); // Call the callback if it exists
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message || "Failed to add sets to group.");
@@ -142,7 +142,7 @@ const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>} {/* Only render trigger if provided */}
-      <DialogContent className="sm:max-w-[425px] md:max-w-lg lg:max-w-xl max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[425px] md:max-w-lg lg:max-w-xl max-h-[90vh] flex flex-col" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Add Existing Sets to Group</DialogTitle>
           <DialogDescription>

@@ -235,7 +235,7 @@ const Index: React.FC = () => {
                 <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px]" aria-describedby={undefined}>
               <DialogHeader>
                 <DialogTitle>Login Required</DialogTitle>
                 <DialogDescription>
@@ -388,7 +388,7 @@ const Index: React.FC = () => {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent aria-describedby={undefined}>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -406,7 +406,7 @@ const Index: React.FC = () => {
 
       {/* Share Dialog */}
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px]" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Share Study Set</DialogTitle>
             <DialogDescription>
@@ -437,7 +437,7 @@ const Index: React.FC = () => {
 
       {/* Edit Study Set Dialog */}
       <Dialog open={isEditSetDialogOpen} onOpenChange={setIsEditSetDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px]" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Edit Study Set</DialogTitle>
             <DialogDescription>
