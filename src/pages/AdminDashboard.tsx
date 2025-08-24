@@ -99,7 +99,6 @@ const fetchAdminDashboardData = async (): Promise<{ users: UserProfile[], studyS
 };
 
 const AdminDashboard: React.FC = () => {
-  console.log("AdminDashboard component is rendering."); // Added console log
   const queryClient = useQueryClient();
   const { user: currentUser, profile, loading: isLoadingAuth } = useAuth();
 
@@ -311,7 +310,7 @@ const AdminDashboard: React.FC = () => {
       </NotebookCard>
 
       <AlertDialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent aria-describedby={undefined}>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>

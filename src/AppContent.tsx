@@ -33,7 +33,8 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/NotFound";
 import AuthLayout from "@/layouts/AuthLayout";
 import TextbookFinder from "@/pages/TextbookFinder";
-import AdminDashboard from "@/pages/AdminDashboard"; // Import the new AdminDashboard page
+import AdminDashboard from "@/pages/AdminDashboard";
+import TestPage from "@/pages/TestPage"; // Import the new TestPage
 
 const AppContent = () => {
   return (
@@ -52,7 +53,8 @@ const AppContent = () => {
         <Route path="/collaborations" element={<Collaborations />} />
         <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
         <Route path="/textbook-finder" element={<TextbookFinder />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} /> {/* New route for Admin Dashboard */}
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/test" element={<TestPage />} /> {/* New test route */}
 
         {/* Study Sets */}
         <Route path="/create" element={<CreateStudySet />} />
