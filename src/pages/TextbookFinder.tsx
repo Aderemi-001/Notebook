@@ -95,7 +95,7 @@ const TextbookFinder: React.FC = () => {
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
-          <BookOpen className="mr-3 h-7 w-7" /> Ethical Textbook Finder
+          <BookOpen className="mr-3 h-7 w-7" /> Textbook Finder
         </h1>
         <Button asChild variant="outline">
           <Link to="/" className="flex items-center">
