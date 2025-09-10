@@ -67,6 +67,11 @@ export const ROUTE_SPECIFIC_SUGGESTIONS: { [key: string]: string[] } = {
     "How do I refresh the constellation?",
     "What are concept relationships?",
   ],
+  '/collaborations': [
+    "How do I send a collaboration invitation?",
+    "How do I accept an invitation?",
+    "What are the different permission levels?",
+  ],
 };
 
 export const ROUTE_KEYWORDS: { [key: string]: string } = {
