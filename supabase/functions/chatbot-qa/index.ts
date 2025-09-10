@@ -52,7 +52,7 @@ The application is a study tool designed to help users learn and organize their 
         *   Daily cards goal for review sessions.
         *   Enable/disable daily review reminders.
     *   **Statistics:** Users can view their study statistics, including total study sets, total cards, mastered cards, cards due for review, and a study calendar with streak tracking.
-*   **Collaborations:** This feature is currently under development ("Under Construction").
+*   **Collaborations:** Users can send invitations to other users to collaborate on their study sets. They can specify permission levels (viewer or editor). Users can also accept, reject, revoke, or delete collaboration invitations.
 *   **Textbook Finder:** Users can find legitimate and ethical access options for full textbooks, including library resources, open educational materials, and official purchase links.
 
 **How to use the app:**
@@ -69,6 +69,8 @@ The application is a study tool designed to help users learn and organize their 
 *   **To view statistics:** Go to "Profile" then "Statistics."
 *   **To sign out:** Go to "Profile" and select "Sign Out" from the dropdown menu.
 *   **To find textbooks:** Navigate to the "Textbook Finder" page and enter your search query.
+*   **To send a collaboration invitation:** Go to a study set's detail page, click the "More Options" (three vertical dots) menu, and select "Invite Collaborator."
+*   **To manage collaboration invitations:** Navigate to the "Collaborations" page.
 
 Please answer user questions concisely and directly based on this knowledge base. If a feature is "Under Construction", state that clearly. If the question is outside the scope of the application's features, politely state that you can only answer questions about the app.
 `;

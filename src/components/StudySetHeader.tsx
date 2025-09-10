@@ -19,8 +19,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Globe, Plus, MoreVertical, Folder, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Globe, Plus, MoreVertical, Folder, ShieldCheck, Share2, UserPlus } from 'lucide-react';
 import { UserPreferences } from '@/hooks/use-user-preferences';
+import SendCollaborationInvitationDialog from '@/components/collaborations/SendCollaborationInvitationDialog'; // Import the new dialog
 
 interface StudySetHeaderProps {
   studySet: {
@@ -54,6 +55,7 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
   // State to control the open state of the AlertDialogs
   const [isResetProgressDialogOpen, setIsResetProgressDialogOpen] = React.useState(false);
   const [isDeleteSetDialogOpen, setIsDeleteSetDialogOpen] = React.useState(false);
+  const [isSendInvitationDialogOpen, setIsSendInvitationDialogOpen] = React.useState(false); // New state for invitation dialog
 
   return (
     <div className="flex justify-between items-center mb-8">
@@ -104,6 +106,11 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
                   <Pencil className="mr-2 h-4 w-4" /> Edit Set
                 </Link>
               </DropdownMenuItem>
+              {isOwner && ( // Only owner can send invitations
+                <DropdownMenuItem onSelect={() => setIsSendInvitationDialogOpen(true)} className="flex items-center">
+                  <UserPlus className="mr-2 h-4 w-4" /> Invite Collaborator
+                </DropdownMenuItem>
+              )}
 
               {/* Reset Progress Trigger - only for owner */}
               {isOwner && (
@@ -177,6 +184,16 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      )}
+
+      {/* Send Collaboration Invitation Dialog */}
+      {isOwner && (
+        <SendCollaborationInvitationDialog
+          studySetId={studySet.id}
+          studySetTitle={studySet.title}
+          open={isSendInvitationDialogOpen}
+          onOpenChange={setIsSendInvitationDialogOpen}
+        />
       )}
     </div>
   );
