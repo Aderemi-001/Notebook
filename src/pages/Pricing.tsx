@@ -43,7 +43,7 @@ const Pricing = () => {
 
     return (
         <DashboardLayout>
-            <div className="max-w-5xl mx-auto py-12 px-4">
+            <div className="max-w-5xl mx-auto py-12 px-4 pb-32 md:pb-12">
                 <div className="text-center mb-12 space-y-4">
                     <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
                         Power Up Your <span className="text-primary italic">Learning</span>
