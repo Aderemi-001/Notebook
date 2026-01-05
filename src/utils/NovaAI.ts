@@ -68,7 +68,7 @@ export class NovaAI {
             const apiKey = import.meta.env.VITE_GROQ_API_KEY;
             if (!apiKey) {
                 console.error('❌ GROQ API KEY NOT FOUND! Check .env.local');
-                return this.getFallbackResponse(query);
+                return "⚠️ **Configuration Error**: `VITE_GROQ_API_KEY` is missing in this environment. Please allow a few minutes for Vercel environment variables to propagate, or check your settings.";
             }
 
             console.log('✅ Groq API Key loaded, length:', apiKey.length);
@@ -194,12 +194,12 @@ export class NovaAI {
             console.log('✅ Groq API response received!');
             return completion.choices[0]?.message?.content || "I'm having trouble processing that. Could you rephrase?";
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('❌ Nova AI Error:', error);
             console.error('Error details:', JSON.stringify(error, null, 2));
 
-            // Fallback to local response
-            return this.getFallbackResponse(query);
+            // Return actual error to UI for debugging
+            return `⚠️ **AI Connection Error**: ${error.message || "Unknown error"}. \n\n*This is a debug message only visible to help fix the issue.*`;
         }
     }
 
