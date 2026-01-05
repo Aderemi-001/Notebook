@@ -1,0 +1,38 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Open Book -->
+  <rect x="20" y="30" width="80" height="60" rx="4" fill="url(#gradient1)" stroke="url(#gradient2)" stroke-width="3"/>
+  
+  <!-- Book Spine -->
+  <line x1="60" y1="30" x2="60" y2="90" stroke="url(#gradient2)" stroke-width="2"/>
+  
+  <!-- Brain Icon (Left Page) -->
+  <circle cx="40" cy="55" r="12" fill="none" stroke="url(#gradient3)" stroke-width="2"/>
+  <path d="M 35 55 Q 40 50 45 55 Q 40 60 35 55" stroke="url(#gradient3)" stroke-width="1.5" fill="none"/>
+  <circle cx="37" cy="53" r="1.5" fill="url(#gradient3)"/>
+  <circle cx="43" cy="53" r="1.5" fill="url(#gradient3)"/>
+  
+  <!-- Sparkles/Stars (Right Page) -->
+  <path d="M 75 45 L 76 48 L 79 49 L 76 50 L 75 53 L 74 50 L 71 49 L 74 48 Z" fill="url(#gradient4)"/>
+  <path d="M 85 55 L 86 57 L 88 58 L 86 59 L 85 61 L 84 59 L 82 58 L 84 57 Z" fill="url(#gradient4)"/>
+  <path d="M 80 65 L 81 67 L 83 68 L 81 69 L 80 71 L 79 69 L 77 68 L 79 67 Z" fill="url(#gradient4)"/>
+  
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgb(139, 92, 246);stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:rgb(59, 130, 246);stop-opacity:0.1" />
+    </linearGradient>
+    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgb(139, 92, 246);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgb(59, 130, 246);stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgb(168, 85, 247);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgb(139, 92, 246);stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gradient4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgb(96, 165, 250);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgb(59, 130, 246);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

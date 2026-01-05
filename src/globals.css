@@ -1,90 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
+    /* Premium "Zinc" Palette (Light) */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* White */
+    --foreground: 240 10% 3.9%;
+    /* Zinc-950 */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 10% 3.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 240 10% 3.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 240 5.9% 10%;
+    /* Zinc-900 */
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 240 4.8% 95.9%;
+    /* Zinc-100 */
+    --secondary-foreground: 240 5.9% 10%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 4.8% 95.9%;
+    /* Zinc-100 */
+    --muted-foreground: 240 3.8% 46.1%;
+    /* Zinc-500 */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 240 4.8% 95.9%;
+    /* Zinc-100 */
+    --accent-foreground: 240 5.9% 10%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 240 5.9% 90%;
+    /* Zinc-200 */
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+    /* Zinc-950 */
 
-    --radius: 0.5rem;
-
-    /* Font sizes */
-    --font-size-small: 0.875rem; /* 14px */
-    --font-size-medium: 1rem;    /* 16px */
-    --font-size-large: 1.125rem; /* 18px */
+    --radius: 0.75rem;
+    /* Rounded-xl */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Premium "Zinc" Palette (Dark) */
+    --background: 240 10% 3.9%;
+    /* Zinc-950 */
+    --foreground: 0 0% 98%;
+    /* Zinc-50 */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 0% 98%;
+    /* Zinc-50 */
+    --primary-foreground: 240 5.9% 10%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 3.7% 15.9%;
+    /* Zinc-800 */
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    /* Zinc-400 */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
-
-  /* Apply base font size */
-  html {
-    font-size: var(--font-size-medium); /* Default to medium */
-  }
-
-  html.font-size-small {
-    font-size: var(--font-size-small);
-  }
-
-  html.font-size-medium {
-    font-size: var(--font-size-medium);
-  }
-
-  html.font-size-large {
-    font-size: var(--font-size-large);
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
   }
 }
 
@@ -93,55 +90,80 @@
     @apply border-border;
   }
 
-  html, body {
+  body {
     @apply bg-background text-foreground;
-    /* Notebook paper background */
-    background-color: hsl(30, 100%, 98%); /* Light cream background */
-    background-image: linear-gradient(to bottom, hsl(0, 0%, 90%) 1px, transparent 1px); /* Light gray lines */
-    background-size: 100% 24px; /* Adjust 24px for line spacing */
-    background-repeat: repeat-y;
+    font-family: 'Inter', sans-serif;
+    /* Subtle premium texture */
+    background-image: radial-gradient(at top center, hsl(var(--secondary) / 0.3) 0%, transparent 70%);
+    background-attachment: fixed;
   }
 
-  .dark html, .dark body {
-    background-color: hsl(220, 10%, 15%); /* Dark gray background */
-    background-image: linear-gradient(to bottom, hsl(220, 10%, 25%) 1px, transparent 1px); /* Slightly lighter dark gray lines */
-  }
-}
-
-/* Fix for prose content overflowing its container's padding */
-@layer components {
-  .prose :where(p:first-child, ul:first-child, ol:first-child, h1:first-child, h2:first-child, h3:first-child, h4:first-child, h5:first-child, h6:first-child):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
-    margin-top: 0;
-  }
-  .prose :where(p:last-child, ul:last-child, ol:last-child, h1:last-child, h2:last-child, h3:last-child, h4:last-child, h5:last-child, h6:last-child):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
-    margin-bottom: 0;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Outfit', sans-serif;
+    @apply tracking-tight;
   }
 }
 
-/* Custom scrollbar styling */
-/* For Webkit browsers (Chrome, Safari) */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+@layer utilities {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-sm hover:shadow-md transition-all duration-300;
+  }
 
-::-webkit-scrollbar-track {
-  background: hsl(var(--muted)); /* Use muted background for the track */
-  border-radius: 10px;
-}
+  .text-balance {
+    text-wrap: balance;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary)); /* Use primary color for the thumb */
-  border-radius: 10px;
-  border: 2px solid hsl(var(--muted)); /* Add a border to match track color */
-}
+  /* 3D Transform Utilities for Flip Card */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary-foreground)); /* Slightly darker on hover */
-}
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
 
-/* For Firefox */
-html {
-  scrollbar-color: hsl(var(--primary)) hsl(var(--muted)); /* thumb and track color */
-  scrollbar-width: thin;
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+
+  .rotate-y-0 {
+    transform: rotateY(0deg);
+  }
+
+  /* Prevent iOS zoom on focus */
+  @media screen and (max-width: 768px) {
+
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Global Scrollbar Styling (Matches ScrollArea) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border/60 hover:bg-border rounded-full border-[2px] border-transparent bg-clip-content transition-colors;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }

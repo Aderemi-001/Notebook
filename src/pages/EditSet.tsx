@@ -20,17 +20,6 @@ import { useFileImport } from "@/hooks/use-file-import";
 import FlashcardEditor from "@/components/FlashcardEditor";
 import { useStudySetGroups } from "@/hooks/use-study-set-groups";
 import StudySetFormFields from "@/components/StudySetFormFields";
-import { Label } from "@/components/ui/label";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Loader2, Brain } from "lucide-react";
 import * as React from 'react'; // Explicitly import React
 import { useAuth } from '@/hooks/useAuth'; // Import useAuth
@@ -56,14 +45,10 @@ const EditSet = () => {
   const { profile } = useAuth(); // Get profile for admin check, 'user' is not directly used here
 
   const { data: studySet, isLoading, isError, error } = useStudySetData(setId);
-  const { file, setFile, sourceTextContent, setSourceTextContent, estimateOptimalCards, generateCardsAndConcepts, currentUser, isLoadingUser } = useFileImport();
+  const { file, setFile, sourceTextContent, setSourceTextContent, generateCardsAndConcepts, currentUser, isLoadingUser } = useFileImport();
 
   const { data: userGroups, isLoading: isLoadingGroups } = useStudySetGroups();
 
-  const [estimatedOptimalCards, setEstimatedOptimalCards] = useState<number | null>(null);
-  const [showEstimationDialog, setShowEstimationDialog] = useState(false);
-  const [numCardsToGenerate, setNumCardsToGenerate] = useState<number | undefined>(undefined);
-  const [isEstimating, setIsEstimating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccessToastAfterRender, setShowSuccessToastAfterRender] = useState(false);
   const [generatedCardConceptLinks, setGeneratedCardConceptLinks] = useState<{ card_term: string; concept_name: string }[]>([]);
@@ -180,7 +165,7 @@ const EditSet = () => {
       if (generatedCardConceptLinks.length > 0) {
         const allCardsInSet = [...(studySet?.cards || []), ...(insertedNewCards || [])];
         const cardTermToIdMap = new Map(allCardsInSet.map((card: { id: string; term: string }) => [card.term, card.id]));
-        
+
         const { data: existingConcepts, error: fetchConceptsError } = await supabase
           .from('concepts')
           .select('id, name')
@@ -213,7 +198,7 @@ const EditSet = () => {
           const { error: insertCardConceptsError } = await supabase
             .from('card_concepts')
             .insert(cardConceptsToInsert);
-          
+
           if (insertCardConceptsError) {
             console.error("Error inserting card-concept links:", insertCardConceptsError);
           } else {
@@ -241,7 +226,7 @@ const EditSet = () => {
     showError("Please fix the errors before submitting.");
   }
 
-  const handleEstimateCards = async () => {
+  const handleGenerateCards = async () => {
     if (!file) {
       showError("Please select a file first.");
       return;
@@ -251,33 +236,20 @@ const EditSet = () => {
       navigate('/login');
       return;
     }
-    setIsEstimating(true);
-    const optimalCount = await estimateOptimalCards();
-    setIsEstimating(false);
-    if (optimalCount !== null) {
-      setEstimatedOptimalCards(optimalCount);
-      setNumCardsToGenerate(optimalCount); // Pre-fill with suggested count
-      setShowEstimationDialog(true);
-    }
-  };
 
-  const handleConfirmGenerate = async () => {
-    setShowEstimationDialog(false);
     setIsGenerating(true);
-    const result = await generateCardsAndConcepts(numCardsToGenerate);
+    const result = await generateCardsAndConcepts();
     setIsGenerating(false);
 
     if (result && result.cards.length > 0) {
-      form.setValue('cards', result.cards.map((card: { term: string; definition: string }) => ({ id: undefined, term: card.term, definition: card.definition }))); // Use setValue
-      setGeneratedCardConceptLinks(result.card_concept_links || []); // Store the links
+      form.setValue('cards', result.cards.map((card: { term: string; definition: string }) => ({ id: undefined, term: card.term, definition: card.definition })));
+      setGeneratedCardConceptLinks(result.card_concept_links || []);
       setShowSuccessToastAfterRender(true);
     } else {
-      form.setValue('cards', [{ id: undefined, term: "", definition: "" }]); // Clear all and add one empty card
+      form.setValue('cards', [{ id: undefined, term: "", definition: "" }]);
       showError("The AI couldn't find any terms and definitions in the file.");
     }
   };
-
-  const isGenerateButtonDisabled = !numCardsToGenerate || numCardsToGenerate <= 0 || isGenerating || (estimatedOptimalCards !== null && numCardsToGenerate > estimatedOptimalCards);
 
   if (!setId) {
     return (
@@ -339,7 +311,7 @@ const EditSet = () => {
   }
 
   return (
-    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">Edit Study Set</h1>
         <Button asChild variant="outline">
@@ -356,7 +328,10 @@ const EditSet = () => {
 
           <NotebookCard>
             <CardHeader>
-              <CardTitle>Import from file with AI</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-indigo-500" />
+                Import from file with Nova
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <Input
@@ -364,25 +339,23 @@ const EditSet = () => {
                 accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setFile(e.target.files ? e.target.files[0] : null);
-                  setEstimatedOptimalCards(null);
-                  setNumCardsToGenerate(undefined);
                   setGeneratedCardConceptLinks([]); // Clear previous links
                 }}
                 className="w-full"
               />
               <Button
                 type="button"
-                onClick={handleEstimateCards}
-                disabled={!file || isLoadingUser || !currentUser || isEstimating || isGenerating}
-                className="w-full"
+                onClick={handleGenerateCards}
+                disabled={!file || isLoadingUser || !currentUser || isGenerating}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
               >
-                {isEstimating ? (
+                {isGenerating ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Estimating...
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Nova is generating flashcards...
                   </>
                 ) : (
                   <>
-                    <Brain className="mr-2 h-4 w-4" /> Estimate Cards with AI
+                    <Brain className="mr-2 h-4 w-4" /> Generate Flashcards with Nova
                   </>
                 )}
               </Button>
@@ -397,47 +370,8 @@ const EditSet = () => {
         </form>
       </Form>
 
-      <AlertDialog open={showEstimationDialog} onOpenChange={setShowEstimationDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>AI Card Generation Suggestion</AlertDialogTitle>
-            <AlertDialogDescription>
-              The AI suggests generating up to <span className="font-bold text-primary">{estimatedOptimalCards}</span> high-quality cards from your content.
-              How many cards would you like to generate?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-4 py-2">
-            <Label htmlFor="dialog-num-cards">Number of Cards</Label>
-            <Input
-              id="dialog-num-cards"
-              type="number"
-              min="1"
-              max={estimatedOptimalCards !== null ? estimatedOptimalCards : undefined} // Set max attribute
-              value={numCardsToGenerate || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumCardsToGenerate(parseInt(e.target.value) || undefined)}
-              placeholder="Enter desired number"
-            />
-            {numCardsToGenerate !== undefined && estimatedOptimalCards !== null && numCardsToGenerate > estimatedOptimalCards && (
-              <p className="text-sm text-destructive">
-                You cannot request more than {estimatedOptimalCards} cards.
-              </p>
-            )}
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowEstimationDialog(false)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmGenerate} disabled={isGenerateButtonDisabled}>
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
-                </>
-              ) : (
-                `Generate ${numCardsToGenerate || 0} Cards`
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+
+    </div >
   );
 };
 

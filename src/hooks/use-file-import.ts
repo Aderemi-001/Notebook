@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { showError, showLoading, dismissToast } from "@/utils/toast";
-import * as pdfjsLib from 'pdfjs-dist';
+import { showError } from "@/utils/toast";
 import { useQueryClient } from "@tanstack/react-query";
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+import { NovaFileProcessor } from "@/utils/NovaFileProcessor";
+import { NovaPDF } from "@/utils/NovaPDF";
 
 interface ProcessedAIData {
   cards: { term: string; definition: string }[];
@@ -18,13 +17,20 @@ interface EstimationResult {
   optimal_max_cards: number;
 }
 
-const MAX_FILE_SIZE_MB = 10; // Define a max file size
+const MAX_FILE_SIZE_MB = 10;
+
+export type ProgressState = 'idle' | 'extracting' | 'processing' | 'complete' | 'error';
 
 export const useFileImport = () => {
   const [file, setFile] = useState<File | null>(null);
   const [sourceTextContent, setSourceTextContent] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+  // Progress State
+  const [progressState, setProgressState] = useState<ProgressState>('idle');
+  const [progressMessage, setProgressMessage] = useState<string>("");
+
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -44,58 +50,36 @@ export const useFileImport = () => {
     }
 
     if (selectedFile.type === "application/pdf") {
-      const reader = new FileReader();
-      reader.readAsArrayBuffer(selectedFile);
-      await new Promise<void>((resolve, reject) => {
-        reader.onload = async (e: ProgressEvent<FileReader>) => {
-          try {
-            const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
-            const loadingTask = pdfjsLib.getDocument({ data: pdfData });
-            const pdf = await loadingTask.promise;
-
-            let pageTextPromises: Promise<string>[] = [];
-            for (let i = 1; i <= pdf.numPages; i++) {
-              pageTextPromises.push(
-                pdf.getPage(i).then((page: any) => page.getTextContent()).then((textContent: any) =>
-                  textContent.items.map((item: any) => item.str).join(' ')
-                )
-              );
-            }
-            extractedFileContent = (await Promise.all(pageTextPromises)).join('\n');
-
-            resolve();
-          } catch (pdfError) {
-            console.error("Error parsing PDF:", pdfError);
-            reject(new Error("Failed to parse PDF file. It might be corrupted or unsupported."));
-          }
-        };
-        reader.onerror = (err) => reject(err);
-      });
-    } else if (selectedFile.type.startsWith("text/") || 
-               selectedFile.name.endsWith('.md') || 
-               selectedFile.name.endsWith('.csv') ||
-               selectedFile.name.endsWith('.json') ||
-               selectedFile.name.endsWith('.xml') ||
-               selectedFile.name.endsWith('.html') ||
-               selectedFile.name.endsWith('.js') ||
-               selectedFile.name.endsWith('.ts') ||
-               selectedFile.name.endsWith('.css')
+      try {
+        extractedFileContent = await NovaPDF.extractText(selectedFile);
+      } catch (pdfError) {
+        console.error("Error parsing PDF:", pdfError);
+        throw new Error("Failed to parse PDF file. It might be corrupted or unsupported.");
+      }
+    } else if (selectedFile.type.startsWith("text/") ||
+      selectedFile.name.endsWith('.md') ||
+      selectedFile.name.endsWith('.csv') ||
+      selectedFile.name.endsWith('.json') ||
+      selectedFile.name.endsWith('.xml') ||
+      selectedFile.name.endsWith('.html') ||
+      selectedFile.name.endsWith('.js') ||
+      selectedFile.name.endsWith('.ts') ||
+      selectedFile.name.endsWith('.css')
     ) {
-        extractedFileContent = await selectedFile.text();
+      extractedFileContent = await selectedFile.text();
     } else {
-        throw new Error(`Unsupported file type: ${selectedFile.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.`);
+      throw new Error(`Unsupported file type: ${selectedFile.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.`);
     }
 
     if (!extractedFileContent.trim()) {
-        throw new Error("Could not extract any meaningful text from the file. Please ensure the file contains readable content.");
+      throw new Error("Could not extract any meaningful text from the file. Please ensure the file contains readable content.");
     }
     return { extractedFileContent };
   }, []);
 
   const callAIProcessFile = useCallback(async (
     textContent: string,
-    mode: 'estimate' | 'generate',
-    numCards?: number
+    mode: 'estimate' | 'generate'
   ): Promise<ProcessedAIData | EstimationResult | null> => {
     if (!currentUser) {
       throw new Error("You must be logged in to use AI features.");
@@ -106,29 +90,22 @@ export const useFileImport = () => {
       throw new Error("Session not found. Please try logging in again.");
     }
 
-    const response = await fetch(
-      `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/process-file`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          // Removed redundant 'apikey' header
-        },
-        body: JSON.stringify({ 
-          textContent: textContent,
-          numCards: numCards,
-          mode: mode,
-        }),
-      }
-    );
-    
-    const data = await response.json();
-    
-    if (!response.ok || (data as any).error) {
-      throw new Error((data as any)?.error || "Failed to process file with AI.");
+    let result;
+
+    if (mode === 'estimate') {
+      const count = NovaFileProcessor.estimateCardCount(textContent);
+      result = { optimal_max_cards: count };
+    } else {
+      const processed = await NovaFileProcessor.processWithAI(textContent);
+
+      result = {
+        cards: processed.cards,
+        concepts: processed.concepts,
+        optimal_max_cards: processed.cards.length
+      };
     }
-    return data;
+
+    return result;
   }, [currentUser]);
 
   const estimateOptimalCards = useCallback(async (): Promise<number | null> => {
@@ -141,25 +118,33 @@ export const useFileImport = () => {
       return null;
     }
 
-    const toastId = showLoading("AI is estimating optimal card count...");
+    setProgressState('extracting');
+    setProgressMessage("Reading file...");
+
     try {
       const { extractedFileContent } = await extractFileContent(file);
       setSourceTextContent(extractedFileContent);
 
+      setProgressState('processing');
+      setProgressMessage("Estimating content size...");
+
       const result = await callAIProcessFile(extractedFileContent, 'estimate') as EstimationResult;
-      dismissToast(toastId);
+
+      setProgressState('idle');
+      setProgressMessage("");
       return result.optimal_max_cards;
     } catch (error: any) {
-      dismissToast(toastId);
+      setProgressState('error');
+      setProgressMessage(error.message || "Error during estimation");
       showError(error.message || "An unexpected error occurred during estimation.");
       console.error(error);
       return null;
     }
   }, [file, currentUser, extractFileContent, callAIProcessFile]);
 
-  const generateCardsAndConcepts = useCallback(async (numCardsToGenerate?: number): Promise<ProcessedAIData | null> => {
-    if (!file || !sourceTextContent) {
-      showError("No file or source content available for generation. Please select a file first.");
+  const generateCardsAndConcepts = useCallback(async (): Promise<ProcessedAIData | null> => {
+    if (!file) {
+      showError("Please select a file first.");
       return null;
     }
     if (!currentUser) {
@@ -167,90 +152,106 @@ export const useFileImport = () => {
       return null;
     }
 
-    const toastId = showLoading("AI is generating your flashcards, concepts, and relationships...");
+    setProgressState('extracting');
+    setProgressMessage("Extracting text from file...");
+
     try {
-      const data = await callAIProcessFile(sourceTextContent, 'generate', numCardsToGenerate) as ProcessedAIData;
+      let textToProcess = sourceTextContent;
+
+      if (!textToProcess) {
+        console.log("📝 Auto-extracting text from file...");
+        const { extractedFileContent } = await extractFileContent(file);
+        textToProcess = extractedFileContent;
+        setSourceTextContent(extractedFileContent);
+      }
+
+      setProgressState('processing');
+      setProgressMessage("Nova AI is analyzing content & generating flashcards...");
+
+      const data = await callAIProcessFile(textToProcess, 'generate') as ProcessedAIData;
 
       const newCards = data.cards;
       const newConcepts = data.concepts;
-      const newRelationships = data.relationships;
 
       if (!newCards || newCards.length === 0) {
         showError("The AI couldn't find any terms and definitions in the file.");
+        setProgressState('error');
         return null;
       }
 
       // Process concepts (upserting existing, inserting new)
       if (newConcepts && newConcepts.length > 0) {
-        const conceptNameToIdMap = new Map<string, string>();
-        for (const concept of newConcepts) {
-          const { data: existingConcept, error: fetchConceptError } = await supabase
-            .from('concepts')
-            .select('id')
-            .eq('user_id', currentUser.id)
-            .eq('name', concept.name)
-            .single();
+        try {
+          const { data: savedConcepts, error: conceptError } = await supabase.from('concepts').upsert(
+            newConcepts.map(c => ({
+              user_id: currentUser.id,
+              name: c.name,
+              description: c.description
+            })),
+            { onConflict: 'name,user_id', ignoreDuplicates: true }
+          ).select('id, name');
 
-          if (fetchConceptError && fetchConceptError.code !== 'PGRST116') {
-            console.error("Error fetching existing concept:", fetchConceptError);
-            continue;
-          }
-
-          let conceptId: string;
-          if (existingConcept) {
-            conceptId = existingConcept.id;
+          if (conceptError) {
+            console.warn("Concept storage warning:", conceptError);
           } else {
-            const { data: insertedConcept, error: insertConceptError } = await supabase
-              .from('concepts')
-              .insert({ user_id: currentUser.id, name: concept.name, description: concept.description })
-              .select('id')
-              .single();
-            if (insertConceptError) {
-              console.error("Error inserting concept:", insertConceptError);
-              continue;
-            }
-            conceptId = insertedConcept.id;
-          }
-          conceptNameToIdMap.set(concept.name, conceptId);
-        }
+            console.log("✅ Concepts saved successfully");
 
-        // Process relationships (upserting)
-        if (newRelationships && newRelationships.length > 0) {
-          const relationshipsToUpsert = [];
-          for (const rel of newRelationships) {
-            const sourceId = conceptNameToIdMap.get(rel.source_name);
-            const targetId = conceptNameToIdMap.get(rel.target_name);
-            if (sourceId && targetId) {
-              relationshipsToUpsert.push({
-                user_id: currentUser.id,
-                source_concept_id: sourceId,
-                target_concept_id: targetId,
-                type: rel.type,
-                strength: rel.strength || 0.5,
-              });
-            }
-          }
+            // 2. Save Relationships (If available)
+            if (data.relationships && data.relationships.length > 0 && savedConcepts) {
+              // Fetch all concepts to ensure we have IDs for everyone (in case upsert didn't return duplicates)
+              const { data: allConcepts } = await supabase
+                .from('concepts')
+                .select('id, name')
+                .eq('user_id', currentUser.id);
 
-          if (relationshipsToUpsert.length > 0) {
-            const { error: insertRelError } = await supabase
-              .from('concept_relationships')
-              .upsert(relationshipsToUpsert, { onConflict: 'user_id,source_concept_id,target_concept_id,type' });
-            if (insertRelError) {
-              console.error("Error inserting relationships:", insertRelError);
+              if (allConcepts) {
+                const conceptMap = new Map(allConcepts.map(c => [c.name, c.id]));
+
+                const validRelationships = data.relationships
+                  .map(rel => ({
+                    user_id: currentUser.id,
+                    source_concept_id: conceptMap.get(rel.source_name),
+                    target_concept_id: conceptMap.get(rel.target_name),
+                    type: rel.type,
+                    strength: rel.strength
+                  }))
+                  .filter(rel => rel.source_concept_id && rel.target_concept_id); // Only allow complete links
+
+                if (validRelationships.length > 0) {
+                  const { error: relError } = await supabase
+                    .from('concept_relationships')
+                    .insert(validRelationships);
+
+                  if (relError) console.warn("Relationship storage error:", relError);
+                  else console.log(`✅ Saved ${validRelationships.length} relationships`);
+                }
+              }
             }
           }
+        } catch (conceptError) {
+          console.warn("Concept processing skipped.", conceptError);
         }
       }
-      
+
       queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] });
+
+      setProgressState('complete');
+      setProgressMessage("Generation complete!");
+
+      // Reset after a moment
+      setTimeout(() => {
+        setProgressState('idle');
+        setProgressMessage("");
+      }, 2000);
+
       return data;
 
     } catch (error: any) {
+      setProgressState('error');
+      setProgressMessage("Error generating content.");
       showError(error.message || "An unexpected error occurred.");
       console.error(error);
       return null;
-    } finally {
-      dismissToast(toastId);
     }
   }, [file, sourceTextContent, currentUser, queryClient, extractFileContent, callAIProcessFile]);
 
@@ -263,5 +264,7 @@ export const useFileImport = () => {
     generateCardsAndConcepts,
     currentUser,
     isLoadingUser,
+    progressState,
+    progressMessage
   };
 };

@@ -363,6 +363,25 @@ const Settings: React.FC = () => {
           </div>
         </CardContent>
       </NotebookCard>
+
+      <NotebookCard>
+        <CardHeader>
+          <CardTitle>Legal</CardTitle>
+          <CardDescription>View our terms and privacy policy.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Button asChild variant="outline" className="w-full justify-start">
+            <Link to="/terms">
+              View Terms & Conditions
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full justify-start">
+            <Link to="/privacy">
+              View Privacy Policy
+            </Link>
+          </Button>
+        </CardContent>
+      </NotebookCard>
     </div>
   );
 };

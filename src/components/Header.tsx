@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,8 +7,6 @@ import {
   LogOut,
   User,
   Settings,
-  MenuIcon,
-  // Removed: ShieldCheck, // Import ShieldCheck icon
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -19,15 +17,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { navItems } from '@/config/navigation';
 import { Badge } from '@/components/ui/badge'; // Import Badge
+import BrandLogo from '@/components/BrandLogo';
 
 export const Header: React.FC = () => {
   const { user, profile } = useAuth(); // Get profile from useAuth
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const location = useLocation();
 
   const handleLogout = async () => {
     console.log('Logout clicked'); // Debugging log
@@ -38,167 +33,64 @@ export const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2 font-bold text-lg">
-          <img src="/my-notebook-logo.svg" alt="My Notebook Logo" className="h-8 w-8" />
-          <span>My Notebook</span>
+        <Link to="/" className="flex items-center gap-2 font-heading font-bold text-xl text-primary hover:text-primary/90 transition-colors">
+          <BrandLogo size="sm" />
+          <span>Notebook</span>
         </Link>
 
         {user ? (
           <div className="flex items-center space-x-4">
-            {/* Desktop Navigation Dropdown */}
-            <div className="hidden md:flex items-center space-x-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MenuIcon className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 z-[999]" align="end" forceMount>
-                  <DropdownMenuLabel>Navigation</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {navItems.map((item) => (
-                    <DropdownMenuItem key={item.name} asChild>
-                      <Link to={item.href}>
-                        {item.icon}
-                        <span>{item.name}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* User Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="User Avatar" />
-                      <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 z-[999]" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none flex items-center gap-2">
-                        {profile?.display_name || user.email}
-                        {profile?.is_admin && <Badge variant="secondary" className="text-xs">Admin</Badge>}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/settings">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  {/* Removed: {profile?.is_admin && ( // Conditionally render Admin Dashboard link
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin/dashboard">
-                        <ShieldCheck className="mr-2 h-4 w-4" />
-                        <span>Admin Dashboard</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  )} */}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Mobile Sheet Menu - remains visible on mobile */}
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-              <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon">
-                  <MenuIcon className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[280px] sm:w-[320px] flex flex-col">
-                {/* User Info in Mobile Menu */}
-                <div className="flex items-center space-x-2 px-2 pt-6">
+            {/* User Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="User Avatar" />
                     <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col overflow-hidden">
-                    <p className="text-sm font-medium leading-none truncate flex items-center gap-2">
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 z-[999]" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none flex items-center gap-2">
                       {profile?.display_name || user.email}
                       {profile?.is_admin && <Badge variant="secondary" className="text-xs">Admin</Badge>}
                     </p>
-                    <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
                   </div>
-                </div>
-                <Separator className="my-4" />
-                
-                <ScrollArea className="flex-grow pr-4 -mr-4">
-                  <div className="flex flex-col space-y-2">
-                    {/* Navigation Items */}
-                    {navItems.map((item) => (
-                      <Button key={item.name} variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
-                        <Link to={item.href}>
-                          <span className="flex items-center">
-                            {item.icon}
-                            {item.name}
-                          </span>
-                        </Link>
-                      </Button>
-                    ))}
-                    <Separator />
-                    {/* Profile, Settings, Logout in Mobile Menu */}
-                    <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
-                      <Link to="/profile">
-                        <span className="flex items-center">
-                          <User className="mr-2 h-4 w-4" />
-                          <span>Profile</span>
-                        </span>
-                      </Link>
-                    </Button>
-                    <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
-                      <Link to="/settings">
-                        <span className="flex items-center">
-                          <Settings className="mr-2 h-4 w-4" />
-                          <span>Settings</span>
-                        </span>
-                      </Link>
-                    </Button>
-                    {/* Removed: {profile?.is_admin && ( // Conditionally render Admin Dashboard link in mobile menu
-                      <Button variant="ghost" asChild className="justify-start" onClick={() => setIsSheetOpen(false)}>
-                        <Link to="/admin/dashboard">
-                          <span className="flex items-center">
-                            <ShieldCheck className="mr-2 h-4 w-4" />
-                            <span>Admin Dashboard</span>
-                          </span>
-                        </Link>
-                      </Button>
-                    )} */}
-                    <Button variant="ghost" onClick={() => { handleLogout(); setIsSheetOpen(false); }} className="justify-start text-red-500 hover:text-red-600">
-                      <span className="flex items-center">
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Log out</span>
-                      </span>
-                    </Button>
-                  </div>
-                </ScrollArea>
-              </SheetContent>
-            </Sheet>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Mobile Sheet Menu removed in favor of bottom navigation */}
           </div>
         ) : (
-          <Button asChild>
-            <Link to="/login">Login</Link>
-          </Button>
+          location.pathname !== '/login' && (
+            <Button asChild>
+              <Link to="/login">Login</Link>
+            </Button>
+          )
         )}
       </div>
     </header>

@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FlippableCard from "@/components/FlippableCard";
@@ -7,10 +7,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
-import { Progress } from "@/components/ui/progress";
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth'; // Import useAuth
+import { useAuth } from '@/hooks/useAuth';
+import StudyProgressBar from '@/components/study/StudyProgressBar';
+import CompletionCelebration from '@/components/study/CompletionCelebration';
 
 interface CardItem {
   id: string;
@@ -20,7 +21,7 @@ interface CardItem {
   ease_factor: number;
   next_review_at: string;
   status: 'learning' | 'mastered';
-  created_at?: string; // Added for sorting
+  created_at?: string;
 }
 
 interface UserProgress {
@@ -44,22 +45,22 @@ const calculateNextReview = (
     EF = Math.max(1.3, EF - 0.20);
     I = 0; // Immediately
   } else if (quality === 1) { // Hard
-    n = 0; // Reset repetition level
-    EF = Math.max(1.3, EF - 0.15); // Slightly less severe decrease
+    n = 0;
+    EF = Math.max(1.3, EF - 0.15);
     I = 1; // 1 day
   } else { // quality === 2 (Good)
     n += 1;
-    EF = EF + 0.1; // Simple increase for good recall
-    EF = Math.max(1.3, EF); // Ensure EF doesn't go below 1.3
+    EF = EF + 0.1;
+    EF = Math.max(1.3, EF);
 
     if (n === 1) {
-      I = 1; // First successful recall, 1 day
+      I = 1;
     } else if (n === 2) {
-      I = 6; // Second successful recall, 6 days
+      I = 6;
     } else {
-      I = Math.round(6 * Math.pow(EF, n - 2)); // Standard SM-2 for subsequent recalls
+      I = Math.round(6 * Math.pow(EF, n - 2));
     }
-    status = 'mastered'; // Mark as mastered if recalled well
+    status = 'mastered';
   }
 
   const nextReviewDate = new Date();
@@ -75,11 +76,7 @@ const calculateNextReview = (
 
 const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortOrder: string, cardsCountGoal: number): Promise<CardItem[]> => {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    // If user is not authenticated, return an empty array instead of throwing an error.
-    // The UI will then prompt the user to log in.
-    return [];
-  }
+  if (!user) return [];
 
   const now = new Date();
 
@@ -105,18 +102,16 @@ const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortO
     throw error;
   }
 
-  if (!data) {
-    return [];
-  }
+  if (!data) return [];
 
   let processedCards = data
-    .map((card: any) => { // Explicitly type 'card'
+    .map((card: any) => {
       const progress = card.user_progress?.[0];
       return {
         id: card.id,
         term: card.term,
         definition: card.definition,
-        created_at: card.created_at, // Include created_at
+        created_at: card.created_at,
         repetition_level: progress?.repetition_level ?? 0,
         ease_factor: progress?.ease_factor ?? 2.5,
         next_review_at: progress?.next_review_at ?? now.toISOString(),
@@ -129,7 +124,6 @@ const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortO
       const isNewCardForCurrentUser = !card.progress_user_id || card.progress_user_id !== user.id;
       const isDueForReview = cardNextReviewDate <= now;
 
-      // Apply hideMastered filter
       if (hideMastered && card.status === 'mastered') {
         return false;
       }
@@ -137,28 +131,29 @@ const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortO
       return isNewCardForCurrentUser || (card.progress_user_id === user.id && isDueForReview);
     });
 
-  // Apply sorting based on preference
   if (sortOrder === 'alphabetical_term_asc') {
     processedCards.sort((a: CardItem, b: CardItem) => a.term.localeCompare(b.term));
   } else if (sortOrder === 'random') {
     processedCards.sort(() => Math.random() - 0.5);
   } else if (sortOrder === 'created_at_asc') {
     processedCards.sort((a: CardItem, b: CardItem) => new Date(a.created_at!).getTime() - new Date(b.created_at!).getTime());
-  } else { // Default to 'next_review_at_asc'
+  } else {
     processedCards.sort((a: CardItem, b: CardItem) => new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime());
   }
 
-  // Limit the number of cards based on the user's preference
   return processedCards.slice(0, cardsCountGoal);
 };
 
 const StudyMode = () => {
   const { setId } = useParams<{ setId: string }>();
-  const { user, loading: isLoadingAuth } = useAuth(); // Use useAuth to get user and loading state
+  const navigate = useNavigate();
+  const { user, loading: isLoadingAuth } = useAuth();
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showDefinition, setShowDefinition] = useState(false);
   const [studyFinished, setStudyFinished] = useState(false);
+  const [masteredCount, setMasteredCount] = useState(0);
+  const [learningCount, setLearningCount] = useState(0);
   const queryClient = useQueryClient();
 
   const { data: cards, isLoading, isError, error, refetch } = useQuery<CardItem[], Error>({
@@ -167,22 +162,30 @@ const StudyMode = () => {
       setId!,
       preferences?.hide_mastered_from_daily_review || false,
       preferences?.default_card_sort_order || 'next_review_at_asc',
-      preferences?.default_study_session_cards_count || 20 // Use default from preferences
+      preferences?.default_study_session_cards_count || 20
     ),
-    enabled: !!setId && !isLoadingAuth && !isLoadingPreferences, // Only enable query when auth and preferences are known
-    staleTime: 0, // Always refetch for a fresh session
+    enabled: !!setId && !isLoadingAuth && !isLoadingPreferences,
+    staleTime: 0,
   });
 
-  // Set initial showDefinition based on preferences once loaded
   useEffect(() => {
     if (!isLoadingPreferences && preferences) {
       setShowDefinition(preferences.default_flashcard_side === 'definition');
     }
   }, [isLoadingPreferences, preferences]);
 
+  // Update counts when cards load
+  useEffect(() => {
+    if (cards) {
+      const mastered = cards.filter(c => c.status === 'mastered').length;
+      const learning = cards.length - mastered;
+      setMasteredCount(mastered);
+      setLearningCount(learning);
+    }
+  }, [cards]);
+
   const currentCard = cards?.[currentCardIndex];
   const totalCards = cards?.length || 0;
-  const progressPercentage = totalCards > 0 ? ((currentCardIndex + (studyFinished ? 1 : 0)) / totalCards) * 100 : 0;
 
   const handleFlipCard = () => {
     setShowDefinition(!showDefinition);
@@ -190,7 +193,7 @@ const StudyMode = () => {
 
   const updateCardProgress = useCallback(async (cardId: string, quality: 0 | 1 | 2) => {
     try {
-      if (!user) { // Re-check user here for safety, though UI should prevent this
+      if (!user) {
         showError("You must be logged in to track progress.");
         return;
       }
@@ -223,13 +226,19 @@ const StudyMode = () => {
         );
 
       if (upsertError) throw upsertError;
-      
+
+      // Update local counts
+      if (newProgress.status === 'mastered') {
+        setMasteredCount(prev => prev + 1);
+        setLearningCount(prev => Math.max(0, prev - 1));
+      }
+
       let successMessage = "";
       if (quality === 0) {
         successMessage = "Card marked for immediate re-study.";
       } else if (quality === 1) {
         successMessage = "Card marked for review soon.";
-      } else { // quality === 2
+      } else {
         successMessage = "Card mastered! Well done.";
       }
       showSuccess(successMessage);
@@ -255,11 +264,98 @@ const StudyMode = () => {
     }
   };
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (studyFinished) return;
+
+      switch (e.key) {
+        case ' ': // Space - flip card
+          e.preventDefault();
+          handleFlipCard();
+          break;
+        case 'ArrowRight': // Next card (if definition is showing)
+          if (showDefinition && currentCard) {
+            handleNextCard(2); // Default to "Good"
+          }
+          break;
+        case 'ArrowLeft': // Previous card
+          if (currentCardIndex > 0) {
+            setCurrentCardIndex(currentCardIndex - 1);
+            setShowDefinition(false);
+          }
+          break;
+        case '1': // Again
+          if (showDefinition && currentCard) {
+            handleNextCard(0);
+          }
+          break;
+        case '2': // Hard
+          if (showDefinition && currentCard) {
+            handleNextCard(1);
+          }
+          break;
+        case '3': // Good
+          if (showDefinition && currentCard) {
+            handleNextCard(2);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentCardIndex, showDefinition, studyFinished, currentCard, handleNextCard, handleFlipCard]);
+
   const handleRestartStudy = () => {
     setCurrentCardIndex(0);
     setShowDefinition(preferences?.default_flashcard_side === 'definition');
     setStudyFinished(false);
+    setMasteredCount(0); // Reset counts
     refetch();
+  };
+
+  // Touch handlers for swipe gestures
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Minimum swipe distance (px)
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      // Swipe Left -> Next Card (Good)
+      if (showDefinition && currentCard) {
+        handleNextCard(2);
+      } else if (!showDefinition) {
+        // Optional: Shake or hint to flip first? For now, just flip.
+        handleFlipCard();
+      }
+    }
+
+    if (isRightSwipe) {
+      // Swipe Right -> Previous Card
+      if (currentCardIndex > 0) {
+        setCurrentCardIndex(currentCardIndex - 1);
+        setShowDefinition(preferences?.default_flashcard_side === 'definition'); // user pref or false
+      }
+    }
   };
 
   if (!setId) {
@@ -320,7 +416,15 @@ const StudyMode = () => {
   }
 
   return (
-    <div className="container mx-auto py-10 flex flex-col items-center animate-fade-in">
+    <div className="container mx-auto py-10 flex flex-col items-center animate-fade-in relative">
+      <CompletionCelebration
+        show={studyFinished}
+        totalCards={totalCards}
+        masteredCount={masteredCount}
+        onRestart={handleRestartStudy}
+        onExit={() => navigate(`/sets/${setId}`)}
+      />
+
       <div className="w-full flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Study Mode</h1>
         <Button asChild variant="outline">
@@ -333,92 +437,83 @@ const StudyMode = () => {
       </div>
 
       {/* Progress Bar */}
-      {!studyFinished && totalCards > 0 && (
-        <div className="w-full max-w-md mb-6">
-          <Progress value={progressPercentage} className="h-2" />
-          <p className="text-sm text-muted-foreground text-right mt-1">
-            {currentCardIndex + 1} / {totalCards}
-          </p>
-        </div>
-      )}
+      <div className="w-full max-w-md mb-6">
+        <StudyProgressBar
+          currentIndex={currentCardIndex}
+          totalCards={totalCards}
+          masteredCount={masteredCount}
+          learningCount={learningCount}
+        />
+      </div>
 
-      {studyFinished ? (
-        <div className="w-full max-w-md">
+      {!studyFinished && currentCard ? (
+        <div
+          className="w-full max-w-md perspective-1000 touch-pan-y"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           <FlippableCard
-            isFlipped={false}
-            frontContent={
-              <>
-                <CardTitle className="mb-4">Study Session Complete!</CardTitle>
-                <CardContent>
-                  <p className="text-lg mb-6">You've reviewed all due cards in this set.</p>
-                  <Button onClick={handleRestartStudy}>
-                    <RotateCcw className="mr-2 h-4 w-4" /> Restart Study
-                  </Button>
-                </CardContent>
-              </>
-            }
-            backContent={<></>}
-            className="min-h-[256px]"
-          />
-        </div>
-      ) : (
-        <>
-          <FlippableCard
-            key={currentCard?.id || 'study-card'}
+            key={currentCard.id}
             isFlipped={showDefinition}
             onClick={handleFlipCard}
-            className="w-full max-w-md min-h-[256px]"
+            className="w-full min-h-[300px]"
             frontContent={
-              <>
+              <div className="flex flex-col items-center justify-center min-h-[300px] text-center p-6">
                 <CardHeader>
-                  <CardTitle className="text-2xl">Term</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Term</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto scrollbar-hide">
-                  <p className="text-xl font-medium">
-                    {currentCard?.term}
+                <CardContent className="flex-grow flex flex-col items-center justify-center">
+                  <p className="text-2xl font-semibold mb-8">{currentCard.term}</p>
+                  <p className="text-xs text-muted-foreground animate-pulse">
+                    Tap to Flip • Swift Left to Next
                   </p>
                 </CardContent>
-              </>
+              </div>
             }
             backContent={
-              <>
+              <div className="flex flex-col items-center justify-center min-h-[300px] text-center p-6 bg-slate-50 dark:bg-slate-900/50">
                 <CardHeader>
-                  <CardTitle className="text-2xl">Definition</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Definition</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto scrollbar-hide">
-                  <p className="text-xl font-medium">
-                    {currentCard?.definition}
-                  </p>
+                <CardContent className="flex-grow flex flex-col items-center justify-center w-full">
+                  <p className="text-xl mb-8">{currentCard.definition}</p>
+
+                  <div className="grid grid-cols-3 gap-2 w-full max-w-xs" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleNextCard(0)}
+                      className="w-full"
+                    >
+                      Again
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleNextCard(1)}
+                      className="w-full bg-orange-100 text-orange-900 hover:bg-orange-200"
+                    >
+                      Hard
+                    </Button>
+                    <Button
+                      variant="default"
+                      onClick={() => handleNextCard(2)}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                    >
+                      Good
+                    </Button>
+                  </div>
                 </CardContent>
-              </>
+              </div>
             }
           />
 
-          <div className="mt-8 flex flex-wrap justify-center gap-2">
-            {!showDefinition && (
-              <Button onClick={handleFlipCard} variant="outline" className="w-full sm:w-auto">
-                Flip Card
-              </Button>
-            )}
-            {showDefinition && (
-              <>
-                <Button onClick={() => handleNextCard(0)} variant="destructive" className="w-full sm:w-auto">
-                  Again
-                </Button>
-                <Button onClick={() => handleNextCard(1)} className="bg-orange-500 hover:bg-orange-600 text-white w-full sm:w-auto">
-                  Hard
-                </Button>
-                <Button onClick={() => handleNextCard(2)} className="bg-green-500 hover:bg-green-600 w-full sm:w-auto">
-                  Good
-                </Button>
-              </>
-            )}
+          <div className="mt-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              Card {currentCardIndex + 1} of {cards.length}
+            </p>
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            Card {currentCardIndex + 1} of {cards.length}
-          </p>
-        </>
-      )}
+        </div>
+      ) : null}
     </div>
   );
 };

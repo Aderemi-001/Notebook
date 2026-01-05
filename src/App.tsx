@@ -1,22 +1,42 @@
+/**
+ * Author: Aderemi Adesanmi
+ * Version: v1.0
+ */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import AuthLayout from "@/layouts/AuthLayout";
+import DashboardLayout from "@/layouts/DashboardLayout";
+import PublicLayout from "@/layouts/PublicLayout";
+
+import { CommandPalette } from "@/components/CommandPalette";
+
+// Wrapper component to render DashboardLayout around Outlet
+const DashboardLayoutWrapper = () => (
+  <DashboardLayout>
+    <CommandPalette />
+    <Outlet />
+  </DashboardLayout>
+);
+
+// Wrapper for PublicLayout
+const PublicLayoutWrapper = () => (
+  <PublicLayout>
+    <Outlet />
+  </PublicLayout>
+);
 
 // Import all page components directly
-import Index from "@/pages/Index";
+import Dashboard from "@/pages/Dashboard";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import Login from "@/pages/Login";
-import StudySetDetail from "@/pages/StudySetDetail";
 import CreateStudySet from "@/pages/CreateStudySet";
 import EditSet from "@/pages/EditSet";
 import StudyMode from "@/pages/StudyMode";
-import NotesIndex from "@/pages/NotesIndex";
-import CreateNote from "@/pages/CreateNote";
-import EditNote from "@/pages/EditNote";
 import Profile from "@/pages/Profile";
+import Notebook from "@/pages/Notebook";
+import StudySetsLayout from "@/pages/StudySetsLayout";
 import GroupsIndex from "@/pages/GroupsIndex";
 import CreateGroup from "@/pages/CreateGroup";
 import GroupDetail from "@/pages/GroupDetail";
@@ -28,12 +48,8 @@ import Statistics from "@/pages/Statistics";
 import CognitiveConstellation from "@/pages/CognitiveConstellation";
 import Collaborations from "@/pages/Collaborations";
 import ExamsIndex from "@/pages/ExamsIndex";
-import GenerateExam from "@/pages/GenerateExam";
-import PastExams from "@/pages/PastExams";
 import TakeExam from "@/pages/TakeExam";
 import EssayIndex from "@/pages/EssayIndex";
-import GenerateEssayQuestions from "@/pages/GenerateEssayQuestions";
-import PastEssayQuestions from "@/pages/PastEssayQuestions";
 import EssayPractice from "@/pages/EssayPractice";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/NotFound";
@@ -41,21 +57,46 @@ import TextbookFinder from "@/pages/TextbookFinder";
 import TestPage from "@/pages/TestPage";
 import EmailConfirmation from "@/pages/EmailConfirmation";
 import PasswordReset from "@/pages/PasswordReset";
+import TermsAndConditions from "@/pages/TermsAndConditions";
+import UserAgreement from "@/pages/UserAgreement";
 
 const queryClient = new QueryClient();
 
+import LoadingScreen from "@/components/LoadingScreen";
+
 const App: React.FC = () => {
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    // Simulate initial load / branding splash
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) return <LoadingScreen />;
+
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
-          <AuthLayout> {/* AuthLayout now wraps the entire Routes block */}
-            <Routes>
-              <Route path="/" element={<Index />} />
+          <Routes>
+            {/* Public Routes with Header/Footer */}
+            <Route element={<PublicLayoutWrapper />}>
+              <Route path="/login" element={<Login />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/login" element={<Login />} />
+              <Route path="/terms" element={<TermsAndConditions />} />
+              <Route path="/confirm-email" element={<EmailConfirmation />} />
+              <Route path="/reset-password" element={<PasswordReset />} />
+            </Route>
+
+            {/* Standalone Route for Agreement (No Header/Sidebar to force focus) */}
+            <Route path="/user-agreement" element={<UserAgreement />} />
+
+            {/* Dashboard Layout Routes */}
+            <Route element={<DashboardLayoutWrapper />}>
+              <Route path="/" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/dashboard" element={<Statistics />} />
@@ -65,19 +106,16 @@ const App: React.FC = () => {
               <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
               <Route path="/textbook-finder" element={<TextbookFinder />} />
               <Route path="/test" element={<TestPage />} />
-              <Route path="/confirm-email" element={<EmailConfirmation />} />
-              <Route path="/reset-password" element={<PasswordReset />} />
 
               {/* Study Sets */}
               <Route path="/create" element={<CreateStudySet />} />
-              <Route path="/sets/:setId" element={<StudySetDetail />} />
+              <Route path="/sets" element={<StudySetsLayout />} />
+              <Route path="/sets/:setId" element={<StudySetsLayout />} />
               <Route path="/sets/:setId/edit" element={<EditSet />} />
               <Route path="/sets/:setId/study" element={<StudyMode />} />
 
-              {/* Notes */}
-              <Route path="/notes" element={<NotesIndex />} />
-              <Route path="/create-note" element={<CreateNote />} />
-              <Route path="/notes/:noteId/edit" element={<EditNote />} />
+              {/* Pro Notebook */}
+              <Route path="/notebook" element={<Notebook />} />
 
               {/* Study Set Groups */}
               <Route path="/groups" element={<GroupsIndex />} />
@@ -85,22 +123,18 @@ const App: React.FC = () => {
               <Route path="/groups/:groupId" element={<GroupDetail />} />
               <Route path="/groups/:groupId/edit" element={<EditGroup />} />
 
-              {/* Exams */}
+              {/* Exams / Quiz */}
               <Route path="/exams" element={<ExamsIndex />} />
-              <Route path="/generate-exam" element={<GenerateExam />} />
-              <Route path="/past-exams" element={<PastExams />} />
-              <Route path="/exams/:examId" element={<TakeExam />} />
+              <Route path="/quiz/:examId" element={<TakeExam />} />
 
-              {/* Essays */}
+              {/* Essay Practice */}
               <Route path="/essays" element={<EssayIndex />} />
-              <Route path="/generate-essay-questions" element={<GenerateEssayQuestions />} />
-              <Route path="/past-essay-questions" element={<PastEssayQuestions />} />
               <Route path="/essay-practice/:questionId" element={<EssayPractice />} />
+            </Route>
 
-              {/* Catch-all for 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthLayout>
+            {/* Catch-all for 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

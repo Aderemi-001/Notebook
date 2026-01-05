@@ -2,10 +2,20 @@ import * as React from 'react';
 
 export interface ChatMessage {
   id: number;
-  sender: 'user' | 'bot' | 'system'; // Added 'system' to the sender types
+  sender: 'user' | 'bot' | 'system';
   text: string | React.ReactNode;
   timestamp: Date;
   feedbackGiven?: 'up' | 'down' | null;
+}
+
+export interface Intent {
+  id: string;
+  keywords: string[];
+  response?: string | string[]; // Static response or array of options
+  action?: 'search_notes' | 'navigate' | 'unknown'; // Dynamic action
+  minScore?: number; // Minimum keyword matches to trigger (default 1)
+  requiredContext?: string[]; // Optional: only trigger if previous intent was one of these
+  followUpContext?: string; // Optional: sets the context for the next message
 }
 
 export const DEFAULT_SUGGESTED_QUESTIONS = [

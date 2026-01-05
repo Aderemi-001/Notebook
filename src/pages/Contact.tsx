@@ -29,7 +29,7 @@ const Contact: React.FC = () => {
         </CardHeader>
         <CardContent className="prose dark:prose-invert max-w-none space-y-6 p-6">
           <p>
-            If you have any questions, suggestions, or need support regarding My Notebook, please don't hesitate to contact us using the information below. We aim to respond to all inquiries promptly.
+            If you have any questions, suggestions, or need support regarding Notebook, please don't hesitate to contact us using the information below. We aim to respond to all inquiries promptly.
           </p>
 
           <h2 className="flex items-center gap-2 text-2xl font-semibold mt-8 mb-4">

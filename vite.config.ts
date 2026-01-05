@@ -5,18 +5,36 @@ import path from "path";
 
 export default defineConfig(() => ({
   server: {
-    host: "::",
-    port: 8080,
+    host: "0.0.0.0",
+    port: 5173,
   },
   plugins: [
-    dyadComponentTagger(), 
-    react({
-      jsxRuntime: 'automatic' // Explicitly set JSX runtime
-    })
+    dyadComponentTagger(),
+    react()
   ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'pdfjs': ['pdfjs-dist'],
+          'vendor': [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            '@supabase/supabase-js',
+            '@tanstack/react-query',
+            'lucide-react'
+          ],
+        }
+      }
+    }
+  },
+  optimizeDeps: {
+    include: ['unpdf', 'pdfjs-dist']
   },
 }));

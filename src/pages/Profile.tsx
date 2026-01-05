@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { NotebookCard } from '@/components/NotebookCard';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { ArrowLeft, LogOut, Menu, Settings as SettingsIcon, BarChart2, Trash2, Loader2 } from 'lucide-react';
@@ -198,7 +198,7 @@ const Profile = () => {
         <h1 className="text-2xl sm:text-3xl font-bold">User Profile</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" aria-label="Profile options menu">
               <Menu className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -218,7 +218,7 @@ const Profile = () => {
 
       <NotebookCard className="mb-6">
         <CardHeader>
-          <CardTitle>Account & App Settings</CardTitle>
+          <h2 className="text-xl font-semibold leading-none tracking-tight">Account & App Settings</h2>
           <CardDescription>Manage your personal information and application preferences.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -259,8 +259,8 @@ const Profile = () => {
 
       <NotebookCard className="mt-6">
         <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
-          <CardDescription>
+          <h2 className="text-xl font-semibold leading-none tracking-tight text-destructive">Danger Zone</h2>
+          <CardDescription className="text-zinc-600 dark:text-zinc-400">
             Irreversible actions that will affect your account and data.
           </CardDescription>
         </CardHeader>

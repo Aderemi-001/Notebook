@@ -7,7 +7,7 @@ import {
   Handshake,
   GraduationCap,
   PenTool,
-  BookText,
+  Search,
   Globe,
   Network,
 } from 'lucide-react';
@@ -25,10 +25,10 @@ export const navItems: NavItem[] = [
   { name: "My Notes", href: "/notes", icon: <NotebookPen className="mr-2 h-4 w-4" /> },
   { name: "Exams", href: "/exams", icon: <GraduationCap className="mr-2 h-4 w-4" /> },
   { name: "Essays", href: "/essays", icon: <PenTool className="mr-2 h-4 w-4" /> },
-  { name: "Cognitive Constellation", href: "/constellation", icon: <Network className="mr-2 h-4 w-4" /> },
+  { name: "Cognitive Constellation (Beta)", href: "/constellation", icon: <Network className="mr-2 h-4 w-4" /> },
   { name: "My Groups", href: "/groups", icon: <Group className="mr-2 h-4 w-4" /> },
   { name: "Explore Public Sets", href: "/explore-public-sets", icon: <Globe className="mr-2 h-4 w-4" /> },
-  { name: "Textbook Finder", href: "/textbook-finder", icon: <BookText className="mr-2 h-4 w-4" /> },
+  { name: "Textbook Finder", href: "/textbook-finder", icon: <Search className="mr-2 h-4 w-4" /> },
   { name: "Statistics", href: "/dashboard", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
   { name: "Collaborations", href: "/collaborations", icon: <Handshake className="mr-2 h-4 w-4" /> },
 ];

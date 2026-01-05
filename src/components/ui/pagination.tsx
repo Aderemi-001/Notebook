@@ -95,11 +95,12 @@ const PaginationEllipsis = ({
   ...props
 }: React.ComponentProps<"span">) => (
   <span
-    aria-hidden
+    aria-hidden="true"
     className={cn("flex h-9 w-9 items-center justify-center", className)}
+    tabIndex={-1}
     {...props}
   >
-    <MoreHorizontal className="h-4 w-4" />
+    <MoreHorizontal className="h-4 w-4" tabIndex={-1} />
     <span className="sr-only">More pages</span>
   </span>
 );

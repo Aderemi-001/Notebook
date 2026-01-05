@@ -16,14 +16,14 @@ const FlippableCard = React.forwardRef<HTMLDivElement, FlippableCardProps>(
       <div
         ref={ref}
         className={cn(
-          "relative w-full h-full cursor-pointer perspective",
+          "relative w-full h-full cursor-pointer perspective-1000",
           className
         )}
         onClick={onClick}
       >
         <div
           className={cn(
-            "absolute w-full h-full transition-transform duration-700 ease-in-out transform-gpu",
+            "absolute w-full h-full transition-transform duration-700 ease-in-out transform-gpu transform-style-3d",
             isFlipped ? 'rotate-y-180' : 'rotate-y-0'
           )}
         >

@@ -25,7 +25,7 @@ export default function PrivacyPolicy() {
         </CardHeader>
         <CardContent className="prose max-w-none">
           <p>
-            This Privacy Policy describes how My Notebook ("we," "us," or "our") collects, uses, and discloses your information when you use our application (the "Service").
+            This Privacy Policy describes how Notebook ("we," "us," or "our") collects, uses, and discloses your information when you use our application (the "Service").
           </p>
 
           <h2>1. Information We Collect</h2>

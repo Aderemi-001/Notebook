@@ -78,9 +78,10 @@ const BreadcrumbSeparator = ({
     role="presentation"
     aria-hidden="true"
     className={cn("[&>svg]:size-3.5", className)}
+    tabIndex={-1}
     {...props}
   >
-    {children ?? <ChevronRight className="h-4 w-4" />}
+    {children ?? <ChevronRight className="h-4 w-4" tabIndex={-1} />}
   </li>
 );
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
@@ -93,9 +94,10 @@ const BreadcrumbEllipsis = ({
     role="presentation"
     aria-hidden="true"
     className={cn("flex h-9 w-9 items-center justify-center", className)}
+    tabIndex={-1}
     {...props}
   >
-    <MoreHorizontal className="h-4 w-4" />
+    <MoreHorizontal className="h-4 w-4" tabIndex={-1} />
     <span className="sr-only">More pages</span>
   </span>
 );

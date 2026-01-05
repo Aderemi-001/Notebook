@@ -110,7 +110,7 @@ const Login = () => {
         <NotebookCard className="p-8">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-extrabold text-gray-900">
-              My Notebook
+              Notebook
             </CardTitle>
             <CardDescription className="mt-2 text-sm text-gray-600">
               {isLogin ? 'Sign in to your account' : 'Create your account to get started!'}

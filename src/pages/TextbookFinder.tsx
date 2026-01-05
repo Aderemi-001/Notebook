@@ -1,63 +1,34 @@
+
 import * as React from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, Search, Loader2, BookOpen, ExternalLink, DollarSign } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, Search, Loader2, BookOpen, ExternalLink, Calendar, FileText, Globe, Book, FileDown, ChevronDown, Library } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { showError } from '@/utils/toast'; // Removed showLoading, dismissToast
+import { showError } from '@/utils/toast';
 import { Label } from "@/components/ui/label";
-import { useAuth } from '@/hooks/useAuth';
-
-interface TextbookResult {
-  title: string;
-  author: string;
-  description: string;
-  access_method: string;
-  link: string;
-  cost_implication: string;
-}
-
-const fetchTextbooks = async (query: string): Promise<TextbookResult[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("User not authenticated. Please log in to use the textbook finder.");
-  }
-
-  const response = await fetch(
-    `https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/textbook-finder`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-      },
-      body: JSON.stringify({ query }),
-    }
-  );
-
-  const result = await response.json();
-
-  if (!response.ok || result.error) {
-    throw new Error(result?.error || "Failed to find textbooks.");
-  }
-
-  return result.results || [];
-};
+import { textbookService, TextbookResult } from '@/services/textbookService';
 
 const TextbookFinder: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
-  const { user, loading: isLoadingAuth } = useAuth();
+  const [filterFree, setFilterFree] = useState(false);
 
   const { data: results, isLoading, isError, error } = useQuery<TextbookResult[], Error>({
-    queryKey: ['textbookSearch', submittedQuery],
-    queryFn: () => fetchTextbooks(submittedQuery),
-    enabled: !!submittedQuery && !!user && !isLoadingAuth,
+    queryKey: ['textbookSearch', submittedQuery, filterFree],
+    queryFn: () => textbookService.searchBooks(submittedQuery, filterFree),
+    enabled: !!submittedQuery,
   });
 
   const handleSearch = (e: React.FormEvent) => {
@@ -66,75 +37,66 @@ const TextbookFinder: React.FC = () => {
       showError("Please enter a search query.");
       return;
     }
-    if (!user) {
-      showError("You must be logged in to use the textbook finder.");
-      return;
-    }
     setSubmittedQuery(searchQuery);
   };
-
-  if (isLoadingAuth) {
-    return (
-      <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
-        <Skeleton className="h-8 w-1/2 mb-8" />
-        <Skeleton className="h-10 w-full mb-6" />
-        <Skeleton className="h-48 w-full rounded-lg" />
-      </div>
-    );
-  }
-
-  if (isError && submittedQuery) {
-    return (
-      <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center text-red-500 animate-fade-in">
-        Error searching for textbooks: {error?.message || "Unknown error"}
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
-          <BookOpen className="mr-3 h-7 w-7" /> Textbook Finder
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
+          <Search className="h-8 w-8 text-primary" /> Textbook Finder
         </h1>
         <Button asChild variant="outline">
           <Link to="/" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
           </Link>
         </Button>
       </div>
 
       <p className="text-muted-foreground mb-6">
-        Find legitimate and ethical access options for textbooks, including library resources, open educational materials, and official purchase links.
+        Search for textbooks and study resources using the Google Books library.
       </p>
 
       <NotebookCard className="mb-6">
         <CardHeader>
           <CardTitle>Search for Textbooks</CardTitle>
-          <CardDescription>Enter the title, author, or ISBN of the textbook you're looking for.</CardDescription>
+          <CardDescription>Enter the title, author, or ISBN.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <Label htmlFor="textbook-search" className="sr-only">Search query</Label>
-            <Input
-              id="textbook-search"
-              type="text"
-              placeholder="e.g., 'Calculus by Stewart', 'Biology OpenStax', '978-0321743250'"
-              value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-              className="flex-grow"
-              disabled={!user}
-            />
-            <Button type="submit" disabled={!searchQuery.trim() || isLoading || !user}>
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="h-4 w-4" />
-              )}
-              <span className="sr-only">Search</span>
-            </Button>
+          <form onSubmit={handleSearch} className="flex flex-col gap-4">
+            <div className="flex gap-2">
+              <Label htmlFor="textbook-search" className="sr-only">Search query</Label>
+              <Input
+                id="textbook-search"
+                type="text"
+                placeholder="e.g., 'Calculus', 'Campbell Biology'"
+                value={searchQuery}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                className="flex-grow"
+              />
+              <Button type="submit" disabled={!searchQuery.trim() || isLoading}>
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+                <span className="sr-only">Search</span>
+              </Button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="free-filter"
+                checked={filterFree}
+                onCheckedChange={(checked) => setFilterFree(checked as boolean)}
+              />
+              <Label
+                htmlFor="free-filter"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Show only free e-books (Google Books)
+              </Label>
+            </div>
           </form>
-          {!user && <p className="text-sm text-red-500 mt-2">Please log in to use the textbook finder.</p>}
         </CardContent>
       </NotebookCard>
 
@@ -157,54 +119,138 @@ const TextbookFinder: React.FC = () => {
         </div>
       )}
 
+      {isError && submittedQuery && (
+        <div className="text-center text-red-500 py-8">
+          Error searching for textbooks: {error?.message}
+        </div>
+      )}
+
       {results && results.length > 0 && (
-        <NotebookCard className="mt-6">
-          <CardHeader>
-            <CardTitle>Search Results for "{submittedQuery}"</CardTitle>
-            <CardDescription>Found {results.length} legitimate access options.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {results.map((result: TextbookResult, index: number) => (
-              <div key={index} className="border p-4 rounded-md bg-background">
-                <h3 className="text-xl font-semibold mb-1">{result.title}</h3>
-                <p className="text-sm text-muted-foreground mb-2">by {result.author}</p>
-                <p className="text-muted-foreground text-sm mb-3">{result.description}</p>
-                <div className="flex items-center text-sm text-muted-foreground mb-2">
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  <span>Access Method: {result.access_method}</span>
-                </div>
-                <div className="flex items-center text-sm text-muted-foreground mb-3">
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  <span>Cost: {result.cost_implication}</span>
-                </div>
-                {result.link && (
-                  <Button asChild variant="outline" size="sm">
-                    <a href={result.link} target="_blank" rel="noopener noreferrer" className="flex items-center">
-                      <ExternalLink className="mr-2 h-4 w-4" /> View Resource
+        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+          {results.map((result: TextbookResult, index: number) => {
+            // Smart Title Cleaning: Remove subtitles (after :), extra meta (after | or -), and "Books:" prefix
+            const cleanTitle = result.title.split(/[:|(-]/)[0].replace(/^Books:\s?/i, '').trim();
+
+            return (
+              <NotebookCard key={index} className="flex flex-col h-full hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-2">
+                  <div className="flex gap-4">
+                    {result.thumbnail && (
+                      <img
+                        src={result.thumbnail}
+                        alt={`Cover of ${result.title}`}
+                        className="w-16 h-24 object-cover rounded shadow-sm border"
+                      />
+                    )}
+                    <div>
+                      <CardTitle className="text-lg line-clamp-2">{result.title}</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">by {result.author}</p>
+                      {result.isbn && <p className="text-xs text-muted-foreground mt-1">ISBN: {result.isbn}</p>}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-grow space-y-4">
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    {result.description}
+                  </p>
+
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" /> {result.publishedDate}
+                    </span>
+                    {result.pageCount && (
+                      <span className="flex items-center gap-1">
+                        <FileText className="h-3 w-3" /> {result.pageCount} pages
+                      </span>
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-0 flex gap-2">
+                  <Button asChild variant="default" size="sm" className="flex-1">
+                    <a
+                      href={result.previewLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center"
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" /> Google Books
                     </a>
                   </Button>
-                )}
-              </div>
-            ))}
-          </CardContent>
-        </NotebookCard>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="px-3">
+                        Free Sources <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={`https://annas-archive.org/search?q=${encodeURIComponent(result.isbn || cleanTitle)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="cursor-pointer font-medium"
+                        >
+                          <Library className="mr-2 h-4 w-4" /> Anna's Archive (Z-Lib)
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={`https://libgen.is/search.php?req=${encodeURIComponent(cleanTitle)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="cursor-pointer"
+                        >
+                          <BookOpen className="mr-2 h-4 w-4" /> Library Genesis
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={`https://archive.org/search.php?query=${encodeURIComponent(result.isbn || cleanTitle)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="cursor-pointer"
+                        >
+                          <Globe className="mr-2 h-4 w-4" /> Archive.org {result.isbn ? '(ISBN)' : ''}
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={`https://www.gutenberg.org/ebooks/search/?query=${encodeURIComponent(cleanTitle)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="cursor-pointer"
+                        >
+                          <Book className="mr-2 h-4 w-4" /> Project Gutenberg
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={`https://www.google.com/search?q=${encodeURIComponent(cleanTitle + ' filetype:pdf')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="cursor-pointer"
+                        >
+                          <FileDown className="mr-2 h-4 w-4" /> Web Search (PDF)
+                        </a>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardFooter>
+              </NotebookCard>
+            )
+          })}
+        </div>
       )}
 
       {results && results.length === 0 && submittedQuery && !isLoading && (
         <div className="text-center py-10 border-2 border-dashed rounded-lg mt-6">
-          <h2 className="text-xl font-semibold">No legitimate textbooks found for "{submittedQuery}"</h2>
+          <h2 className="text-xl font-semibold">No textbooks found for "{submittedQuery}"</h2>
           <p className="text-muted-foreground mt-2">
-            Try a different search query or explore other study resources.
+            Try a different search query.
           </p>
         </div>
       )}
-
-      <div className="mt-8 p-4 border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950 rounded-md text-sm text-yellow-800 dark:text-yellow-200">
-        <p className="font-semibold mb-2">Important Note on Access:</p>
-        <p>
-          This tool helps you find legitimate ways to access textbooks. Downloading copyrighted material from unofficial sources may violate copyright laws. We encourage you to use legal alternatives such as library access, open educational resources, or purchasing/renting from authorized retailers to support authors and publishers.
-        </p>
-      </div>
     </div>
   );
 };

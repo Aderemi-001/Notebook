@@ -19,9 +19,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Globe, Plus, MoreVertical, Folder, ShieldCheck, Share2, UserPlus } from 'lucide-react';
+import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Globe, Plus, MoreVertical, Folder, ShieldCheck, Share2, UserPlus, Library, PanelLeftOpen } from 'lucide-react';
 import { UserPreferences } from '@/hooks/use-user-preferences';
-import SendCollaborationInvitationDialog from '@/components/collaborations/SendCollaborationInvitationDialog'; // Import the new dialog
+import ShareStudySetDialog from '@/components/collaborations/ShareStudySetDialog';
+import SendCollaborationInvitationDialog from '@/components/collaborations/SendCollaborationInvitationDialog';
 
 interface StudySetHeaderProps {
   studySet: {
@@ -40,6 +41,8 @@ interface StudySetHeaderProps {
   handleDeleteSet: () => void;
   handleResetProgress: () => void;
   handleAddToMySets: () => void;
+  isSidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 const StudySetHeader: React.FC<StudySetHeaderProps> = ({
@@ -51,16 +54,33 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
   handleDeleteSet,
   handleResetProgress,
   handleAddToMySets,
+  isSidebarOpen,
+  onToggleSidebar,
 }) => {
   // State to control the open state of the AlertDialogs
   const [isResetProgressDialogOpen, setIsResetProgressDialogOpen] = React.useState(false);
   const [isDeleteSetDialogOpen, setIsDeleteSetDialogOpen] = React.useState(false);
   const [isSendInvitationDialogOpen, setIsSendInvitationDialogOpen] = React.useState(false); // New state for invitation dialog
+  const [isShareDialogOpen, setIsShareDialogOpen] = React.useState(false); // State for Share Dialog
 
   return (
     <div className="flex justify-between items-center mb-8">
       <div className="flex items-center gap-4">
-        <h1 className="text-3xl font-bold">{studySet.title}</h1>
+        {onToggleSidebar && !isSidebarOpen && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebar}
+            className="md:flex hidden text-muted-foreground hover:text-foreground"
+            title="Expand View"
+          >
+            <PanelLeftOpen className="h-5 w-5" />
+          </Button>
+        )}
+        <div className="flex items-center gap-3">
+          <Library className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold">{studySet.title}</h1>
+        </div>
         <Badge variant={studySet.is_public ? "default" : "secondary"} className="flex items-center gap-1">
           <Globe className="h-3 w-3" />
           {studySet.is_public ? "Public" : "Private"}
@@ -145,6 +165,17 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
               <Plus className="mr-2 h-4 w-4" /> Add to My Sets
             </DropdownMenuItem>
           )}
+
+          {/* Share Option - Visible to Owner, Admin, or if Public */}
+          {(isOwner || isAdmin || studySet.is_public) && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)} className="flex items-center">
+                <Share2 className="mr-2 h-4 w-4" /> Share Set
+              </DropdownMenuItem>
+            </>
+          )}
+
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -195,6 +226,14 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
           onOpenChange={setIsSendInvitationDialogOpen}
         />
       )}
+
+      <ShareStudySetDialog
+        studySetId={studySet.id}
+        studySetTitle={studySet.title}
+        isPublic={studySet.is_public}
+        open={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+      />
     </div>
   );
 };

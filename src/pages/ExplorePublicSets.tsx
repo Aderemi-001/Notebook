@@ -37,7 +37,9 @@ const ExplorePublicSets: React.FC = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto py-10 animate-fade-in">
-        <h1 className="text-3xl font-bold mb-8">Explore Public Study Sets</h1>
+        <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
+          <Globe className="h-7 w-7" /> Explore Public Study Sets
+        </h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="flex flex-col">

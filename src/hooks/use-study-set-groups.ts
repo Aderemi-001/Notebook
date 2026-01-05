@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface StudySetGroup {
@@ -29,5 +29,26 @@ export const useStudySetGroups = () => {
   return useQuery<StudySetGroup[], Error>({
     queryKey: ['userStudySetGroups'],
     queryFn: fetchUserStudySetGroups,
+  });
+};
+
+export const useCreateStudySetGroup = () => {
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not found");
+
+      const { data, error } = await supabase
+        .from('study_set_groups')
+        .insert({ name, user_id: user.id })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      // Invalidate query to refresh list
+    },
   });
 };

@@ -25,9 +25,25 @@ interface CardItem {
 interface StudySetCardsListProps {
   cards: CardItem[];
   handleToggleFlag: (cardId: string, currentFlagStatus: boolean) => Promise<void>;
+  highlightTerm?: string | null;
 }
 
-const StudySetCardsList: React.FC<StudySetCardsListProps> = ({ cards, handleToggleFlag }) => {
+const StudySetCardsList: React.FC<StudySetCardsListProps> = ({ cards, handleToggleFlag, highlightTerm }) => {
+
+  React.useEffect(() => {
+    if (highlightTerm && cards.length > 0) {
+      const match = cards.find(c => c.term.toLowerCase() === highlightTerm.toLowerCase());
+      if (match) {
+        const element = document.getElementById(`card-${match.id}`);
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 500); // Small delay to ensure render
+        }
+      }
+    }
+  }, [highlightTerm, cards]);
+
   return (
     <>
       <h2 className="text-2xl font-semibold mb-4">Cards ({cards.length})</h2>
@@ -40,20 +56,29 @@ const StudySetCardsList: React.FC<StudySetCardsListProps> = ({ cards, handleTogg
           {cards.map((card: CardItem) => {
             const cardNextReviewDate = card.next_review_at ? new Date(card.next_review_at) : null;
             const isCardDue = cardNextReviewDate && isValid(cardNextReviewDate) && isPast(cardNextReviewDate);
+            const isHighlighted = highlightTerm && card.term.toLowerCase() === highlightTerm.toLowerCase();
 
             return (
               <NotebookCard
                 key={card.id}
+                id={`card-${card.id}`}
                 className={cn(
                   "hover:shadow-md transition-shadow",
                   card.is_flagged && "border-yellow-500 border-2",
                   card.status === 'mastered' && "border-green-500 border-2",
                   card.status === 'learning' && card.has_progress && card.repetition_level === 0 && isCardDue && "border-red-500 border-2",
-                  card.status === 'learning' && card.has_progress && card.repetition_level === 0 && cardNextReviewDate && isValid(cardNextReviewDate) && !isCardDue && "border-orange-500 border-2"
+                  card.status === 'learning' && card.has_progress && card.repetition_level === 0 && cardNextReviewDate && isValid(cardNextReviewDate) && !isCardDue && "border-orange-500 border-2",
+                  isHighlighted && "ring-4 ring-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 shadow-xl scale-[1.02] transition-all duration-500"
                 )}
               >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg font-semibold">{card.term}</CardTitle>
+                  <CardTitle className="text-lg font-semibold">
+                    {isHighlighted ? (
+                      <span className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">{card.term}</span>
+                    ) : (
+                      card.term
+                    )}
+                  </CardTitle>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>

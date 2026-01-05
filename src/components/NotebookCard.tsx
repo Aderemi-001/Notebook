@@ -11,10 +11,11 @@ const NotebookCard = React.forwardRef<HTMLDivElement, NotebookCardProps>(
     <Card
       ref={ref}
       className={cn(
+        "glass-card overflow-hidden", // Use new premium class
         "relative shadow-lg hover:shadow-xl transition-shadow duration-300",
-        "border border-gray-200 rounded-md",
-        "before:content-[''] before:absolute before:left-4 before:top-0 before:bottom-0 before:w-px before:bg-red-400", // Red margin line
-        "pl-6", // Adjusted from pl-10 to pl-6 to reduce left padding
+        // Reduced padding and moved margin line on mobile to save space
+        "before:content-[''] before:absolute before:left-2 sm:before:left-4 before:top-0 before:bottom-0 before:w-px before:bg-red-400", // Red margin line
+        "pl-4 sm:pl-6", // Reduced from pl-6 to pl-4 on mobile
         className
       )}
       {...props}

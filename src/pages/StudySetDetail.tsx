@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -157,9 +157,16 @@ const fetchLinkedNotes = async (setId: string): Promise<LinkedNote[]> => {
   return data || [];
 };
 
-const StudySetDetail = () => {
+interface StudySetDetailProps {
+  isSidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
+}
+
+const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps) => {
   const { setId } = useParams<{ setId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const highlightTerm = searchParams.get('highlight');
   const queryClient = useQueryClient();
   const { user, profile, loading: isLoadingAuth } = useAuth(); // Use useAuth to get user, profile, and loading state
 
@@ -351,7 +358,7 @@ const StudySetDetail = () => {
 
   if (isError) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500 animate-fade-in">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center text-red-500 animate-fade-in">
         Error loading study set: {error?.message || "Unknown error"}
       </div>
     );
@@ -359,7 +366,7 @@ const StudySetDetail = () => {
 
   if (!studySet) {
     return (
-      <div className="container mx-auto py-10 text-center animate-fade-in">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center animate-fade-in">
         <div className="text-center py-10 border-2 border-dashed rounded-lg">
           <p className="text-muted-foreground">Study set not found or you do not have permission to view it.</p>
           {!user && (
@@ -376,7 +383,7 @@ const StudySetDetail = () => {
   }
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
       <StudySetHeader
         studySet={studySet}
         isOwner={isOwner}
@@ -386,6 +393,8 @@ const StudySetDetail = () => {
         handleDeleteSet={handleDeleteSet}
         handleResetProgress={handleResetProgress}
         handleAddToMySets={handleAddToMySets}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={onToggleSidebar}
       />
 
       {studySet.description && (
@@ -403,6 +412,7 @@ const StudySetDetail = () => {
       <StudySetCardsList
         cards={studySet.cards}
         handleToggleFlag={handleToggleFlag}
+        highlightTerm={highlightTerm}
       />
 
       {user && ( // Only show linked notes if user is logged in

@@ -1,78 +1,134 @@
+
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { NotebookCard } from "@/components/NotebookCard";
-import { ArrowLeft, Brain, History, Menu, PlusCircle, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { PlusCircle, Trash2, FileText } from 'lucide-react';
+import { NotebookCard } from '@/components/NotebookCard';
+import { CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
+import { showError, showSuccess } from '@/utils/toast';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const fetchEssayQuestions = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('essay_questions')
+    .select('*, study_sets(title)')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+};
 
 const EssayIndex: React.FC = () => {
+  const queryClient = useQueryClient();
+  const { data: questions, isLoading } = useQuery({
+    queryKey: ['essayQuestions'],
+    queryFn: fetchEssayQuestions
+  });
+
+  const [deleteId, setDeleteId] = React.useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+
+    try {
+      const { error } = await supabase
+        .from('essay_questions')
+        .delete()
+        .eq('id', deleteId);
+
+      if (error) throw error;
+
+      showSuccess("Question deleted");
+      queryClient.invalidateQueries({ queryKey: ['essayQuestions'] });
+      setIsDeleteDialogOpen(false);
+      setDeleteId(null);
+    } catch (err: any) {
+      showError("Failed to delete: " + err.message);
+    }
+  };
+
+  const confirmDelete = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    setDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
   return (
-    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold">Essay Practice</h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link to="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+    <div className="container mx-auto py-10 animate-fade-in">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold flex items-center gap-3">
+          <FileText className="h-8 w-8 text-primary" /> Essay Practice
+        </h1>
+        <Button asChild><Link to="/generate-essay-questions"><PlusCircle className="mr-2 h-4 w-4" /> New Question</Link></Button>
       </div>
 
-      <p className="text-muted-foreground mb-6">
-        Generate essay questions based on your concepts and practice writing responses with AI feedback.
-      </p>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <NotebookCard className="h-full flex flex-col justify-between">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold flex items-center">
-              <Brain className="mr-2 h-5 w-5 text-primary" /> Generate Essay Questions
-            </CardTitle>
-            <CardDescription className="mt-2">
-              Create new essay questions from your cognitive constellation concepts.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
-              <Link to="/generate-essay-questions">
-                <PlusCircle className="mr-2 h-4 w-4" /> Generate Questions
-              </Link>
-            </Button>
-          </CardContent>
-        </NotebookCard>
-
-        <NotebookCard className="h-full flex flex-col justify-between">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold flex items-center">
-              <FileText className="mr-2 h-5 w-5 text-primary" /> Past Essay Questions
-            </CardTitle>
-            <CardDescription className="mt-2">
-              Review previously generated essay questions and your practice attempts.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full">
-              <Link to="/past-essay-questions">
-                <History className="mr-2 h-4 w-4" /> View Past Questions
-              </Link>
-            </Button>
-          </CardContent>
-        </NotebookCard>
-      </div>
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 w-full" />)}
+        </div>
+      ) : questions && questions.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {questions.map((q: any) => (
+            <NotebookCard key={q.id} className="flex flex-col relative group">
+              <CardHeader>
+                <CardTitle className="line-clamp-2 text-lg">{q.question_text}</CardTitle>
+                <CardDescription>{q.study_sets?.title || 'General'}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <p className="text-sm text-muted-foreground">
+                  {new Date(q.created_at).toLocaleDateString()}
+                </p>
+              </CardContent>
+              <CardFooter className="flex gap-2">
+                <Button asChild className="flex-1" variant="secondary">
+                  <Link to={`/essay-practice/${q.id}`}>Practice Now</Link>
+                </Button>
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={(e) => confirmDelete(q.id, e)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </NotebookCard>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20 border-dashed border-2 rounded-lg">
+          <h2 className="text-xl font-semibold mb-2">No Essay Questions Yet</h2>
+          <Button asChild><Link to="/generate-essay-questions">Create One</Link></Button>
+        </div>
+      )}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your essay question.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

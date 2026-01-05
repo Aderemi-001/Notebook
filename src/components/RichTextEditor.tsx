@@ -35,7 +35,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onConte
     },
     editorProps: {
       attributes: {
-        class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4',
+        class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4 break-words break-all',
       },
     },
     editable: true, // Always editable in basic mode
