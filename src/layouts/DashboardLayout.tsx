@@ -17,9 +17,12 @@ import {
     GraduationCap,
     CreditCard
 } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { showSuccess } from '@/utils/toast';
 import Chatbot from '@/components/Chatbot';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,6 +36,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -230,6 +234,63 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     <User className="h-5 w-5" />
                     <span className="text-xs font-medium">Profile</span>
                 </Link>
+
+                {/* Mobile Menu */}
+                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                    <SheetTrigger asChild>
+                        <button className="flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors text-zinc-500 dark:text-zinc-400 hover:text-primary">
+                            <Menu className="h-5 w-5" />
+                            <span className="text-xs font-medium">Menu</span>
+                        </button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-[80vh] overflow-y-auto">
+                        <SheetHeader>
+                            <SheetTitle>Navigation Menu</SheetTitle>
+                        </SheetHeader>
+                        <div className="mt-6 space-y-2">
+                            {navItems.map((item) => (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={(e) => {
+                                        handleAuthCheck(e, item.path);
+                                        setMobileMenuOpen(false);
+                                    }}
+                                    className={cn(
+                                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                                        location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path))
+                                            ? 'bg-primary/10 text-primary font-medium'
+                                            : 'hover:bg-muted'
+                                    )}
+                                >
+                                    <item.icon className="h-5 w-5" />
+                                    <span>{item.label}</span>
+                                </Link>
+                            ))}
+                            <div className="border-t pt-2 mt-2">
+                                {bottomNavItems.map((item) => (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        onClick={(e) => {
+                                            handleAuthCheck(e, item.path);
+                                            setMobileMenuOpen(false);
+                                        }}
+                                        className={cn(
+                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                                            location.pathname === item.path
+                                                ? 'bg-primary/10 text-primary font-medium'
+                                                : 'hover:bg-muted'
+                                        )}
+                                    >
+                                        <item.icon className="h-5 w-5" />
+                                        <span>{item.label}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    </SheetContent>
+                </Sheet>
             </div>
 
             <Chatbot />
