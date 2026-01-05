@@ -5,6 +5,7 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import { useSubscription } from '@/hooks/useSubscription';
 import { payfast } from '@/utils/payfast';
 import { useAuth } from '@/hooks/useAuth';
+import { showError } from '@/utils/toast';
 
 const Pricing = () => {
     const { status, trialEndsAt } = useSubscription();
@@ -12,7 +13,7 @@ const Pricing = () => {
 
     const handleUpgrade = () => {
         if (!user?.email) {
-            alert('Please log in to upgrade');
+            showError('Please log in to upgrade to Nova Pro');
             return;
         }
         payfast.checkoutNovaPro(user.email, user.user_metadata?.full_name || 'User');

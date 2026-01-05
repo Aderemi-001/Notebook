@@ -105,8 +105,7 @@ export class PayFastService {
 
         // Validate credentials
         if (!this.config.merchantId || !this.config.merchantKey) {
-            alert('PayFast credentials not configured. Please check your .env.local file.');
-            console.error('Missing PayFast credentials');
+            console.error('PayFast credentials not configured. Please check your .env.local file.');
             return;
         }
 
