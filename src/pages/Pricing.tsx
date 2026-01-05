@@ -3,14 +3,25 @@ import { Button } from '@/components/ui/button';
 import { Check, Zap, Crown, Rocket } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useSubscription } from '@/hooks/useSubscription';
+import { payfast } from '@/utils/payfast';
+import { useAuth } from '@/hooks/useAuth';
 
 const Pricing = () => {
     const { status, trialEndsAt } = useSubscription();
+    const { user } = useAuth();
+
+    const handleUpgrade = () => {
+        if (!user?.email) {
+            alert('Please log in to upgrade');
+            return;
+        }
+        payfast.checkoutNovaPro(user.email, user.user_metadata?.full_name || 'User');
+    };
 
     const plans = [
         {
             name: "Free Trial",
-            price: "$0",
+            price: "R0",
             duration: "3 Days",
             features: ["All Nova AI features", "Quiz Generation", "Essay Practice", "5 Study Sets max"],
             icon: Rocket,
@@ -19,7 +30,7 @@ const Pricing = () => {
         },
         {
             name: "Nova Pro",
-            price: "$9.99",
+            price: "R99.99",
             duration: "per month",
             features: ["Unlimited AI Generations", "Unlimited Study Sets", "Priority Speed", "Advanced Voice (TTS)", "Direct Support"],
             icon: Crown,
@@ -78,9 +89,9 @@ const Pricing = () => {
                                 <Button
                                     className={`w-full py-6 text-lg font-bold transition-all ${plan.recommended ? 'bg-amber-500 hover:bg-amber-600 shadow-lg' : 'bg-primary hover:bg-primary/90'}`}
                                     disabled={plan.current}
-                                    onClick={() => alert('Stripe Checkout coming soon!')}
+                                    onClick={plan.price === 'R0' ? undefined : handleUpgrade}
                                 >
-                                    {plan.current ? 'Current Plan' : plan.price === '$0' ? 'Free Access' : 'Upgrade to Pro'}
+                                    {plan.current ? 'Current Plan' : plan.price === 'R0' ? 'Free Access' : 'Upgrade to Pro'}
                                 </Button>
                             </CardFooter>
                         </Card>
