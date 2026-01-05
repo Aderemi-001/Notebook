@@ -121,7 +121,7 @@ Guidelines:
     static async generateDefinition(term: string): Promise<string> {
         try {
             const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
             const prompt = `You are a precise dictionary. Provide a specific, concise (1 sentence) definition. Plain text only. No intro.\n\nDefine: "${term}"`;
 
