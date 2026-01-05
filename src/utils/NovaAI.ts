@@ -60,23 +60,14 @@ export interface AIStudyContent {
 
 export class NovaAI {
     private static getClient() {
-        // Load keys from env
-        const apiKeysString = import.meta.env.VITE_GROQ_API_KEY || "";
-        const apiKeys = apiKeysString.split(',').map((k: string) => k.trim()).filter((k: string) => k.length > 0);
-
-        if (apiKeys.length === 0) {
-            console.error("❌ No Groq API Keys found!");
-            // Return a default client that might fail but avoids a crash
-            // Ideally should throw, but let's try to be resilient
+        const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+        if (!apiKey) {
+            console.error("❌ No Groq API Key found!");
             throw new Error("Missing VITE_GROQ_API_KEY");
         }
 
-        // Pick a random key for simple load balancing
-        const randomKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
-        console.log(`🔑 Using API Key ending in ...${randomKey.slice(-4)}`);
-
         return new Groq({
-            apiKey: randomKey,
+            apiKey: apiKey,
             dangerouslyAllowBrowser: true,
         });
     }
