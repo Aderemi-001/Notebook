@@ -32,7 +32,7 @@ const QuickActions: React.FC = () => {
     const actions = [
         {
             icon: Play,
-            label: nextSet ? `Continue: ${nextSet.title}` : "Start Studying",
+            label: nextSet ? `Continue: ${nextSet.title.length > 20 ? nextSet.title.substring(0, 20) + '...' : nextSet.title}` : "Start Studying",
             onClick: () => nextSet ? navigate(`/sets/${nextSet.id}/study`) : navigate('/sets'),
             variant: "default" as const,
             disabled: !nextSet
@@ -68,10 +68,12 @@ const QuickActions: React.FC = () => {
                             variant={action.variant}
                             onClick={action.onClick}
                             disabled={action.disabled}
-                            className="h-auto py-4 flex-col gap-2"
+                            className="h-auto py-4 flex-col gap-2 w-full"
                         >
                             <action.icon className="h-5 w-5" />
-                            <span className="text-xs font-medium">{action.label}</span>
+                            <span className="text-xs font-medium text-center whitespace-normal leading-tight">
+                                {action.label}
+                            </span>
                         </Button>
                     ))}
                 </div>
