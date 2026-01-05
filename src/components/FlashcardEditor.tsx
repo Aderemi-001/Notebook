@@ -22,7 +22,7 @@ const AutoResizeTextarea = React.forwardRef<HTMLTextAreaElement, React.TextareaH
     const textarea = combinedRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
+      textarea.style.height = `${textarea.scrollHeight + 2}px`; // +2px buffer to prevent cutoff
     }
   };
 
@@ -38,7 +38,7 @@ const AutoResizeTextarea = React.forwardRef<HTMLTextAreaElement, React.TextareaH
         adjustHeight();
         if (props.onInput) props.onInput(e);
       }}
-      className={cn("min-h-[80px] overflow-hidden resize-none transition-all duration-200", props.className)}
+      className={cn("min-h-[80px] resize-none transition-all duration-200", props.className)}
     />
   );
 });
