@@ -123,11 +123,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <div className="min-h-screen bg-background flex flex-col md:flex-row">
             {/* Mobile Header */}
             <div className="md:hidden flex items-center justify-between p-4 border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-                <div className="flex items-center gap-2 font-bold text-xl">
+                <div className="flex items-center gap-2">
                     <BrandLogo size="sm" />
-                    <span>Notebook</span>
                 </div>
-                {/* Mobile menu trigger removed in favor of bottom navigation */}
             </div>
 
             {/* Mobile Menu removed - now using bottom navigation */}
