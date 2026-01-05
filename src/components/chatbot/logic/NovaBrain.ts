@@ -36,7 +36,8 @@ export class NovaBrain {
      * Handle simple queries locally (no API call needed)
      */
     private static async handleLocalQuery(query: string, context: NovaContext): Promise<NovaResponse | null> {
-        const lowerQuery = query.toLowerCase().trim();
+        // Normalize: lowercase and remove punctuation (keeping alphanumeric and spaces)
+        const lowerQuery = query.toLowerCase().replace(/[?!.,]/g, '').trim();
         const userName = context.user?.user_metadata?.full_name?.split(' ')[0] || 'friend';
 
         // 1. Greetings
