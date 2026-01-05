@@ -7,10 +7,7 @@
 
 import Groq from 'groq-sdk';
 
-const groq = new Groq({
-    apiKey: import.meta.env.VITE_GROQ_API_KEY || '',
-    dangerouslyAllowBrowser: true // Allow client-side usage
-});
+
 
 export interface NovaAIContext {
     route: string;
@@ -62,16 +59,148 @@ export interface AIStudyContent {
 }
 
 export class NovaAI {
-    static async getResponse(query: string, context: NovaAIContext): Promise<string> {
-        try {
-            // Debug: Check if API key is loaded
-            const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-            if (!apiKey) {
-                console.error('❌ GROQ API KEY NOT FOUND! Check .env.local');
-                return this.getFallbackResponse(query);
-            }
+    private static getClient() {
+        // Load keys from env
+        const apiKeysString = import.meta.env.VITE_GROQ_API_KEY || "";
+        const apiKeys = apiKeysString.split(',').map((k: string) => k.trim()).filter((k: string) => k.length > 0);
 
-            console.log('✅ Groq API Key loaded, length:', apiKey.length);
+        if (apiKeys.length === 0) {
+            console.error("❌ No Groq API Keys found!");
+            // Return a default client that might fail but avoids a crash
+            // Ideally should throw, but let's try to be resilient
+            throw new Error("Missing VITE_GROQ_API_KEY");
+        }
+
+        // Pick a random key for simple load balancing
+        const randomKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
+        console.log(`🔑 Using API Key ending in ...${randomKey.slice(-4)}`);
+
+        return new Groq({
+            apiKey: randomKey,
+            dangerouslyAllowBrowser: true,
+        });
+    }
+
+    /**
+     * AI-powered Content Extraction (Groq)
+     * Using the 70b model for high quality extraction
+     * Extracts:
+    * 1. Flashcards (Terms & Definitions)
+    * 2. Key Concepts (Nodes)
+    * 3. Concept Relationships (Edges) - For Cognitive Constellation
+    */
+    public static async generateStudyContent(text: string, fileName: string): Promise<AIStudyContent> {
+        try {
+            const client = this.getClient();
+
+            const systemPrompt = `You are an expert educational content creator.
+Task: Deeply analyze the provided text to create a comprehensive study graph.
+Output: Return ONLY a valid JSON object.
+Structure:
+{
+  "cards": [ { "term": "Exact Term", "definition": "Precise definition from text" } ],
+  "concepts": [ { "name": "Concept Name", "description": "Brief summary of the concept" } ],
+  "relationships": [ { "source_name": "Concept A", "target_name": "Concept B", "type": "causes/part_of/related_to", "strength": 0.1-1.0 } ]
+}
+
+Guidelines:
+1. MAXIMIZE CARDS: Extract as many valid flashcards as possible (up to 50).
+2. STRICT CLEANUP: IGNORE headers, footers, page numbers, citations (e.g., "[1]", "(Smith, 2020)"), and references sections.
+3. QUALITY OVER QUANTITY: Ensure "term" is a concept/question and "definition" is a complete answer/explanation. Avoid sentence fragments.
+4. CONCEPTS: Identify the top 10-20 core topics or entities.
+5. RELATIONSHIPS: Connect the concepts logically to form a knowledge graph.
+6. NO CITATION GARBAGE: Do not create cards for "[Online] Available at" or similar metadata.`;
+
+            const completion = await client.chat.completions.create({
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: `Analyze this content: \n\n${text.substring(0, 45000)}` }
+                ],
+                // Revert to 70b for quality since we have multiple keys
+                model: 'llama-3.3-70b-versatile',
+                response_format: { type: 'json_object' },
+                temperature: 0.3,
+                max_tokens: 6000,
+            });
+
+            const content = completion.choices[0]?.message?.content;
+            if (!content) return { cards: [], concepts: [], relationships: [] };
+
+            const response = JSON.parse(content);
+            return {
+                cards: response.cards || [],
+                concepts: response.concepts || [],
+                relationships: response.relationships || []
+            };
+
+        } catch (error) {
+            console.error('Groq Content Generation Error:', error);
+            // Fallback: return empty structure
+            return { cards: [], concepts: [], relationships: [] };
+        }
+    }
+
+    /**
+     * Generates a concise definition for a single term.
+     * Optimized for minimal token usage.
+     */
+    static async generateDefinition(term: string): Promise<string> {
+        try {
+            const client = this.getClient();
+
+            const completion = await client.chat.completions.create({
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a precise dictionary. Provide a specific, concise (1 sentence) definition. Plain text only. No intro."
+                    },
+                    {
+                        role: "user",
+                        content: `Define: "${term}"`
+                    }
+                ],
+                model: "llama-3.3-70b-versatile",
+                temperature: 0.3,
+                max_tokens: 60,
+            });
+
+            return completion.choices[0]?.message?.content?.trim() || "";
+        } catch (error) {
+            console.error("Nova Definition Error:", error);
+            return "";
+        }
+    }
+
+    static async improveText(text: string, type: 'grammar' | 'flow' | 'conciseness' = 'flow'): Promise<string> {
+        try {
+            const client = this.getClient();
+
+            let systemPrompt = "You are a helpful writing assistant. Improve the following text.";
+            if (type === 'grammar') systemPrompt = "Fix grammar and spelling errors. Keep the tone natural. Output only the corrected text.";
+            if (type === 'flow') systemPrompt = "Improve the flow and coherence. Make it sound more professional but grounded. Output only the improved text.";
+            if (type === 'conciseness') systemPrompt = "Make the text more concise and punchy. Remove fluff. Output only the shortened text.";
+
+            const completion = await client.chat.completions.create({
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: text }
+                ],
+                model: "llama-3.3-70b-versatile",
+                temperature: 0.4,
+                max_tokens: 1000,
+            });
+
+            return completion.choices[0]?.message?.content?.trim() || text;
+        } catch (error) {
+            console.error("Nova Improve Error:", error);
+            return text; // Return original on error to be safe
+        }
+    }
+
+    public static async chat(query: string, context: NovaAIContext): Promise<string> {
+        try {
+            // Re-initialize client to pick a fresh key for each request
+            const client = this.getClient();
 
             // Build comprehensive system prompt with app knowledge
             const systemPrompt = `You are Nova, an intelligent AI assistant built into "Notebook" - a smart study application.
@@ -183,9 +312,9 @@ export class NovaAI {
             console.log('🚀 Calling Groq API...');
 
             // Call Groq API
-            const completion = await groq.chat.completions.create({
+            const completion = await client.chat.completions.create({
                 messages,
-                model: 'llama-3.1-8b-instant', // Switch to 8b due to 70b rate limits
+                model: 'llama-3.3-70b-versatile',
                 temperature: 0.7,
                 max_tokens: 200,
                 top_p: 1,
@@ -204,132 +333,12 @@ export class NovaAI {
     }
 
     /**
-     * Generates a concise definition for a single term.
-     * Optimized for minimal token usage.
-     */
-    static async generateDefinition(term: string): Promise<string> {
-        try {
-            const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-            if (!apiKey) throw new Error('API key missing');
-
-            const completion = await groq.chat.completions.create({
-                messages: [
-                    {
-                        role: "system",
-                        content: "You are a precise dictionary. Provide a specific, concise (1 sentence) definition. Plain text only. No intro."
-                    },
-                    {
-                        role: "user",
-                        content: `Define: "${term}"`
-                    }
-                ],
-                model: "llama-3.3-70b-versatile",
-                temperature: 0.3,
-                max_tokens: 60,
-            });
-
-            return completion.choices[0]?.message?.content?.trim() || "";
-        } catch (error) {
-            console.error("Nova Definition Error:", error);
-            return "";
-        }
-    }
-
-    static async improveText(text: string, type: 'grammar' | 'flow' | 'conciseness' = 'flow'): Promise<string> {
-        try {
-            const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-            if (!apiKey) throw new Error('API key missing');
-
-            let systemPrompt = "You are a helpful writing assistant. Improve the following text.";
-            if (type === 'grammar') systemPrompt = "Fix grammar and spelling errors. Keep the tone natural. Output only the corrected text.";
-            if (type === 'flow') systemPrompt = "Improve the flow and coherence. Make it sound more professional but grounded. Output only the improved text.";
-            if (type === 'conciseness') systemPrompt = "Make the text more concise and punchy. Remove fluff. Output only the shortened text.";
-
-            const completion = await groq.chat.completions.create({
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: text }
-                ],
-                model: "llama-3.3-70b-versatile",
-                temperature: 0.4,
-                max_tokens: 1000,
-            });
-
-            return completion.choices[0]?.message?.content?.trim() || text;
-        } catch (error) {
-            console.error("Nova Improve Error:", error);
-            return text; // Return original on error to be safe
-        }
-    }
-
-
-
-    /**
-     * AI-powered Content Extraction (Groq)
-     * Extracts:
-    * 1. Flashcards (Terms & Definitions)
-    * 2. Key Concepts (Nodes)
-    * 3. Concept Relationships (Edges) - For Cognitive Constellation
-    */
-    static async generateStudyContent(text: string): Promise<AIStudyContent> {
-        try {
-            const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-            if (!apiKey) throw new Error('API key missing');
-
-            const systemPrompt = `You are an expert educational content creator.
-Task: Deeply analyze the provided text to create a comprehensive study graph.
-Output: Return ONLY a valid JSON object.
-Structure:
-{
-  "cards": [ { "term": "Exact Term", "definition": "Precise definition from text" } ],
-  "concepts": [ { "name": "Concept Name", "description": "Brief summary of the concept" } ],
-  "relationships": [ { "source_name": "Concept A", "target_name": "Concept B", "type": "causes/part_of/related_to", "strength": 0.1-1.0 } ]
-}
-
-Guidelines:
-1. MAXIMIZE CARDS: Extract as many valid flashcards as possible (up to 50).
-2. STRICT CLEANUP: IGNORE headers, footers, page numbers, citations (e.g., "[1]", "(Smith, 2020)"), and references sections.
-3. QUALITY OVER QUANTITY: Ensure "term" is a concept/question and "definition" is a complete answer/explanation. Avoid sentence fragments.
-4. CONCEPTS: Identify the top 10-20 core topics or entities.
-5. RELATIONSHIPS: Connect the concepts logically to form a knowledge graph.
-6. NO CITATION GARBAGE: Do not create cards for "[Online] Available at" or similar metadata.`;
-
-            const completion = await groq.chat.completions.create({
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: `Analyze this content: \n\n${text.substring(0, 45000)}` }
-                ],
-                model: 'llama-3.1-8b-instant',
-                response_format: { type: 'json_object' },
-                temperature: 0.3,
-                max_tokens: 6000,
-            });
-
-            const content = completion.choices[0]?.message?.content;
-            if (!content) return { cards: [], concepts: [], relationships: [] };
-
-            const response = JSON.parse(content);
-            return {
-                cards: response.cards || [],
-                concepts: response.concepts || [],
-                relationships: response.relationships || []
-            };
-
-        } catch (error) {
-            console.error('Groq Content Generation Error:', error);
-            // Fallback: return empty structure
-            return { cards: [], concepts: [], relationships: [] };
-        }
-    }
-
-    /**
      * AI-powered Essay Grading
      * Provides professional, nuanced feedback
      */
     static async gradeEssay(content: string, question: string, rubric: string = 'Standard Academic'): Promise<AIEssayGrade | null> {
         try {
-            const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-            if (!apiKey) throw new Error('API key missing');
+            const client = this.getClient();
 
             const systemPrompt = `You are a professional academic grader. 
 Task: Grade the provided essay based on the prompt and rubric.
@@ -341,7 +350,7 @@ Format: Return ONLY a JSON object with:
 - structureFeedback: string[] (feedback on flow/organization)
 - metrics: { readabilityScore, gradeLevel, vocabularyRichness }`;
 
-            const completion = await groq.chat.completions.create({
+            const completion = await client.chat.completions.create({
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: `Prompt: ${question} \nRubric: ${rubric} \nEssay: ${content} ` }
@@ -364,13 +373,12 @@ Format: Return ONLY a JSON object with:
      */
     static async analyzeSentiment(text: string): Promise<AISentimentResult> {
         try {
-            const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-            if (!apiKey) throw new Error('API key missing');
+            const client = this.getClient();
 
             const systemPrompt = `Analyze user sentiment. Return ONLY JSON:
             { "score": number(-5 to 5), "label": "positive" | "neutral" | "negative" | "frustrated", "encouragement": "short message" }`;
 
-            const completion = await groq.chat.completions.create({
+            const completion = await client.chat.completions.create({
                 messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
                 model: 'llama-3.3-70b-versatile',
                 response_format: { type: 'json_object' },
@@ -390,12 +398,10 @@ Format: Return ONLY a JSON object with:
      */
     static async correctSpelling(text: string): Promise<string> {
         try {
-            const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-            if (!apiKey) throw new Error('API key missing');
-
+            const client = this.getClient();
             const systemPrompt = `Correct spelling/grammar. Return ONLY corrected text. Maintain tone.`;
 
-            const completion = await groq.chat.completions.create({
+            const completion = await client.chat.completions.create({
                 messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
                 model: 'llama-3.3-70b-versatile',
                 temperature: 0.2,
