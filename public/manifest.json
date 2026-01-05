@@ -1,0 +1,17 @@
+{
+    "short_name": "Notebook",
+    "name": "Notebook - Smart AI Learning Assistant",
+    "icons": [
+        {
+            "src": "/notebook-icon.png",
+            "sizes": "192x192 512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "start_url": "/",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "theme_color": "#3b82f6",
+    "description": "Master any subject with Nova, your Hybrid AI study partner."
+}

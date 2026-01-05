@@ -91,7 +91,6 @@ export class NovaAI {
         try {
             const groq = this.getGroqClient();
             if (groq) {
-                // console.log(`🚀 [NovaAI] Trying Groq for ${actionName}...`);
                 return await groqFn(groq);
             }
         } catch (error: any) {
@@ -108,7 +107,6 @@ export class NovaAI {
 
         // 2. Fallback to Gemini (Secondary)
         try {
-            // console.log(`✨ [NovaAI] Using Gemini Fallback for ${actionName}...`);
             const gemini = this.getGeminiClient();
             return await geminiFn(gemini);
         } catch (error) {

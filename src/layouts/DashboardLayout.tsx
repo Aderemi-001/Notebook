@@ -25,6 +25,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 import { useRealtime } from '@/hooks/useRealtime';
 import BrandLogo from '@/components/BrandLogo';
+import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
@@ -207,6 +208,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </div>
 
             <Chatbot />
+            <InstallPrompt />
         </div>
     );
 };
