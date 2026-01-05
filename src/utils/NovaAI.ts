@@ -74,7 +74,7 @@ export class NovaAI {
     public static async generateStudyContent(text: string, fileName: string): Promise<AIStudyContent> {
         try {
             const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001", generationConfig: { responseMimeType: "application/json" } });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json" } });
 
             const systemPrompt = `You are an expert educational content creator.
 Task: Deeply analyze the provided text to create a comprehensive study graph.
@@ -135,7 +135,7 @@ Guidelines:
     static async improveText(text: string, type: 'grammar' | 'flow' | 'conciseness' = 'flow'): Promise<string> {
         try {
             const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
             let systemPrompt = "You are a helpful writing assistant. Improve the following text.";
             if (type === 'grammar') systemPrompt = "Fix grammar and spelling errors. Keep the tone natural. Output only the corrected text.";
@@ -154,7 +154,7 @@ Guidelines:
     public static async chat(query: string, context: NovaAIContext): Promise<string> {
         try {
             const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
             const systemPrompt = `You are Nova, an intelligent AI assistant built into "Notebook" - a smart study application.
 
@@ -213,7 +213,7 @@ Guidelines:
     static async gradeEssay(content: string, question: string, rubric: string = 'Standard Academic'): Promise<AIEssayGrade | null> {
         try {
             const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001", generationConfig: { responseMimeType: "application/json" } });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json" } });
 
             const systemPrompt = `You are a professional academic grader. 
 Task: Grade the provided essay based on the prompt and rubric.
@@ -241,7 +241,7 @@ Format: Return ONLY a JSON object with:
     static async analyzeSentiment(text: string): Promise<AISentimentResult> {
         try {
             const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001", generationConfig: { responseMimeType: "application/json" } });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json" } });
 
             const systemPrompt = `Analyze user sentiment. Return ONLY JSON:
             { "score": number(-5 to 5), "label": "positive" | "neutral" | "negative" | "frustrated", "encouragement": "short message" }`;
@@ -262,7 +262,7 @@ Format: Return ONLY a JSON object with:
     static async correctSpelling(text: string): Promise<string> {
         try {
             const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
             const prompt = `Correct spelling/grammar. Return ONLY corrected text. Maintain tone.\n\n${text}`;
             const result = await model.generateContent(prompt);
