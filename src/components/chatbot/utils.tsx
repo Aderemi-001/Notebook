@@ -3,69 +3,86 @@ import { Link } from 'react-router-dom';
 import { ROUTE_KEYWORDS, ROUTE_SPECIFIC_SUGGESTIONS, DEFAULT_SUGGESTED_QUESTIONS } from './types';
 
 export const parseAndRenderLinks = (text: string): React.ReactNode => {
-  // Split by bold patterns: **bold text**
-  const segments = text.split(/(\*\*.*?\*\*)/g);
+  const lines = text.split('\n');
 
   return (
-    <>
-      {segments.map((segment, segmentIndex) => {
-        // Handle Bold Text
-        if (segment.startsWith('**') && segment.length >= 4) {
-          return (
-            <strong key={`bold-${segmentIndex}`} className="font-bold text-foreground">
-              {segment.slice(2, -2)}
-            </strong>
-          );
+    <div className="space-y-2">
+      {lines.map((line, lineIndex) => {
+        const trimmed = line.trim();
+
+        // Handle Headers
+        if (trimmed.startsWith('### ')) {
+          return <h3 key={lineIndex} className="text-sm font-bold text-foreground mt-1 mb-0.5">{trimmed.slice(4)}</h3>;
+        }
+        if (trimmed.startsWith('## ')) {
+          return <h2 key={lineIndex} className="text-base font-bold text-foreground mt-2 mb-1">{trimmed.slice(3)}</h2>;
+        }
+        if (trimmed.startsWith('# ')) {
+          return <h1 key={lineIndex} className="text-lg font-bold text-foreground mt-3 mb-1.5">{trimmed.slice(2)}</h1>;
         }
 
-        // Handle Links (Existing Logic applied to non-bold segments)
-        // Sort keywords by length descending to match longer phrases first
-        const sortedKeywords = Object.keys(ROUTE_KEYWORDS).sort((a, b) => b.length - a.length);
-        const parts: React.ReactNode[] = [];
-        let currentText = segment;
-        let lastLinkIndex = 0;
+        // Handle Empty Lines
+        if (trimmed === '') return <div key={lineIndex} className="h-1" />;
 
-        while (currentText.length > 0) {
-          let bestMatch: { keyword: string; route: string; index: number; length: number } | null = null;
+        // Handle bold patterns: **bold text**
+        const segments = line.split(/(\*\*.*?\*\*)/g);
 
-          // Find the best keyword match in currentText
-          for (const keyword of sortedKeywords) {
-            const index = currentText.toLowerCase().indexOf(keyword.toLowerCase());
-            if (index !== -1) {
-              // Select the earliest match, or longest match if at the same position
-              if (!bestMatch || index < bestMatch.index || (index === bestMatch.index && keyword.length > bestMatch.length)) {
-                bestMatch = { keyword, route: ROUTE_KEYWORDS[keyword], index, length: keyword.length };
+        return (
+          <div key={lineIndex} className="leading-relaxed">
+            {segments.map((segment, segmentIndex) => {
+              // Handle Bold Text
+              if (segment.startsWith('**') && segment.length >= 4) {
+                return (
+                  <strong key={`bold-${segmentIndex}`} className="font-bold text-foreground">
+                    {segment.slice(2, -2)}
+                  </strong>
+                );
               }
-            }
-          }
 
-          if (bestMatch) {
-            // Push text before the link
-            if (bestMatch.index > 0) {
-              parts.push(currentText.substring(0, bestMatch.index));
-            }
-            // Push the link itself
-            parts.push(
-              <Link
-                key={`link-${segmentIndex}-${lastLinkIndex++}`}
-                to={bestMatch.route}
-                className="text-primary hover:underline font-medium"
-              >
-                {currentText.substring(bestMatch.index, bestMatch.index + bestMatch.length)}
-              </Link>
-            );
-            // Advance currentText past the link
-            currentText = currentText.substring(bestMatch.index + bestMatch.length);
-          } else {
-            // No more matches, push remaining text and break
-            parts.push(currentText);
-            break;
-          }
-        }
+              // Handle Links (Existing Logic applied to non-bold segments)
+              const sortedKeywords = Object.keys(ROUTE_KEYWORDS).sort((a, b) => b.length - a.length);
+              const parts: React.ReactNode[] = [];
+              let currentText = segment;
+              let lastLinkIndex = 0;
 
-        return <React.Fragment key={`seg-${segmentIndex}`}>{parts}</React.Fragment>;
+              while (currentText.length > 0) {
+                let bestMatch: { keyword: string; route: string; index: number; length: number } | null = null;
+
+                for (const keyword of sortedKeywords) {
+                  const index = currentText.toLowerCase().indexOf(keyword.toLowerCase());
+                  if (index !== -1) {
+                    if (!bestMatch || index < bestMatch.index || (index === bestMatch.index && keyword.length > bestMatch.length)) {
+                      bestMatch = { keyword, route: ROUTE_KEYWORDS[keyword], index, length: keyword.length };
+                    }
+                  }
+                }
+
+                if (bestMatch) {
+                  if (bestMatch.index > 0) {
+                    parts.push(currentText.substring(0, bestMatch.index));
+                  }
+                  parts.push(
+                    <Link
+                      key={`link-${segmentIndex}-${lastLinkIndex++}`}
+                      to={bestMatch.route}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      {currentText.substring(bestMatch.index, bestMatch.index + bestMatch.length)}
+                    </Link>
+                  );
+                  currentText = currentText.substring(bestMatch.index + bestMatch.length);
+                } else {
+                  parts.push(currentText);
+                  break;
+                }
+              }
+
+              return <React.Fragment key={`seg-${segmentIndex}`}>{parts}</React.Fragment>;
+            })}
+          </div>
+        );
       })}
-    </>
+    </div>
   );
 };
 

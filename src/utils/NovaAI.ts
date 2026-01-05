@@ -231,7 +231,7 @@ Role: AI Study Assistant
 Personality: Friendly, helpful, concise, encouraging.
 Features: /dashboard, /sets, /create, /generate-exam (Practice Quiz), /essay-practice, /notes
 Context: User=${context.userName}, Page=${context.route}
-Format: Markdown. Be concise.`;
+Format: Markdown. Be concise. IMPORTANT: Do not use Markdown headers (e.g., #, ##, ###). Instead, use **bold text** for titles or highlights.`;
 
         // Prepare messages for Groq
         const messages: any[] = [
