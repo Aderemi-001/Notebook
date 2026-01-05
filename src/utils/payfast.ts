@@ -103,9 +103,22 @@ export class PayFastService {
         const [firstName, ...lastNameParts] = userName.split(' ');
         const lastName = lastNameParts.join(' ') || 'User';
 
+        // Validate credentials
+        if (!this.config.merchantId || !this.config.merchantKey) {
+            alert('PayFast credentials not configured. Please check your .env.local file.');
+            console.error('Missing PayFast credentials');
+            return;
+        }
+
+        console.log('Initiating PayFast checkout with:', {
+            merchantId: this.config.merchantId,
+            sandbox: this.config.sandbox,
+            email: userEmail
+        });
+
         this.createSubscriptionCheckout({
             amount: '99.99', // R99.99/month
-            item_name: 'Nova Pro Subscription',
+            item_name: 'Nova Pro Monthly Subscription',
             item_description: 'Monthly subscription to Nova Pro - Unlimited AI study tools',
             email_address: userEmail,
             name_first: firstName,
