@@ -236,14 +236,17 @@ const CreateSet = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              <div className="space-y-4">
+              <div className="space-y-4 opacity-70 pointer-events-none relative">
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-[1px] rounded-lg border-2 border-dashed border-yellow-500/50">
+                  <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-4 py-2 rounded-full font-medium flex items-center shadow-sm">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Feature Under Construction
+                  </div>
+                </div>
                 <Input
                   type="file"
+                  disabled
                   accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setFile(e.target.files ? e.target.files[0] : null);
-                    setGeneratedCardConceptLinks([]);
-                  }}
                   className="w-full"
                 />
 
@@ -259,19 +262,10 @@ const CreateSet = () => {
 
                 <Button
                   type="button"
-                  onClick={handleGenerateCards}
-                  disabled={!file || isLoadingUser || progressState === 'extracting' || progressState === 'processing' || !currentUser}
+                  disabled
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300"
                 >
-                  {progressState === 'extracting' || progressState === 'processing' ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" /> Generate Flashcards with Nova
-                    </>
-                  )}
+                  <Sparkles className="mr-2 h-4 w-4" /> Generate Flashcards with Nova
                 </Button>
               </div>
             </CardContent>
