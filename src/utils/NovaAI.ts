@@ -185,7 +185,7 @@ export class NovaAI {
             // Call Groq API
             const completion = await groq.chat.completions.create({
                 messages,
-                model: 'llama-3.3-70b-versatile', // Fast and smart
+                model: 'llama-3.1-8b-instant', // Switch to 8b due to 70b rate limits
                 temperature: 0.7,
                 max_tokens: 200,
                 top_p: 1,
@@ -299,7 +299,7 @@ Guidelines:
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: `Analyze this content: \n\n${text.substring(0, 45000)}` }
                 ],
-                model: 'llama-3.3-70b-versatile',
+                model: 'llama-3.1-8b-instant',
                 response_format: { type: 'json_object' },
                 temperature: 0.3,
                 max_tokens: 6000,
