@@ -62,13 +62,24 @@ export const usePWAInstall = () => {
     }, [isStandalone]);
 
     const handleInstall = async () => {
+        console.log('Install button clicked. Deferred prompt available:', !!deferredPrompt);
+
         if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                setShowPrompt(false);
+            try {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log('Install outcome:', outcome);
+                if (outcome === 'accepted') {
+                    setShowPrompt(false);
+                }
+                setDeferredPrompt(null);
+            } catch (error) {
+                console.error('Install error:', error);
             }
-            setDeferredPrompt(null);
+        } else {
+            // Fallback: Show manual install instructions
+            console.log('No deferred prompt available. Showing manual instructions.');
+            alert('To install:\n\n1. Click the ⊕ icon in your browser address bar\n2. Or use browser menu → "Install Notebook"\n3. Or press Ctrl+Shift+A (Chrome)');
         }
     };
 
