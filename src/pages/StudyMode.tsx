@@ -2,7 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FlippableCard from "@/components/FlippableCard";
-import { ArrowLeft, RotateCcw } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -457,47 +457,51 @@ const StudyMode = () => {
             key={currentCard.id}
             isFlipped={showDefinition}
             onClick={handleFlipCard}
-            className="w-full min-h-[300px]"
+            className="w-full min-h-[350px] sm:min-h-[400px]"
             frontContent={
-              <div className="flex flex-col items-center justify-center min-h-[300px] text-center p-6">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Term</CardTitle>
+              <div className="flex flex-col items-center justify-center min-h-[350px] sm:min-h-[400px] text-center p-6 h-full">
+                <CardHeader className="py-2">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">Term</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-grow flex flex-col items-center justify-center">
-                  <p className="text-2xl font-semibold mb-8">{currentCard.term}</p>
-                  <p className="text-xs text-muted-foreground animate-pulse">
-                    Tap to Flip • Swift Left to Next
+                <CardContent className="flex-grow flex flex-col items-center justify-center w-full overflow-hidden">
+                  <div className="flex-grow flex items-center justify-center overflow-y-auto w-full p-2">
+                    <p className="text-xl sm:text-2xl font-semibold">{currentCard.term}</p>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground animate-pulse mt-4">
+                    Tap to Flip • Swipe to Navigate
                   </p>
                 </CardContent>
               </div>
             }
             backContent={
-              <div className="flex flex-col items-center justify-center min-h-[300px] text-center p-6 bg-slate-50 dark:bg-slate-900/50">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Definition</CardTitle>
+              <div className="flex flex-col items-center justify-center min-h-[350px] sm:min-h-[400px] text-center p-6 bg-slate-50 dark:bg-slate-900/50 h-full">
+                <CardHeader className="py-2">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">Definition</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-grow flex flex-col items-center justify-center w-full">
-                  <p className="text-xl mb-8">{currentCard.definition}</p>
+                <CardContent className="flex-grow flex flex-col items-center justify-center w-full overflow-hidden">
+                  <div className="flex-grow flex items-center justify-center overflow-y-auto w-full p-2 mb-4 scrollbar-hide">
+                    <p className="text-lg sm:text-xl leading-relaxed">{currentCard.definition}</p>
+                  </div>
 
-                  <div className="grid grid-cols-3 gap-2 w-full max-w-xs" onClick={(e) => e.stopPropagation()}>
+                  <div className="grid grid-cols-3 gap-1.5 w-full" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="destructive"
                       onClick={() => handleNextCard(0)}
-                      className="w-full"
+                      className="w-full text-xs py-1 h-9 sm:h-10"
                     >
                       Again
                     </Button>
                     <Button
                       variant="secondary"
                       onClick={() => handleNextCard(1)}
-                      className="w-full bg-orange-100 text-orange-900 hover:bg-orange-200"
+                      className="w-full bg-orange-100 text-orange-900 hover:bg-orange-200 text-xs py-1 h-9 sm:h-10"
                     >
                       Hard
                     </Button>
                     <Button
                       variant="default"
                       onClick={() => handleNextCard(2)}
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="w-full bg-green-600 hover:bg-green-700 text-xs py-1 h-9 sm:h-10"
                     >
                       Good
                     </Button>

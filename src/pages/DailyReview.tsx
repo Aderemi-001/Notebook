@@ -178,7 +178,7 @@ const DailyReview: React.FC = () => {
         );
 
       if (upsertError) throw upsertError;
-      
+
       let successMessage = "";
       if (quality === 0) {
         successMessage = "Card marked for immediate re-study.";
@@ -319,7 +319,7 @@ const DailyReview: React.FC = () => {
             key={currentCard?.id || 'daily-review-card'}
             isFlipped={showDefinition}
             onClick={handleFlipCard}
-            className="w-full max-w-md min-h-[256px]"
+            className="w-full max-w-md min-h-[350px] sm:min-h-[400px]"
             frontContent={
               <>
                 <CardHeader>
