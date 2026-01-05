@@ -1,11 +1,13 @@
 /**
  * NovaAI.ts
  * 
- * AI-powered conversational intelligence for Nova
- * Uses Google Gemini API for fast, free, intelligent responses
+ * Hybrid AI Engine for Nova
+ * Primary Provider: Groq (Llama 3 70b) - Ultra-fast LPU inference
+ * Fallback Provider: Google Gemini (Flash 1.5) - High reliability & context
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 export interface NovaAIContext {
     route: string;
@@ -57,27 +59,69 @@ export interface AIStudyContent {
 }
 
 export class NovaAI {
-    private static getClient() {
+    private static getGeminiClient() {
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
         if (!apiKey) {
             console.error("❌ No Google Gemini API Key found!");
             throw new Error("Missing VITE_GEMINI_API_KEY");
         }
-
         return new GoogleGenerativeAI(apiKey);
     }
 
-    /**
-     * AI-powered Content Extraction (Gemini)
-     * Using Gemini 1.5 Flash for massive context and high limits
-     */
-    public static async generateStudyContent(text: string, fileName: string): Promise<AIStudyContent> {
-        try {
-            const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest", generationConfig: { responseMimeType: "application/json" } });
+    private static getGroqClient() {
+        const apiKey = import.meta.env.VITE_GROQ_API_KEY;
 
-            const systemPrompt = `You are an expert educational content creator.
+        if (!apiKey) {
+            console.warn("⚠️ No Groq API Key found. Skipping Groq.");
+            return null;
+        }
+        return new Groq({ apiKey, dangerouslyAllowBrowser: true });
+    }
+
+    /**
+     * Executes an AI task with automatic fallback.
+     * Tries Groq first, then falls back to Gemini on error.
+     */
+    private static async executeWithFallback<T>(
+        actionName: string,
+        groqFn: (groq: Groq) => Promise<T>,
+        geminiFn: (gemini: any) => Promise<T>
+    ): Promise<T> {
+        // 1. Try Groq (Primary)
+        try {
+            const groq = this.getGroqClient();
+            if (groq) {
+                // console.log(`🚀 [NovaAI] Trying Groq for ${actionName}...`);
+                return await groqFn(groq);
+            }
+        } catch (error: any) {
+            // Check for Rate Limits (429) or other API errors
+            const isRateLimit = error?.status === 429 || error?.toString().includes('429');
+
+            if (isRateLimit) {
+                console.warn(`⚠️ [NovaAI] Groq Rate Limit Hit (429) for ${actionName}. Switching to Gemini fallback.`);
+            } else {
+                console.error(`❌ [NovaAI] Groq Error for ${actionName}:`, error);
+                console.warn(`⚠️ [NovaAI] Switching to Gemini fallback due to error.`);
+            }
+        }
+
+        // 2. Fallback to Gemini (Secondary)
+        try {
+            // console.log(`✨ [NovaAI] Using Gemini Fallback for ${actionName}...`);
+            const gemini = this.getGeminiClient();
+            return await geminiFn(gemini);
+        } catch (error) {
+            console.error(`❌ [NovaAI] Gemini Fallback Failed for ${actionName}:`, error);
+            throw error; // If both fail, throw
+        }
+    }
+
+    /**
+     * AI-powered Content Extraction
+     */
+    public static async generateStudyContent(text: string): Promise<AIStudyContent> {
+        const systemPrompt = `You are an expert educational content creator.
 Task: Deeply analyze the provided text to create a comprehensive study graph.
 Output: Return ONLY a valid JSON object.
 Structure:
@@ -86,124 +130,141 @@ Structure:
   "concepts": [ { "name": "Concept Name", "description": "Brief summary of the concept" } ],
   "relationships": [ { "source_name": "Concept A", "target_name": "Concept B", "type": "causes/part_of/related_to", "strength": 0.1-1.0 } ]
 }
-
 Guidelines:
-1. MAXIMIZE CARDS: Extract as many valid flashcards as possible (up to 50).
-2. STRICT CLEANUP: IGNORE headers, footers, page numbers, citations (e.g., "[1]", "(Smith, 2020)"), and references sections.
-3. QUALITY OVER QUANTITY: Ensure "term" is a concept/question and "definition" is a complete answer/explanation. Avoid sentence fragments.
-4. CONCEPTS: Identify the top 10-20 core topics or entities.
-5. RELATIONSHIPS: Connect the concepts logically to form a knowledge graph.
-6. NO CITATION GARBAGE: Do not create cards for "[Online] Available at" or similar metadata.`;
+1. Extract up to 50 flashcards.
+2. Ignore citations, headers, footers.
+3. Identify top 10-20 core concepts.
+4. Return ONLY raw JSON code, no markdown formatting.`;
 
-            const prompt = `${systemPrompt}\n\nAnalyze this content: \n\n${text.substring(0, 45000)}`;
+        const userPrompt = `Analyze this content: \n\n${text.substring(0, 45000)}`;
 
-            const result = await model.generateContent(prompt);
-            const responseText = result.response.text();
-
-            if (!responseText) return { cards: [], concepts: [], relationships: [] };
-
-            const response = JSON.parse(responseText);
-            return {
-                cards: response.cards || [],
-                concepts: response.concepts || [],
-                relationships: response.relationships || []
-            };
-
-        } catch (error) {
-            console.error('Gemini Content Generation Error:', error);
+        try {
+            return await this.executeWithFallback<AIStudyContent>(
+                'generateStudyContent',
+                async (groq) => {
+                    const completion = await groq.chat.completions.create({
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userPrompt }
+                        ],
+                        model: "llama3-70b-8192",
+                        temperature: 0.1,
+                        response_format: { type: "json_object" }
+                    });
+                    return JSON.parse(completion.choices[0]?.message?.content || "{}");
+                },
+                async (gemini) => {
+                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest", generationConfig: { responseMimeType: "application/json" } });
+                    const result = await model.generateContent(systemPrompt + "\n\n" + userPrompt);
+                    return JSON.parse(result.response.text());
+                }
+            );
+        } catch (e) {
             return { cards: [], concepts: [], relationships: [] };
         }
     }
 
     /**
-     * Generates a concise definition for a single term.
+     * Generates a concise definition
      */
     static async generateDefinition(term: string): Promise<string> {
+        const systemPrompt = `You are a precise dictionary. Provide a specific, concise (1 sentence) definition. Plain text only. No intro.`;
+        const userPrompt = `Define: "${term}"`;
+
         try {
-            const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-
-            const prompt = `You are a precise dictionary. Provide a specific, concise (1 sentence) definition. Plain text only. No intro.\n\nDefine: "${term}"`;
-
-            const result = await model.generateContent(prompt);
-            return result.response.text().trim();
-        } catch (error) {
-            console.error("Nova Definition Error:", error);
+            return await this.executeWithFallback<string>(
+                'generateDefinition',
+                async (groq) => {
+                    const completion = await groq.chat.completions.create({
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userPrompt }
+                        ],
+                        model: "llama3-70b-8192",
+                    });
+                    return completion.choices[0]?.message?.content?.trim() || "";
+                },
+                async (gemini) => {
+                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest" });
+                    const result = await model.generateContent(systemPrompt + "\n\n" + userPrompt);
+                    return result.response.text().trim();
+                }
+            );
+        } catch (e) {
             return "";
         }
     }
 
     static async improveText(text: string, type: 'grammar' | 'flow' | 'conciseness' = 'flow'): Promise<string> {
+        let systemPrompt = "You are a helpful writing assistant. Improve the following text.";
+        if (type === 'grammar') systemPrompt = "Fix grammar and spelling errors. Keep the tone natural. Output only the corrected text.";
+        if (type === 'flow') systemPrompt = "Improve the flow and coherence. Make it sound more professional but grounded. Output only the improved text.";
+        if (type === 'conciseness') systemPrompt = "Make the text more concise and punchy. Remove fluff. Output only the shortened text.";
+
         try {
-            const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-
-            let systemPrompt = "You are a helpful writing assistant. Improve the following text.";
-            if (type === 'grammar') systemPrompt = "Fix grammar and spelling errors. Keep the tone natural. Output only the corrected text.";
-            if (type === 'flow') systemPrompt = "Improve the flow and coherence. Make it sound more professional but grounded. Output only the improved text.";
-            if (type === 'conciseness') systemPrompt = "Make the text more concise and punchy. Remove fluff. Output only the shortened text.";
-
-            const prompt = `${systemPrompt}\n\n${text}`;
-            const result = await model.generateContent(prompt);
-            return result.response.text().trim();
-        } catch (error) {
-            console.error("Nova Improve Error:", error);
+            return await this.executeWithFallback<string>(
+                'improveText',
+                async (groq) => {
+                    const completion = await groq.chat.completions.create({
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: text }
+                        ],
+                        model: "llama3-70b-8192",
+                    });
+                    return completion.choices[0]?.message?.content?.trim() || text;
+                },
+                async (gemini) => {
+                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest" });
+                    const result = await model.generateContent(systemPrompt + "\n\n" + text);
+                    return result.response.text().trim();
+                }
+            );
+        } catch (e) {
             return text;
         }
     }
 
     public static async chat(query: string, context: NovaAIContext): Promise<string> {
+        const systemPrompt = `You are Nova, an intelligent AI assistant built into "Notebook".
+Role: AI Study Assistant
+Personality: Friendly, helpful, concise, encouraging.
+Features: /dashboard, /sets, /create, /generate-exam (Practice Quiz), /essay-practice, /notes
+Context: User=${context.userName}, Page=${context.route}
+Format: Markdown. Be concise.`;
+
+        // Prepare messages for Groq
+        const messages: any[] = [
+            { role: "system", content: systemPrompt },
+            ...context.conversationHistory,
+            { role: "user", content: query }
+        ];
+
         try {
-            const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-
-            const systemPrompt = `You are Nova, an intelligent AI assistant built into "Notebook" - a smart study application.
-
-## YOUR IDENTITY
-- Name: Nova
-- Role: AI Study Assistant
-- Personality: Friendly, helpful, concise, encouraging
-- Emoji usage: 1-2 per response maximum
-
-## APP FEATURES & NAVIGATION
-1. **Dashboard** (/dashboard) - Stats, streak, quick actions
-2. **My Sets** (/sets) - Create, edit, delete sets
-3. **Create Set** (/create) - Manual or File Import (PDF/PPT)
-4. **Practice Quiz** (/generate-exam) - AI generated quizzes
-5. **Essay Practice** (/essay-practice) - AI grading
-6. **Daily Review** (/daily-review) - Spaced repetition
-7. **My Notes** (/notes) - Linked notes & handwriting
-8. **Profile** (/profile) - Stats & settings
-9. **Settings** (/settings) - Theme & preferences
-
-## HOW TO HELP USERS
-- Be concise.
-- Use **bold** for feature names.
-- Provide step-by-step help.
-- Never invent features.
-
-## CURRENT CONTEXT
-- User: ${context.userName}
-- Time: ${context.timeOfDay}
-- Current page: ${context.route}`;
-
-            // Combine history and new query into a chat structure
-            const chat = model.startChat({
-                history: context.conversationHistory.map(msg => ({
-                    role: msg.role === 'assistant' ? 'model' : 'user',
-                    parts: [{ text: msg.content }]
-                })),
-                systemInstruction: systemPrompt,
-            });
-
-            console.log('🚀 Calling Gemini API...');
-            const result = await chat.sendMessage(query);
-            console.log('✅ Gemini API response received!');
-
-            return result.response.text();
-
-        } catch (error) {
-            console.error('❌ Nova AI Error (Gemini):', error);
+            return await this.executeWithFallback<string>(
+                'chat',
+                async (groq) => {
+                    const completion = await groq.chat.completions.create({
+                        messages: messages,
+                        model: "llama3-70b-8192",
+                    });
+                    return completion.choices[0]?.message?.content || "";
+                },
+                async (gemini) => {
+                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest" });
+                    const chat = model.startChat({
+                        history: context.conversationHistory.map(msg => ({
+                            role: msg.role === 'assistant' ? 'model' : 'user',
+                            parts: [{ text: msg.content }]
+                        })),
+                        systemInstruction: systemPrompt,
+                    });
+                    const result = await chat.sendMessage(query);
+                    return result.response.text();
+                }
+            );
+        } catch (e) {
+            console.error("Nova Chat Error:", e);
             return this.getFallbackResponse(query);
         }
     }
@@ -212,26 +273,40 @@ Guidelines:
      * AI-powered Essay Grading
      */
     static async gradeEssay(content: string, question: string, rubric: string = 'Standard Academic'): Promise<AIEssayGrade | null> {
-        try {
-            const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest", generationConfig: { responseMimeType: "application/json" } });
-
-            const systemPrompt = `You are a professional academic grader. 
+        const systemPrompt = `You are a professional academic grader. 
 Task: Grade the provided essay based on the prompt and rubric.
 Format: Return ONLY a JSON object with:
-- score: number (0-100)
-- letterGrade: string (A, B, C, D, F)
-- feedback: string (short encouraging summary)
-- contentFeedback: string[] (specific observations on content)
-- structureFeedback: string[] (feedback on flow/organization)
-- metrics: { readabilityScore, gradeLevel, vocabularyRichness }`;
+{
+  "score": number (0-100),
+  "letterGrade": string,
+  "feedback": string,
+  "contentFeedback": string[],
+  "structureFeedback": string[],
+  "metrics": { "readabilityScore": number, "gradeLevel": string, "vocabularyRichness": number }
+}`;
+        const userPrompt = `Prompt: ${question} \nRubric: ${rubric} \nEssay: ${content}`;
 
-            const prompt = `${systemPrompt}\n\nPrompt: ${question} \nRubric: ${rubric} \nEssay: ${content}`;
-
-            const result = await model.generateContent(prompt);
-            return JSON.parse(result.response.text()) as AIEssayGrade;
-        } catch (error) {
-            console.error('Gemini Grading Error:', error);
+        try {
+            return await this.executeWithFallback<AIEssayGrade | null>(
+                'gradeEssay',
+                async (groq) => {
+                    const completion = await groq.chat.completions.create({
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userPrompt }
+                        ],
+                        model: "llama3-70b-8192",
+                        response_format: { type: "json_object" }
+                    });
+                    return JSON.parse(completion.choices[0]?.message?.content || "null");
+                },
+                async (gemini) => {
+                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest", generationConfig: { responseMimeType: "application/json" } });
+                    const result = await model.generateContent(systemPrompt + "\n\n" + userPrompt);
+                    return JSON.parse(result.response.text());
+                }
+            );
+        } catch (e) {
             return null;
         }
     }
@@ -240,19 +315,29 @@ Format: Return ONLY a JSON object with:
      * AI-powered Sentiment Analysis
      */
     static async analyzeSentiment(text: string): Promise<AISentimentResult> {
+        const systemPrompt = `Analyze user sentiment. Return ONLY JSON: { "score": number(-5 to 5), "label": "positive"|"neutral"|"negative"|"frustrated", "encouragement": "short message" }`;
+
         try {
-            const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest", generationConfig: { responseMimeType: "application/json" } });
-
-            const systemPrompt = `Analyze user sentiment. Return ONLY JSON:
-            { "score": number(-5 to 5), "label": "positive" | "neutral" | "negative" | "frustrated", "encouragement": "short message" }`;
-
-            const prompt = `${systemPrompt}\n\nUser Input: ${text}`;
-            const result = await model.generateContent(prompt);
-
-            return JSON.parse(result.response.text()) as AISentimentResult;
-        } catch (error) {
-            console.error('Gemini Sentiment Error:', error);
+            return await this.executeWithFallback<AISentimentResult>(
+                'analyzeSentiment',
+                async (groq) => {
+                    const completion = await groq.chat.completions.create({
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: text }
+                        ],
+                        model: "llama3-70b-8192",
+                        response_format: { type: "json_object" }
+                    });
+                    return JSON.parse(completion.choices[0]?.message?.content || "{}");
+                },
+                async (gemini) => {
+                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest", generationConfig: { responseMimeType: "application/json" } });
+                    const result = await model.generateContent(systemPrompt + "\n\nUser Input: " + text);
+                    return JSON.parse(result.response.text());
+                }
+            );
+        } catch (e) {
             return { score: 0, label: 'neutral', encouragement: '' };
         }
     }
@@ -261,15 +346,28 @@ Format: Return ONLY a JSON object with:
      * AI-powered Spell Correction
      */
     static async correctSpelling(text: string): Promise<string> {
-        try {
-            const genAI = this.getClient();
-            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        const systemPrompt = `Correct spelling/grammar. Return ONLY corrected text. Maintain tone.`;
 
-            const prompt = `Correct spelling/grammar. Return ONLY corrected text. Maintain tone.\n\n${text}`;
-            const result = await model.generateContent(prompt);
-            return result.response.text().trim();
-        } catch (error) {
-            console.error('Gemini Spell Error:', error);
+        try {
+            return await this.executeWithFallback<string>(
+                'correctSpelling',
+                async (groq) => {
+                    const completion = await groq.chat.completions.create({
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: text }
+                        ],
+                        model: "llama3-70b-8192",
+                    });
+                    return completion.choices[0]?.message?.content?.trim() || text;
+                },
+                async (gemini) => {
+                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest" });
+                    const result = await model.generateContent(systemPrompt + "\n\n" + text);
+                    return result.response.text().trim();
+                }
+            );
+        } catch (e) {
             return text;
         }
     }
