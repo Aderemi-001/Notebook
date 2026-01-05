@@ -133,11 +133,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     <span>Notebook</span>
                 </div>
 
-                <Button asChild className="mb-6 w-full shadow-md hover:shadow-lg transition-all" size="lg">
-                    <Link to="/create" onClick={(e) => handleAuthCheck(e, '/create')}>
-                        <Plus className="mr-2 h-5 w-5" /> Create Set
-                    </Link>
-                </Button>
+                <div className="relative mb-6">
+                    <Button asChild className="w-full shadow-md hover:shadow-lg transition-all" size="lg">
+                        <Link to="/create" onClick={(e) => handleAuthCheck(e, '/create')}>
+                            <Plus className="mr-2 h-5 w-5" /> Create Set
+                        </Link>
+                    </Button>
+                    <div className="absolute -top-2 -right-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-lg animate-pulse border border-white/20">
+                        v2.0 HYBRID AI
+                    </div>
+                </div>
 
                 <div className="flex-col flex gap-1">
                     <p className="text-xs font-semibold text-muted-foreground px-3 mb-2 uppercase tracking-wider">Menu</p>
@@ -168,6 +173,24 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                             </>
                         )}
                     </Button>
+                </div>
+
+                {/* Footer Attribution */}
+                <div className="mt-6 px-3 py-4 bg-muted/30 rounded-xl border border-border/50">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-2">Powered By</p>
+                    <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                            <span className="text-xs font-medium text-foreground/80">Groq Llama 3.3</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                            <span className="text-xs font-medium text-foreground/80">Google Gemini Flash</span>
+                        </div>
+                    </div>
+                    <p className="mt-4 text-[10px] text-muted-foreground/60 italic">
+                        Version 2.0.4 "Supernova"
+                    </p>
                 </div>
             </aside>
 

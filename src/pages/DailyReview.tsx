@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import FlippableCard from "@/components/FlippableCard";
-import { ArrowLeft, RotateCcw, BookOpen } from 'lucide-react';
+import { ArrowLeft, RotateCcw, BookOpen, Volume2 } from 'lucide-react';
+import { speak } from '@/utils/audio';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -322,13 +323,23 @@ const DailyReview: React.FC = () => {
             className="w-full max-w-md min-h-[350px] sm:min-h-[400px]"
             frontContent={
               <>
-                <CardHeader>
-                  <CardTitle className="text-2xl">Term</CardTitle>
-                  {currentCard?.set_title && (
-                    <CardDescription className="flex items-center text-sm text-muted-foreground">
-                      <BookOpen className="mr-1 h-3 w-3" /> From: {currentCard.set_title}
-                    </CardDescription>
-                  )}
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl">Term</CardTitle>
+                    {currentCard?.set_title && (
+                      <CardDescription className="flex items-center text-sm text-muted-foreground">
+                        <BookOpen className="mr-1 h-3 w-3" /> From: {currentCard.set_title}
+                      </CardDescription>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 rounded-full"
+                    onClick={(e) => { e.stopPropagation(); if (currentCard) speak(currentCard.term); }}
+                  >
+                    <Volume2 className="h-5 w-5" />
+                  </Button>
                 </CardHeader>
                 <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto scrollbar-hide">
                   <p className="text-xl font-medium">
@@ -339,13 +350,23 @@ const DailyReview: React.FC = () => {
             }
             backContent={
               <>
-                <CardHeader>
-                  <CardTitle className="text-2xl">Definition</CardTitle>
-                  {currentCard?.set_title && (
-                    <CardDescription className="flex items-center text-sm text-muted-foreground">
-                      <BookOpen className="mr-1 h-3 w-3" /> From: {currentCard.set_title}
-                    </CardDescription>
-                  )}
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl">Definition</CardTitle>
+                    {currentCard?.set_title && (
+                      <CardDescription className="flex items-center text-sm text-muted-foreground">
+                        <BookOpen className="mr-1 h-3 w-3" /> From: {currentCard.set_title}
+                      </CardDescription>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 rounded-full"
+                    onClick={(e) => { e.stopPropagation(); if (currentCard) speak(currentCard.definition); }}
+                  >
+                    <Volume2 className="h-5 w-5" />
+                  </Button>
                 </CardHeader>
                 <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto scrollbar-hide">
                   <p className="text-xl font-medium">

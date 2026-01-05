@@ -2,6 +2,7 @@ import React from 'react';
 import { Trophy, Star, Zap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import confetti from 'canvas-confetti';
 
 interface CompletionCelebrationProps {
     show: boolean;
@@ -19,6 +20,17 @@ const CompletionCelebration: React.FC<CompletionCelebrationProps> = ({
     onExit
 }) => {
     const masteryPercentage = totalCards > 0 ? Math.round((masteredCount / totalCards) * 100) : 0;
+
+    React.useEffect(() => {
+        if (show) {
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#3b82f6', '#f59e0b', '#10b981', '#ef4444']
+            });
+        }
+    }, [show]);
 
     if (!show) return null;
 
