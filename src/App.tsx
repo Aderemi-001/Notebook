@@ -60,6 +60,7 @@ import PasswordReset from "@/pages/PasswordReset";
 import TermsAndConditions from "@/pages/TermsAndConditions";
 import UserAgreement from "@/pages/UserAgreement";
 import Pricing from "@/pages/Pricing";
+import PaymentResult from "@/pages/PaymentResult";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,7 @@ const App: React.FC = () => {
               <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
               <Route path="/textbook-finder" element={<TextbookFinder />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/payment-result" element={<PaymentResult />} />
               <Route path="/test" element={<TestPage />} />
 
               {/* Study Sets */}

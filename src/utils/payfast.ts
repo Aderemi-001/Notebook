@@ -68,8 +68,8 @@ export class PayFastService {
         const data: Record<string, string> = {
             merchant_id: this.config.merchantId,
             merchant_key: this.config.merchantKey,
-            return_url: `${window.location.origin}/pricing?success=true`,
-            cancel_url: `${window.location.origin}/pricing?canceled=true`,
+            return_url: `${window.location.origin}/payment-result?success=true`,
+            cancel_url: `${window.location.origin}/payment-result?canceled=true`,
             notify_url: `${window.location.origin}/api/payfast-webhook`, // You'll need to create this endpoint
             ...paymentData,
         };
