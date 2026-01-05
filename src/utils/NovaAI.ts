@@ -2,12 +2,10 @@
  * NovaAI.ts
  * 
  * AI-powered conversational intelligence for Nova
- * Uses Groq API for fast, intelligent responses
+ * Uses Google Gemini API for fast, free, intelligent responses
  */
 
-import Groq from 'groq-sdk';
-
-
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface NovaAIContext {
     route: string;
@@ -60,29 +58,23 @@ export interface AIStudyContent {
 
 export class NovaAI {
     private static getClient() {
-        const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
         if (!apiKey) {
-            console.error("❌ No Groq API Key found!");
-            throw new Error("Missing VITE_GROQ_API_KEY");
+            console.error("❌ No Google Gemini API Key found!");
+            throw new Error("Missing VITE_GEMINI_API_KEY");
         }
 
-        return new Groq({
-            apiKey: apiKey,
-            dangerouslyAllowBrowser: true,
-        });
+        return new GoogleGenerativeAI(apiKey);
     }
 
     /**
-     * AI-powered Content Extraction (Groq)
-     * Using the 70b model for high quality extraction
-     * Extracts:
-    * 1. Flashcards (Terms & Definitions)
-    * 2. Key Concepts (Nodes)
-    * 3. Concept Relationships (Edges) - For Cognitive Constellation
-    */
+     * AI-powered Content Extraction (Gemini)
+     * Using Gemini 1.5 Flash for massive context and high limits
+     */
     public static async generateStudyContent(text: string, fileName: string): Promise<AIStudyContent> {
         try {
-            const client = this.getClient();
+            const genAI = this.getClient();
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest", generationConfig: { responseMimeType: "application/json" } });
 
             const systemPrompt = `You are an expert educational content creator.
 Task: Deeply analyze the provided text to create a comprehensive study graph.
@@ -102,22 +94,14 @@ Guidelines:
 5. RELATIONSHIPS: Connect the concepts logically to form a knowledge graph.
 6. NO CITATION GARBAGE: Do not create cards for "[Online] Available at" or similar metadata.`;
 
-            const completion = await client.chat.completions.create({
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: `Analyze this content: \n\n${text.substring(0, 45000)}` }
-                ],
-                // Revert to 70b for quality since we have multiple keys
-                model: 'llama-3.3-70b-versatile',
-                response_format: { type: 'json_object' },
-                temperature: 0.3,
-                max_tokens: 6000,
-            });
+            const prompt = `${systemPrompt}\n\nAnalyze this content: \n\n${text.substring(0, 45000)}`;
 
-            const content = completion.choices[0]?.message?.content;
-            if (!content) return { cards: [], concepts: [], relationships: [] };
+            const result = await model.generateContent(prompt);
+            const responseText = result.response.text();
 
-            const response = JSON.parse(content);
+            if (!responseText) return { cards: [], concepts: [], relationships: [] };
+
+            const response = JSON.parse(responseText);
             return {
                 cards: response.cards || [],
                 concepts: response.concepts || [],
@@ -125,37 +109,23 @@ Guidelines:
             };
 
         } catch (error) {
-            console.error('Groq Content Generation Error:', error);
-            // Fallback: return empty structure
+            console.error('Gemini Content Generation Error:', error);
             return { cards: [], concepts: [], relationships: [] };
         }
     }
 
     /**
      * Generates a concise definition for a single term.
-     * Optimized for minimal token usage.
      */
     static async generateDefinition(term: string): Promise<string> {
         try {
-            const client = this.getClient();
+            const genAI = this.getClient();
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-            const completion = await client.chat.completions.create({
-                messages: [
-                    {
-                        role: "system",
-                        content: "You are a precise dictionary. Provide a specific, concise (1 sentence) definition. Plain text only. No intro."
-                    },
-                    {
-                        role: "user",
-                        content: `Define: "${term}"`
-                    }
-                ],
-                model: "llama-3.3-70b-versatile",
-                temperature: 0.3,
-                max_tokens: 60,
-            });
+            const prompt = `You are a precise dictionary. Provide a specific, concise (1 sentence) definition. Plain text only. No intro.\n\nDefine: "${term}"`;
 
-            return completion.choices[0]?.message?.content?.trim() || "";
+            const result = await model.generateContent(prompt);
+            return result.response.text().trim();
         } catch (error) {
             console.error("Nova Definition Error:", error);
             return "";
@@ -164,36 +134,28 @@ Guidelines:
 
     static async improveText(text: string, type: 'grammar' | 'flow' | 'conciseness' = 'flow'): Promise<string> {
         try {
-            const client = this.getClient();
+            const genAI = this.getClient();
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
             let systemPrompt = "You are a helpful writing assistant. Improve the following text.";
             if (type === 'grammar') systemPrompt = "Fix grammar and spelling errors. Keep the tone natural. Output only the corrected text.";
             if (type === 'flow') systemPrompt = "Improve the flow and coherence. Make it sound more professional but grounded. Output only the improved text.";
             if (type === 'conciseness') systemPrompt = "Make the text more concise and punchy. Remove fluff. Output only the shortened text.";
 
-            const completion = await client.chat.completions.create({
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: text }
-                ],
-                model: "llama-3.3-70b-versatile",
-                temperature: 0.4,
-                max_tokens: 1000,
-            });
-
-            return completion.choices[0]?.message?.content?.trim() || text;
+            const prompt = `${systemPrompt}\n\n${text}`;
+            const result = await model.generateContent(prompt);
+            return result.response.text().trim();
         } catch (error) {
             console.error("Nova Improve Error:", error);
-            return text; // Return original on error to be safe
+            return text;
         }
     }
 
     public static async chat(query: string, context: NovaAIContext): Promise<string> {
         try {
-            // Re-initialize client to pick a fresh key for each request
-            const client = this.getClient();
+            const genAI = this.getClient();
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
-            // Build comprehensive system prompt with app knowledge
             const systemPrompt = `You are Nova, an intelligent AI assistant built into "Notebook" - a smart study application.
 
 ## YOUR IDENTITY
@@ -203,133 +165,55 @@ Guidelines:
 - Emoji usage: 1-2 per response maximum
 
 ## APP FEATURES & NAVIGATION
-
-### Core Features:
-1. **Dashboard** (/dashboard)
-   - Overview of study stats, recent sets, quick actions
-   - Shows study streak, mastered cards, daily progress
-
-2. **My Sets** (/sets)
-   - User's personal study set library
-   - Can create, edit, delete, and organize sets
-   - Each set contains flashcards (term + definition)
-
-3. **Create Set** (/create)
-   - Manual card creation OR file import
-   - **Nova File Import**: Upload PDF, Word, PPT files
-   - AI extracts terms/definitions automatically
-   - Supports spell-check, keyword extraction, math detection
-
-4. **Practice Quiz** (/generate-exam)
-   - AI-generated multiple-choice questions
-   - Based on user's study sets
-   - Customizable question count and types
-
-5. **Essay Practice** (/essay-practice)
-   - Write essays on study topics
-   - AI grades essays on Content, Structure, Readability
-   - Provides letter grade and detailed feedback
-
-6. **Daily Review** (/daily-review)
-   - Spaced Repetition System (SM-2 algorithm)
-   - Shows cards due for review today
-   - "Again", "Hard", "Good", "Easy" buttons
-   - Adaptive learning curve
-
-7. **My Notes** (/notes)
-   - Free-form note-taking
-   - Handwriting mode available
-   - Can link notes to study sets
-
-8. **Profile** (/profile)
-   - User stats, study streak
-   - Account management
-
-9. **Settings** (/settings)
-   - Theme (dark/light mode)
-   - Study preferences (flashcard side, daily goals)
-   - Exam generation defaults
-   - Legal documents (Terms, Privacy Policy)
-
-### Advanced Features:
-- **Cognitive Constellation**: Visual concept mapping (coming soon)
-- **Spaced Repetition**: Smart review scheduling based on performance
-- **AI Intelligence Modules**:
-  - NovaMemory: Tracks learning curves
-  - NovaSentiment: Detects frustration, provides encouragement
-  - NovaKeywords: Extracts key concepts (TF-IDF)
-  - NovaSpellCheck: Auto-corrects typos
-  - NovaMath: Detects equations, creates math flashcards
+1. **Dashboard** (/dashboard) - Stats, streak, quick actions
+2. **My Sets** (/sets) - Create, edit, delete sets
+3. **Create Set** (/create) - Manual or File Import (PDF/PPT)
+4. **Practice Quiz** (/generate-exam) - AI generated quizzes
+5. **Essay Practice** (/essay-practice) - AI grading
+6. **Daily Review** (/daily-review) - Spaced repetition
+7. **My Notes** (/notes) - Linked notes & handwriting
+8. **Profile** (/profile) - Stats & settings
+9. **Settings** (/settings) - Theme & preferences
 
 ## HOW TO HELP USERS
-
-### Deletion Instructions:
-- **Delete Study Set**: Find set on Dashboard/My Sets → click trash icon 🗑️
-- **Delete Essay**: Go to Essay Practice → find essay in history → click delete button
-- **Delete Note**: My Notes → select note → click trash icon in header
-- **Delete Card**: Open set → click trash icon next to card
-
-### Navigation:
-- Use **bold** for feature names (e.g., **Dashboard**, **Practice Quiz**)
-- Provide direct routes when helpful
-- Keep instructions step-by-step and concise
-
-### Study Tips:
-- Encourage spaced repetition for long-term retention
-- Suggest active recall over passive reading
-- Recommend practice quizzes before exams
+- Be concise.
+- Use **bold** for feature names.
+- Provide step-by-step help.
+- Never invent features.
 
 ## CURRENT CONTEXT
 - User: ${context.userName}
 - Time: ${context.timeOfDay}
-- Current page: ${context.route}
+- Current page: ${context.route}`;
 
-## RESPONSE GUIDELINES
-1. Be concise (under 100 words unless explaining complex features)
-2. Use **bold** for emphasis on feature names
-3. Provide step-by-step instructions for "how to" questions
-4. If unsure, admit limitations honestly
-5. Encourage users and celebrate progress
-6. Never make up features that don't exist
-7. For deletion requests, always warn that it's permanent`;
-
-            // Build conversation history
-            const messages: any[] = [
-                { role: 'system', content: systemPrompt },
-                ...context.conversationHistory.slice(-6), // Last 6 messages for context
-                { role: 'user', content: query }
-            ];
-
-            console.log('🚀 Calling Groq API...');
-
-            // Call Groq API
-            const completion = await client.chat.completions.create({
-                messages,
-                model: 'llama-3.3-70b-versatile',
-                temperature: 0.7,
-                max_tokens: 200,
-                top_p: 1,
+            // Combine history and new query into a chat structure
+            const chat = model.startChat({
+                history: context.conversationHistory.map(msg => ({
+                    role: msg.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: msg.content }]
+                })),
+                systemInstruction: systemPrompt,
             });
 
-            console.log('✅ Groq API response received!');
-            return completion.choices[0]?.message?.content || "I'm having trouble processing that. Could you rephrase?";
+            console.log('🚀 Calling Gemini API...');
+            const result = await chat.sendMessage(query);
+            console.log('✅ Gemini API response received!');
+
+            return result.response.text();
 
         } catch (error) {
-            console.error('❌ Nova AI Error:', error);
-            console.error('Error details:', JSON.stringify(error, null, 2));
-
-            // Fallback to local response
+            console.error('❌ Nova AI Error (Gemini):', error);
             return this.getFallbackResponse(query);
         }
     }
 
     /**
      * AI-powered Essay Grading
-     * Provides professional, nuanced feedback
      */
     static async gradeEssay(content: string, question: string, rubric: string = 'Standard Academic'): Promise<AIEssayGrade | null> {
         try {
-            const client = this.getClient();
+            const genAI = this.getClient();
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest", generationConfig: { responseMimeType: "application/json" } });
 
             const systemPrompt = `You are a professional academic grader. 
 Task: Grade the provided essay based on the prompt and rubric.
@@ -341,66 +225,50 @@ Format: Return ONLY a JSON object with:
 - structureFeedback: string[] (feedback on flow/organization)
 - metrics: { readabilityScore, gradeLevel, vocabularyRichness }`;
 
-            const completion = await client.chat.completions.create({
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: `Prompt: ${question} \nRubric: ${rubric} \nEssay: ${content} ` }
-                ],
-                model: 'llama-3.3-70b-versatile',
-                response_format: { type: 'json_object' },
-                temperature: 0.5,
-            });
+            const prompt = `${systemPrompt}\n\nPrompt: ${question} \nRubric: ${rubric} \nEssay: ${content}`;
 
-            return JSON.parse(completion.choices[0]?.message?.content || '{}') as AIEssayGrade;
+            const result = await model.generateContent(prompt);
+            return JSON.parse(result.response.text()) as AIEssayGrade;
         } catch (error) {
-            console.error('Groq Grading Error:', error);
+            console.error('Gemini Grading Error:', error);
             return null;
         }
     }
 
     /**
      * AI-powered Sentiment Analysis
-     * Detects emotional nuances and frustration
      */
     static async analyzeSentiment(text: string): Promise<AISentimentResult> {
         try {
-            const client = this.getClient();
+            const genAI = this.getClient();
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest", generationConfig: { responseMimeType: "application/json" } });
 
             const systemPrompt = `Analyze user sentiment. Return ONLY JSON:
             { "score": number(-5 to 5), "label": "positive" | "neutral" | "negative" | "frustrated", "encouragement": "short message" }`;
 
-            const completion = await client.chat.completions.create({
-                messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
-                model: 'llama-3.3-70b-versatile',
-                response_format: { type: 'json_object' },
-                temperature: 0.5,
-            });
+            const prompt = `${systemPrompt}\n\nUser Input: ${text}`;
+            const result = await model.generateContent(prompt);
 
-            return JSON.parse(completion.choices[0]?.message?.content || '{}') as AISentimentResult;
+            return JSON.parse(result.response.text()) as AISentimentResult;
         } catch (error) {
-            console.error('Groq Sentiment Error:', error);
+            console.error('Gemini Sentiment Error:', error);
             return { score: 0, label: 'neutral', encouragement: '' };
         }
     }
 
     /**
      * AI-powered Spell Correction
-     * Context-aware correction
      */
     static async correctSpelling(text: string): Promise<string> {
         try {
-            const client = this.getClient();
-            const systemPrompt = `Correct spelling/grammar. Return ONLY corrected text. Maintain tone.`;
+            const genAI = this.getClient();
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
-            const completion = await client.chat.completions.create({
-                messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
-                model: 'llama-3.3-70b-versatile',
-                temperature: 0.2,
-            });
-
-            return completion.choices[0]?.message?.content || text;
+            const prompt = `Correct spelling/grammar. Return ONLY corrected text. Maintain tone.\n\n${text}`;
+            const result = await model.generateContent(prompt);
+            return result.response.text().trim();
         } catch (error) {
-            console.error('Groq Spell Error:', error);
+            console.error('Gemini Spell Error:', error);
             return text;
         }
     }
