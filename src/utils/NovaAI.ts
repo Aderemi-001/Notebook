@@ -147,7 +147,7 @@ Guidelines:
                             { role: "system", content: systemPrompt },
                             { role: "user", content: userPrompt }
                         ],
-                        model: "llama3-70b-8192",
+                        model: "llama-3.3-70b-versatile",
                         temperature: 0.1,
                         response_format: { type: "json_object" }
                     });
@@ -180,7 +180,7 @@ Guidelines:
                             { role: "system", content: systemPrompt },
                             { role: "user", content: userPrompt }
                         ],
-                        model: "llama3-70b-8192",
+                        model: "llama-3.3-70b-versatile",
                     });
                     return completion.choices[0]?.message?.content?.trim() || "";
                 },
@@ -210,7 +210,7 @@ Guidelines:
                             { role: "system", content: systemPrompt },
                             { role: "user", content: text }
                         ],
-                        model: "llama3-70b-8192",
+                        model: "llama-3.3-70b-versatile",
                     });
                     return completion.choices[0]?.message?.content?.trim() || text;
                 },
@@ -246,7 +246,7 @@ Format: Markdown. Be concise.`;
                 async (groq) => {
                     const completion = await groq.chat.completions.create({
                         messages: messages,
-                        model: "llama3-70b-8192",
+                        model: "llama-3.3-70b-versatile",
                     });
                     return completion.choices[0]?.message?.content || "";
                 },
@@ -295,7 +295,7 @@ Format: Return ONLY a JSON object with:
                             { role: "system", content: systemPrompt },
                             { role: "user", content: userPrompt }
                         ],
-                        model: "llama3-70b-8192",
+                        model: "llama-3.3-70b-versatile",
                         response_format: { type: "json_object" }
                     });
                     return JSON.parse(completion.choices[0]?.message?.content || "null");
@@ -326,7 +326,7 @@ Format: Return ONLY a JSON object with:
                             { role: "system", content: systemPrompt },
                             { role: "user", content: text }
                         ],
-                        model: "llama3-70b-8192",
+                        model: "llama-3.3-70b-versatile",
                         response_format: { type: "json_object" }
                     });
                     return JSON.parse(completion.choices[0]?.message?.content || "{}");
@@ -357,7 +357,7 @@ Format: Return ONLY a JSON object with:
                             { role: "system", content: systemPrompt },
                             { role: "user", content: text }
                         ],
-                        model: "llama3-70b-8192",
+                        model: "llama-3.3-70b-versatile",
                     });
                     return completion.choices[0]?.message?.content?.trim() || text;
                 },
