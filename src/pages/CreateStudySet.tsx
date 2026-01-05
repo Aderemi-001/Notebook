@@ -18,6 +18,7 @@ import { useFileImport } from "@/hooks/use-file-import";
 import { Loader2, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { PremiumGate } from "@/components/PremiumGate";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -228,54 +229,56 @@ const CreateSet = () => {
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
           <StudySetFormFields form={form} userGroups={userGroups} isLoadingGroups={isLoadingGroups} />
 
-          <NotebookCard>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-indigo-500" />
-                Import from file with Nova
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <div className="space-y-4">
-                <Input
-                  type="file"
-                  accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setFile(e.target.files ? e.target.files[0] : null);
-                    setGeneratedCardConceptLinks([]);
-                  }}
-                  className="w-full"
-                />
+          <PremiumGate feature="AI File Import">
+            <NotebookCard>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-indigo-500" />
+                  Import from file with Nova
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <div className="space-y-4">
+                  <Input
+                    type="file"
+                    accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      setFile(e.target.files ? e.target.files[0] : null);
+                      setGeneratedCardConceptLinks([]);
+                    }}
+                    className="w-full"
+                  />
 
-                {progressState !== 'idle' && (
-                  <div className="space-y-2 animate-fade-in">
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>{progressMessage}</span>
-                      <span>{getProgressValue()}%</span>
+                  {progressState !== 'idle' && (
+                    <div className="space-y-2 animate-fade-in">
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>{progressMessage}</span>
+                        <span>{getProgressValue()}%</span>
+                      </div>
+                      <Progress value={getProgressValue()} className={`h-2 ${progressState === 'error' ? 'bg-red-100' : ''}`} />
                     </div>
-                    <Progress value={getProgressValue()} className={`h-2 ${progressState === 'error' ? 'bg-red-100' : ''}`} />
-                  </div>
-                )}
-
-                <Button
-                  type="button"
-                  onClick={handleGenerateCards}
-                  disabled={!file || isLoadingUser || progressState === 'extracting' || progressState === 'processing' || !currentUser}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300"
-                >
-                  {progressState === 'extracting' || progressState === 'processing' ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" /> Generate Flashcards with Nova
-                    </>
                   )}
-                </Button>
-              </div>
-            </CardContent>
-          </NotebookCard>
+
+                  <Button
+                    type="button"
+                    onClick={handleGenerateCards}
+                    disabled={!file || isLoadingUser || progressState === 'extracting' || progressState === 'processing' || !currentUser}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300"
+                  >
+                    {progressState === 'extracting' || progressState === 'processing' ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" /> Generate Flashcards with Nova
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </NotebookCard>
+          </PremiumGate>
 
           <FlashcardEditor form={form} />
 

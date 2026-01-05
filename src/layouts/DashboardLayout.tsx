@@ -14,7 +14,8 @@ import {
     LogIn,
     Globe,
     Library,
-    GraduationCap
+    GraduationCap,
+    CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -74,10 +75,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         { label: 'My Notes', icon: NotebookPen, path: '/notebook' },
         { label: 'My Sets', icon: Library, path: '/sets' }, // Changed from BookOpen to Library
         { label: 'Explore Sets', icon: Globe, path: '/explore-public-sets' },
-        { label: 'Practice Quiz', icon: GraduationCap, path: '/exams' }, // Changed from Brain to GraduationCap
+        { label: 'Practice Quiz', icon: GraduationCap, path: '/exams' },
         { label: 'Textbook Finder', icon: Search, path: '/textbook-finder' },
-        { label: 'Constellation (Beta)', icon: Brain, path: '/constellation' }, // Changed from Quote to Brain
+        { label: 'Constellation (Beta)', icon: Brain, path: '/constellation' },
         { label: 'Essay Practice', icon: FileText, path: '/essays' },
+        { label: 'Upgrade to Pro', icon: CreditCard, path: '/pricing' },
     ];
 
     const bottomNavItems = [
