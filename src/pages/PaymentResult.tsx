@@ -4,12 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
+import { supabase } from '@/integrations/supabase/client';
+import { useSubscription } from '@/hooks/useSubscription';
 
 const PaymentResult = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const success = searchParams.get('success') === 'true';
     const canceled = searchParams.get('canceled') === 'true';
+    const { isPremium } = useSubscription();
 
     useEffect(() => {
         // Auto-redirect to pricing after 5 seconds if canceled
@@ -17,7 +20,30 @@ const PaymentResult = () => {
             const timer = setTimeout(() => navigate('/pricing'), 5000);
             return () => clearTimeout(timer);
         }
-    }, [canceled, navigate]);
+
+        // Insert welcome notification on success
+        if (success) {
+            const insertNotification = async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    // Check if notification already sent recently to avoid duplicates on refresh
+                    // But simplified: just insert. RLS allows insert own notification? Usually yes.
+                    // Actually notifications table RLS usually allows insert?
+                    // If not, we might need an RPC. But let's try insert.
+                    // Assuming 'notifications' table schema: user_id, message, type, is_read, ...
+
+                    // Trigger welcome notification
+                    await supabase.from('notifications').insert({
+                        user_id: user.id,
+                        message: "🎉 Welcome to Nova Pro! Your subscription is active. - Nova Admin",
+                        type: 'info',
+                        is_read: false
+                    });
+                }
+            };
+            insertNotification();
+        }
+    }, [canceled, success, navigate]);
 
     if (success) {
         return (
@@ -34,19 +60,27 @@ const PaymentResult = () => {
                             <div className="space-y-2">
                                 <p className="text-lg font-semibold">Welcome to Nova Pro! 🎉</p>
                                 <p className="text-muted-foreground">
-                                    Your subscription is being activated. This may take a few moments.
+                                    {isPremium ? "Your subscription is active and ready to use!" : "Your subscription is being activated. This may take a few moments."}
                                 </p>
                             </div>
 
-                            <div className="bg-muted/50 rounded-xl p-4 space-y-2">
-                                <div className="flex items-center justify-center gap-2">
-                                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                                    <span className="text-sm font-medium">Processing your subscription...</span>
+                            {!isPremium ? (
+                                <div className="bg-muted/50 rounded-xl p-4 space-y-2">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                        <span className="text-sm font-medium">Processing your subscription...</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        You'll receive a confirmation email shortly
+                                    </p>
                                 </div>
-                                <p className="text-xs text-muted-foreground">
-                                    You'll receive a confirmation email shortly
-                                </p>
-                            </div>
+                            ) : (
+                                <div className="bg-green-50 rounded-xl p-4 border border-green-100 animate-in fade-in slide-in-from-bottom-2">
+                                    <p className="text-sm font-bold text-green-700">
+                                        You are now a Pro Member!
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="flex flex-col gap-3">
                                 <Button

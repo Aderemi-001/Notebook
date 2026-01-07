@@ -35,34 +35,34 @@ const StudyProgressBar: React.FC<StudyProgressBarProps> = ({
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-3 pt-2">
-                        <div className="flex items-center gap-2 text-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <div className="p-2 rounded-full bg-blue-50 dark:bg-blue-950">
-                                <Target className="h-4 w-4 text-blue-600" />
+                    <div className="grid grid-cols-3 gap-2 pt-2">
+                        <div className="flex flex-col items-center text-center gap-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="p-1.5 rounded-full bg-blue-50 dark:bg-blue-950">
+                                <Target className="h-3.5 w-3.5 text-blue-600" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Remaining</p>
-                                <p className="font-semibold">{remaining}</p>
+                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Remaining</p>
+                                <p className="font-bold text-sm">{remaining}</p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 text-sm animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100">
-                            <div className="p-2 rounded-full bg-orange-50 dark:bg-orange-950">
-                                <Zap className="h-4 w-4 text-orange-600" />
+                        <div className="flex flex-col items-center text-center gap-1 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100">
+                            <div className="p-1.5 rounded-full bg-orange-50 dark:bg-orange-950">
+                                <Zap className="h-3.5 w-3.5 text-orange-600" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Learning</p>
-                                <p className="font-semibold">{learningCount}</p>
+                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Learning</p>
+                                <p className="font-bold text-sm">{learningCount}</p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 text-sm animate-in fade-in slide-in-from-bottom-2 duration-300 delay-200">
-                            <div className="p-2 rounded-full bg-green-50 dark:bg-green-950">
-                                <Trophy className="h-4 w-4 text-green-600" />
+                        <div className="flex flex-col items-center text-center gap-1 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-200">
+                            <div className="p-1.5 rounded-full bg-green-50 dark:bg-green-950">
+                                <Trophy className="h-3.5 w-3.5 text-green-600" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Mastered</p>
-                                <p className="font-semibold">{masteredCount}</p>
+                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Mastered</p>
+                                <p className="font-bold text-sm">{masteredCount}</p>
                             </div>
                         </div>
                     </div>

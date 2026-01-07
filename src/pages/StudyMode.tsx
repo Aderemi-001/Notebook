@@ -1,8 +1,8 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import FlippableCard from "@/components/FlippableCard";
-import { ArrowLeft, Volume2 } from 'lucide-react';
+import { ArrowLeft, Volume2, Lock, Sparkles } from 'lucide-react';
 import { speak } from '@/utils/audio';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,7 +12,10 @@ import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import StudyProgressBar from '@/components/study/StudyProgressBar';
+import { gamificationService } from '@/services/gamificationService';
 import CompletionCelebration from '@/components/study/CompletionCelebration';
+import { useSubscription } from '@/hooks/useSubscription';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CardItem {
   id: string;
@@ -75,13 +78,13 @@ const calculateNextReview = (
   };
 };
 
-const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortOrder: string, cardsCountGoal: number): Promise<CardItem[]> => {
+const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortOrder: string, cardsCountGoal: number, targetCardId?: string | null): Promise<CardItem[]> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
   const now = new Date();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('cards')
     .select(`
       id,
@@ -97,6 +100,12 @@ const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortO
       )
     `)
     .eq('set_id', setId);
+
+  if (targetCardId) {
+    query = query.eq('id', targetCardId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching cards for study set:", error);
@@ -119,18 +128,24 @@ const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortO
         status: progress?.status ?? 'learning',
         progress_user_id: progress?.user_id,
       };
-    })
-    .filter((card: any) => {
-      const cardNextReviewDate = new Date(card.next_review_at);
-      const isNewCardForCurrentUser = !card.progress_user_id || card.progress_user_id !== user.id;
-      const isDueForReview = cardNextReviewDate <= now;
-
-      if (hideMastered && card.status === 'mastered') {
-        return false;
-      }
-
-      return isNewCardForCurrentUser || (card.progress_user_id === user.id && isDueForReview);
     });
+
+  // If targeting a specific card, skip the standard filtering/sorting logic
+  if (targetCardId) {
+    return processedCards;
+  }
+
+  processedCards = processedCards.filter((card: any) => {
+    const cardNextReviewDate = new Date(card.next_review_at);
+    const isNewCardForCurrentUser = !card.progress_user_id || card.progress_user_id !== user.id;
+    const isDueForReview = cardNextReviewDate <= now;
+
+    if (hideMastered && card.status === 'mastered') {
+      return false;
+    }
+
+    return isNewCardForCurrentUser || (card.progress_user_id === user.id && isDueForReview);
+  });
 
   if (sortOrder === 'alphabetical_term_asc') {
     processedCards.sort((a: CardItem, b: CardItem) => a.term.localeCompare(b.term));
@@ -148,7 +163,11 @@ const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortO
 const StudyMode = () => {
   const { setId } = useParams<{ setId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams(); // Needs import
+  const targetCardId = searchParams.get('cardId');
+
   const { user, loading: isLoadingAuth } = useAuth();
+  const { isPremium } = useSubscription();
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showDefinition, setShowDefinition] = useState(false);
@@ -158,12 +177,13 @@ const StudyMode = () => {
   const queryClient = useQueryClient();
 
   const { data: cards, isLoading, isError, error, refetch } = useQuery<CardItem[], Error>({
-    queryKey: ['studyCards', setId, preferences?.hide_mastered_from_daily_review, preferences?.default_card_sort_order, preferences?.default_study_session_cards_count],
+    queryKey: ['studyCards', setId, preferences?.hide_mastered_from_daily_review, preferences?.default_card_sort_order, preferences?.default_study_session_cards_count, targetCardId],
     queryFn: () => fetchCardsForStudySet(
       setId!,
       preferences?.hide_mastered_from_daily_review || false,
       preferences?.default_card_sort_order || 'next_review_at_asc',
-      preferences?.default_study_session_cards_count || 20
+      preferences?.default_study_session_cards_count || 20,
+      targetCardId
     ),
     enabled: !!setId && !isLoadingAuth && !isLoadingPreferences,
     staleTime: 0,
@@ -243,6 +263,11 @@ const StudyMode = () => {
         successMessage = "Card mastered! Well done.";
       }
       showSuccess(successMessage);
+
+      // Check for streak update (fire and forget)
+      if (quality > 0) {
+        gamificationService.checkAndIncrementStreak(user.id);
+      }
 
       queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
       queryClient.invalidateQueries({ queryKey: ['studyDays'] });
@@ -369,7 +394,7 @@ const StudyMode = () => {
 
   if (isLoadingAuth || isLoading || isLoadingPreferences) {
     return (
-      <div className="container mx-auto py-10 flex flex-col items-center animate-fade-in">
+      <div className="w-full px-4 md:px-8 py-10 flex flex-col items-center animate-fade-in">
         <Skeleton className="h-10 w-3/4 mb-8" />
         <Skeleton className="h-64 w-full max-w-md rounded-lg" />
         <div className="flex gap-4 mt-8">
@@ -417,7 +442,13 @@ const StudyMode = () => {
   }
 
   return (
-    <div className="container mx-auto py-10 flex flex-col items-center animate-fade-in relative">
+    <div className="min-h-screen flex flex-col items-center animate-fade-in relative px-4 py-8 md:py-12 pb-32 md:pb-12 overflow-y-auto overflow-x-hidden">
+      {/* Immersive Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-screen pointer-events-none overflow-hidden">
+        <div className="absolute -top-1/4 -right-1/4 w-1/2 h-1/2 bg-primary/5 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute -bottom-1/4 -left-1/4 w-1/2 h-1/2 bg-indigo-500/5 blur-[120px] rounded-full animate-float" />
+      </div>
+
       <CompletionCelebration
         show={studyFinished}
         totalCards={totalCards}
@@ -426,19 +457,36 @@ const StudyMode = () => {
         onExit={() => navigate(`/sets/${setId}`)}
       />
 
-      <div className="w-full flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Study Mode</h1>
-        <Button asChild variant="outline">
-          <Link to={`/sets/${setId}`} className="flex items-center">
-            <>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details
-            </>
-          </Link>
-        </Button>
+      {/* Optimized Header Navigation */}
+      <div className="w-full max-w-4xl flex items-center justify-between mb-8 relative z-10">
+        <div className="flex flex-col gap-2">
+          <Button variant="ghost" className="p-0 hover:bg-transparent text-primary font-black text-[10px] tracking-[0.2em] uppercase h-auto group w-fit" asChild>
+            <Link to={`/sets/${setId}`} className="flex items-center gap-2">
+              <div className="p-1.5 bg-primary/10 rounded-lg group-hover:bg-primary group-hover:text-white transition-all">
+                <ArrowLeft className="h-3 w-3" />
+              </div>
+              Exit Session
+            </Link>
+          </Button>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tighter text-foreground">
+            Active Study <span className="text-primary/40">Mode</span>
+          </h1>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-3">
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Session Data</span>
+            <div className="flex gap-1.5">
+              <div className="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-lg text-[10px] font-black border border-emerald-500/20">
+                {masteredCount} MASTERY
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full max-w-md mb-6">
+      {/* Advanced Progress Layer */}
+      <div className="w-full max-w-xl mb-12 relative z-10">
         <StudyProgressBar
           currentIndex={currentCardIndex}
           totalCards={totalCards}
@@ -449,90 +497,191 @@ const StudyMode = () => {
 
       {!studyFinished && currentCard ? (
         <div
-          className="w-full max-w-md perspective-1000 touch-pan-y"
+          className="w-full max-w-xl perspective-2000 touch-pan-y relative z-20"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
+          {/* Card Context Shimmer */}
+          <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 via-indigo-500/5 to-primary/10 blur-3xl opacity-50 rounded-[3rem] -z-10 group-hover:opacity-100 transition-opacity duration-1000" />
+
           <FlippableCard
             key={currentCard.id}
             isFlipped={showDefinition}
             onClick={handleFlipCard}
-            className="w-full min-h-[350px] sm:min-h-[400px]"
+            className="w-full h-[45vh] min-h-[350px] transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl"
             frontContent={
-              <div className="flex flex-col items-center justify-center min-h-[350px] sm:min-h-[400px] text-center p-6 h-full">
-                <CardHeader className="py-2 flex flex-row items-center justify-center gap-2">
-                  <CardTitle className="text-xs font-medium text-muted-foreground">Term</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 rounded-full"
-                    onClick={(e) => { e.stopPropagation(); speak(currentCard.term); }}
-                  >
-                    <Volume2 className="h-3 w-3" />
-                  </Button>
-                </CardHeader>
-                <CardContent className="flex-grow flex flex-col items-center justify-center w-full overflow-hidden">
-                  <div className="flex-grow flex items-center justify-center overflow-y-auto w-full p-2">
-                    <p className="text-xl sm:text-2xl font-semibold">{currentCard.term}</p>
+              <div className="flex flex-col items-center justify-center h-full text-center p-8 relative glass-card rounded-[2.5rem] border-white/40 shadow-premium overflow-hidden">
+                {/* Internal Card Branding */}
+                <div className="absolute top-8 left-8 flex items-center gap-2 opacity-50">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Curriculum Node</span>
+                </div>
+
+                <div className="flex-grow flex flex-col items-center justify-center w-full mt-8">
+                  <div className="flex-grow flex items-center justify-center w-full max-h-[70%]">
+                    <p className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter leading-tight text-foreground select-none">
+                      {currentCard?.term}
+                    </p>
                   </div>
-                  <p className="text-[10px] text-muted-foreground animate-pulse mt-4">
-                    Tap to Flip • Swipe to Navigate
-                  </p>
-                </CardContent>
+
+                  <div className="pt-8 flex flex-col items-center gap-4">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="relative group/audio">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={cn(
+                                "h-14 w-14 rounded-2xl transition-all active:scale-90",
+                                isPremium
+                                  ? "bg-primary/5 text-primary hover:bg-primary hover:text-white shadow-sm"
+                                  : "bg-muted text-muted-foreground opacity-70 cursor-not-allowed border border-dashed border-muted-foreground/30"
+                              )}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isPremium) {
+                                  speak(currentCard.term);
+                                } else {
+                                  navigate('/pricing');
+                                  showError("Advanced Voice is a Nova Pro feature.");
+                                }
+                              }}
+                            >
+                              <Volume2 className="h-6 w-6" />
+                              {!isPremium && (
+                                <div className="absolute -top-1 -right-1 bg-amber-500 text-white p-1 rounded-full border-2 border-white dark:border-gray-900 scale-75 shadow-lg">
+                                  <Lock className="h-3 w-3" />
+                                </div>
+                              )}
+                            </Button>
+                            {!isPremium && (
+                              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/audio:opacity-100 transition-opacity whitespace-nowrap">
+                                <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">NOVA PRO</span>
+                              </div>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        {!isPremium && (
+                          <TooltipContent className="bg-amber-500 text-white font-bold border-0 shadow-xl">
+                            <p className="flex items-center gap-2">
+                              <Sparkles className="h-4 w-4" /> Unlock Advanced Voice with Nova Pro
+                            </p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                    <p className="text-[10px] text-muted-foreground font-bold tracking-[0.25em] uppercase animate-pulse">
+                      Tap To Reveal Definition
+                    </p>
+                  </div>
+                </div>
               </div>
             }
             backContent={
-              <div className="flex flex-col items-center justify-center min-h-[350px] sm:min-h-[400px] text-center p-6 bg-slate-50 dark:bg-slate-900/50 h-full">
-                <CardHeader className="py-2 flex flex-row items-center justify-center gap-2">
-                  <CardTitle className="text-xs font-medium text-muted-foreground">Definition</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 rounded-full"
-                    onClick={(e) => { e.stopPropagation(); speak(currentCard.definition); }}
-                  >
-                    <Volume2 className="h-3 w-3" />
-                  </Button>
-                </CardHeader>
-                <CardContent className="flex-grow flex flex-col items-center justify-center w-full overflow-hidden">
-                  <div className="flex-grow flex items-center justify-center overflow-y-auto w-full p-2 mb-4 scrollbar-hide">
-                    <p className="text-lg sm:text-xl leading-relaxed">{currentCard.definition}</p>
-                  </div>
+              <div className="flex flex-col items-center justify-between h-full text-center p-8 glass-card rounded-[2.5rem] border-indigo-100 bg-white/40 shadow-premium overflow-hidden">
+                <div className="absolute top-8 left-8 flex items-center gap-2 opacity-50">
+                  <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Definition Clarity</span>
+                </div>
 
-                  <div className="grid grid-cols-3 gap-1.5 w-full" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleNextCard(0)}
-                      className="w-full text-xs py-1 h-9 sm:h-10"
-                    >
-                      Again
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => handleNextCard(1)}
-                      className="w-full bg-orange-100 text-orange-900 hover:bg-orange-200 text-xs py-1 h-9 sm:h-10"
-                    >
-                      Hard
-                    </Button>
-                    <Button
-                      variant="default"
-                      onClick={() => handleNextCard(2)}
-                      className="w-full bg-green-600 hover:bg-green-700 text-xs py-1 h-9 sm:h-10"
-                    >
-                      Good
-                    </Button>
+                <div className="flex-grow flex flex-col items-center justify-center w-full mt-12 mb-8 overflow-y-auto custom-scrollbar">
+                  <p className="text-lg sm:text-2xl leading-relaxed font-bold text-foreground/90 selection:bg-primary/20">
+                    {currentCard?.definition}
+                  </p>
+                </div>
+
+                <div className="w-full space-y-6" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex justify-center">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="relative">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={cn(
+                                "rounded-xl font-bold text-xs gap-2 transition-colors",
+                                isPremium
+                                  ? "text-muted-foreground hover:text-primary"
+                                  : "text-muted-foreground/40 cursor-not-allowed"
+                              )}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isPremium) {
+                                  speak(currentCard.definition);
+                                } else {
+                                  navigate('/pricing');
+                                  showError("Advanced Voice is a Nova Pro feature.");
+                                }
+                              }}
+                            >
+                              <Volume2 className="h-4 w-4" />
+                              <span>Listen</span>
+                              {!isPremium && <Lock className="h-3 w-3 text-amber-500 ml-1" />}
+                            </Button>
+                          </div>
+                        </TooltipTrigger>
+                        {!isPremium && (
+                          <TooltipContent className="bg-amber-500 text-white font-bold border-0">
+                            <p>Unlock Advanced Voice with Pro</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
-                </CardContent>
+                </div>
               </div>
             }
           />
 
-          <div className="mt-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              Card {currentCardIndex + 1} of {cards.length}
-            </p>
+          {/* Action Buttons (Rest of DOM) - Only visible when definition is shown */}
+          {showDefinition && (
+            <div className="grid grid-cols-3 gap-3 w-full mt-6 animate-in slide-in-from-bottom-4 duration-500 fade-in">
+              <Button
+                variant="outline"
+                onClick={() => handleNextCard(0)}
+                className="group/btn relative overflow-hidden h-14 md:h-16 rounded-2xl border-2 border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 hover:bg-red-500 hover:border-red-500 text-red-600 dark:text-red-400 hover:text-white transition-all duration-300 font-black flex flex-col items-center justify-center shadow-sm"
+              >
+                <span className="text-sm uppercase tracking-tighter">Again</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleNextCard(1)}
+                className="group/btn relative overflow-hidden h-14 md:h-16 rounded-2xl border-2 border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/30 hover:bg-orange-500 hover:border-orange-500 text-orange-600 dark:text-orange-400 hover:text-white transition-all duration-300 font-black flex flex-col items-center justify-center shadow-sm"
+              >
+                <span className="text-sm uppercase tracking-tighter">Hard</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleNextCard(2)}
+                className="group/btn relative overflow-hidden h-14 md:h-16 rounded-2xl border-2 border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-500 hover:border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:text-white transition-all duration-300 font-black flex flex-col items-center justify-center shadow-sm"
+              >
+                <span className="text-sm uppercase tracking-tighter">Good</span>
+              </Button>
+            </div>
+          )}
+
+          {/* Navigation Feedback */}
+          <div className="mt-8 flex items-center justify-between px-2">
+            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+              Card {currentCardIndex + 1} <span className="mx-2 opacity-30">/</span> {cards.length}
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex items-center gap-1.5 opacity-40">
+                <div className="px-1.5 py-1 rounded bg-secondary text-[8px] font-black tracking-tighter border border-border/40">SPACE</div>
+                <span className="text-[9px] font-bold text-muted-foreground">FLIP</span>
+              </div>
+              <div className="flex items-center gap-1.5 opacity-40">
+                <div className="px-1.5 py-1 rounded bg-secondary text-[8px] font-black tracking-tighter border border-border/40">1-3</div>
+                <span className="text-[9px] font-bold text-muted-foreground">GRADE</span>
+              </div>
+            </div>
           </div>
+
+
         </div>
       ) : null}
     </div>

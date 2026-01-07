@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { NotebookCard } from "@/components/NotebookCard";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNowStrict } from 'date-fns';
 import { CheckCircle2, XCircle, Clock, UserPlus, BookOpen, Trash2, Loader2, Send } from 'lucide-react';
@@ -58,7 +58,7 @@ const CollaborationInvitations: React.FC = () => {
     return (
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
         {[...Array(4)].map((_, i) => (
-          <NotebookCard key={i}>
+          <Card key={i} className="glass-card shadow-premium rounded-[2rem] border-white/20">
             <CardHeader>
               <Skeleton className="h-6 w-3/4 mb-2" />
               <Skeleton className="h-4 w-1/2" />
@@ -71,7 +71,7 @@ const CollaborationInvitations: React.FC = () => {
                 <Skeleton className="h-8 w-20" />
               </div>
             </CardContent>
-          </NotebookCard>
+          </Card>
         ))}
       </div>
     );
@@ -97,7 +97,7 @@ const CollaborationInvitations: React.FC = () => {
         {receivedInvitations && receivedInvitations.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
             {receivedInvitations.map(inv => (
-              <NotebookCard key={inv.id} className="flex flex-col">
+              <Card key={inv.id} className="glass-card shadow-premium rounded-[2.5rem] border-white/20 flex flex-col">
                 <CardHeader className="flex-grow">
                   <CardTitle className="text-lg font-semibold flex items-center justify-between">
                     <span>{inv.study_sets?.[0]?.title || 'Unknown Study Set'}</span> {/* Access first item in array */}
@@ -152,7 +152,7 @@ const CollaborationInvitations: React.FC = () => {
                     </Button>
                   )}
                 </CardContent>
-              </NotebookCard>
+              </Card>
             ))}
           </div>
         ) : (
@@ -171,7 +171,7 @@ const CollaborationInvitations: React.FC = () => {
         {sentInvitations && sentInvitations.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
             {sentInvitations.map(inv => (
-              <NotebookCard key={inv.id} className="flex flex-col">
+              <Card key={inv.id} className="glass-card shadow-premium rounded-[2.5rem] border-white/20 flex flex-col">
                 <CardHeader className="flex-grow">
                   <CardTitle className="text-lg font-semibold flex items-center justify-between">
                     <span>{inv.study_sets?.[0]?.title || 'Unknown Study Set'}</span> {/* Access first item in array */}
@@ -217,7 +217,7 @@ const CollaborationInvitations: React.FC = () => {
                     </Button>
                   )}
                 </CardContent>
-              </NotebookCard>
+              </Card>
             ))}
           </div>
         ) : (

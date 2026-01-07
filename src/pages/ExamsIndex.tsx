@@ -2,8 +2,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { NotebookCard } from "@/components/NotebookCard";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowLeft, BookOpen, Loader2, GraduationCap } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { studySetService, StudySet } from '@/services/studySetService';
@@ -15,7 +14,7 @@ const ExamsIndex: React.FC = () => {
   });
 
   return (
-    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+    <div className="w-full px-4 md:px-8 py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
           <GraduationCap className="h-8 w-8 text-primary" /> Practice Quizzes
@@ -38,7 +37,7 @@ const ExamsIndex: React.FC = () => {
       ) : studySets && studySets.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {studySets.map(set => (
-            <NotebookCard key={set.id} className="flex flex-col justify-between hover:border-primary/50 transition-colors">
+            <Card key={set.id} className="glass-card shadow-premium rounded-[2rem] border-white/20 hover:border-primary/30 transition-all duration-300 flex flex-col justify-between">
               <CardHeader>
                 <CardTitle className="line-clamp-1">{set.title}</CardTitle>
                 <CardDescription className="line-clamp-2">{set.description || "No description"}</CardDescription>
@@ -51,7 +50,7 @@ const ExamsIndex: React.FC = () => {
                   <Link to={`/quiz/${set.id}`}>Start Quiz</Link>
                 </Button>
               </CardContent>
-            </NotebookCard>
+            </Card>
           ))}
         </div>
       ) : (

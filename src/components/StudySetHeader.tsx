@@ -23,6 +23,7 @@ import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Globe, Plus, MoreVert
 import { UserPreferences } from '@/hooks/use-user-preferences';
 import ShareStudySetDialog from '@/components/collaborations/ShareStudySetDialog';
 import SendCollaborationInvitationDialog from '@/components/collaborations/SendCollaborationInvitationDialog';
+import { cn } from '@/lib/utils';
 
 interface StudySetHeaderProps {
   studySet: {
@@ -64,160 +65,190 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
   const [isShareDialogOpen, setIsShareDialogOpen] = React.useState(false); // State for Share Dialog
 
   return (
-    <div className="flex justify-between items-center mb-8">
-      <div className="flex items-center gap-4">
-        {onToggleSidebar && !isSidebarOpen && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleSidebar}
-            className="md:flex hidden text-muted-foreground hover:text-foreground"
-            title="Expand View"
-          >
-            <PanelLeftOpen className="h-5 w-5" />
-          </Button>
-        )}
+    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 animate-fade-in">
+      <div className="space-y-4">
+        {/* Navigation Context */}
         <div className="flex items-center gap-3">
-          <Library className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">{studySet.title}</h1>
+          {onToggleSidebar && !isSidebarOpen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleSidebar}
+              className="h-10 w-10 text-primary hover:bg-primary/10 rounded-xl transition-all active:scale-95"
+              title="Expand View"
+            >
+              <PanelLeftOpen className="h-5 w-5" />
+            </Button>
+          )}
+
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest">
+            <Library className="h-3 w-3" />
+            Knowledge Portfolio
+          </div>
         </div>
-        <Badge variant={studySet.is_public ? "default" : "secondary"} className="flex items-center gap-1">
-          <Globe className="h-3 w-3" />
-          {studySet.is_public ? "Public" : "Private"}
-        </Badge>
-        {isAdmin && !isOwner && ( // Show admin badge if admin but not owner
-          <Badge variant="outline" className="flex items-center gap-1 text-blue-600 border-blue-600">
-            <ShieldCheck className="h-3 w-3" /> Admin View
-          </Badge>
-        )}
-        {studySet.group_id && studySet.study_set_groups?.[0]?.name && (
-          <Link to={`/groups/${studySet.group_id}`}>
-            <Badge variant="outline" className="flex items-center gap-1 cursor-pointer hover:bg-accent">
-              <Folder className="h-3 w-3" />
-              {studySet.study_set_groups[0].name}
-            </Badge>
-          </Link>
-        )}
+
+        {/* Title & Metadata */}
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-4">
+            <h1 className="text-4xl md:text-5xl font-black tracking-tighter leading-none">
+              {studySet.title}
+            </h1>
+
+            <div className="flex items-center gap-2">
+              <Badge variant={studySet.is_public ? "default" : "secondary"} className={cn(
+                "rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider border-0 shadow-sm",
+                studySet.is_public ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-indigo-500 text-white shadow-indigo-500/20"
+              )}>
+                {studySet.is_public ? <Globe className="h-3 w-3 mr-1.5" /> : <ShieldCheck className="h-3 w-3 mr-1.5" />}
+                {studySet.is_public ? "Public" : "Private"}
+              </Badge>
+
+              {isAdmin && !isOwner && (
+                <Badge variant="outline" className="rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider text-indigo-500 border-indigo-500/30 bg-indigo-500/5">
+                  Admin Oversight
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 text-muted-foreground">
+            <div className="flex items-center gap-1.5 font-bold text-sm">
+              <span className="h-2 w-2 rounded-full bg-primary/40" />
+              {studySet.cards.length} Flashcards
+            </div>
+
+            {studySet.group_id && studySet.study_set_groups && studySet.study_set_groups[0]?.name && (
+              <Link to={`/groups/${studySet.group_id}`} className="hover:text-primary transition-colors flex items-center gap-1.5 font-bold text-sm border-l border-border/60 pl-4">
+                <Folder className="h-4 w-4" />
+                {studySet.study_set_groups[0].name}
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon">
-            <MoreVertical className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem asChild>
-            <Link to="/" className="flex items-center">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
+
+      {/* Primary Actions Grid */}
+      <div className="flex items-center gap-3">
+        {isLoggedIn && studySet.cards.length > 0 && (
+          <Button
+            asChild
+            size="lg"
+            className="rounded-2xl px-8 py-7 bg-primary hover:bg-primary/90 shadow-premium hover:shadow-premium-hover font-black text-lg transition-all active:scale-95 group"
+          >
+            <Link to={`/sets/${studySet.id}/study`}>
+              <PlayCircle className="mr-3 h-6 w-6 transition-transform group-hover:scale-110" />
+              Start Study Session
             </Link>
-          </DropdownMenuItem>
-          {isLoggedIn && studySet.cards.length > 0 && ( // Only show "Start Study" if logged in and has cards
-            <DropdownMenuItem asChild>
-              <Link to={`/sets/${studySet.id}/study`} className="flex items-center">
-                <PlayCircle className="mr-2 h-4 w-4" /> Start Study
+          </Button>
+        )}
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-14 w-14 rounded-2xl border-border/60 hover:bg-secondary transition-all active:scale-90">
+              <MoreVertical className="h-6 w-6" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-premium border-border/40 backdrop-blur-xl bg-background/80">
+            <DropdownMenuItem asChild className="rounded-xl p-3">
+              <Link to="/" className="flex items-center font-bold">
+                <ArrowLeft className="mr-3 h-4 w-4" /> Back to Sets
               </Link>
             </DropdownMenuItem>
-          )}
-          {(isOwner || isAdmin) && ( // Allow edit if owner OR admin
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to={`/sets/${studySet.id}/edit`} className="flex items-center">
-                  <Pencil className="mr-2 h-4 w-4" /> Edit Set
-                </Link>
+
+            {(isOwner || isAdmin) && (
+              <>
+                <DropdownMenuSeparator className="my-2 opacity-40" />
+                <DropdownMenuItem asChild className="rounded-xl p-3">
+                  <Link to={`/sets/${studySet.id}/edit`} className="flex items-center font-bold">
+                    <Pencil className="mr-3 h-4 w-4" /> Edit Set Content
+                  </Link>
+                </DropdownMenuItem>
+
+                {isOwner && (
+                  <DropdownMenuItem onSelect={() => setIsSendInvitationDialogOpen(true)} className="rounded-xl p-3 flex items-center font-bold">
+                    <UserPlus className="mr-3 h-4 w-4 text-indigo-500" /> Share with Team
+                  </DropdownMenuItem>
+                )}
+
+                {isOwner && (
+                  <DropdownMenuItem onSelect={() => setIsResetProgressDialogOpen(true)} className="rounded-xl p-3 flex items-center font-bold">
+                    <RotateCcw className="mr-3 h-4 w-4 text-orange-500" /> Reset All Progress
+                  </DropdownMenuItem>
+                )}
+              </>
+            )}
+
+            {(isOwner || isAdmin || studySet.is_public) && (
+              <>
+                <DropdownMenuSeparator className="my-2 opacity-40" />
+                <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)} className="rounded-xl p-3 flex items-center font-bold">
+                  <Share2 className="mr-3 h-4 w-4 text-emerald-500" /> Export & Share
+                </DropdownMenuItem>
+              </>
+            )}
+
+            {studySet.is_public && !isOwner && (
+              <DropdownMenuItem
+                onClick={handleAddToMySets}
+                disabled={!isLoggedIn}
+                className="rounded-xl p-3 flex items-center font-bold text-primary"
+              >
+                <Plus className="mr-3 h-4 w-4" /> Clone to Library
               </DropdownMenuItem>
-              {isOwner && ( // Only owner can send invitations
-                <DropdownMenuItem onSelect={() => setIsSendInvitationDialogOpen(true)} className="flex items-center">
-                  <UserPlus className="mr-2 h-4 w-4" /> Invite Collaborator
-                </DropdownMenuItem>
-              )}
+            )}
 
-              {/* Reset Progress Trigger - only for owner */}
-              {isOwner && (
-                <DropdownMenuItem onSelect={() => setIsResetProgressDialogOpen(true)} className="flex items-center text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                  <RotateCcw className="mr-2 h-4 w-4" /> Reset Progress
+            {(isOwner || isAdmin) && (
+              <>
+                <DropdownMenuSeparator className="my-2 opacity-40" />
+                <DropdownMenuItem
+                  onSelect={preferences?.confirm_deletion ? () => setIsDeleteSetDialogOpen(true) : handleDeleteSet}
+                  className="rounded-xl p-3 flex items-center font-bold text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                >
+                  <Trash2 className="mr-3 h-4 w-4" /> Permanent Delete
                 </DropdownMenuItem>
-              )}
-            </>
-          )}
-          {(isOwner || isAdmin) && ( // Allow delete if owner OR admin
-            <>
-              <DropdownMenuSeparator />
-              {preferences?.confirm_deletion ? (
-                // Delete Set Trigger (conditional based on preferences)
-                <DropdownMenuItem onSelect={() => setIsDeleteSetDialogOpen(true)} className="flex items-center text-sm text-destructive outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                  <Trash2 className="h-4 w-4" /> Delete Set
-                </DropdownMenuItem>
-              ) : (
-                // Direct delete if no confirmation needed
-                <DropdownMenuItem onClick={handleDeleteSet} className="flex items-center text-destructive">
-                  <Trash2 className="h-4 w-4" /> Delete Set
-                </DropdownMenuItem>
-              )}
-            </>
-          )}
-          {studySet.is_public && !isOwner && (
-            <DropdownMenuItem
-              onClick={handleAddToMySets}
-              disabled={!isLoggedIn} // Disable if not logged in
-              className="flex items-center"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add to My Sets
-            </DropdownMenuItem>
-          )}
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-          {/* Share Option - Visible to Owner, Admin, or if Public */}
-          {(isOwner || isAdmin || studySet.is_public) && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => setIsShareDialogOpen(true)} className="flex items-center">
-                <Share2 className="mr-2 h-4 w-4" /> Share Set
-              </DropdownMenuItem>
-            </>
-          )}
-
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {/* AlertDialogs rendered outside DropdownMenuContent */}
+      {/* AlertDialogs */}
       <AlertDialog open={isResetProgressDialogOpen} onOpenChange={setIsResetProgressDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-[2.5rem] border-orange-500/20 shadow-2xl overflow-hidden glass-card">
+          <div className="absolute top-0 right-0 -mr-10 -mt-10 h-32 w-32 rounded-full bg-orange-500/10 blur-3xl" />
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to reset progress?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action will permanently delete all your learning progress for this study set. You will start learning all cards from scratch.
+            <AlertDialogTitle className="text-2xl font-black tracking-tight">Reset Study Data?</AlertDialogTitle>
+            <AlertDialogDescription className="text-lg font-medium leading-relaxed pt-2">
+              This will erase your learning memory for this set. You'll be back at square one, but sometimes a fresh start is what's needed for mastery.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleResetProgress}>
-              Reset Progress
+          <AlertDialogFooter className="pt-6">
+            <AlertDialogCancel className="rounded-xl font-bold py-6">Maintain Progress</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetProgress} className="rounded-xl font-bold py-6 bg-orange-500 hover:bg-orange-600">
+              Wipe Data & Reset
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {preferences?.confirm_deletion && (
-        <AlertDialog open={isDeleteSetDialogOpen} onOpenChange={setIsDeleteSetDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your
-                "{studySet.title}" study set and all its associated cards.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteSet}>
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+      <AlertDialog open={isDeleteSetDialogOpen} onOpenChange={setIsDeleteSetDialogOpen}>
+        <AlertDialogContent className="rounded-[2.5rem] border-red-500/20 shadow-2xl overflow-hidden glass-card">
+          <div className="absolute top-0 right-0 -mr-10 -mt-10 h-32 w-32 rounded-full bg-red-500/10 blur-3xl" />
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-black tracking-tight text-red-500">Delete Knowledge Set?</AlertDialogTitle>
+            <AlertDialogDescription className="text-lg font-medium leading-relaxed pt-2">
+              This action is absolute. Your collection "{studySet.title}" and all its data will be permanently removed from the neural network.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="pt-6">
+            <AlertDialogCancel className="rounded-xl font-bold py-6">Keep Set</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSet} className="rounded-xl font-bold py-6 bg-red-500 hover:bg-red-600">
+              Confirm Destruction
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {/* Send Collaboration Invitation Dialog */}
       {isOwner && (
         <SendCollaborationInvitationDialog
           studySetId={studySet.id}

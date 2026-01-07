@@ -3,8 +3,7 @@ import { UseFormReturn, useFieldArray } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { NotebookCard } from '@/components/NotebookCard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, Sparkles, Loader2 } from 'lucide-react';
 import { NovaAI } from '@/utils/NovaAI';
 import { useState } from 'react';
@@ -69,7 +68,7 @@ const FlashcardEditor: React.FC<FlashcardEditorProps> = ({ form }) => {
   };
 
   return (
-    <NotebookCard>
+    <Card className="glass-card shadow-premium rounded-[2.5rem] border-white/20">
       <CardHeader>
         <CardTitle>Flashcards</CardTitle>
       </CardHeader>
@@ -156,7 +155,7 @@ const FlashcardEditor: React.FC<FlashcardEditorProps> = ({ form }) => {
           Add Card
         </Button>
       </CardContent>
-    </NotebookCard>
+    </Card>
   );
 };
 

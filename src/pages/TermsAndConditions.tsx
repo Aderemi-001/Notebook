@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 
 const TermsAndConditions: React.FC = () => {
     return (
-        <div className="container mx-auto py-10 px-4 max-w-4xl animate-fade-in">
+        <div className="w-full px-4 md:px-8 py-10 max-w-4xl animate-fade-in">
             <div className="mb-6 flex items-center justify-between">
                 <Button variant="ghost" asChild>
                     <Link to="/">
@@ -70,23 +70,30 @@ const TermsAndConditions: React.FC = () => {
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">6. Termination</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">6. Subscription Cancellation</h3>
+                                <p>
+                                    You may cancel your Nova Pro subscription at any time. If you cancel, you will continue to have access to the pro features until the end of your current billing period. No further charges will be applied after cancellation. To cancel, verify your subscription status on the Pricing page or contact support.
+                                </p>
+                            </section>
+
+                            <section>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">7. Termination</h3>
                                 <p>
                                     We may terminate or suspend your account and bar access to the Service immediately, without prior notice or liability, under our sole discretion, for any reason whatsoever and without limitation, including but not limited to a breach of the Terms.
                                 </p>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">7. Changes to Terms</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">8. Changes to Terms</h3>
                                 <p>
                                     We reserve the right, at our sole discretion, to modify or replace these Terms at any time. What constitutes a material change will be determined at our sole discretion. By continuing to access or use our Service after those revisions become effective, you agree to be bound by the revised terms.
                                 </p>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">8. Contact Us</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">9. Contact Us</h3>
                                 <p>
-                                    If you have any questions about these Terms, please contact us at support@notebook.app.
+                                    If you have any questions about these Terms, please contact us at my.notebook.by.remi@gmail.com.
                                 </p>
                             </section>
                         </div>

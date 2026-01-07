@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,9 @@ export interface NoteSummary {
 const Notebook: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
-    const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+    const { noteId } = useParams();
+    const navigate = useNavigate();
+    const selectedNoteId = noteId || null;
     const [searchQuery, setSearchQuery] = useState("");
     const [isCreating, setIsCreating] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -60,7 +63,7 @@ const Notebook: React.FC = () => {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['notebook-list'] });
-            setSelectedNoteId(data.id);
+            navigate(`/notebook/${data.id}`);
             setIsCreating(false);
             showSuccess("New note created");
         },
@@ -79,14 +82,14 @@ const Notebook: React.FC = () => {
     const filteredNotes = notes?.filter(n => n.title.toLowerCase().includes(searchQuery.toLowerCase())) || [];
 
     return (
-        <div className="h-[calc(100vh-8rem)] md:h-[calc(100vh-6rem)] w-full bg-background border rounded-xl overflow-hidden shadow-sm flex flex-col md:flex-row">
+        <div className="h-[calc(100vh-8rem)] md:h-[calc(100vh-6rem)] w-full flex flex-col md:flex-row overflow-hidden">
             {/* Mobile View: Show list only if no note selected */}
-            <div className={cn("w-full md:w-[300px] lg:w-[350px] border-r flex flex-col bg-muted/10 transition-all duration-300 ease-in-out",
+            <div className={cn("w-full md:w-[300px] lg:w-[350px] border-r border-border/40 flex flex-col bg-muted/5 backdrop-blur-md transition-all duration-300 ease-in-out",
                 selectedNoteId ? "hidden" : "flex",
                 (!selectedNoteId || isSidebarOpen) ? "md:flex" : "md:hidden"
             )}>
                 {/* Header */}
-                <div className="p-4 border-b space-y-3">
+                <div className="p-4 border-b border-border/40 space-y-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <NotebookPen className="h-5 w-5 text-primary" />
@@ -106,7 +109,7 @@ const Notebook: React.FC = () => {
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Search..."
-                            className="pl-8 bg-background"
+                            className="pl-8 bg-background/50 backdrop-blur-sm"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -125,7 +128,7 @@ const Notebook: React.FC = () => {
                         {filteredNotes.map(note => (
                             <button
                                 key={note.id}
-                                onClick={() => setSelectedNoteId(note.id)}
+                                onClick={() => navigate(`/notebook/${note.id}`)}
                                 className={cn(
                                     "flex flex-col items-start gap-1 p-3 rounded-lg text-left transition-colors hover:bg-accent",
                                     selectedNoteId === note.id ? "bg-accent/80 ring-1 ring-border" : "bg-transparent"
@@ -154,14 +157,14 @@ const Notebook: React.FC = () => {
             </div>
 
             {/* Editor Area */}
-            <div className={cn("flex-1 h-full bg-background flex flex-col", !selectedNoteId ? "hidden md:flex" : "flex")}>
+            <div className={cn("flex-1 h-full bg-transparent flex flex-col", !selectedNoteId ? "hidden md:flex" : "flex")}>
                 {selectedNoteId ? (
                     <UnifiedEditor
                         key={selectedNoteId} // Force remount on switch
                         noteId={selectedNoteId}
-                        onBack={() => setSelectedNoteId(null)} // Mobile back
+                        onBack={() => navigate('/notebook')} // Mobile back
                         onDelete={() => {
-                            setSelectedNoteId(null);
+                            navigate('/notebook');
                             queryClient.invalidateQueries({ queryKey: ['notebook-list'] });
                         }}
                         onUpdate={() => {

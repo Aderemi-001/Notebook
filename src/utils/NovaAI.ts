@@ -3,17 +3,22 @@
  * 
  * Hybrid AI Engine for Nova
  * Primary Provider: Groq (Llama 3 70b) - Ultra-fast LPU inference
- * Fallback Provider: Google Gemini (Flash 1.5) - High reliability & context
+ * Fallback Provider: Google Gemini (2.5 Flash) - High reliability & context
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import Groq from 'groq-sdk';
+
 
 export interface NovaAIContext {
     route: string;
     userName: string;
     timeOfDay: 'morning' | 'afternoon' | 'evening' | 'late_night';
     conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>;
+    activeStudySet?: {
+        id: string;
+        title: string;
+        description?: string;
+        topCards?: { term: string; definition: string }[];
+    };
 }
 
 export interface AIExtractedCard {
@@ -58,25 +63,16 @@ export interface AIStudyContent {
     relationships: AIExtractedRelationship[];
 }
 
+export interface AIAdminMessage {
+    title: string;
+    content: string;
+    suggestedType: 'info' | 'warning' | 'success' | 'alert';
+}
+
 export class NovaAI {
-    private static getGeminiClient() {
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
-            console.error("❌ No Google Gemini API Key found!");
-            throw new Error("Missing VITE_GEMINI_API_KEY");
-        }
-        return new GoogleGenerativeAI(apiKey);
-    }
+    // Removed for security: private static getGeminiClient()
 
-    private static getGroqClient() {
-        const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-
-        if (!apiKey) {
-            console.warn("⚠️ No Groq API Key found. Skipping Groq.");
-            return null;
-        }
-        return new Groq({ apiKey, dangerouslyAllowBrowser: true });
-    }
+    // Removed for security: private static getGroqClient()
 
     /**
      * Executes an AI task with automatic fallback.
@@ -84,15 +80,12 @@ export class NovaAI {
      */
     private static async executeWithFallback<T>(
         actionName: string,
-        groqFn: (groq: Groq) => Promise<T>,
-        geminiFn: (gemini: any) => Promise<T>
+        groqFn: () => Promise<T>,
+        geminiFn: () => Promise<T>
     ): Promise<T> {
-        // 1. Try Groq (Primary)
+        // 1. Try Groq (Primary) via Backend
         try {
-            const groq = this.getGroqClient();
-            if (groq) {
-                return await groqFn(groq);
-            }
+            return await groqFn();
         } catch (error: any) {
             // Check for Rate Limits (429) or other API errors
             const isRateLimit = error?.status === 429 || error?.toString().includes('429');
@@ -107,12 +100,96 @@ export class NovaAI {
 
         // 2. Fallback to Gemini (Secondary)
         try {
-            const gemini = this.getGeminiClient();
-            return await geminiFn(gemini);
+            return await geminiFn();
         } catch (error) {
             console.error(`❌ [NovaAI] Gemini Fallback Failed for ${actionName}:`, error);
             throw error; // If both fail, throw
         }
+    }
+
+    /**
+     * Resilient Gemini Executor using Backend Proxy
+     * Recursively tries models via /api/gemini until one works.
+     */
+    private static async runGeminiWithRetry(
+        systemPrompt: string,
+        userPrompt: string,
+        jsonMode: boolean = false
+    ): Promise<any> {
+        const models = [
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-001",
+            "gemini-1.5-pro"
+        ];
+
+        console.log("🔍 [NovaAI Debug] Starting Gemini Request via Backend Proxy...");
+
+        let lastError: any = null;
+
+        for (const modelName of models) {
+            try {
+                const response = await fetch('/api/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        systemPrompt,
+                        userPrompt,
+                        modelName,
+                        jsonMode
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Server responded with ${response.status}`);
+                }
+
+                const data = await response.json();
+                const responseText = data.text;
+
+                if (jsonMode) {
+                    try {
+                        // Clean up markdown code blocks if present (common in 1.0 pro)
+                        const cleaned = responseText.replace(/```json/g, '').replace(/```/g, '');
+                        return JSON.parse(cleaned);
+                    } catch (parseError) {
+                        console.error("JSON Parse Error:", parseError);
+                        throw new Error("Received invalid JSON from AI");
+                    }
+                }
+                return responseText;
+
+            } catch (e: any) {
+                console.warn(`⚠️ Model ${modelName} failed:`, e.message);
+                lastError = e;
+            }
+        }
+
+        console.error("❌ [NovaAI Debug] All models failed.");
+        throw lastError || new Error("All Gemini models failed via backend.");
+    }
+
+    /**
+     * Shared Helper for Groq Backend Requests
+     */
+    private static async runGroqViaBackend(
+        messages: any[],
+        model: string = "llama-3.3-70b-versatile",
+        jsonMode: boolean = false
+    ): Promise<any> {
+        const response = await fetch('/api/groq', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages, model, jsonMode })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Groq Backend Error");
+        }
+
+        const data = await response.json();
+        return jsonMode ? JSON.parse(data.content) : data.content;
     }
 
     /**
@@ -134,30 +211,35 @@ Guidelines:
 3. Identify top 10-20 core concepts.
 4. Return ONLY raw JSON code, no markdown formatting.`;
 
-        const userPrompt = `Analyze this content: \n\n${text.substring(0, 45000)}`;
+        // Large Document Handling
+        // Groq (Llama 3) has a limited context window (approx 8k-128k pending model).
+        // Gemini 2.5 Flash has 1M context window.
+        // If text is > 40k chars, we skip Groq to ensure full context is read.
+        const CHAR_LIMIT_FOR_GROQ = 40000;
+        const isLargeDoc = text.length > CHAR_LIMIT_FOR_GROQ;
+
+        // Note: We do NOT truncate 'text' here anymore. We pass the full text.
 
         try {
             return await this.executeWithFallback<AIStudyContent>(
                 'generateStudyContent',
-                async (groq) => {
-                    const completion = await groq.chat.completions.create({
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: userPrompt }
-                        ],
-                        model: "llama-3.3-70b-versatile",
-                        temperature: 0.1,
-                        response_format: { type: "json_object" }
-                    });
-                    return JSON.parse(completion.choices[0]?.message?.content || "{}");
+                async () => {
+                    // SKIP Groq for large docs to avoid token limit errors or truncation
+                    if (isLargeDoc) {
+                        throw new Error("Text too long for Groq. Switching to Gemini (Large Doc Mode).");
+                    }
+
+                    return await this.runGroqViaBackend([
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: `Analyze this content: \n\n${text}` }
+                    ], "llama-3.3-70b-versatile", true);
                 },
-                async (gemini) => {
-                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest", generationConfig: { responseMimeType: "application/json" } });
-                    const result = await model.generateContent(systemPrompt + "\n\n" + userPrompt);
-                    return JSON.parse(result.response.text());
+                async () => {
+                    return await this.runGeminiWithRetry(systemPrompt, "Analyze this content: \n\n" + text, true);
                 }
             );
         } catch (e) {
+            console.error("AI Generation Error:", e);
             return { cards: [], concepts: [], relationships: [] };
         }
     }
@@ -172,20 +254,14 @@ Guidelines:
         try {
             return await this.executeWithFallback<string>(
                 'generateDefinition',
-                async (groq) => {
-                    const completion = await groq.chat.completions.create({
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: userPrompt }
-                        ],
-                        model: "llama-3.3-70b-versatile",
-                    });
-                    return completion.choices[0]?.message?.content?.trim() || "";
+                async () => {
+                    return await this.runGroqViaBackend([
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: userPrompt }
+                    ]);
                 },
-                async (gemini) => {
-                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest" });
-                    const result = await model.generateContent(systemPrompt + "\n\n" + userPrompt);
-                    return result.response.text().trim();
+                async () => {
+                    return await this.runGeminiWithRetry(systemPrompt, userPrompt, false);
                 }
             );
         } catch (e) {
@@ -202,20 +278,14 @@ Guidelines:
         try {
             return await this.executeWithFallback<string>(
                 'improveText',
-                async (groq) => {
-                    const completion = await groq.chat.completions.create({
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: text }
-                        ],
-                        model: "llama-3.3-70b-versatile",
-                    });
-                    return completion.choices[0]?.message?.content?.trim() || text;
+                async () => {
+                    return await this.runGroqViaBackend([
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: text }
+                    ]);
                 },
-                async (gemini) => {
-                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest" });
-                    const result = await model.generateContent(systemPrompt + "\n\n" + text);
-                    return result.response.text().trim();
+                async () => {
+                    return await this.runGeminiWithRetry(systemPrompt, text, false);
                 }
             );
         } catch (e) {
@@ -224,17 +294,39 @@ Guidelines:
     }
 
     public static async chat(query: string, context: NovaAIContext): Promise<string> {
-        const systemPrompt = `You are "Nova", the premium Version 2.0 AI Learning Assistant built into the "Notebook" platform.
-You are professional, encouraging, and highly intelligent. Your goal is to help users master their subjects with speed and clarity.
+        const systemPrompt = `You are "Nova" (v3.0), the AI engine of the "Notebook" platform.
+You are a highly efficient, focused, and proactive study partner.
 
-Core Guidelines:
-1. Formatting: Use **bold** for emphasis or titles. NEVER use # hashtags or markdown headers.
-2. Structure: Use clean bullet points for lists. Use line breaks to separate ideas.
-3. Identity: You are Notebook v2.0, powered by a Hybrid Architecture (Groq + Gemini).
-4. Pedagogy: Provide active learning tips and clear definitions.
-5. NO Citations: Do not include page numbers or bracketed citations.
+Guidelines:
+1. **Be Concise**: Avoid fluff. Get straight to the answer.
+2. **Be Action-Oriented**: If a user wants to do something (create, study, quiz), guide them to it or explain how.
+3. **Format**: Use **bold** for key concepts. Use lists for steps.
+4. **Tone**: Professional, encouraging, but crisp. No long philosophical ramblings unless asked.
+5. **Context**: You know the user is ${context.userName} on page ${context.route}.
+6. **Multiple Choice**: If user replies with a single letter (A, B, C, D) or short phrase, treat it as an answer to your previous question. Do NOT ask for clarification if it looks like an answer.
+${context.activeStudySet ? `6. **Active Study Set**: User is looking at set "${context.activeStudySet.title}" (ID: ${context.activeStudySet.id}).
+   - Description: ${context.activeStudySet.description || "N/A"}
+   - Top Cards/Context: ${JSON.stringify(context.activeStudySet.topCards?.slice(0, 5) || [])}
+   - USE THIS CONTEXT to answer specific questions about the material.` : ""}
 
-Context: User=${context.userName}, Page=${context.route}`;
+Site Map (Use these for navigation):
+- / (Dashboard)
+- /create (Create Set)
+- /sets (My Sets)
+- /explore-public-sets (Explore Sets)
+- /exams (Practice Quiz)
+- /textbook-finder (Textbook Finder)
+- /constellation (Constellation)
+- /essays (Essay Practice)
+- /notebook (My Notes)
+- /profile, /settings
+
+Examples:
+User: "I'm tired"
+Nova: "Take a break. Rest is vital for memory consolidation. Come back in 20 minutes."
+
+User: "take me to explore sets"
+Nova: "Navigating to Explore Sets." (Action: navigate to /explore-public-sets)`;
 
         // Prepare messages for Groq
         const messages: any[] = [
@@ -246,24 +338,11 @@ Context: User=${context.userName}, Page=${context.route}`;
         try {
             return await this.executeWithFallback<string>(
                 'chat',
-                async (groq) => {
-                    const completion = await groq.chat.completions.create({
-                        messages: messages,
-                        model: "llama-3.3-70b-versatile",
-                    });
-                    return completion.choices[0]?.message?.content || "";
+                async () => {
+                    return await this.runGroqViaBackend(messages);
                 },
-                async (gemini) => {
-                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest" });
-                    const chat = model.startChat({
-                        history: context.conversationHistory.map(msg => ({
-                            role: msg.role === 'assistant' ? 'model' : 'user',
-                            parts: [{ text: msg.content }]
-                        })),
-                        systemInstruction: systemPrompt,
-                    });
-                    const result = await chat.sendMessage(query);
-                    return result.response.text();
+                async () => {
+                    return await this.runGeminiWithRetry(systemPrompt, query);
                 }
             );
         } catch (e) {
@@ -292,21 +371,14 @@ Format: Return ONLY a JSON object with:
         try {
             return await this.executeWithFallback<AIEssayGrade | null>(
                 'gradeEssay',
-                async (groq) => {
-                    const completion = await groq.chat.completions.create({
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: userPrompt }
-                        ],
-                        model: "llama-3.3-70b-versatile",
-                        response_format: { type: "json_object" }
-                    });
-                    return JSON.parse(completion.choices[0]?.message?.content || "null");
+                async () => {
+                    return await this.runGroqViaBackend([
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: userPrompt }
+                    ], "llama-3.3-70b-versatile", true);
                 },
-                async (gemini) => {
-                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest", generationConfig: { responseMimeType: "application/json" } });
-                    const result = await model.generateContent(systemPrompt + "\n\n" + userPrompt);
-                    return JSON.parse(result.response.text());
+                async () => {
+                    return await this.runGeminiWithRetry(systemPrompt, userPrompt, true);
                 }
             );
         } catch (e) {
@@ -323,21 +395,14 @@ Format: Return ONLY a JSON object with:
         try {
             return await this.executeWithFallback<AISentimentResult>(
                 'analyzeSentiment',
-                async (groq) => {
-                    const completion = await groq.chat.completions.create({
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: text }
-                        ],
-                        model: "llama-3.3-70b-versatile",
-                        response_format: { type: "json_object" }
-                    });
-                    return JSON.parse(completion.choices[0]?.message?.content || "{}");
+                async () => {
+                    return await this.runGroqViaBackend([
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: text }
+                    ], "llama-3.3-70b-versatile", true);
                 },
-                async (gemini) => {
-                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest", generationConfig: { responseMimeType: "application/json" } });
-                    const result = await model.generateContent(systemPrompt + "\n\nUser Input: " + text);
-                    return JSON.parse(result.response.text());
+                async () => {
+                    return await this.runGeminiWithRetry(systemPrompt, "User Input: " + text, true);
                 }
             );
         } catch (e) {
@@ -354,20 +419,14 @@ Format: Return ONLY a JSON object with:
         try {
             return await this.executeWithFallback<string>(
                 'correctSpelling',
-                async (groq) => {
-                    const completion = await groq.chat.completions.create({
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: text }
-                        ],
-                        model: "llama-3.3-70b-versatile",
-                    });
-                    return completion.choices[0]?.message?.content?.trim() || text;
+                async () => {
+                    return await this.runGroqViaBackend([
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: text }
+                    ]);
                 },
-                async (gemini) => {
-                    const model = gemini.getGenerativeModel({ model: "gemini-flash-latest" });
-                    const result = await model.generateContent(systemPrompt + "\n\n" + text);
-                    return result.response.text().trim();
+                async () => {
+                    return await this.runGeminiWithRetry(systemPrompt, text, false);
                 }
             );
         } catch (e) {
@@ -395,4 +454,43 @@ Format: Return ONLY a JSON object with:
 
         return "I'm currently offline, but I can still help! Try asking about specific features like creating sets, taking quizzes, or managing your notes.";
     }
+    // End of class
+    /**
+     * AI-powered Admin Message Generation
+     */
+    static async generateAdminMessage(topic: string): Promise<AIAdminMessage> {
+        const systemPrompt = `You are an expert Communications Director for a tech platform. 
+Task: Draft a concise, professional notification message based on the user's topic.
+Output: Return ONLY a valid JSON object.
+Structure:
+{
+  "title": "Short, catchy title (max 50 chars)",
+  "content": "Clear, informative message body (max 200 chars)",
+  "suggestedType": "info" | "warning" | "success" | "alert"
 }
+Tone: Professional, helpful, and direct.`;
+
+        try {
+            return await this.executeWithFallback<AIAdminMessage>(
+                'generateAdminMessage',
+                async () => {
+                    return await this.runGroqViaBackend([
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: `Topic: ${topic}` }
+                    ], "llama-3.3-70b-versatile", true);
+                },
+                async () => {
+                    return await this.runGeminiWithRetry(systemPrompt, `Topic: ${topic}`, true);
+                }
+            );
+        } catch (e) {
+            console.error("Admin Gen Error:", e);
+            return {
+                title: "Notification",
+                content: topic,
+                suggestedType: 'info'
+            };
+        }
+    }
+}
+

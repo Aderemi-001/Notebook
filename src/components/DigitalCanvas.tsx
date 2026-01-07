@@ -59,6 +59,10 @@ const DigitalCanvas: React.FC<DigitalCanvasProps> = ({
             const rect = container.getBoundingClientRect();
             // Important: Avoid 0x0.
             if (rect.width > 0 && rect.height > 0) {
+                // Round dimensions to integers to avoid sub-pixel blurring loops
+                const newWidth = Math.floor(rect.width);
+                const newHeight = Math.floor(rect.height);
+
                 // Save current content before resizing!
                 const currentCanvas = canvasRef.current;
                 let tempSnapshot: string | null = null;
@@ -69,7 +73,7 @@ const DigitalCanvas: React.FC<DigitalCanvasProps> = ({
                     tempSnapshot = currentCanvas.toDataURL();
                 }
 
-                setDimensions({ width: rect.width, height: rect.height });
+                setDimensions({ width: newWidth, height: newHeight });
 
                 // Restore content
                 if (tempSnapshot) setCanvasState(tempSnapshot);
@@ -264,9 +268,10 @@ const DigitalCanvas: React.FC<DigitalCanvasProps> = ({
     return (
         <div ref={containerRef} className={`flex flex-col gap-4 h-full w-full ${className} relative`}>
             {/* Extended Toolbar with Visible Slider */}
-            <div className="absolute bottom-6 md:bottom-auto md:top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-white/95 backdrop-blur border shadow-md rounded-full z-50 transition-all hover:bg-white max-w-[95vw] overflow-x-auto safe-area-bottom">
-                <Button variant={tool === 'pen' ? "default" : "ghost"} size="icon" onClick={() => setTool('pen')} className="rounded-full flex-shrink-0 h-10 w-10 md:h-9 md:w-9"><Pen className="h-5 w-5 md:h-4 md:w-4" /></Button>
-                <Button variant={tool === 'eraser' ? "default" : "ghost"} size="icon" onClick={() => setTool('eraser')} className="rounded-full flex-shrink-0 h-10 w-10 md:h-9 md:w-9"><Eraser className="h-5 w-5 md:h-4 md:w-4" /></Button>
+            {/* Extended Toolbar with Visible Slider */}
+            <div className="flex items-center justify-center gap-2 p-2 bg-secondary/80 backdrop-blur-md border border-border/50 shadow-sm rounded-2xl mx-auto w-fit max-w-full overflow-x-auto transition-all safe-area-bottom mb-2">
+                <Button variant={tool === 'pen' ? "default" : "ghost"} size="icon" onClick={() => setTool('pen')} className="rounded-xl flex-shrink-0 h-10 w-10 md:h-9 md:w-9"><Pen className="h-5 w-5 md:h-4 md:w-4" /></Button>
+                <Button variant={tool === 'eraser' ? "default" : "ghost"} size="icon" onClick={() => setTool('eraser')} className="rounded-xl flex-shrink-0 h-10 w-10 md:h-9 md:w-9"><Eraser className="h-5 w-5 md:h-4 md:w-4" /></Button>
 
                 <div className="w-px h-6 md:h-5 bg-border mx-1 flex-shrink-0" />
 
@@ -292,8 +297,8 @@ const DigitalCanvas: React.FC<DigitalCanvasProps> = ({
 
                 <div className="w-px h-6 md:h-5 bg-border mx-1 flex-shrink-0" />
 
-                <Button variant="ghost" size="icon" onClick={clearCanvas} className="rounded-full hover:bg-destructive/10 hover:text-destructive flex-shrink-0 h-10 w-10 md:h-9 md:w-9" title="Clear Canvas"><Trash2 className="h-5 w-5 md:h-4 md:w-4" /></Button>
-                <Button variant="ghost" size="icon" onClick={handleManualSave} className="rounded-full flex-shrink-0 h-10 w-10 md:h-9 md:w-9" title="Save"><Save className="h-5 w-5 md:h-4 md:w-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={clearCanvas} className="rounded-xl hover:bg-destructive/10 hover:text-destructive flex-shrink-0 h-10 w-10 md:h-9 md:w-9" title="Clear Canvas"><Trash2 className="h-5 w-5 md:h-4 md:w-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={handleManualSave} className="rounded-xl flex-shrink-0 h-10 w-10 md:h-9 md:w-9" title="Save"><Save className="h-5 w-5 md:h-4 md:w-4" /></Button>
             </div>
 
             {/* Canvas - Simple Full Screen */}

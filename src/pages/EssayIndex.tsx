@@ -3,8 +3,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Trash2, FileText } from 'lucide-react';
-import { NotebookCard } from '@/components/NotebookCard';
-import { CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -71,7 +70,7 @@ const EssayIndex: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in">
+    <div className="w-full px-4 md:px-8 py-10 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <FileText className="h-8 w-8 text-primary" /> Essay Practice
@@ -86,7 +85,7 @@ const EssayIndex: React.FC = () => {
       ) : questions && questions.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {questions.map((q: any) => (
-            <NotebookCard key={q.id} className="flex flex-col relative group">
+            <Card key={q.id} className="glass-card shadow-premium rounded-[2rem] border-white/20 hover:border-primary/30 transition-all duration-300 flex flex-col relative group">
               <CardHeader>
                 <CardTitle className="line-clamp-2 text-lg">{q.question_text}</CardTitle>
                 <CardDescription>{q.study_sets?.title || 'General'}</CardDescription>
@@ -104,7 +103,7 @@ const EssayIndex: React.FC = () => {
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </CardFooter>
-            </NotebookCard>
+            </Card>
           ))}
         </div>
       ) : (

@@ -329,6 +329,17 @@ const CognitiveConstellation: React.FC = () => {
     lastPointer.current = { x: e.clientX, y: e.clientY };
   };
 
+  // Tutorial State
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('hasSeenConstellationTutorial');
+    if (!hasSeen) {
+      setShowTutorial(true);
+      localStorage.setItem('hasSeenConstellationTutorial', 'true');
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh]">
@@ -362,33 +373,79 @@ const CognitiveConstellation: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto py-6 h-[calc(100vh-80px)] overflow-hidden flex flex-col">
+    <div className="container mx-auto py-4 sm:py-6 h-[calc(100vh-80px)] overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4 px-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 px-4 gap-4">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" asChild>
             <Link to="/"><ArrowLeft className="h-4 w-4" /></Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-3">
               <Brain className="h-7 w-7 text-primary" />
-              Cognitive Constellation <span className="text-xs font-normal px-2 py-0.5 bg-primary/10 text-primary rounded-full">Beta</span>
+              Constellation <span className="text-xs font-normal px-2 py-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full">Beta</span>
             </h1>
-            <p className="text-muted-foreground text-sm">Visualizing {nodes.length} concepts and {links.length} connections</p>
+            <p className="text-muted-foreground text-xs sm:text-sm">Visualizing {nodes.length} concepts and {links.length} links</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={() => setScale(s => Math.min(s * 1.2, 3))}>
-            <ZoomIn className="h-4 w-4" />
+
+        {/* Toolbar */}
+        <div className="flex gap-2 self-end sm:self-auto">
+          <Button variant="outline" size="icon" onClick={() => setShowTutorial(true)} className="h-10 w-10">
+            <span className="text-lg font-bold">?</span>
           </Button>
-          <Button variant="outline" size="icon" onClick={() => setScale(s => Math.max(s / 1.2, 0.5))}>
-            <ZoomOut className="h-4 w-4" />
+          <div className="w-px h-10 bg-border mx-1" />
+          <Button variant="outline" size="icon" onClick={() => setScale(s => Math.min(s * 1.2, 3))} className="h-10 w-10">
+            <ZoomIn className="h-5 w-5" />
           </Button>
-          <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
-            <RefreshCw className="h-4 w-4" />
+          <Button variant="outline" size="icon" onClick={() => setScale(s => Math.max(s / 1.2, 0.5))} className="h-10 w-10">
+            <ZoomOut className="h-5 w-5" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={() => window.location.reload()} className="h-10 w-10">
+            <RefreshCw className="h-5 w-5" />
           </Button>
         </div>
       </div>
+
+      {/* Tutorial Dialog */}
+      <Dialog open={showTutorial} onOpenChange={setShowTutorial}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Sparkles className="h-5 w-5 text-indigo-500" /> Welcome to Constellation
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-muted-foreground text-sm">
+              This 3D graph visualizes how all your study concepts connect.
+            </p>
+            <div className="grid gap-4">
+              <div className="flex gap-3 items-start">
+                <div className="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-lg">
+                  <Brain className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h4 className="font-semibold">Concepts (Stars)</h4>
+                  <p className="text-xs text-muted-foreground">Each node is a concept. Use <ZoomIn className="h-3 w-3 inline" /> buttons to zoom in and read the labels.</p>
+                </div>
+              </div>
+              <div className="flex gap-3 items-start">
+                <div className="bg-pink-100 dark:bg-pink-900/50 p-2 rounded-lg">
+                  <Sparkles className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                </div>
+                <div>
+                  <h4 className="font-semibold">Interactions</h4>
+                  <p className="text-xs text-muted-foreground">
+                    • <strong>Drag</strong> to move the view or rearrange stars.<br />
+                    • <strong>Click</strong> a star to see study sets containing it.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <Button className="w-full mt-4" onClick={() => setShowTutorial(false)}>Got it, let's explore!</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog for Related Cards */}
       <Dialog open={isCardsOpen} onOpenChange={setIsCardsOpen}>
@@ -473,25 +530,26 @@ const CognitiveConstellation: React.FC = () => {
                 style={{ cursor: 'pointer' }}
               >
                 {/* Glow effect */}
-                <circle r="20" fill="url(#glow)" opacity="0.5" className="animate-pulse" />
+                <circle r="25" fill="url(#glow)" opacity="0.5" className="animate-pulse" />
 
                 {/* Core */}
                 <circle
-                  r={hoveredNode?.id === node.id ? 8 : 5}
-                  fill={hoveredNode?.id === node.id ? "#a855f7" : "#6366f1"}
+                  r={hoveredNode?.id === node.id ? 10 : 6}
+                  fill={hoveredNode?.id === node.id ? "#ec4899" : "#6366f1"}
                   stroke="#fff"
                   strokeWidth="2"
                   className="transition-all duration-300"
                 />
 
-                {/* Label */}
+                {/* Label - Larger font size */}
                 <text
-                  y={20}
+                  y={24}
                   textAnchor="middle"
-                  fill={hoveredNode?.id === node.id ? "#fff" : "rgba(255,255,255,0.7)"}
-                  fontSize={hoveredNode?.id === node.id ? "14" : "10"}
-                  fontWeight={hoveredNode?.id === node.id ? "bold" : "normal"}
-                  className="pointer-events-none select-none transition-all"
+                  fill={hoveredNode?.id === node.id ? "#fff" : "rgba(255,255,255,0.9)"}
+                  fontSize={hoveredNode?.id === node.id ? "16" : "12"}
+                  fontWeight={hoveredNode?.id === node.id ? "bold" : "500"}
+                  className="pointer-events-none select-none transition-all drop-shadow-md"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
                 >
                   {node.name}
                 </text>
@@ -510,7 +568,7 @@ const CognitiveConstellation: React.FC = () => {
 
         {/* Hover Info Panel */}
         {hoveredNode && (
-          <div className="absolute bottom-4 left-4 max-w-xs bg-black/80 backdrop-blur border border-white/10 p-4 rounded-lg text-white shadow-xl animate-fade-in pointer-events-none">
+          <div className="absolute bottom-4 left-4 max-w-xs bg-black/80 backdrop-blur border border-white/10 p-4 rounded-lg text-white shadow-xl animate-fade-in pointer-events-none z-50">
             <h3 className="font-bold text-lg text-indigo-300">{hoveredNode.name}</h3>
             {hoveredNode.description && <p className="text-sm text-slate-300 mt-1">{hoveredNode.description}</p>}
             <div className="mt-2 text-xs text-slate-500">

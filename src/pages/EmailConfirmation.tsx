@@ -1,15 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { NotebookCard } from '@/components/NotebookCard';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CheckCircle2 } from 'lucide-react';
 
 const EmailConfirmation: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
       <div className="max-w-md w-full space-y-8">
-        <NotebookCard className="p-8 text-center">
+        <Card className="glass-card shadow-premium rounded-[2.5rem] p-8 text-center bg-white/50 dark:bg-black/20 border-white/20">
           <CardHeader>
             <CardTitle className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">
               Email Confirmation Test Page
@@ -24,7 +23,7 @@ const EmailConfirmation: React.FC = () => {
               <Link to="/login">Go to Login</Link>
             </Button>
           </CardContent>
-        </NotebookCard>
+        </Card>
       </div>
     </div>
   );

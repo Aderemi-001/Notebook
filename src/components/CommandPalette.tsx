@@ -92,14 +92,14 @@ export function CommandPalette() {
                                     <Plus className="mr-2 h-4 w-4" />
                                     <span>Create New Note</span>
                                 </CommandItem>
-                                <CommandItem onSelect={() => runCommand(() => navigate("/sets/new"))}>
+                                <CommandItem onSelect={() => runCommand(() => navigate("/create"))}>
                                     <Plus className="mr-2 h-4 w-4" />
                                     <span>Create Study Set</span>
                                 </CommandItem>
                             </CommandGroup>
                             <CommandSeparator />
                             <CommandGroup heading="Navigation">
-                                <CommandItem onSelect={() => runCommand(() => navigate("/dashboard"))}>
+                                <CommandItem onSelect={() => runCommand(() => navigate("/"))}>
                                     <LayoutDashboard className="mr-2 h-4 w-4" />
                                     <span>Dashboard</span>
                                 </CommandItem>

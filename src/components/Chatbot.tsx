@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Send, Loader2, Bot, User2, ThumbsUp, ThumbsDown, Sparkles, Minimize2, Maximize2 } from 'lucide-react';
+import { Send, Sparkles, Bot, User2, ThumbsUp, ThumbsDown, X, Maximize2, Minimize2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/useAuth';
 import { ChatMessage } from '@/components/chatbot/types';
 import { cn } from '@/lib/utils';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getDynamicSuggestions, parseAndRenderLinks } from '@/components/chatbot/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { NovaBrain, NovaContext } from '@/components/chatbot/logic/NovaBrain';
@@ -22,7 +22,48 @@ const Chatbot: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user, loading: isLoadingAuth } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const inactivityTimerRef = useRef<number | null>(null);
+
+  // Check for active study set
+  const matchSet = location.pathname.match(/\/sets\/([a-f0-9-]+)/);
+  const activeSetId = matchSet ? matchSet[1] : null;
+
+  // Fetch active set context if on a set page
+  const [activeSetContext, setActiveSetContext] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchSetContext = async () => {
+      if (!activeSetId || !isOpen) {
+        setActiveSetContext(null);
+        return;
+      }
+
+      try {
+        // Fetch basic set info and top cards
+        const { data: setInfo, error } = await supabase
+          .from('study_sets')
+          .select('id, title, description, cards(term, definition)')
+          .eq('id', activeSetId)
+          .single();
+
+        if (error) throw error;
+
+        if (setInfo) {
+          setActiveSetContext({
+            id: setInfo.id,
+            title: setInfo.title,
+            description: setInfo.description,
+            topCards: setInfo.cards?.slice(0, 5) // Send top 5 cards for context
+          });
+        }
+      } catch (e) {
+        console.error("Failed to fetch set context for chatbot:", e);
+      }
+    };
+
+    fetchSetContext();
+  }, [activeSetId, isOpen]);
 
   // State for context awareness
   const [thinkingStep, setThinkingStep] = useState<string | null>(null);
@@ -44,6 +85,43 @@ const Chatbot: React.FC = () => {
       }]);
     }, INACTIVITY_TIMEOUT_MS) as unknown as number;
   }, []);
+
+  useEffect(() => {
+    // Mobile Back Button Support
+    if (isOpen) {
+      if (!isMinimized) {
+        // Push state only if we aren't already in a chat state (simple check)
+        // This makes "Back" close the chatbot on mobile instead of leaving the app
+        const currentState = window.history.state;
+        if (!currentState || currentState.modal !== 'chatbot') {
+          window.history.pushState({ modal: 'chatbot' }, '');
+        }
+      }
+    } else {
+      // If closed, we might need to pop state if we were the one who pushed it?
+      // Actually, safer to just rely on the popstate event handler below to clean up state 
+      // OR let valid navigation handle it. 
+      // But if user clicks X, we should ideally go back() if we are in modal state, 
+      // but that might be complex. 
+      // Simplest: just ensure when BACK is pressed, we close.
+    }
+  }, [isOpen, isMinimized]);
+
+  useEffect(() => {
+    const handlePopState = (_event: PopStateEvent) => {
+      // If back button is pressed and checking specific logic isn't strictly needed 
+      // if we assume only chatbot pushes this 'modal' state.
+      // But simpler: if Back is pressed and Chatbot is Open, it will trigger this.
+      if (isOpen) {
+        setIsOpen(false);
+        // We prevent default behavior? No, popstate happened already.
+        // We just update React state to match.
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && !isMinimized) {
@@ -96,10 +174,22 @@ const Chatbot: React.FC = () => {
       else if (currentHour >= 17 && currentHour < 22) timeOfDay = 'evening';
       else if (currentHour >= 22 || currentHour < 5) timeOfDay = 'late_night';
 
+      // Convert recent chat messages to history format for AI context
+      const history = messages
+        .filter(m => m.sender === 'user' || m.sender === 'bot')
+        .slice(-10) // Keep last 10 messages for context window efficiency
+        .map(m => ({
+          role: m.sender === 'user' ? 'user' as const : 'assistant' as const,
+          // Prefer rawText for bot messages (which may be JSX), fallback to text if string
+          content: m.rawText || (typeof m.text === 'string' ? m.text : '')
+        }));
+
       const context: NovaContext = {
         route: location.pathname,
         user: user,
-        timeOfDay: timeOfDay
+        timeOfDay: timeOfDay,
+        activeStudySet: activeSetContext,
+        conversationHistory: history
       };
 
       // 2. Process via Nova Native Brain
@@ -109,7 +199,16 @@ const Chatbot: React.FC = () => {
 
       // 3. Handle Action Redirects
       if (response.action === 'navigate' && response.actionTarget) {
-        // We could auto-navigate, but for now just show the link/text
+        // Dispatch animation event for DashboardLayout
+        window.dispatchEvent(new CustomEvent('novaRedirect'));
+
+        // Wait for animation to cover screen before navigating (1.2s)
+        await new Promise(resolve => setTimeout(resolve, 1200));
+
+        navigate(response.actionTarget);
+        if (window.innerWidth < 768) {
+          setIsOpen(false); // Close on mobile after nav
+        }
       }
 
       // 4. Handle Search Requirement
@@ -142,6 +241,7 @@ const Chatbot: React.FC = () => {
       const botResponse: ChatMessage = {
         id: Date.now() + 1,
         text: parseAndRenderLinks(textToSend),
+        rawText: textToSend, // Store raw text for AI context history
         sender: 'bot',
         timestamp: new Date(),
       };
@@ -174,6 +274,7 @@ const Chatbot: React.FC = () => {
         setMessages(prev => [...prev, {
           id: Date.now() + 2,
           text: cardContent,
+          rawText: "I found some matching cards for you.", // Fallback text for history
           sender: 'bot',
           timestamp: new Date()
         }]);
@@ -212,7 +313,7 @@ const Chatbot: React.FC = () => {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-4 md:bottom-4 md:right-4 rounded-full p-4 h-14 w-14 shadow-xl z-50 hover:scale-105 transition-transform bg-primary text-primary-foreground"
+        className="fixed bottom-24 right-4 md:bottom-4 md:right-4 rounded-full p-4 h-14 w-14 shadow-xl z-50 hover:scale-105 transition-transform bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white"
         aria-label="Open Nova Chatbot"
       >
         <Sparkles className="h-6 w-6" />
@@ -222,14 +323,14 @@ const Chatbot: React.FC = () => {
 
   return (
     <div className={cn(
-      "fixed z-50 bg-background border shadow-2xl transition-all duration-300 ease-in-out flex flex-col overflow-hidden",
+      "fixed z-[100] bg-background/95 backdrop-blur-xl border-l shadow-2xl transition-all duration-300 ease-in-out flex flex-col overflow-hidden",
       isMinimized
-        ? "bottom-24 right-4 md:bottom-4 md:right-4 w-72 h-14 rounded-full cursor-pointer"
-        : "bottom-0 right-0 w-full h-[100dvh] sm:bottom-4 sm:right-4 sm:w-[400px] sm:h-[600px] sm:max-h-[80vh] sm:rounded-2xl"
+        ? "bottom-24 right-4 md:bottom-4 md:right-4 w-72 h-14 rounded-full cursor-pointer border"
+        : "top-0 right-0 h-full w-full sm:w-[420px] sm:max-w-[90vw]"
     )}>
       {/* Header */}
       <div
-        className="flex items-center justify-between p-4 bg-primary text-primary-foreground cursor-pointer"
+        className="flex-none flex items-center justify-between p-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white cursor-pointer z-10"
         onClick={() => isMinimized && setIsMinimized(false)}
       >
         <div className="flex items-center gap-3">
@@ -268,76 +369,76 @@ const Chatbot: React.FC = () => {
       {/* Main Chat Area */}
       {!isMinimized && (
         <>
-          <div className="flex-1 overflow-hidden relative">
-            <ScrollArea className="h-full px-4 py-4">
-              <div className="space-y-6 pb-4">
-                {messages.length === 0 ? (
-                  <div className="text-center py-10 px-4">
-                    <div className="bg-primary/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 animate-pulse">
-                      <Sparkles className="h-10 w-10 text-primary" />
-                    </div>
-                    <h3 className="font-bold text-lg mb-2">Hi, I'm Nova!</h3>
-                    <p className="text-muted-foreground text-sm mb-6">
-                      I can help you create notes, find study sets, or explain features.
-                      <br />
-                      Try asking: <span className="font-medium">"How do I create a set?"</span>
-                    </p>
+          <div className="flex-1 overflow-y-auto px-4 py-4 scroll-smooth">
+            <div className="space-y-6 pb-4">
+              {messages.length === 0 ? (
+                <div className="text-center py-10 px-4">
+                  <div className="bg-primary/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 animate-pulse">
+                    <Sparkles className="h-10 w-10 text-primary" />
+                  </div>
+                  <h3 className="font-bold text-lg mb-2">Hi, I'm Nova!</h3>
+                  <p className="text-muted-foreground text-sm mb-6">
+                    I can help you create notes, find study sets, or explain features.
+                    <br />
+                    Try asking: <span className="font-medium">"How do I create a set?"</span>
+                  </p>
 
-                    <div className="grid grid-cols-1 gap-2">
-                      {suggestedQuestions.slice(0, 3).map((q, i) => (
-                        <Button key={i} variant="outline" size="sm" className="justify-start text-xs h-auto py-2 whitespace-normal text-left" onClick={() => handleSendMessage(q)}>
-                          {q}
-                        </Button>
-                      ))}
+                  <div className="grid grid-cols-1 gap-2">
+                    {suggestedQuestions.slice(0, 3).map((q, i) => (
+                      <Button key={i} variant="outline" size="sm" className="justify-start text-xs h-auto py-2 whitespace-normal text-left" onClick={() => handleSendMessage(q)}>
+                        {q}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                messages.map((msg) => (
+                  <div key={msg.id} className={cn("flex gap-3 animate-pop-in", msg.sender === 'user' ? "flex-row-reverse" : "flex-row")}>
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1",
+                      msg.sender === 'user' ? "bg-secondary" : "bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white"
+                    )}>
+                      {msg.sender === 'user' ? <User2 className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
+                    </div>
+                    <div className={cn(
+                      "max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm break-words",
+                      msg.sender === 'user'
+                        ? "bg-primary text-primary-foreground rounded-tr-none"
+                        : "bg-muted text-foreground rounded-tl-none border"
+                    )}>
+                      <div className="whitespace-pre-wrap leading-relaxed break-words">{msg.text}</div>
+                      {msg.sender === 'bot' && (
+                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-primary/10">
+                          <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-green-600" onClick={() => handleFeedback(msg.id, 'up')} disabled={!!msg.feedbackGiven}>
+                            <ThumbsUp className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-red-500" onClick={() => handleFeedback(msg.id, 'down')} disabled={!!msg.feedbackGiven}>
+                            <ThumbsDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                ) : (
-                  messages.map((msg) => (
-                    <div key={msg.id} className={cn("flex gap-3", msg.sender === 'user' ? "flex-row-reverse" : "flex-row")}>
-                      <div className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1",
-                        msg.sender === 'user' ? "bg-secondary" : "bg-primary text-primary-foreground"
-                      )}>
-                        {msg.sender === 'user' ? <User2 className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
-                      </div>
-                      <div className={cn(
-                        "max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm",
-                        msg.sender === 'user'
-                          ? "bg-primary text-primary-foreground rounded-tr-none"
-                          : "bg-muted text-foreground rounded-tl-none border"
-                      )}>
-                        <div className="whitespace-pre-wrap leading-relaxed">{msg.text}</div>
-                        {msg.sender === 'bot' && (
-                          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-primary/10">
-                            <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-green-600" onClick={() => handleFeedback(msg.id, 'up')} disabled={!!msg.feedbackGiven}>
-                              <ThumbsUp className="h-3 w-3" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-red-500" onClick={() => handleFeedback(msg.id, 'down')} disabled={!!msg.feedbackGiven}>
-                              <ThumbsDown className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-                {isSending && thinkingStep && (
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1 animate-pulse">
-                      <Sparkles className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                    <div className="bg-muted text-foreground rounded-2xl rounded-tl-none border px-4 py-3 max-w-[80%] flex items-center gap-2">
-                      <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground font-medium italic">{thinkingStep}</span>
-                    </div>
+                ))
+              )}
+              {isSending && thinkingStep && (
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 mt-1 animate-pulse">
+                    <Sparkles className="h-4 w-4 text-white" />
                   </div>
-                )}       <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
+                  <div className="bg-muted text-foreground rounded-2xl rounded-tl-none border px-4 py-4 max-w-[80%] flex items-center gap-1.5 min-h-[46px] shadow-sm">
+                    <div className="w-1.5 h-1.5 bg-foreground/60 rounded-full animate-typing-dot [animation-delay:-0.32s]"></div>
+                    <div className="w-1.5 h-1.5 bg-foreground/60 rounded-full animate-typing-dot [animation-delay:-0.16s]"></div>
+                    <div className="w-1.5 h-1.5 bg-foreground/60 rounded-full animate-typing-dot"></div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
 
           {/* Input Area */}
-          <div className="p-4 border-t bg-background/95 backdrop-blur">
+          <div className="flex-none p-4 border-t bg-background/95 backdrop-blur pb-safe">
             {messages.length > 0 && messages.length < 3 && (
               <div className="flex overflow-x-auto gap-2 mb-3 pb-1 scrollbar-hide">
                 {suggestedQuestions.map((q, i) => (

@@ -1,7 +1,8 @@
 import { defineConfig } from "vite";
-import dyadComponentTagger from "@dyad-sh/react-vite-component-tagger";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig(() => ({
   server: {
@@ -9,8 +10,34 @@ export default defineConfig(() => ({
     port: 5173,
   },
   plugins: [
-    dyadComponentTagger(),
-    react()
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      devOptions: {
+        enabled: false
+      },
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'notebook-icon.png'],
+      manifest: {
+        name: 'Notebook - Smart AI Learning Assistant',
+        short_name: 'Notebook',
+        description: 'Master any subject with Nova, your Hybrid AI study partner.',
+        theme_color: '#3b82f6',
+        background_color: '#ffffff',
+        display: 'standalone',
+        start_url: '/',
+        icons: [
+          {
+            src: '/notebook-icon.png',
+            sizes: '192x192 512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
+        ]
+      },
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
+      }
+    })
   ],
   resolve: {
     alias: {

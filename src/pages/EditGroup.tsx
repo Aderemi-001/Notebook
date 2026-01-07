@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { NotebookCard } from "@/components/NotebookCard";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -120,9 +119,9 @@ const EditGroup: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+      <div className="w-full px-4 md:px-8 py-6 sm:py-8 md:py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
-        <NotebookCard>
+        <Card className="glass-card shadow-premium rounded-[2rem] border-white/20">
           <CardHeader>
             <Skeleton className="h-6 w-1/2" />
             <Skeleton className="h-4 w-3/4 mt-2" />
@@ -132,7 +131,7 @@ const EditGroup: React.FC = () => {
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-10 w-24 self-end" />
           </CardContent>
-        </NotebookCard>
+        </Card>
       </div>
     );
   }
@@ -164,7 +163,7 @@ const EditGroup: React.FC = () => {
         </Button>
       </div>
 
-      <NotebookCard className="mb-6">
+      <Card className="glass-card shadow-premium rounded-[2rem] border-white/20 mb-6">
         <CardHeader>
           <CardTitle>Group Details</CardTitle>
           <CardDescription>Update the name and description of your study set group.</CardDescription>
@@ -214,7 +213,7 @@ const EditGroup: React.FC = () => {
             </form>
           </Form>
         </CardContent>
-      </NotebookCard>
+      </Card>
     </div>
   );
 };

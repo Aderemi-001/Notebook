@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { NotebookCard } from "@/components/NotebookCard";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -87,7 +86,7 @@ const CreateGroup: React.FC = () => {
         </Button>
       </div>
 
-      <NotebookCard className="mb-6">
+      <Card className="glass-card shadow-premium rounded-[2.5rem] border-white/20 mb-6">
         <CardHeader>
           <CardTitle>Group Details</CardTitle>
           <CardDescription>Give your new study set group a name and an optional description.</CardDescription>
@@ -137,7 +136,7 @@ const CreateGroup: React.FC = () => {
             </form>
           </Form>
         </CardContent>
-      </NotebookCard>
+      </Card>
     </div>
   );
 };

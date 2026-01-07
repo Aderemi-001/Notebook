@@ -23,6 +23,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onConte
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
         codeBlock: false, // Disable default codeBlock to use CodeBlockLowlight
+        // @ts-ignore
+        link: false,
       }),
       Image.configure({ inline: true, allowBase64: true }),
       Link.configure({ openOnClick: false, autolink: true }),

@@ -73,13 +73,14 @@ export const usePWAInstall = () => {
                     setShowPrompt(false);
                 }
                 setDeferredPrompt(null);
+                return 'prompted'; // Success
             } catch (error) {
                 console.error('Install error:', error);
+                return 'error';
             }
         } else {
-            // Fallback: Show manual install instructions
-            console.log('No deferred prompt available. Showing manual instructions.');
-            alert('To install:\n\n1. Click the ⊕ icon in your browser address bar\n2. Or use browser menu → "Install Notebook"\n3. Or press Ctrl+Shift+A (Chrome)');
+            // Fallback: Signal UI to show manual install instructions (No alert)
+            return 'manual';
         }
     };
 

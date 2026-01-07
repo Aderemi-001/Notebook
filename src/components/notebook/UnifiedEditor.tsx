@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trash2, FileText, PenTool, MoreHorizontal, Loader2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
@@ -13,6 +13,16 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { StudySetSelector } from "./StudySetSelector";
 
 interface UnifiedEditorProps {
@@ -25,6 +35,7 @@ interface UnifiedEditorProps {
 }
 
 const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete, onUpdate, isSidebarOpen, onToggleSidebar }) => {
+    const queryClient = useQueryClient();
     const editorRef = useRef<Editor | null>(null);
 
     // Fetch Note Details
@@ -49,6 +60,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
     const [canvasContent, setCanvasContent] = useState<any>(null);
     const [mode, setMode] = useState<'text' | 'canvas'>('text');
     const [isSaving, setIsSaving] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     // Refs for Stale Closure Protection (Crucial for unmount saves)
     const modeRef = useRef(mode);
@@ -110,6 +122,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
         },
         onSuccess: () => {
             setIsSaving(false);
+            queryClient.invalidateQueries({ queryKey: ['note-detail', noteId] });
             onUpdate();
         },
         onError: () => {
@@ -214,7 +227,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center p-4 border-b bg-background z-50 h-16 shrink-0">
+            <div className="flex items-center p-4 border-b border-border/40 bg-background/60 backdrop-blur-md z-50 h-16 shrink-0">
                 <div className="flex items-center gap-2 flex-1 min-w-0 mr-4">
                     <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden shrink-0">
                         <ArrowLeft className="h-4 w-4" />
@@ -264,13 +277,39 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
                             <DropdownMenuItem onClick={toggleMode}>
                                 {mode === 'text' ? <><PenTool className="mr-2 h-4 w-4" /> Switch to Handwriting</> : <><FileText className="mr-2 h-4 w-4" /> Switch to Text</>}
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate()}>
+                            <DropdownMenuItem className="text-destructive" onSelect={() => setIsDeleteDialogOpen(true)}>
                                 <Trash2 className="mr-2 h-4 w-4" /> Delete Note
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
             </div>
+
+            {/* Premium Delete Confirmation */}
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent className="glass-card rounded-[2rem] border-red-500/20 shadow-2xl overflow-hidden">
+                    <div className="absolute top-0 right-0 -mr-10 -mt-10 h-32 w-32 rounded-full bg-red-500/10 blur-3xl" />
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-2xl font-black tracking-tighter text-red-500">
+                            Purge Knowledge Node?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-base font-medium leading-relaxed pt-2">
+                            This action will permanently delete "{title}" from your neural library. This cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="pt-6">
+                        <AlertDialogCancel className="rounded-xl px-6 font-bold border-border/60">
+                            Keep Note
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => deleteMutation.mutate()}
+                            className="rounded-xl px-8 font-black bg-red-600 hover:bg-red-700 shadow-premium active:scale-95 transition-all"
+                        >
+                            Confirm Destruction
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             {/* Editor Body */}
             <div className="flex-1 overflow-hidden relative">
@@ -290,7 +329,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
                         />
                     </div>
                 ) : (
-                    <div className="h-full w-full bg-slate-50 overflow-hidden">
+                    <div className="h-full w-full bg-transparent overflow-hidden">
                         <DigitalCanvas
                             // Width/Height removed for responsive fill
                             initialData={canvasContent?.image}

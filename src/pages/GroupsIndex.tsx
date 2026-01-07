@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { NotebookCard } from "@/components/NotebookCard";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ArrowLeft, PlusCircle, Folder, Menu, Pencil, Trash2, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -152,12 +151,12 @@ const GroupsIndex: React.FC = () => {
 
   if (isLoading || isLoadingPreferences) {
     return (
-      <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+      <div className="w-full px-4 md:px-8 py-6 sm:py-8 md:py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
         <Skeleton className="h-10 w-full mb-6" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <NotebookCard key={i}>
+            <Card key={i} className="glass-card shadow-premium rounded-[2rem]">
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -165,7 +164,7 @@ const GroupsIndex: React.FC = () => {
               <CardContent>
                 <Skeleton className="h-4 w-1/4" />
               </CardContent>
-            </NotebookCard>
+            </Card>
           ))}
         </div>
       </div>
@@ -239,7 +238,7 @@ const GroupsIndex: React.FC = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredGroups.map((group: StudySetGroup) => (
-            <NotebookCard key={group.id} className="h-full flex flex-col">
+            <Card key={group.id} className="glass-card shadow-premium rounded-[2rem] h-full flex flex-col hover:-translate-y-1 transition-transform duration-300">
               <Link to={`/groups/${group.id}`} className="flex-grow">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold flex items-center">
@@ -326,7 +325,7 @@ const GroupsIndex: React.FC = () => {
                   </Button>
                 )}
               </CardContent>
-            </NotebookCard>
+            </Card>
           ))}
         </div>
       )}

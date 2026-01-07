@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUserStudySets, UserStudySet } from '@/hooks/use-user-study-sets';
-import { CardContent, CardHeader, CardTitle, CardDescription, NotebookCard } from '@/components/NotebookCard';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 interface NoteFormFieldsProps {
   form: UseFormReturn<any>;
@@ -20,7 +20,7 @@ const NoteFormFields: React.FC<NoteFormFieldsProps> = ({ form }) => {
   const { data: userStudySets, isLoading: isLoadingStudySets } = useUserStudySets();
 
   return (
-    <NotebookCard className="mb-6">
+    <Card className="glass-card shadow-premium rounded-[2rem] border-white/20 mb-6">
       <CardHeader>
         <CardTitle>Note Details</CardTitle>
         <CardDescription>Enter the title and content for your new note.</CardDescription>
@@ -71,7 +71,7 @@ const NoteFormFields: React.FC<NoteFormFieldsProps> = ({ form }) => {
           )}
         />
       </CardContent>
-    </NotebookCard>
+    </Card>
   );
 };
 

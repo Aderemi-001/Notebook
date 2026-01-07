@@ -7,6 +7,12 @@ export interface NovaContext {
     user: any;
     timeOfDay: 'morning' | 'afternoon' | 'evening' | 'late_night';
     conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+    activeStudySet?: {
+        id: string;
+        title: string;
+        description?: string;
+        topCards?: { term: string; definition: string }[];
+    };
 }
 
 export interface NovaResponse {
@@ -84,14 +90,44 @@ export class NovaBrain {
         }
 
         // 4. Simple navigation (exact matches)
+        // 3.5 Emotional/State check (tired, stressed)
+        if (lowerQuery.includes('tired') || lowerQuery.includes('exhausted') || lowerQuery.includes('sleepy') || lowerQuery.includes('burnt out')) {
+            return {
+                text: "It sounds like you need a break! 🌙 Rest is just as important as studying. Maybe take a 15-minute power nap or grab some water? I'll be here when you're refreshed.",
+                emotion: 'neutral'
+            };
+        }
+
+        // 3.6 Feature Explanations (Prevent auto-navigation for 'how does X work')
+        if (lowerQuery.includes('constellation') && (lowerQuery.includes('how') || lowerQuery.includes('what') || lowerQuery.includes('explain') || lowerQuery.includes('work'))) {
+            return {
+                text: "The **Cognitive Constellation** 🌌 is a 3D visualization of your knowledge! \n\nEach **star** represents a concept you've studied. \n• **Brightness**: Indicates your mastery level.\n• **Connections**: Lines connect related concepts.\n\nIt allows you to see your 'knowledge galaxy' grow as you learn more. Ready to explore it? Just say **'go to constellation'**! 🚀",
+                emotion: 'excited'
+            };
+        }
+
+        // 4. Simple navigation (exact matches & intents)
+        // 4. Simple navigation (exact matches & intents)
         const navMap: Record<string, { route: string; message: string }> = {
-            'dashboard': { route: '/dashboard', message: 'Taking you to the **Dashboard**! 🚀' },
-            'home': { route: '/dashboard', message: 'Taking you **home**! 🏠' },
+            'dashboard': { route: '/', message: 'Taking you to the **Dashboard**! 🚀' },
+            'home': { route: '/', message: 'Taking you **home**! 🏠' },
             'create set': { route: '/create', message: 'Let\'s **create a new study set**! ✨' },
+            'new set': { route: '/create', message: 'Opening the **set creator**! 🆕' },
             'my sets': { route: '/sets', message: 'Here are your **study sets**! 📚' },
-            'quiz': { route: '/generate-exam', message: 'Ready for a **quiz**? Let\'s test your knowledge! 📝' },
+            'explore': { route: '/explore-public-sets', message: 'Let\'s **explore public sets**! 🌍' },
+            'explore sets': { route: '/explore-public-sets', message: 'Opening **Explore Sets**! 🌍' },
+            'practice quiz': { route: '/exams', message: 'Opening **Practice Quiz** mode! 📝' },
+            // 'quiz' removed from strict map to allow context-aware quizzing below
             'profile': { route: '/profile', message: 'Going to your **profile**! 👤' },
-            'settings': { route: '/settings', message: 'Opening **settings**! ⚙️' }
+            'settings': { route: '/settings', message: 'Opening **settings**! ⚙️' },
+            'textbook': { route: '/textbook-finder', message: 'Opening **Textbook Finder**! 📖' },
+            'finder': { route: '/textbook-finder', message: 'Heading to **Textbook Finder**! 🔍' },
+            'constellation': { route: '/constellation', message: 'Launching **Constellation** (Beta)! 🌌' },
+            'essay': { route: '/essays', message: 'Let\'s practice some **Essays**! ✍️' },
+            'notes': { route: '/notebook', message: 'Opening your **Notes**! 📒' },
+            'notebook': { route: '/notebook', message: 'Going to your **Notebook**! 📒' },
+            'pricing': { route: '/pricing', message: 'Checking out the **Pro** plans! 💎' },
+            'upgrade': { route: '/pricing', message: 'Let\'s look at **Upgrades**! 🚀' }
         };
 
         for (const [keyword, nav] of Object.entries(navMap)) {
@@ -103,6 +139,21 @@ export class NovaBrain {
                     emotion: 'happy'
                 };
             }
+        }
+
+        // Special handling for 'quiz' to support context-aware inline quizzes
+        if (lowerQuery.includes('quiz')) {
+            // If we are looking at a set, let the AI handle it (Inline Quiz)
+            if (context.activeStudySet) {
+                return null; // Fall through to AI
+            }
+            // Otherwise, navigate to global exams
+            return {
+                text: "Let's head to **Quizzes**! 📝",
+                action: 'navigate',
+                actionTarget: '/exams',
+                emotion: 'happy'
+            };
         }
 
         // No local match - use AI
@@ -122,11 +173,12 @@ export class NovaBrain {
             route: context.route,
             userName,
             timeOfDay: context.timeOfDay,
-            conversationHistory: context.conversationHistory || []
+            conversationHistory: context.conversationHistory || [],
+            activeStudySet: context.activeStudySet
         };
 
         try {
-            const aiResponse = await NovaAI.getResponse(query, aiContext);
+            const aiResponse = await NovaAI.chat(query, aiContext);
 
             // Parse response for actions
             const lowerResponse = aiResponse.toLowerCase();
@@ -137,13 +189,13 @@ export class NovaBrain {
             if (lowerResponse.includes('go to') || lowerResponse.includes('click')) {
                 if (lowerResponse.includes('practice quiz')) {
                     action = 'navigate';
-                    actionTarget = '/generate-exam';
+                    actionTarget = '/exams';
                 } else if (lowerResponse.includes('essay practice')) {
                     action = 'navigate';
-                    actionTarget = '/essay-practice';
+                    actionTarget = '/essays';
                 } else if (lowerResponse.includes('dashboard')) {
                     action = 'navigate';
-                    actionTarget = '/dashboard';
+                    actionTarget = '/';
                 } else if (lowerResponse.includes('my sets')) {
                     action = 'navigate';
                     actionTarget = '/sets';

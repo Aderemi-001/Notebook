@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { NotebookCard } from "@/components/NotebookCard";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ArrowLeft, BookOpen, Globe, Folder, Menu, PlusCircle, Clock, AlertCircle, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -117,7 +116,7 @@ const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
 
       for (const cardId of cardIds) {
         const progress = progressMap.get(cardId);
-        
+
         if (!progress) {
           dueCardsCount++;
           if (!tempEarliestReviewAt || now < tempEarliestReviewAt) {
@@ -128,7 +127,7 @@ const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
           if (cardNextReviewDate <= now && progress.status === 'learning') {
             dueCardsCount++;
           }
-          
+
           if (!tempEarliestReviewAt || cardNextReviewDate < tempEarliestReviewAt) {
             tempEarliestReviewAt = cardNextReviewDate;
           }
@@ -186,13 +185,13 @@ const GroupDetail: React.FC = () => {
 
   if (isLoadingGroup || isLoadingSets) {
     return (
-      <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+      <div className="w-full px-4 md:px-8 py-6 sm:py-8 md:py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
         <Skeleton className="h-6 w-1/3 mb-4" />
         <Skeleton className="h-4 w-full mb-6" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <NotebookCard key={i}>
+            <Card key={i} className="glass-card shadow-premium rounded-[2rem] border-white/20">
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -200,7 +199,7 @@ const GroupDetail: React.FC = () => {
               <CardContent>
                 <Skeleton className="h-4 w-1/4" />
               </CardContent>
-            </NotebookCard>
+            </Card>
           ))}
         </div>
       </div>
@@ -272,7 +271,7 @@ const GroupDetail: React.FC = () => {
       )}
 
       <h2 className="text-2xl font-semibold mb-4">Study Sets in this Group ({filteredStudySets?.length || 0})</h2>
-      
+
       <div className="mb-6">
         <Label htmlFor="search-group-sets" className="sr-only">Search sets in this group</Label>
         <Input
@@ -308,7 +307,7 @@ const GroupDetail: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredStudySets.map((set: StudySet) => (
             <Link to={`/sets/${set.id}`} key={set.id}>
-              <NotebookCard className="hover:shadow-md transition-shadow h-full">
+              <Card className="glass-card shadow-premium rounded-[2rem] border-white/20 hover:border-primary/30 transition-all duration-300 h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-lg font-semibold">{set.title}</CardTitle>
                   <Badge variant={set.is_public ? "default" : "secondary"} className="flex items-center gap-1">
@@ -359,7 +358,7 @@ const GroupDetail: React.FC = () => {
                     </>
                   )}
                 </CardContent>
-              </NotebookCard>
+              </Card>
             </Link>
           ))}
         </div>

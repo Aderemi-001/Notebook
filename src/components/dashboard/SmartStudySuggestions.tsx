@@ -2,10 +2,10 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, TrendingUp, Sparkles, Brain, LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 // --- Types ---
 
@@ -214,51 +214,76 @@ function useSmartSuggestions() {
     });
 }
 
-function AIInsight({ suggestions }: { suggestions: SmartSuggestion[] }) {
+
+
+// --- Component ---
+
+const SmartStudySuggestions: React.FC<{ layout?: 'default' | 'compact' }> = ({ layout = 'default' }) => {
+    // Explicitly casting or assuming type safety to handle potential library resolution issues
+    const { data: suggestions, isLoading } = useSmartSuggestions();
+
+    if (isLoading || !suggestions || suggestions.length === 0) return null;
+
+    return (
+        <section className="mb-8 animate-fade-in">
+            <AIInsightHeader suggestions={suggestions} />
+
+            <div className={cn(
+                "grid gap-4 mt-4",
+                layout === 'compact' ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+            )}>
+                {(suggestions as SmartSuggestion[]).map((suggestion: SmartSuggestion) => (
+                    <SuggestionCard key={suggestion.setId} suggestion={suggestion} />
+                ))}
+            </div>
+        </section>
+    );
+};
+
+// --- Sub-components ---
+
+function AIInsightHeader({ suggestions }: { suggestions: SmartSuggestion[] }) {
     const [insight, setInsight] = React.useState<string | null>(null);
 
     React.useEffect(() => {
-        const getInsight = () => {
-            // Local "Smart" Logic (Zero API)
-            if (suggestions.length === 0) return;
+        if (suggestions.length === 0) return;
 
-            const hour = new Date().getHours();
-            let timeBasedMsg = "";
+        const hour = new Date().getHours();
+        let greeting = "";
+        if (hour < 5) greeting = "Late night study session?";
+        else if (hour < 12) greeting = "Good morning!";
+        else if (hour < 18) greeting = "Good afternoon!";
+        else greeting = "Good evening!";
 
-            if (hour < 12) timeBasedMsg = "Good morning! ☀️ Starting early builds strong memory.";
-            else if (hour < 18) timeBasedMsg = "Good afternoon! ☕ Powering through the day?";
-            else timeBasedMsg = "Good evening! 🌙 A quick review now sleeps better.";
+        const topSuggestion = suggestions[0];
+        let tip = "";
 
-            // Simple suggestion logic
-            const topSuggestion = suggestions[0];
-            let specificMsg = "";
+        if (topSuggestion.type === 'review') {
+            tip = `I recommend starting with **${topSuggestion.title}** to clear your backlog.`;
+        } else if (topSuggestion.type === 'mastery') {
+            tip = `You're so close to mastering **${topSuggestion.title}**. Keep going!`;
+        } else {
+            tip = `It's been a while since you practiced **${topSuggestion.title}**.`;
+        }
 
-            if (topSuggestion.type === 'review') {
-                specificMsg = `Your priority is **${topSuggestion.title}** - tackle those due cards first.`;
-            } else if (topSuggestion.type === 'mastery') {
-                specificMsg = `You're crushing **${topSuggestion.title}**! Push to 100% mastery.`;
-            } else {
-                specificMsg = `Maybe refresh **${topSuggestion.title}**? It's been a while.`;
-            }
-
-            setInsight(`${timeBasedMsg} ${specificMsg}`);
-        };
-        getInsight();
+        setInsight(`${greeting} ${tip}`);
     }, [suggestions]);
 
     if (!insight) return null;
 
     return (
-        <div className="mt-4 p-3 bg-white/50 dark:bg-slate-900/50 rounded-lg border border-indigo-200/50 dark:border-indigo-800/50 flex items-start gap-3 animate-fade-in">
-            <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/50 rounded-full">
-                <Brain className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+        <div className="flex items-start md:items-center gap-3 mb-2">
+            <div className="flex-shrink-0 p-2 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl shadow-md text-white">
+                <Sparkles className="h-5 w-5" />
             </div>
             <div>
-                <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-0.5">Nova Insight</div>
-                <p className="text-xs text-indigo-800 dark:text-indigo-200 leading-relaxed font-medium">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    Nova Suggestions
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
                     {insight.split(/(\*\*.*?\*\*)/).map((part: string, index: number) =>
                         part.startsWith('**') && part.endsWith('**') ? (
-                            <strong key={index} className="font-bold text-indigo-900 dark:text-indigo-100">
+                            <strong key={index} className="font-semibold text-primary">
                                 {part.slice(2, -2)}
                             </strong>
                         ) : part
@@ -269,72 +294,51 @@ function AIInsight({ suggestions }: { suggestions: SmartSuggestion[] }) {
     );
 }
 
-// --- Component ---
-
-const SmartStudySuggestions: React.FC = () => {
-    // Explicitly casting or assuming type safety to handle potential library resolution issues
-    const { data: suggestions, isLoading } = useSmartSuggestions();
-
-    if (isLoading || !suggestions || suggestions.length === 0) return null;
-
-    return (
-        <Card className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border-indigo-100 dark:border-indigo-900 mb-6">
-            <CardContent className="p-6">
-                <Header />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {(suggestions as SmartSuggestion[]).map((suggestion: SmartSuggestion) => (
-                        <SuggestionCard key={suggestion.setId} suggestion={suggestion} />
-                    ))}
-                </div>
-                <AIInsight suggestions={suggestions} />
-            </CardContent>
-        </Card>
-    );
-};
-
-// Sub-components for cleaner render
-
-const Header: React.FC = () => (
-    <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="h-5 w-5 text-indigo-500" />
-        <h3 className="font-semibold text-lg text-indigo-900 dark:text-indigo-100">Recommended by Nova</h3>
-    </div>
-);
-
 const SuggestionCard: React.FC<{ suggestion: SmartSuggestion }> = ({ suggestion }) => {
     const { type, title, reason, setId } = suggestion;
 
     return (
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-lg border shadow-sm flex flex-col justify-between">
-            <div>
-                <SuggestionBadge type={type} />
-                <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-1 truncate" title={title}>
+        <div className="group relative overflow-hidden bg-card hover:bg-accent/5 transition-colors border rounded-xl shadow-sm hover:shadow-md">
+            {/* Decor line */}
+            <div className={`absolute left-0 top-0 bottom-0 w-1 ${type === 'review' ? 'bg-orange-500' :
+                type === 'mastery' ? 'bg-green-500' :
+                    'bg-blue-500'
+                }`} />
+
+            <div className="p-5 flex flex-col h-full">
+                <div className="flex justify-between items-start mb-2">
+                    <SuggestionBadge type={type} />
+                </div>
+
+                <h4 className="font-bold text-lg text-foreground mb-1 line-clamp-1" title={title}>
                     {title}
                 </h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-grow">
                     {reason}
                 </p>
+
+                <Button asChild className="w-full bg-secondary/50 text-secondary-foreground hover:bg-secondary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-none">
+                    <Link to={`/sets/${setId}/study`} className="flex items-center justify-center gap-2">
+                        <span>Study Now</span>
+                        <ArrowRight className="h-4 w-4 opacity-50 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                </Button>
             </div>
-            <Button asChild size="sm" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
-                <Link to={`/sets/${setId}/study`}>
-                    Study Now <ArrowRight className="ml-1 h-3 w-3" />
-                </Link>
-            </Button>
         </div>
     );
 };
 
 const SuggestionBadge: React.FC<{ type: SmartSuggestion['type'] }> = ({ type }) => {
-    const config: Record<SmartSuggestion['type'], { icon: LucideIcon, label: string }> = {
-        review: { icon: Clock, label: 'Due Now' },
-        mastery: { icon: TrendingUp, label: 'Almost There' },
-        decay: { icon: Clock, label: 'Refresh Memory' },
+    const config: Record<SmartSuggestion['type'], { icon: LucideIcon, label: string, color: string }> = {
+        review: { icon: Clock, label: 'Due for Review', color: 'text-orange-500 bg-orange-500/10' },
+        mastery: { icon: TrendingUp, label: 'Near Mastery', color: 'text-green-500 bg-green-500/10' },
+        decay: { icon: Brain, label: 'Spaced Repetition', color: 'text-blue-500 bg-blue-500/10' },
     };
 
-    const { icon: Icon, label } = config[type];
+    const { icon: Icon, label, color } = config[type];
 
     return (
-        <div className="text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-1 flex items-center gap-1">
+        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${color}`}>
             <Icon className="h-3 w-3" />
             {label}
         </div>

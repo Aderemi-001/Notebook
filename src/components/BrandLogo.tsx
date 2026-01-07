@@ -1,18 +1,23 @@
-import React from 'react';
+import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 interface BrandLogoProps {
     className?: string;
     size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
     rounded?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full';
+    shadow?: boolean;
+    glow?: boolean;
+    bgWhite?: boolean;
 }
 
 const BrandLogo: React.FC<BrandLogoProps> = ({
     className,
     size = 'md',
-    rounded = 'lg'
+    rounded = '2xl',
+    shadow = false,
+    glow = false,
 }) => {
-    const sizeClasses = {
+    const sizeClasses: Record<'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl', string> = {
         'xs': 'h-6 w-6',
         'sm': 'h-8 w-8',
         'md': 'h-10 w-10',
@@ -21,7 +26,7 @@ const BrandLogo: React.FC<BrandLogoProps> = ({
         '2xl': 'h-24 w-24 md:h-32 md:w-32',
     };
 
-    const roundedClasses = {
+    const roundedClasses: Record<'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full', string> = {
         'sm': 'rounded-sm',
         'md': 'rounded-md',
         'lg': 'rounded-lg',
@@ -31,20 +36,19 @@ const BrandLogo: React.FC<BrandLogoProps> = ({
         'full': 'rounded-full',
     };
 
-    // Higher scale for larger sizes to ensure concealment of artifacts
-    const scaleClass = size === 'xl' || size === '2xl' ? 'scale-[1.50]' : 'scale-115';
-
     return (
         <div className={cn(
-            "overflow-hidden flex items-center justify-center bg-white shrink-0",
+            "overflow-hidden flex items-center justify-center shrink-0 transition-all duration-500 bg-white",
             sizeClasses[size],
             roundedClasses[rounded],
+            shadow && "shadow-premium",
+            glow && "shadow-glow",
             className
         )}>
             <img
                 src="/notebook-icon.png"
                 alt="Notebook Logo"
-                className={cn("h-full w-full object-cover", scaleClass)}
+                className="h-full w-full object-cover"
             />
         </div>
     );

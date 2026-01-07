@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { NotebookCard } from './NotebookCard';
+
 
 interface FlippableCardProps {
   frontContent: React.ReactNode;
@@ -23,22 +23,22 @@ const FlippableCard = React.forwardRef<HTMLDivElement, FlippableCardProps>(
       >
         <div
           className={cn(
-            "absolute w-full h-full transition-transform duration-700 ease-in-out transform-gpu transform-style-3d",
+            "absolute w-full h-full transition-transform duration-700 ease-in-out transform-style-3d",
             isFlipped ? 'rotate-y-180' : 'rotate-y-0'
           )}
+          style={{ willChange: 'transform' }}
         >
-          {/* Front of the card */}
-          <div className="absolute w-full h-full backface-hidden">
-            <NotebookCard className="w-full h-full flex flex-col justify-center items-center text-center">
+          <div className="absolute w-full h-full backface-hidden" style={{ zIndex: isFlipped ? 1 : 2 }}>
+            <div className="w-full h-full flex flex-col justify-center items-center text-center">
               {frontContent}
-            </NotebookCard>
+            </div>
           </div>
 
           {/* Back of the card */}
-          <div className="absolute w-full h-full backface-hidden rotate-y-180">
-            <NotebookCard className="w-full h-full flex flex-col justify-center items-center text-center">
+          <div className="absolute w-full h-full backface-hidden rotate-y-180" style={{ zIndex: isFlipped ? 2 : 1 }}>
+            <div className="w-full h-full flex flex-col justify-center items-center text-center">
               {backContent}
-            </NotebookCard>
+            </div>
           </div>
         </div>
       </div>

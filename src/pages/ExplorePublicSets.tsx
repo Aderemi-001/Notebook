@@ -71,7 +71,7 @@ const ExplorePublicSets: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in">
+    <div className="w-full px-4 md:px-8 py-10 animate-fade-in">
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
         <Globe className="h-7 w-7" /> Explore Public Study Sets
       </h1>

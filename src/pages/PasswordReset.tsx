@@ -3,8 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { NotebookCard } from '@/components/NotebookCard';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -114,7 +113,7 @@ const PasswordReset: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
       <div className="max-w-md w-full space-y-8">
-        <NotebookCard className="p-8 text-center">
+        <Card className="glass-card shadow-premium rounded-[2.5rem] p-8 text-center bg-white/50 dark:bg-black/20 border-white/20">
           <CardHeader>
             <CardTitle className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">
               Reset Your Password
@@ -177,7 +176,7 @@ const PasswordReset: React.FC = () => {
               </Form>
             )}
           </CardContent>
-        </NotebookCard>
+        </Card>
       </div>
     </div>
   );

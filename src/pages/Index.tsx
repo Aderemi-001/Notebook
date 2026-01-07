@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { PlusCircle, Search, Loader2, BookOpen, Users, Settings, Trash2, Edit, Eye, Share2, Copy, ArrowRight, ShieldCheck, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { NotebookCard } from '@/components/NotebookCard';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -41,7 +40,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from '@/components/ui/badge';
-import SmartStudySuggestions from '@/components/dashboard/SmartStudySuggestions';
 
 // Define the interface for the data returned by the RPC
 interface RpcStudySetResult {
@@ -195,7 +193,7 @@ const Index: React.FC = () => {
         <Skeleton className="h-10 w-full mb-6" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <NotebookCard key={i}>
+            <Card key={i} className="glass-card shadow-premium rounded-[2rem] border-white/20">
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -208,7 +206,7 @@ const Index: React.FC = () => {
                 <Skeleton className="h-8 w-20" />
                 <Skeleton className="h-8 w-20" />
               </CardFooter>
-            </NotebookCard>
+            </Card>
           ))}
         </div>
       </div>
@@ -216,7 +214,7 @@ const Index: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+    <div className="w-full px-4 md:px-8 py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
           <BookOpen className="mr-3 h-7 w-7" />
@@ -256,21 +254,21 @@ const Index: React.FC = () => {
         )}
       </div>
 
-      <div className="mb-6 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="mb-8 relative group">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground transition-colors group-focus-within:text-primary z-10" />
         <Input
           type="text"
           placeholder="Search your study sets..."
           value={searchQuery}
           onChange={handleSearchChange}
-          className="w-full pl-10" // Added left padding for the icon
+          className="w-full pl-12 pr-4 py-7 rounded-[1.25rem] bg-white/80 dark:bg-white/5 border-input hover:border-primary/50 focus:border-primary focus:ring-primary/20 transition-all text-lg backdrop-blur-md shadow-sm"
         />
       </div>
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <NotebookCard key={i}>
+            <Card key={i} className="glass-card shadow-premium rounded-[2rem] border-white/20">
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -283,7 +281,7 @@ const Index: React.FC = () => {
                 <Skeleton className="h-8 w-20" />
                 <Skeleton className="h-8 w-20" />
               </CardFooter>
-            </NotebookCard>
+            </Card>
           ))}
         </div>
       ) : isError ? (
@@ -291,7 +289,7 @@ const Index: React.FC = () => {
       ) : filteredStudySets && filteredStudySets.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStudySets.map((set) => (
-            <NotebookCard key={set.id}>
+            <Card key={set.id} className="glass-card shadow-premium rounded-[2rem] border-white/20 hover:border-primary/30 transition-all duration-300 group">
               <CardHeader>
                 <CardTitle className="flex justify-between items-center">
                   <Link to={`/sets/${set.id}`} className="hover:underline">
@@ -356,11 +354,14 @@ const Index: React.FC = () => {
                 <div className="text-sm text-muted-foreground">
                   {set.cards_count} {set.cards_count === 1 ? 'card' : 'cards'}
                 </div>
-                <Button asChild variant="secondary" size="sm">
-                  <Link to={`/sets/${set.id}/study`}>Study Now <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                <Button asChild className="w-full bg-secondary/50 text-secondary-foreground hover:bg-secondary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-none rounded-xl h-10 px-3">
+                  <Link to={`/sets/${set.id}/study`} className="flex items-center justify-center gap-2">
+                    <span className="text-sm font-bold truncate">Study Now</span>
+                    <ArrowRight className="h-4 w-4 opacity-50 group-hover:translate-x-1 transition-transform shrink-0" />
+                  </Link>
                 </Button>
               </CardFooter>
-            </NotebookCard>
+            </Card>
           ))}
         </div>
       ) : (

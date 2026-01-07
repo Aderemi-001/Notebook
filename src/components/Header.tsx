@@ -34,7 +34,7 @@ export const Header: React.FC = () => {
     <header className="sticky top-0 z-40 w-full border-b bg-background">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 font-heading font-bold text-xl text-primary hover:text-primary/90 transition-colors">
-          <BrandLogo size="sm" />
+          <BrandLogo size="sm" rounded="2xl" shadow />
           <span>Notebook</span>
         </Link>
 

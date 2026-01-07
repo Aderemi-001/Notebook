@@ -143,16 +143,10 @@ const About: React.FC = () => {
               <Handshake className="h-5 w-5" /> Our Commitment
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Notebook v1.0 is just the beginning. We are dedicated to building the ultimate knowledge management system, evolving daily to help you reach your full academic potential.
+              Notebook v3.0 is just the beginning. We are dedicated to building the ultimate knowledge management system, evolving daily to help you reach your full academic potential.
             </p>
           </div>
 
-          <div className="pt-4 border-t border-muted-foreground/10 text-center">
-            <p className="text-xs text-muted-foreground/60 flex items-center justify-center gap-2 uppercase tracking-widest font-semibold text-[10px]">
-              Nova AI Powered by
-              <span className="text-primary/70">Groq LPU™ Inference Engine</span>
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -4,6 +4,9 @@ import { showError } from "@/utils/toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { NovaFileProcessor } from "@/utils/NovaFileProcessor";
 import { NovaPDF } from "@/utils/NovaPDF";
+import { NovaOffice } from "@/utils/NovaOffice";
+import { NovaImage } from "@/utils/NovaImage";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface ProcessedAIData {
   cards: { term: string; definition: string }[];
@@ -17,8 +20,6 @@ interface EstimationResult {
   optimal_max_cards: number;
 }
 
-const MAX_FILE_SIZE_MB = 10;
-
 export type ProgressState = 'idle' | 'extracting' | 'processing' | 'complete' | 'error';
 
 export const useFileImport = () => {
@@ -26,6 +27,9 @@ export const useFileImport = () => {
   const [sourceTextContent, setSourceTextContent] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+  // Subscription check for file limits
+  const { isPremium } = useSubscription();
 
   // Progress State
   const [progressState, setProgressState] = useState<ProgressState>('idle');
@@ -45,16 +49,52 @@ export const useFileImport = () => {
   const extractFileContent = useCallback(async (selectedFile: File) => {
     let extractedFileContent = "";
 
+    // Calculate limit dynamically to ensure we use the latest isPremium value
+    const MAX_FILE_SIZE_MB = isPremium ? 100 : 10;
+
+    // Dynamic Size Check
     if (selectedFile.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      throw new Error(`File size exceeds the limit of ${MAX_FILE_SIZE_MB}MB.`);
+      const upgradeMsg = !isPremium ? " Upgrade to Pro for 100MB uploads." : "";
+      throw new Error(`File too large. Limit is ${MAX_FILE_SIZE_MB}MB.${upgradeMsg}`);
     }
 
     if (selectedFile.type === "application/pdf") {
       try {
-        extractedFileContent = await NovaPDF.extractText(selectedFile);
+        setProgressMessage("Extracting text from PDF...");
+        extractedFileContent = await NovaPDF.extractText(selectedFile, setProgressMessage);
       } catch (pdfError) {
         console.error("Error parsing PDF:", pdfError);
         throw new Error("Failed to parse PDF file. It might be corrupted or unsupported.");
+      }
+    } else if (
+      selectedFile.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
+      selectedFile.name.endsWith('.pptx')
+    ) {
+      try {
+        setProgressMessage("Extracting content from Slides (PPTX)...");
+        extractedFileContent = await NovaOffice.extractTextFromPptx(selectedFile);
+      } catch (error) {
+        console.error("Error parsing PPTX:", error);
+        throw new Error("Failed to parse PowerPoint file.");
+      }
+    } else if (
+      selectedFile.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      selectedFile.name.endsWith('.docx')
+    ) {
+      try {
+        setProgressMessage("Extracting text from Document (DOCX)...");
+        extractedFileContent = await NovaOffice.extractTextFromDocx(selectedFile);
+      } catch (error) {
+        console.error("Error parsing DOCX:", error);
+        throw new Error("Failed to parse Word document.");
+      }
+    } else if (selectedFile.type.startsWith("image/")) {
+      try {
+        setProgressMessage("Nova is reading the image (OCR)...");
+        extractedFileContent = await NovaImage.extractText(selectedFile);
+      } catch (error) {
+        console.error("Error performing OCR:", error);
+        throw new Error("Failed to read text from image. Make sure the text is clear.");
       }
     } else if (selectedFile.type.startsWith("text/") ||
       selectedFile.name.endsWith('.md') ||
@@ -68,14 +108,14 @@ export const useFileImport = () => {
     ) {
       extractedFileContent = await selectedFile.text();
     } else {
-      throw new Error(`Unsupported file type: ${selectedFile.type}. Please use .txt, .csv, .md, .json, .xml, .html, .js, .ts, .css, or .pdf.`);
+      throw new Error(`Unsupported file type: ${selectedFile.type}. Please use .pdf, .pptx, .docx, images, or code files.`);
     }
 
     if (!extractedFileContent.trim()) {
       throw new Error("Could not extract any meaningful text from the file. Please ensure the file contains readable content.");
     }
     return { extractedFileContent };
-  }, []);
+  }, [isPremium]);
 
   const callAIProcessFile = useCallback(async (
     textContent: string,
@@ -140,7 +180,7 @@ export const useFileImport = () => {
       console.error(error);
       return null;
     }
-  }, [file, currentUser, extractFileContent, callAIProcessFile]);
+  }, [file, currentUser, extractFileContent, callAIProcessFile, isPremium]);
 
   const generateCardsAndConcepts = useCallback(async (): Promise<ProcessedAIData | null> => {
     if (!file) {
@@ -168,7 +208,47 @@ export const useFileImport = () => {
       setProgressState('processing');
       setProgressMessage("Nova AI is analyzing content & generating flashcards...");
 
-      const data = await callAIProcessFile(textToProcess, 'generate') as ProcessedAIData;
+      const isLargeFile = file && file.size > 10 * 1024 * 1024; // > 10MB
+      let data: ProcessedAIData;
+
+      if (isLargeFile && isPremium) {
+        // Large File Strategy: Storage Upload -> Server-Side Processing
+        console.log("📂 Large file detected. Switching to Server-Side Processing...");
+        setProgressMessage("Uploading large file for enhanced processing...");
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+
+        // 1. Upload to Storage
+        const { error: uploadError } = await supabase.storage
+          .from('temp-uploads')
+          .upload(fileName, file);
+
+        if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+
+        setProgressMessage("Nova AI is analyzing large document in the cloud...");
+
+        // 2. Trigger Edge Function with File Path
+        const { data: funcData, error: funcError } = await supabase.functions.invoke('process-file', {
+          body: {
+            filePath: fileName,
+            bucketName: 'temp-uploads',
+            mode: 'generate'
+          }
+        });
+
+        if (funcError) throw new Error(`Processing failed: ${funcError.message}`);
+
+        // 3. Cleanup (Delete file) - Optional, can be done by Edge Function or Bucket Policy
+        await supabase.storage.from('temp-uploads').remove([fileName]);
+
+        data = funcData;
+      } else {
+        // Standard Strategy: Client-Side Extraction -> AI
+        const dataResponse = await callAIProcessFile(textToProcess, 'generate');
+        if (!dataResponse) throw new Error("AI returned no data"); // Should be handled inside callAIProcessFile but adding check here
+        data = dataResponse as ProcessedAIData;
+      }
 
       const newCards = data.cards;
       const newConcepts = data.concepts;
@@ -248,8 +328,16 @@ export const useFileImport = () => {
 
     } catch (error: any) {
       setProgressState('error');
-      setProgressMessage("Error generating content.");
-      showError(error.message || "An unexpected error occurred.");
+
+      // Check if this is a file size error
+      if (error.message && error.message.includes('File too large')) {
+        setProgressMessage(error.message);
+        showError(error.message);
+      } else {
+        setProgressMessage("Error generating content.");
+        showError(error.message || "An unexpected error occurred.");
+      }
+
       console.error(error);
       return null;
     }

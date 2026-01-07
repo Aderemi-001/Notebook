@@ -1,9 +1,11 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Target, Flame, TrendingUp, Loader2 } from "lucide-react";
+import { BookOpen, Target, Flame, TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DashboardStatsProps {
     className?: string;
@@ -11,6 +13,7 @@ interface DashboardStatsProps {
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({ className }) => {
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     // Fetch all stats in parallel
     const { data: stats, isLoading } = useQuery({
@@ -36,44 +39,22 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ className }) => {
             // Mastery Rate
             const { data: progressData } = await supabase
                 .from('user_progress')
-                .select('repetition_level')
+                .select('repetition_level, status')
                 .eq('user_id', user.id);
 
-            const masteredCount = progressData?.filter(p => (p.repetition_level || 0) >= 4).length || 0;
+            // Count as mastered if status is 'mastered' OR repetition_level >= 4 (fallback)
+            const masteredCount = progressData?.filter(p => p.status === 'mastered' || (p.repetition_level || 0) >= 4).length || 0;
             const totalCards = progressData?.length || 0;
             const masteryRate = totalCards > 0 ? Math.round((masteredCount / totalCards) * 100) : 0;
 
-            // Streak (simplified - count consecutive days with reviews)
-            const { data: recentReviews } = await supabase
-                .from('user_progress')
-                .select('last_reviewed_at')
-                .eq('user_id', user.id)
-                .order('last_reviewed_at', { ascending: false })
-                .limit(30);
+            // Streak - fetched directly from profiles (optimized)
+            const { data: profileStats } = await supabase
+                .from('profiles')
+                .select('current_streak')
+                .eq('id', user.id)
+                .single();
 
-            let streak = 0;
-            if (recentReviews && recentReviews.length > 0) {
-                const dates = new Set(
-                    recentReviews.map(r => new Date(r.last_reviewed_at).toISOString().split('T')[0])
-                );
-                const sortedDates = Array.from(dates).sort().reverse();
-
-                let currentDate = new Date();
-                currentDate.setHours(0, 0, 0, 0);
-
-                for (const dateStr of sortedDates) {
-                    const reviewDate = new Date(dateStr);
-                    reviewDate.setHours(0, 0, 0, 0);
-
-                    const diffDays = Math.floor((currentDate.getTime() - reviewDate.getTime()) / (1000 * 60 * 60 * 24));
-
-                    if (diffDays === streak) {
-                        streak++;
-                    } else {
-                        break;
-                    }
-                }
-            }
+            const streak = profileStats?.current_streak || 0;
 
             return {
                 totalSets: totalSets || 0,
@@ -104,56 +85,79 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ className }) => {
             icon: BookOpen,
             label: "Study Sets",
             value: stats?.totalSets || 0,
-            color: "text-blue-600",
-            bgColor: "bg-blue-50 dark:bg-blue-950"
+            color: "text-indigo-600 dark:text-indigo-400",
+            bgColor: "bg-indigo-50 dark:bg-indigo-500/10",
+            borderColor: "border-indigo-100 dark:border-indigo-500/20"
         },
         {
             icon: Target,
             label: "Studied Today",
             value: stats?.cardsToday || 0,
             suffix: " cards",
-            color: "text-green-600",
-            bgColor: "bg-green-50 dark:bg-green-950"
+            color: "text-emerald-600 dark:text-emerald-400",
+            bgColor: "bg-emerald-50 dark:bg-emerald-500/10",
+            borderColor: "border-emerald-100 dark:border-emerald-500/20"
         },
         {
             icon: Flame,
             label: "Day Streak",
             value: stats?.streak || 0,
             suffix: stats?.streak === 1 ? " day" : " days",
-            color: "text-orange-600",
-            bgColor: "bg-orange-50 dark:bg-orange-950"
+            color: "text-orange-600 dark:text-orange-400",
+            bgColor: "bg-orange-50 dark:bg-orange-500/10",
+            borderColor: "border-orange-100 dark:border-orange-500/20",
+            animate: ""
         },
         {
             icon: TrendingUp,
             label: "Mastery Rate",
             value: stats?.masteryRate || 0,
             suffix: "%",
-            color: "text-purple-600",
-            bgColor: "bg-purple-50 dark:bg-purple-950"
+            color: "text-violet-600 dark:text-violet-400",
+            bgColor: "bg-violet-50 dark:bg-violet-500/10",
+            borderColor: "border-violet-100 dark:border-violet-500/20"
         }
     ];
 
     return (
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 ${className}`}>
             {statCards.map((stat, index) => (
-                <Card key={index} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground mb-1">
-                                    {stat.label}
-                                </p>
-                                <p className="text-3xl font-bold">
-                                    {stat.value}
-                                    {stat.suffix && <span className="text-lg text-muted-foreground ml-1">{stat.suffix}</span>}
-                                </p>
-                            </div>
-                            <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                                <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <button
+                    key={index}
+                    onClick={() => {
+                        if (stat.label === "Study Sets") navigate('/sets');
+                        else if (stat.label === "Studied Today") navigate('/daily-review');
+                        else navigate('/dashboard'); // Mastery Rate & Day Streak
+                    }}
+                    className={cn(
+                        "premium-card p-6 flex items-center justify-between group overflow-hidden relative text-left w-full transition-all active:scale-[0.98] hover:shadow-lg",
+                        stat.borderColor,
+                        stat.animate
+                    )}
+                >
+                    {/* Background Glow */}
+                    <div className={cn(
+                        "absolute -right-4 -top-4 w-24 h-24 rounded-full blur-3xl opacity-20 transition-opacity group-hover:opacity-40",
+                        stat.bgColor
+                    )} />
+
+                    <div className="relative z-10">
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                            {stat.label}
+                        </p>
+                        <p className="text-3xl font-black tracking-tight">
+                            {stat.value}
+                            {stat.suffix && <span className="text-sm font-medium text-muted-foreground ml-1">{stat.suffix}</span>}
+                        </p>
+                    </div>
+
+                    <div className={cn(
+                        "p-3.5 rounded-2xl relative z-10 transition-transform duration-500 group-hover:scale-110",
+                        stat.bgColor
+                    )}>
+                        <stat.icon className={cn("h-6 w-6", stat.color)} />
+                    </div>
+                </button>
             ))}
         </div>
     );

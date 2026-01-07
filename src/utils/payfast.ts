@@ -3,7 +3,7 @@
  * Docs: https://developers.payfast.co.za/docs
  */
 
-import md5 from 'crypto-js/md5';
+
 
 interface PayFastConfig {
     merchantId: string;
@@ -22,7 +22,7 @@ interface PayFastPaymentData {
     subscription_type?: '1'; // 1 = subscription
     billing_date?: string; // YYYY-MM-DD
     recurring_amount?: string;
-    frequency?: '3'; // 3 = monthly
+    frequency?: '3' | '6'; // 3 = monthly, 6 = annual
     cycles?: '0'; // 0 = indefinite
 }
 
@@ -34,7 +34,7 @@ export class PayFastService {
         this.config = {
             merchantId: import.meta.env.VITE_PAYFAST_MERCHANT_ID || '',
             merchantKey: import.meta.env.VITE_PAYFAST_MERCHANT_KEY || '',
-            passphrase: import.meta.env.VITE_PAYFAST_PASSPHRASE || '',
+            passphrase: '', // MOVED TO BACKEND (api/payfast.ts)
             sandbox: import.meta.env.VITE_PAYFAST_SANDBOX === 'true',
         };
 
@@ -44,37 +44,43 @@ export class PayFastService {
     }
 
     /**
-     * Generate signature for PayFast payment
+     * Generate signature securely via Backend API
      */
-    private generateSignature(data: Record<string, string>): string {
-        // Create parameter string
-        const paramString = Object.keys(data)
-            .sort()
-            .map(key => `${key}=${encodeURIComponent(data[key]).replace(/%20/g, '+')}`)
-            .join('&');
+    private async generateSignature(data: Record<string, string>): Promise<string> {
+        try {
+            const response = await fetch('/api/payfast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
 
-        // Append passphrase if set
-        const signatureString = this.config.passphrase
-            ? `${paramString}&passphrase=${encodeURIComponent(this.config.passphrase)}`
-            : paramString;
+            if (!response.ok) {
+                throw new Error('Failed to generate signature');
+            }
 
-        return md5(signatureString).toString();
+            const result = await response.json();
+            return result.signature;
+        } catch (error) {
+            console.error('PayFast Signature Error:', error);
+            throw error;
+        }
     }
 
     /**
      * Create a subscription checkout
      */
-    createSubscriptionCheckout(paymentData: PayFastPaymentData): string {
+    async createSubscriptionCheckout(paymentData: PayFastPaymentData): Promise<string> {
         const data: Record<string, string> = {
             merchant_id: this.config.merchantId,
             merchant_key: this.config.merchantKey,
             return_url: `${window.location.origin}/payment-result?success=true`,
             cancel_url: `${window.location.origin}/payment-result?canceled=true`,
-            notify_url: `${window.location.origin}/api/payfast-webhook`, // You'll need to create this endpoint
+            notify_url: `${window.location.origin}/api/payfast-webhook`,
             ...paymentData,
         };
 
-        const signature = this.generateSignature(data);
+        // Generate signature on server
+        const signature = await this.generateSignature(data);
         data.signature = signature;
 
         // Build form and auto-submit
@@ -99,32 +105,34 @@ export class PayFastService {
     /**
      * Quick checkout for Nova Pro subscription
      */
-    checkoutNovaPro(userEmail: string, userName: string) {
+    async checkoutNovaPro(userEmail: string, userName: string, billingCycle: 'monthly' | 'annual' = 'monthly') {
         const [firstName, ...lastNameParts] = userName.split(' ');
         const lastName = lastNameParts.join(' ') || 'User';
 
         // Validate credentials
         if (!this.config.merchantId || !this.config.merchantKey) {
-            console.error('PayFast credentials not configured. Please check your .env.local file.');
+            console.error('PayFast credentials not configured.');
             return;
         }
 
-        console.log('Initiating PayFast checkout with:', {
-            merchantId: this.config.merchantId,
-            sandbox: this.config.sandbox,
-            email: userEmail
-        });
+        console.log(`Initiating PayFast checkout for ${billingCycle}...`);
 
-        this.createSubscriptionCheckout({
-            amount: '99.99', // R99.99/month
-            item_name: 'Nova Pro Monthly Subscription',
-            item_description: 'Monthly subscription to Nova Pro - Unlimited AI study tools',
+        // Pricing Configuration
+        const isAnnual = billingCycle === 'annual';
+        const price = isAnnual ? '619.99' : '59.99';
+        const itemName = isAnnual ? 'Nova Pro Annual Subscription' : 'Nova Pro Monthly Subscription';
+        const frequency = isAnnual ? '6' : '3'; // 3 = Monthly, 6 = Annual
+
+        await this.createSubscriptionCheckout({
+            amount: price,
+            item_name: itemName,
+            item_description: `${billingCycle === 'annual' ? 'Annual' : 'Monthly'} subscription to Nova Pro - Unlimited AI study tools`,
             email_address: userEmail,
             name_first: firstName,
             name_last: lastName,
             subscription_type: '1',
-            recurring_amount: '99.99',
-            frequency: '3', // Monthly
+            recurring_amount: price,
+            frequency: frequency,
             cycles: '0', // Indefinite
         });
     }

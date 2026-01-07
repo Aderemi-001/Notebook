@@ -11,6 +11,55 @@ const corsHeaders = {
 
 // @ts-ignore
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+// @ts-ignore
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+// @ts-ignore
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+// Helper to upload file to Gemini (for large files > 20MB or just general robustness)
+async function uploadToGemini(fileBuffer: ArrayBuffer, mimeType: string) {
+  const NUM_BYTES = fileBuffer.byteLength;
+  console.log(`Initialising Gemini Upload for ${NUM_BYTES} bytes...`);
+
+  // 1. Start Resumable Upload
+  const startUrl = `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${GEMINI_API_KEY}`;
+  const startRes = await fetch(startUrl, {
+    method: 'POST',
+    headers: {
+      'X-Goog-Upload-Protocol': 'resumable',
+      'X-Goog-Upload-Command': 'start',
+      'X-Goog-Upload-Header-Content-Length': NUM_BYTES.toString(),
+      'X-Goog-Upload-Header-Content-Type': mimeType,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ file: { display_name: 'uploaded_doc' } })
+  });
+
+  const uploadUrl = startRes.headers.get('x-goog-upload-url');
+  if (!uploadUrl) throw new Error("Failed to get Gemini upload URL");
+
+  // 2. Upload Bytes
+  const uploadRes = await fetch(uploadUrl, {
+    method: 'POST', // or PUT? Google docs say PUT usually, but Resumable protocol uses POST for start, PUT/POST for bytes.
+    // 'X-Goog-Upload-Command': 'upload, finalize',
+    headers: {
+      'Content-Length': NUM_BYTES.toString(),
+      'X-Goog-Upload-Offset': '0',
+      'X-Goog-Upload-Command': 'upload, finalize'
+    },
+    body: fileBuffer
+  });
+
+  if (!uploadRes.ok) {
+    const txt = await uploadRes.text();
+    throw new Error(`Gemini byte upload failed: ${txt}`);
+  }
+
+  const fileData = await uploadRes.json();
+  console.log("File uploaded to Gemini:", fileData.file.uri);
+  return fileData.file.uri;
+}
+
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -27,16 +76,65 @@ serve(async (req: Request) => {
   const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
   try {
-    const { textContent, imageParts, numCards, mode } = await req.json(); // Expect textContent, imageParts, numCards, and mode
+    const { textContent, imageParts, numCards, mode, filePath, bucketName } = await req.json();
 
-    if ((!textContent || typeof textContent !== 'string' || !textContent.trim()) && (!imageParts || imageParts.length === 0)) {
-      return new Response(JSON.stringify({ error: "No text content or image parts provided in the request body." }), {
+    const parts = [];
+
+    // --- CASE 1: File Path Provided (Storage Download -> Gemini File API) ---
+    if (filePath && bucketName) {
+      console.log(`Processing file from storage: ${bucketName}/${filePath}`);
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+      const { data: fileData, error: dlError } = await supabase.storage
+        .from(bucketName)
+        .download(filePath);
+
+      if (dlError) throw dlError;
+
+      const buffer = await fileData.arrayBuffer();
+      // Determine Mime Type (guess from ext or fileData)
+      const mimeType = fileData.type || 'application/pdf'; // User 'application/octet-stream' might happen, default to PDF for now
+
+      // Upload to Gemini
+      try {
+        const fileUri = await uploadToGemini(buffer, mimeType);
+        parts.push({
+          file_data: {
+            mime_type: mimeType,
+            file_uri: fileUri
+          }
+        });
+      } catch (uploadErr) {
+        console.error("Gemini Upload Failed:", uploadErr);
+        throw new Error("Failed to process large file with AI provider.");
+      }
+    }
+    // --- CASE 2: Inline Text/Images (Legacy/Small files) ---
+    else if ((!textContent || typeof textContent !== 'string' || !textContent.trim()) && (!imageParts || imageParts.length === 0)) {
+      return new Response(JSON.stringify({ error: "No content provided." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
+    } else {
+      // ... (Existing text/image logic)
+      // Add text content if available
+      if (textContent && textContent.trim()) {
+        parts.push({ text: textContent });
+      }
+      // Add image parts if available
+      if (imageParts && imageParts.length > 0) {
+        imageParts.forEach((img: { data: string; mimeType: string }) => {
+          parts.push({
+            inlineData: {
+              data: img.data,
+              mimeType: img.mimeType,
+            },
+          });
+        });
+      }
     }
 
-    const parts = [];
     let prompt = "";
 
     if (mode === 'estimate') {
@@ -108,22 +206,7 @@ serve(async (req: Request) => {
 
     parts.push({ text: prompt });
 
-    // Add text content if available
-    if (textContent && textContent.trim()) {
-      parts.push({ text: textContent });
-    }
-
-    // Add image parts if available
-    if (imageParts && imageParts.length > 0) {
-      imageParts.forEach((img: { data: string; mimeType: string }) => {
-        parts.push({
-          inlineData: {
-            data: img.data,
-            mimeType: img.mimeType,
-          },
-        });
-      });
-    }
+    // (Parts construction moved above)
     parts.push({ text: "---" }); // Closing delimiter for content
 
     const geminiResponse = await fetch(GEMINI_API_URL, {

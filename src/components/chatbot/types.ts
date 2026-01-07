@@ -4,6 +4,7 @@ export interface ChatMessage {
   id: number;
   sender: 'user' | 'bot' | 'system';
   text: string | React.ReactNode;
+  rawText?: string; // Original text before React rendering, used for AI context
   timestamp: Date;
   feedbackGiven?: 'up' | 'down' | null;
 }
@@ -135,4 +136,12 @@ export const ROUTE_KEYWORDS: { [key: string]: string } = {
   "collaborations page": "/collaborations",
   "collaborations": "/collaborations",
   "/collaborations": "/collaborations",
+  "my sets page": "/sets",
+  "my sets": "/sets",
+  "/sets": "/sets",
+  "study sets": "/sets",
+  "exams page": "/exams",
+  "practice quiz": "/exams",
+  "/exams": "/exams",
+  "quiz": "/exams",
 };

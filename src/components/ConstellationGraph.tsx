@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface GraphNode {
     id: string;
@@ -22,7 +23,11 @@ interface ConstellationGraphProps {
     selectedNodeId: string | null;
 }
 
-export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({ nodes: rawNodes, onSelectNode, selectedNodeId }) => {
+export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
+    nodes: rawNodes,
+    onSelectNode,
+    selectedNodeId
+}: ConstellationGraphProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [nodes, setNodes] = useState<GraphNode[]>([]);
     const [links, setLinks] = useState<GraphLink[]>([]);
@@ -38,7 +43,7 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({ nodes: r
         setDimensions({ width: clientWidth, height: clientHeight });
 
         // Initialize positions randomly but centered
-        const newNodes: GraphNode[] = rawNodes.map(n => ({
+        const newNodes: GraphNode[] = rawNodes.map((n: ConstellationGraphProps['nodes'][0]) => ({
             id: n.id,
             count: n.count,
             x: clientWidth / 2 + (Math.random() - 0.5) * 200,
@@ -52,10 +57,10 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({ nodes: r
         const linkSet = new Set<string>();
         const newLinks: GraphLink[] = [];
 
-        rawNodes.forEach(node => {
-            node.relatedTags.forEach(targetId => {
+        rawNodes.forEach((node: ConstellationGraphProps['nodes'][0]) => {
+            node.relatedTags.forEach((targetId: string) => {
                 // Ensure both nodes exist in our current set (filtering consistency)
-                if (rawNodes.find(n => n.id === targetId)) {
+                if (rawNodes.find((n: ConstellationGraphProps['nodes'][0]) => n.id === targetId)) {
                     const linkId = [node.id, targetId].sort().join('-');
                     if (!linkSet.has(linkId)) {
                         linkSet.add(linkId);

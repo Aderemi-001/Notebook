@@ -6,7 +6,7 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
     // Handle CORS preflight
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
@@ -50,7 +50,7 @@ serve(async (req) => {
             return new Response('User lookup failed', { status: 500 })
         }
 
-        const user = userData.users.find(u => u.email === emailAddress)
+        const user = userData.users.find((u: any) => u.email === emailAddress)
 
         if (!user) {
             console.error('User not found:', emailAddress)

@@ -163,7 +163,7 @@ const Statistics: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+    <div className="w-full px-4 md:px-8 py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
           <LayoutDashboard className="mr-3 h-7 w-7" /> Study Statistics

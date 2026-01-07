@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { CardContent, CardHeader, CardTitle, CardDescription, NotebookCard } from '@/components/NotebookCard';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -65,7 +65,7 @@ const StudySetFormFields: React.FC<StudySetFormFieldsProps> = ({ form, userGroup
 
   return (
     <>
-      <NotebookCard>
+      <Card className="glass-card shadow-premium rounded-[2.5rem] border-white/20">
         <CardHeader>
           <CardTitle>Set Details</CardTitle>
           <CardDescription>Give your study set a title, description, and configure its visibility.</CardDescription>
@@ -164,7 +164,7 @@ const StudySetFormFields: React.FC<StudySetFormFieldsProps> = ({ form, userGroup
             />
           </div>
         </CardContent>
-      </NotebookCard>
+      </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>

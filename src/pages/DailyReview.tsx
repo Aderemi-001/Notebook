@@ -1,18 +1,25 @@
 import * as React from 'react';
 import { useState, useEffect, useCallback } from 'react';
+import { NovaReviewLoader } from "@/components/NovaReviewLoader";
+import { gamificationService } from '@/services/gamificationService';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+// Card components imported below
 import FlippableCard from "@/components/FlippableCard";
-import { ArrowLeft, RotateCcw, BookOpen, Volume2 } from 'lucide-react';
+import { ArrowLeft, RotateCcw, BookOpen, Volume2, Lock, Sparkles } from 'lucide-react';
+import { cn } from "@/lib/utils";
 import { speak } from '@/utils/audio';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
 import { Progress } from "@/components/ui/progress";
-import { NotebookCard } from '@/components/NotebookCard';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useUserPreferences } from '@/hooks/use-user-preferences';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useNavigate } from 'react-router-dom';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { NovaAI } from '@/utils/NovaAI';
+import BrandLogo from '@/components/BrandLogo';
 
 interface CardItem {
   id: string;
@@ -117,17 +124,88 @@ const fetchDailyReviewCards = async (hideMastered: boolean, sortOrder: string): 
 
 const DailyReview: React.FC = () => {
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
+  const { isPremium } = useSubscription();
+  const navigate = useNavigate();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showDefinition, setShowDefinition] = useState(false);
   const [sessionFinished, setSessionFinished] = useState(false);
+  const [isPreparing, setIsPreparing] = useState(true); // Start true for "Magic" feel
+  const [prepProgress, setPrepProgress] = useState(0);
+  const [novaTip, setNovaTip] = useState<string | null>(null);
+  const [prepPhase, setPrepPhase] = useState(0); // 0: memory, 1: calibration, 2: ready
   const queryClient = useQueryClient();
 
   const { data: cards, isLoading, isError, error, refetch } = useQuery<CardItem[], Error>({
     queryKey: ['dailyReviewCards', preferences?.hide_mastered_from_daily_review, preferences?.default_card_sort_order],
-    queryFn: () => fetchDailyReviewCards(preferences?.hide_mastered_from_daily_review || false, preferences?.default_card_sort_order || 'next_review_at_asc'),
-    enabled: !isLoadingPreferences, // Enable only when preferences are loaded
+    queryFn: async () => {
+      // Add a timeout safeguard (10 seconds)
+      const timeoutPromise = new Promise<CardItem[]>((_, reject) =>
+        setTimeout(() => reject(new Error("Request timed out")), 10000)
+      );
+
+      try {
+        const result = await Promise.race([
+          fetchDailyReviewCards(preferences?.hide_mastered_from_daily_review || false, preferences?.default_card_sort_order || 'next_review_at_asc'),
+          timeoutPromise
+        ]);
+        return result;
+      } catch (err) {
+        console.error("Daily Review fetch failed:", err);
+        throw err;
+      }
+    },
+    enabled: !!preferences, // Enable only when preferences are loaded
     staleTime: 0, // Always refetch for a fresh session
+    retry: 1, // Only retry once to avoid long waits
   });
+
+  // Prep Transition Logic
+  useEffect(() => {
+    if (!!preferences && !sessionFinished && currentCardIndex === 0) {
+      startPreparation();
+    }
+  }, [!!preferences]);
+
+  const startPreparation = async () => {
+    setPrepProgress(0);
+    setPrepPhase(0);
+
+    // Initial Tip (Generic) - will update if cards load fast
+    const fetchTip = async (specificTitles?: string) => {
+      const prompt = specificTitles ? `I'm about to review cards from these sets: ${specificTitles}. Give me a 1-sentence, high-energy, and professional motivation or memory tip for this session. Keep it under 15 words. Mention Nova by name.` : `I'm starting a study review session. Give me a 1-sentence, high-energy, and professional motivation or memory tip. Keep it under 15 words. Mention Nova by name.`;
+      try {
+        const tip = await NovaAI.chat(prompt, { route: '/daily-review', userName: 'User', timeOfDay: new Date().getHours() < 12 ? 'morning' : 'afternoon', conversationHistory: [] });
+        setNovaTip(tip);
+      } catch (e) {
+        setNovaTip("Nova is ready for your session.");
+      }
+    };
+    fetchTip();
+
+    // Simulate progress
+    const duration = 3500;
+    const interval = 50;
+    const increment = (interval / duration) * 100;
+
+    const timer = setInterval(() => {
+      setPrepProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(timer);
+          return 100;
+        }
+
+        // Update phases based on progress
+        if (prev > 75) setPrepPhase(2);
+        else if (prev > 45) setPrepPhase(1);
+
+        return prev + increment;
+      });
+    }, interval);
+
+    setTimeout(() => {
+      setIsPreparing(false);
+    }, duration);
+  };
 
   useEffect(() => {
     if (!isLoadingPreferences && preferences) {
@@ -190,6 +268,12 @@ const DailyReview: React.FC = () => {
       }
       showSuccess(successMessage);
 
+      // Check for streak update (fire and forget)
+      if (quality > 0) {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser) gamificationService.checkAndIncrementStreak(currentUser.id);
+      }
+
       queryClient.invalidateQueries({ queryKey: ['dueCardsCount'] }); // Update global due cards count
       queryClient.invalidateQueries({ queryKey: ['studyDays'] }); // Invalidate studyDays query
     } catch (err: any) {
@@ -221,12 +305,7 @@ const DailyReview: React.FC = () => {
   if (isLoading || isLoadingPreferences) {
     return (
       <div className="container mx-auto py-6 sm:py-8 md:py-10 flex flex-col items-center animate-fade-in">
-        <Skeleton className="h-10 w-3/4 mb-8" />
-        <Skeleton className="h-64 w-full max-w-md rounded-lg" />
-        <div className="flex gap-4 mt-8">
-          <Skeleton className="h-10 w-24" />
-          <Skeleton className="h-10 w-24" />
-        </div>
+        <NovaReviewLoader />
       </div>
     );
   }
@@ -242,7 +321,7 @@ const DailyReview: React.FC = () => {
   if (!cards || cards.length === 0) {
     return (
       <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center animate-fade-in">
-        <NotebookCard className="p-8">
+        <Card className="glass-card shadow-premium rounded-[2.5rem] p-8 bg-white/50 dark:bg-black/20 border-white/20">
           <CardHeader>
             <CardTitle className="text-2xl">No Cards Due Today!</CardTitle>
             <CardDescription>
@@ -269,13 +348,53 @@ const DailyReview: React.FC = () => {
               <RotateCcw className="mr-2 h-4 w-4" /> Check Again
             </Button>
           </CardContent>
-        </NotebookCard>
+        </Card>
       </div>
     );
   }
 
+  const prepStatusText = [
+    "Analyzing memory patterns...",
+    "Calibrating neural intensity...",
+    "Nova is ready for you."
+  ];
+
   return (
-    <div className="container mx-auto py-6 sm:py-8 md:py-10 flex flex-col items-center animate-fade-in">
+    <div className="w-full px-4 md:px-8 py-6 sm:py-8 md:py-10 flex flex-col items-center animate-fade-in">
+      {/* Nova Preparation Overlay */}
+      {isPreparing && (
+        <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8 text-center transition-all duration-500">
+          <div className="relative mb-12">
+            <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full animate-pulse" />
+            <BrandLogo size="2xl" glow className="relative animate-float" />
+          </div>
+
+          <div className="max-w-md w-full space-y-8">
+            <div className="space-y-4">
+              <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary/80 animate-pulse">
+                {prepStatusText[prepPhase]}
+              </p>
+
+              <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden border border-white/10">
+                <div
+                  className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out"
+                  style={{ width: `${prepProgress}%` }}
+                />
+              </div>
+            </div>
+
+            <div className={cn(
+              "p-6 rounded-3xl bg-white/5 border border-white/10 transition-all duration-700 delay-500",
+              novaTip ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            )}>
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Nova's Briefing</span>
+              <p className="text-lg font-medium italic text-foreground leading-relaxed">
+                "{novaTip || "Preparing your personalized review session..."}"
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="w-full flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">Daily Review</h1>
         <Button asChild variant="outline">
@@ -296,7 +415,7 @@ const DailyReview: React.FC = () => {
       )}
 
       {sessionFinished ? (
-        <NotebookCard className="w-full max-w-md">
+        <Card className="glass-card shadow-premium rounded-[2.5rem] w-full max-w-md bg-white/50 dark:bg-black/20 border-white/20 overflow-hidden">
           <CardHeader>
             <CardTitle className="text-2xl">Daily Review Complete!</CardTitle>
             <CardDescription>
@@ -313,7 +432,7 @@ const DailyReview: React.FC = () => {
               </Link>
             </Button>
           </CardContent>
-        </NotebookCard>
+        </Card>
       ) : (
         <>
           <FlippableCard
@@ -332,14 +451,43 @@ const DailyReview: React.FC = () => {
                       </CardDescription>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-full"
-                    onClick={(e) => { e.stopPropagation(); if (currentCard) speak(currentCard.term); }}
-                  >
-                    <Volume2 className="h-5 w-5" />
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="relative group/audio">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "h-10 w-10 rounded-full transition-all",
+                              isPremium
+                                ? "hover:bg-primary/10 text-primary"
+                                : "text-muted-foreground/40 cursor-not-allowed bg-muted/30"
+                            )}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isPremium) {
+                                if (currentCard) speak(currentCard.term);
+                              } else {
+                                navigate('/pricing');
+                                showError("Advanced Voice is a Nova Pro feature.");
+                              }
+                            }}
+                          >
+                            <Volume2 className="h-5 w-5" />
+                            {!isPremium && <Lock className="absolute -top-1 -right-1 h-3 w-3 text-amber-500 shadow-sm" />}
+                          </Button>
+                        </div>
+                      </TooltipTrigger>
+                      {!isPremium && (
+                        <TooltipContent className="bg-amber-500 text-white font-bold border-0 shadow-lg">
+                          <p className="flex items-center gap-2">
+                            <Sparkles className="h-4 w-4" /> Unlock Advanced Voice with Nova Pro
+                          </p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </CardHeader>
                 <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto scrollbar-hide">
                   <p className="text-xl font-medium">
@@ -359,14 +507,43 @@ const DailyReview: React.FC = () => {
                       </CardDescription>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-full"
-                    onClick={(e) => { e.stopPropagation(); if (currentCard) speak(currentCard.definition); }}
-                  >
-                    <Volume2 className="h-5 w-5" />
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="relative group/audio">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "h-10 w-10 rounded-full transition-all",
+                              isPremium
+                                ? "hover:bg-primary/10 text-primary"
+                                : "text-muted-foreground/40 cursor-not-allowed bg-muted/30"
+                            )}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isPremium) {
+                                if (currentCard) speak(currentCard.definition);
+                              } else {
+                                navigate('/pricing');
+                                showError("Advanced Voice is a Nova Pro feature.");
+                              }
+                            }}
+                          >
+                            <Volume2 className="h-5 w-5" />
+                            {!isPremium && <Lock className="absolute -top-1 -right-1 h-3 w-3 text-amber-500 shadow-sm" />}
+                          </Button>
+                        </div>
+                      </TooltipTrigger>
+                      {!isPremium && (
+                        <TooltipContent className="bg-amber-500 text-white font-bold border-0 shadow-lg">
+                          <p className="flex items-center gap-2">
+                            <Sparkles className="h-4 w-4" /> Unlock Advanced Voice with Nova Pro
+                          </p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </CardHeader>
                 <CardContent className="flex-grow flex items-center justify-center p-4 overflow-y-auto scrollbar-hide">
                   <p className="text-xl font-medium">

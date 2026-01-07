@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 const TestPage: React.FC = () => {
   console.log("TestPage component is rendering.");
   return (
-    <div className="container mx-auto py-6 sm:py-8 md:py-10 text-center animate-fade-in">
+    <div className="w-full px-4 md:px-8 py-6 sm:py-8 md:py-10 text-center animate-fade-in">
       <h1 className="text-3xl font-bold mb-4">Test Page</h1>
       <p className="text-lg text-muted-foreground mb-6">
         If you see this, routing is working!

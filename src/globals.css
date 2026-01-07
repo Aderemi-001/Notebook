@@ -1,3 +1,18 @@
+/* 
+ * ==========================================================================
+ * PROJECT NOVEA - HYPER-PREMIUM DESIGN SYSTEM (SUPERNOVA ULTRA)
+ * ==========================================================================
+ * STATUS: HARD-LOCKED FOUNDATION
+ * 
+ * All future styling must adhere to the "Aether & Pulse" design philosophy.
+ * This file serves as the definitive source of truth for the visual core.
+ * Do not introduce competing color palettes or design languages.
+ * ==========================================================================
+ */
+
+/* Suppress CSS linter warnings for Tailwind CSS directives */
+/* stylelint-disable at-rule-no-unknown */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -6,95 +21,87 @@
 
 @layer base {
   :root {
-    /* Premium "Zinc" Palette (Light) */
-    --background: 0 0% 100%;
-    /* White */
-    --foreground: 240 10% 3.9%;
-    /* Zinc-950 */
+    /* Premium "Indigo-Pulse" Palette (Light) */
+    --background: 240 20% 99%;
+    /* Extremely clean white-blue */
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 240 5.9% 10%;
-    /* Zinc-900 */
-    --primary-foreground: 0 0% 98%;
+    --primary: 243 75% 59%;
+    /* Vibrant Indigo */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 240 4.8% 95.9%;
-    /* Zinc-100 */
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 243 100% 97%;
+    /* Softest Indigo */
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 240 4.8% 95.9%;
-    /* Zinc-100 */
-    --muted-foreground: 240 3.8% 46.1%;
-    /* Zinc-500 */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 240 4.8% 95.9%;
-    /* Zinc-100 */
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 240 5.9% 90%;
-    /* Zinc-200 */
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
-    /* Zinc-950 */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 243 75% 59%;
 
-    --radius: 0.75rem;
-    /* Rounded-xl */
+    --radius: 1rem;
   }
 
   .dark {
-    /* Premium "Zinc" Palette (Dark) */
-    --background: 240 10% 3.9%;
-    /* Zinc-950 */
-    --foreground: 0 0% 98%;
-    /* Zinc-50 */
+    /* Premium "Indigo-Midnight" Palette (Dark) */
+    --background: 222 47% 4%;
+    /* Deepest Indigo Midnight */
+    --foreground: 210 40% 98%;
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 222 47% 6%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 222 47% 6%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 0 0% 98%;
-    /* Zinc-50 */
-    --primary-foreground: 240 5.9% 10%;
+    --primary: 243 75% 65%;
+    /* Glowing Indigo */
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 240 3.7% 15.9%;
-    /* Zinc-800 */
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 222 47% 12%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    /* Zinc-400 */
+    --muted: 222 47% 12%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 222 47% 12%;
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 222 47% 12%;
+    --input: 222 47% 12%;
+    --ring: 243 75% 65%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border selection:bg-primary/20 selection:text-primary;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
-    /* Subtle premium texture */
-    background-image: radial-gradient(at top center, hsl(var(--secondary) / 0.3) 0%, transparent 70%);
+    /* Sophisticated radial mesh background */
+    background-image:
+      radial-gradient(at 0% 0%, hsla(243, 75%, 59%, 0.05) 0, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(263, 75%, 59%, 0.05) 0, transparent 50%);
     background-attachment: fixed;
   }
 
@@ -105,13 +112,48 @@
   h5,
   h6 {
     font-family: 'Outfit', sans-serif;
-    @apply tracking-tight;
+    @apply tracking-tight font-bold;
   }
 }
 
 @layer utilities {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-sm hover:shadow-md transition-all duration-300;
+    @apply bg-card/40 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-premium transition-all duration-500;
+  }
+
+  .premium-card {
+    @apply bg-card border border-border shadow-premium hover:shadow-premium-hover hover:-translate-y-1 transition-all duration-300;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 15px hsla(243, 75%, 59%, 0.3);
+  }
+
+  .bg-nova-gradient {
+    @apply bg-gradient-to-tr from-nova-blue via-nova-purple to-nova-pink;
+  }
+
+  .text-nova-gradient {
+    @apply bg-nova-gradient bg-clip-text text-transparent;
+  }
+
+  .animate-nova-gradient {
+    background-size: 200% 200%;
+    animation: nova-gradient 5s ease infinite;
+  }
+
+  @keyframes nova-gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
   }
 
   .text-balance {
@@ -135,11 +177,35 @@
     transform: rotateY(180deg);
   }
 
-  .rotate-y-0 {
-    transform: rotateY(0deg);
+  /* Custom Scrollbar for Premium Feel */
+  /* Custom Scrollbar for Premium Feel - Globally Applied */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
 
-  /* Prevent iOS zoom on focus */
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/20 hover:bg-primary/40 rounded-full transition-colors;
+  }
+
+  /* Legacy utility class support */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-primary/20 hover:bg-primary/40 rounded-full transition-colors;
+  }
+
   @media screen and (max-width: 768px) {
 
     input,
@@ -149,21 +215,7 @@
     }
   }
 
-  /* Global Scrollbar Styling (Matches ScrollArea) */
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-border/60 hover:bg-border rounded-full border-[2px] border-transparent bg-clip-content transition-colors;
-  }
-
-  ::-webkit-scrollbar-corner {
-    background: transparent;
+  * {
+    -webkit-tap-highlight-color: transparent !important;
   }
 }

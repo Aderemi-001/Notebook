@@ -18,8 +18,8 @@ const LoadingScreen: React.FC = () => {
                         <div className="absolute -inset-4 bg-gradient-to-r from-primary/30 via-purple-500/30 to-primary/30 rounded-[2rem] blur-xl group-hover:blur-2xl transition-all duration-1000 animate-pulse" />
 
                         {/* Logo Icon Base (App Icon Style) */}
-                        <div className="relative bg-white p-4 rounded-[2.5rem] shadow-2xl border border-white/20 animate-float flex items-center justify-center overflow-hidden">
-                            <BrandLogo size="xl" rounded="2xl" />
+                        <div className="relative animate-float flex items-center justify-center overflow-hidden">
+                            <BrandLogo size="xl" rounded="2xl" shadow />
                         </div>
                     </div>
                 </div>

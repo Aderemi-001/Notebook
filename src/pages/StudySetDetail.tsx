@@ -5,6 +5,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { useState, useEffect } from "react";
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 // Import new modular components
 import StudySetHeader from '@/components/StudySetHeader';
@@ -87,7 +90,8 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
     `)
     .eq('id', setId);
 
-  // If not admin, apply RLS-like conditions for fetching
+  // If not admin, strictly enforce RLS-like logic:
+  // User must own the set OR the set must be public
   if (!isAdmin) {
     query = query.or(`user_id.eq.${user?.id},is_public.eq.true`);
   }
@@ -173,6 +177,46 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
   const [isOwner, setIsOwner] = useState(false);
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
 
+  // Edit Card State
+  const [editingCard, setEditingCard] = useState<CardItem | null>(null);
+  const [editForm, setEditForm] = useState({ term: '', definition: '' });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleEditCard = (card: CardItem) => {
+    setEditingCard(card);
+    setEditForm({ term: card.term, definition: card.definition });
+  };
+
+  const handleSaveCard = async () => {
+    if (!editingCard || !user) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('cards')
+        .update({
+          term: editForm.term,
+          definition: editForm.definition
+        })
+        .eq('id', editingCard.id);
+
+      if (error) throw error;
+
+      showSuccess("Card updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
+      setEditingCard(null);
+    } catch (error: any) {
+      showError(error.message || "Failed to update card");
+      console.error("Update card error:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleStudyCard = (cardId: string) => {
+    navigate(`/sets/${setId}/study?cardId=${cardId}`);
+  };
+
   const { data: studySet, isLoading, isError, error } = useQuery<StudySet, Error>({
     queryKey: ['studySet', setId, user?.id, profile?.is_admin], // Add profile.is_admin to query key
     queryFn: () => fetchStudySetDetails(setId!),
@@ -192,6 +236,10 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
       setIsOwner(false);
     }
   }, [studySet?.user_id, user]);
+
+  // Derived permissions
+  const canEdit = isOwner || (profile?.is_admin ?? false);
+  const canDelete = isOwner || (profile?.is_admin ?? false);
 
   const handleDeleteSet = async () => {
     if (!studySet?.id) return;
@@ -343,7 +391,7 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
 
   if (isLoadingAuth || isLoading || isLoadingPreferences || (user && isLoadingLinkedNotes)) {
     return (
-      <div className="container mx-auto py-10 animate-fade-in">
+      <div className="w-full px-4 md:px-8 py-10 animate-fade-in">
         <Skeleton className="h-8 w-1/2 mb-8" />
         <Skeleton className="h-6 w-1/3 mb-4" />
         <Skeleton className="h-4 w-full mb-6" />
@@ -383,12 +431,12 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-10 min-h-fit animate-fade-in">
       <StudySetHeader
         studySet={studySet}
-        isOwner={isOwner}
+        isOwner={canEdit} // Pass the computed permission
         isLoggedIn={!!user}
-        isAdmin={profile?.is_admin || false} // Pass isAdmin status
+        isAdmin={profile?.is_admin || false}
         preferences={preferences}
         handleDeleteSet={handleDeleteSet}
         handleResetProgress={handleResetProgress}
@@ -412,6 +460,8 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
       <StudySetCardsList
         cards={studySet.cards}
         handleToggleFlag={handleToggleFlag}
+        onEditCard={canEdit ? handleEditCard : undefined} // Use computed permission
+        onStudyCard={handleStudyCard}
         highlightTerm={highlightTerm}
       />
 
@@ -421,6 +471,42 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
           isLoadingLinkedNotes={isLoadingLinkedNotes}
         />
       )}
+
+      {/* Edit Card Dialog */}
+      <Dialog open={!!editingCard} onOpenChange={(open) => !open && setEditingCard(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Card</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="term">Term</Label>
+              <Textarea
+                id="term"
+                value={editForm.term}
+                onChange={(e) => setEditForm(prev => ({ ...prev, term: e.target.value }))}
+                placeholder="Enter term"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="definition">Definition</Label>
+              <Textarea
+                id="definition"
+                value={editForm.definition}
+                onChange={(e) => setEditForm(prev => ({ ...prev, definition: e.target.value }))}
+                placeholder="Enter definition"
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCard(null)}>Cancel</Button>
+            <Button onClick={handleSaveCard} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

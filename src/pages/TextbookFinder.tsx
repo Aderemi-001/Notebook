@@ -5,8 +5,7 @@ import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { NotebookCard } from "@/components/NotebookCard";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,10 +40,10 @@ const TextbookFinder: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
+    <div className="w-full px-4 md:px-8 py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
-          <Search className="h-8 w-8 text-primary" /> Textbook Finder
+          <Search className="h-8 w-8 text-purple-500" /> Textbook Finder
         </h1>
         <Button asChild variant="outline">
           <Link to="/" className="flex items-center">
@@ -57,7 +56,7 @@ const TextbookFinder: React.FC = () => {
         Search for textbooks and study resources using the Google Books library.
       </p>
 
-      <NotebookCard className="mb-6">
+      <Card className="glass-card shadow-premium rounded-[2.5rem] mb-6 border-white/20">
         <CardHeader>
           <CardTitle>Search for Textbooks</CardTitle>
           <CardDescription>Enter the title, author, or ISBN.</CardDescription>
@@ -74,7 +73,7 @@ const TextbookFinder: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 className="flex-grow"
               />
-              <Button type="submit" disabled={!searchQuery.trim() || isLoading}>
+              <Button type="submit" disabled={!searchQuery.trim() || isLoading} className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-all">
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
@@ -98,12 +97,12 @@ const TextbookFinder: React.FC = () => {
             </div>
           </form>
         </CardContent>
-      </NotebookCard>
+      </Card>
 
       {isLoading && submittedQuery && (
         <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
           {[...Array(2)].map((_, i) => (
-            <NotebookCard key={i}>
+            <Card key={i} className="glass-card shadow-premium rounded-[2rem]">
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -114,7 +113,7 @@ const TextbookFinder: React.FC = () => {
                 <Skeleton className="h-4 w-1/3" />
                 <Skeleton className="h-10 w-24" />
               </CardContent>
-            </NotebookCard>
+            </Card>
           ))}
         </div>
       )}
@@ -132,7 +131,7 @@ const TextbookFinder: React.FC = () => {
             const cleanTitle = result.title.split(/[:|(-]/)[0].replace(/^Books:\s?/i, '').trim();
 
             return (
-              <NotebookCard key={index} className="flex flex-col h-full hover:shadow-lg transition-shadow">
+              <Card key={index} className="glass-card shadow-premium rounded-[2rem] flex flex-col h-full hover:shadow-lg transition-shadow border-white/10 dark:border-white/5">
                 <CardHeader className="pb-2">
                   <div className="flex gap-4">
                     {result.thumbnail && (
@@ -237,7 +236,7 @@ const TextbookFinder: React.FC = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardFooter>
-              </NotebookCard>
+              </Card>
             )
           })}
         </div>

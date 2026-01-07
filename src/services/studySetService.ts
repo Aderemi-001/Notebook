@@ -102,5 +102,186 @@ export const studySetService = {
             .eq('id', id);
 
         if (error) throw error;
+    },
+
+    /**
+     * Create a study set with cards and optional concept links (Transaction-like)
+     */
+    async createSetWithCards(
+        setDetails: { title: string, description?: string, is_public: boolean, group_id?: string | null, source_text?: string | null },
+        cards: { term: string, definition: string }[],
+        conceptLinks?: { card_term: string, concept_name: string }[]
+    ) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        // 1. Create Set
+        const { data: set, error: setError } = await supabase
+            .from('study_sets')
+            .insert({
+                title: setDetails.title,
+                description: setDetails.description,
+                is_public: setDetails.is_public,
+                group_id: setDetails.group_id,
+                source_text: setDetails.source_text,
+                user_id: user.id
+            })
+            .select('id')
+            .single();
+
+        if (setError) throw setError;
+        if (!set) throw new Error('Failed to create set');
+
+        // 2. Insert Cards
+        if (cards.length > 0) {
+            const cardsToInsert = cards.map(c => ({
+                set_id: set.id,
+                term: c.term.trim(),
+                definition: c.definition.trim()
+            }));
+
+            const { data: insertedCards, error: cardsError } = await supabase
+                .from('cards')
+                .insert(cardsToInsert)
+                .select('id, term');
+
+            if (cardsError) throw cardsError;
+
+            // 3. Insert Concept Links (if any)
+            if (conceptLinks && conceptLinks.length > 0 && insertedCards) {
+                await this.linkConceptsToCards(user.id, insertedCards, conceptLinks);
+            }
+        }
+
+        return set;
+    },
+
+    /**
+     * Update a study set and its cards (Diffing logic)
+     */
+    async updateSetWithCards(
+        setId: string,
+        setDetails: { title: string, description?: string, is_public: boolean, group_id?: string | null, source_text?: string | null },
+        cards: { id?: string, term: string, definition: string }[],
+        conceptLinks?: { card_term: string, concept_name: string }[]
+    ) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        // 1. Update Set Details
+        const { error: updateSetError } = await supabase
+            .from('study_sets')
+            .update({
+                title: setDetails.title,
+                description: setDetails.description,
+                is_public: setDetails.is_public,
+                group_id: setDetails.group_id,
+                source_text: setDetails.source_text
+            })
+            .eq('id', setId);
+
+        if (updateSetError) throw updateSetError;
+
+        // 2. Handle Cards (Update, Insert, Delete)
+        const existingCards = cards.filter(c => c.id);
+        const newCards = cards.filter(c => !c.id);
+
+        // Fetch current DB cards to identify deletions
+        const { data: currentDbCards, error: fetchCardsError } = await supabase
+            .from('cards')
+            .select('id')
+            .eq('set_id', setId);
+
+        if (fetchCardsError) throw fetchCardsError;
+
+        const currentDbCardIds = new Set(currentDbCards?.map(c => c.id) || []);
+        const formCardIds = new Set(existingCards.map(c => c.id));
+
+        const cardsToDelete = Array.from(currentDbCardIds).filter(id => !formCardIds.has(id));
+
+        // Delete
+        if (cardsToDelete.length > 0) {
+            const { error: deleteError } = await supabase.from('cards').delete().in('id', cardsToDelete);
+            if (deleteError) throw deleteError;
+        }
+
+        // Update
+        for (const card of existingCards) {
+            const { error: updateCardError } = await supabase
+                .from('cards')
+                .update({ term: card.term.trim(), definition: card.definition.trim() })
+                .eq('id', card.id!);
+            if (updateCardError) throw updateCardError;
+        }
+
+        // Insert New
+        if (newCards.length > 0) {
+            const cardsToInsert = newCards.map(c => ({
+                set_id: setId,
+                term: c.term.trim(),
+                definition: c.definition.trim()
+            }));
+            const { error: insertError } = await supabase
+                .from('cards')
+                .insert(cardsToInsert)
+                .select('id, term');
+
+            if (insertError) throw insertError;
+        }
+
+        // 3. Link Concepts (Logic adapted for updates - mostly additive for now)
+        if (conceptLinks && conceptLinks.length > 0) {
+            // We need IDs for all cards (existing + new) to map terms
+            // For simplicity, we only link if we have the IDs handy or fetch them.
+            // The original code only linked 'newly inserted' or 'all' depending on context.
+            // We'll try to link against all involved cards if possible.
+
+            // Re-fetch all cards to get a complete map? Or just use what we have?
+            // To be safe and comprehensive like the original code:
+            // "const allCardsInSet = [...(studySet?.cards || []), ...(insertedNewCards || [])];"
+
+            // Let's fetch all Term->ID pairs for this set to support full linking
+            const { data: allSetCards } = await supabase
+                .from('cards')
+                .select('id, term')
+                .eq('set_id', setId);
+
+            if (allSetCards) {
+                await this.linkConceptsToCards(user.id, allSetCards, conceptLinks);
+            }
+        }
+    },
+
+    /**
+     * Helper to link concepts to cards
+     */
+    async linkConceptsToCards(userId: string, cards: { id: string, term: string }[], conceptLinks: { card_term: string, concept_name: string }[]) {
+        const cardTermToIdMap = new Map(cards.map(c => [c.term, c.id]));
+
+        const { data: existingConcepts } = await supabase
+            .from('concepts')
+            .select('id, name')
+            .eq('user_id', userId);
+
+        const conceptNameToIdMap = new Map(existingConcepts?.map(c => [c.name, c.id]));
+        const cardConceptsToInsert = [];
+
+        for (const link of conceptLinks) {
+            const cardId = cardTermToIdMap.get(link.card_term);
+            const conceptId = conceptNameToIdMap.get(link.concept_name);
+
+            if (cardId && conceptId) {
+                cardConceptsToInsert.push({
+                    user_id: userId,
+                    card_id: cardId,
+                    concept_id: conceptId,
+                });
+            }
+        }
+
+        if (cardConceptsToInsert.length > 0) {
+            const { error } = await supabase.from('card_concepts').insert(cardConceptsToInsert);
+            if (error) console.error('Error linking concepts:', error);
+        }
     }
 };

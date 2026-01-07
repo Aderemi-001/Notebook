@@ -1,54 +1,114 @@
 
-import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Search,
     Brain,
     Settings,
-    LogOut,
     FileText,
     NotebookPen,
     User,
-    Plus,
-    LogIn,
     Globe,
     Library,
     GraduationCap,
-    CreditCard
+    CreditCard,
+    ShieldAlert,
 } from 'lucide-react';
-import { Menu } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { showSuccess } from '@/utils/toast';
-import Chatbot from '@/components/Chatbot';
 import { useAuth } from '@/hooks/useAuth';
-
+import { useSubscription } from '@/hooks/useSubscription';
 import { useRealtime } from '@/hooks/useRealtime';
-import BrandLogo from '@/components/BrandLogo';
+import { useIsMobile } from '@/hooks/use-mobile';
+import WebDashboardLayout from './WebDashboardLayout';
+import MobileDashboardLayout from './MobileDashboardLayout';
+import Chatbot from '@/components/Chatbot';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
 }
 
+interface BroadcastData {
+    message: string;
+    active: boolean;
+    type: 'info' | 'warning' | 'alert';
+    isPopup?: boolean;
+    expiresAt?: string | null;
+}
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const isMobile = useIsMobile();
+    const [showNovaPulse, setShowNovaPulse] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, profile, loading: authLoading } = useAuth();
+
+    // Broadcast & Maintenance State
+    const [broadcast, setBroadcast] = useState<BroadcastData | null>(null);
+    const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
+    const [maintenance, setMaintenance] = useState(false);
+
+    // Fetch System Settings
+    useEffect(() => {
+        const fetchSettings = async () => {
+            const { data } = await supabase
+                .from('system_settings')
+                .select('*')
+                .in('key', ['global_broadcast', 'maintenance_mode']);
+
+            if (data) {
+                const broadcastData = data.find(d => d.key === 'global_broadcast')?.value as BroadcastData;
+                const maintenanceData = data.find(d => d.key === 'maintenance_mode')?.value;
+
+                // Check broadcast validity
+                if (broadcastData?.active) {
+                    const now = new Date();
+                    const isExpired = broadcastData.expiresAt && new Date(broadcastData.expiresAt) < now;
+                    const dismissKey = `dismissed_broadcast_${broadcastData.message.substring(0, 20)}`;
+                    const isDismissed = localStorage.getItem(dismissKey);
+
+                    if (!isExpired && !isDismissed) {
+                        setBroadcast(broadcastData);
+                        if (broadcastData.isPopup) {
+                            setIsBroadcastOpen(true);
+                        }
+                    } else {
+                        setBroadcast(null);
+                    }
+                } else {
+                    setBroadcast(null);
+                }
+
+                if (maintenanceData && typeof maintenanceData === 'object' && 'active' in maintenanceData && (maintenanceData as any).active) {
+                    setMaintenance(true);
+                } else {
+                    setMaintenance(false);
+                }
+            }
+        };
+        fetchSettings();
+    }, [location.pathname]);
+
+    // Listen for Nova Redirects
+    useEffect(() => {
+        const handleRedirect = () => {
+            setShowNovaPulse(true);
+            setTimeout(() => setShowNovaPulse(false), 3000);
+        };
+
+        window.addEventListener('novaRedirect', handleRedirect);
+        return () => window.removeEventListener('novaRedirect', handleRedirect);
+    }, []);
 
     // Enable Real-time updates
     useRealtime();
 
     // Check for terms acceptance
-    React.useEffect(() => {
+    useEffect(() => {
         if (!user) return;
 
-        // Define paths that are allowed without agreement
         const allowedPaths = ['/user-agreement', '/terms', '/logout', '/login', '/privacy', '/contact', '/about'];
         if (allowedPaths.includes(location.pathname)) return;
 
@@ -60,7 +120,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 .single();
 
             if (!error && profile && !profile.terms_accepted_at) {
-                // If not accepted, redirect to agreement page
                 navigate('/user-agreement');
             }
         };
@@ -68,16 +127,53 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         checkAgreement();
     }, [user, location.pathname, navigate]);
 
+    // Check for unread notifications
+    // NOTE: Auto-toast disabled in V3.0 in favor of Notification Inbox
+    // Only real-time broadcasts or specific urgent alerts might trigger toasts elsewhere
+
+
+    // Check for subscription expiry notification
+    const { status: subStatus } = useSubscription(); // Need to import useSubscription
+    useEffect(() => {
+        if (subStatus === 'expired') {
+            const hasNotified = localStorage.getItem('expiry_notified_v3.0');
+            if (!hasNotified) {
+                showSuccess("Your subscription has ended. Renew now to continue enjoying Pro features.");
+                localStorage.setItem('expiry_notified_v3.0', 'true');
+            }
+        } else {
+            // Reset if they become active/trialing again so they get notified next time they expire
+            if (subStatus === 'active' || subStatus === 'trialing') {
+                localStorage.removeItem('expiry_notified_v3.0');
+            }
+        }
+    }, [subStatus]);
+
     const handleLogout = async () => {
         await supabase.auth.signOut();
         showSuccess('Logged out successfully');
         navigate('/login');
     };
 
+    // Maintenance Mode Overlay (EXEMPT ADMINS)
+    if (maintenance && !authLoading && !profile?.is_admin) {
+        return (
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-background space-y-4">
+                <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center">
+                    <ShieldAlert className="h-8 w-8 text-red-600" />
+                </div>
+                <h1 className="text-2xl font-bold">System Maintenance</h1>
+                <p className="text-muted-foreground text-center max-w-md px-4">
+                    We are currently performing scheduled maintenance. The application is temporarily unavailable. Please check back soon.
+                </p>
+            </div>
+        );
+    }
+
     const navItems = [
         { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
         { label: 'My Notes', icon: NotebookPen, path: '/notebook' },
-        { label: 'My Sets', icon: Library, path: '/sets' }, // Changed from BookOpen to Library
+        { label: 'My Sets', icon: Library, path: '/sets' },
         { label: 'Explore Sets', icon: Globe, path: '/explore-public-sets' },
         { label: 'Practice Quiz', icon: GraduationCap, path: '/exams' },
         { label: 'Textbook Finder', icon: Search, path: '/textbook-finder' },
@@ -98,202 +194,61 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         }
     };
 
-    const NavItem = ({ item, isMobile = false }: { item: any, isMobile?: boolean }) => {
-        const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
-
-        return (
-            <Link
-                to={item.path}
-                className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
-                    isActive
-                        ? "bg-primary text-primary-foreground font-medium shadow-sm"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                    isMobile && "text-lg px-4 py-3"
-                )}
-                onClick={(e) => handleAuthCheck(e, item.path)}
-            >
-                <item.icon className={cn("h-5 w-5", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground")} />
-                <span>{item.label}</span>
-            </Link>
-        );
+    const sharedProps = {
+        user,
+        profile,
+        maintenance,
+        broadcast,
+        setBroadcast,
+        isBroadcastOpen,
+        setIsBroadcastOpen,
+        navItems,
+        bottomNavItems,
+        handleLogout,
+        handleAuthCheck,
     };
 
     return (
-        <div className="min-h-screen bg-background flex flex-col md:flex-row">
-            {/* Mobile Header */}
-            <div className="md:hidden flex items-center justify-between p-4 border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-                <div className="flex items-center gap-2">
-                    <BrandLogo size="sm" />
+        <>
+            {/* Maintenance Banner for Admins */}
+            {maintenance && profile?.is_admin && (
+                <div className="bg-red-600 text-white px-4 py-1.5 text-[10px] font-black text-center uppercase tracking-[0.2em] fixed top-0 w-full z-[100] animate-pulse">
+                    ⚠️ System Maintenance Mode Active - platform locked for non-admins
                 </div>
-            </div>
+            )}
 
-            {/* Mobile Menu removed - now using bottom navigation */}
-
-            {/* Desktop Sidebar */}
-            <aside className="hidden md:flex flex-col w-64 shrink-0 border-r bg-card/50 backdrop-blur-sm sticky top-0 h-screen p-4">
-                <div className="flex items-center gap-2 font-heading font-bold text-2xl px-2 mb-8 text-primary">
-                    <BrandLogo size="md" />
-                    <span>Notebook</span>
-                </div>
-
-                <div className="relative mb-6">
-                    <Button asChild className="w-full shadow-md hover:shadow-lg transition-all" size="lg">
-                        <Link to="/create" onClick={(e) => handleAuthCheck(e, '/create')}>
-                            <Plus className="mr-2 h-5 w-5" /> Create Set
-                        </Link>
-                    </Button>
-                    <div className="absolute -top-2 -right-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-lg animate-pulse border border-white/20">
-                        v2.0 HYBRID AI
-                    </div>
-                </div>
-
-                <div className="flex-col flex gap-1">
-                    <p className="text-xs font-semibold text-muted-foreground px-3 mb-2 uppercase tracking-wider">Menu</p>
-                    {navItems.map(item => <NavItem key={item.path} item={item} />)}
-                </div>
-
-                <div className="flex-grow" />
-
-                <div className="flex flex-col gap-1 border-t pt-4">
-                    <p className="text-xs font-semibold text-muted-foreground px-3 mb-2 uppercase tracking-wider">Account</p>
-                    {bottomNavItems.map(item => <NavItem key={item.path} item={item} />)}
-
-                    <Button
-                        variant="ghost"
-                        className={cn(
-                            "w-full justify-start mt-2",
-                            user ? "text-muted-foreground hover:text-destructive hover:bg-destructive/10" : "text-primary hover:text-primary/90 hover:bg-primary/10"
-                        )}
-                        onClick={user ? handleLogout : () => navigate('/login')}
-                    >
-                        {user ? (
-                            <>
-                                <LogOut className="mr-2 h-4 w-4" /> Logout
-                            </>
-                        ) : (
-                            <>
-                                <LogIn className="mr-2 h-4 w-4" /> Login
-                            </>
-                        )}
-                    </Button>
-                </div>
-
-                {/* Footer Attribution */}
-                <div className="mt-6 px-3 py-4 bg-muted/30 rounded-xl border border-border/50">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-2">Powered By</p>
-                    <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                            <span className="text-xs font-medium text-foreground/80">Groq Llama 3.3</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                            <span className="text-xs font-medium text-foreground/80">Google Gemini Flash</span>
-                        </div>
-                    </div>
-                    <p className="mt-4 text-[10px] text-muted-foreground/60 italic">
-                        Version 2.0.4 "Supernova"
-                    </p>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-grow p-4 md:p-8 overflow-x-hidden animate-fade-in pb-32 md:pb-8">
-                <div className="max-w-7xl mx-auto">
+            {isMobile ? (
+                <MobileDashboardLayout {...sharedProps}>
                     {children}
-                </div>
-            </main>
-
-            {/* Mobile Bottom Navigation */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50 flex items-center justify-around pb-safe-offset-4 h-16 safe-area-bottom">
-                <Link to="/" onClick={(e) => handleAuthCheck(e, '/')} className={cn("flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors", location.pathname === '/' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-primary')}>
-                    <LayoutDashboard className="h-5 w-5" />
-                    <span className="text-xs font-medium">Home</span>
-                </Link>
-                <Link to="/notebook" onClick={(e) => handleAuthCheck(e, '/notebook')} className={cn("flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors", location.pathname.startsWith('/notebook') ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-primary')}>
-                    <NotebookPen className="h-5 w-5" />
-                    <span className="text-xs font-medium">Notes</span>
-                </Link>
-
-                <div className="relative -top-5">
-                    <Link to="/create" onClick={(e) => handleAuthCheck(e, '/create')} aria-label="Create new study set">
-                        <Button size="icon" className="h-12 w-12 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90">
-                            <Plus className="h-6 w-6" />
-                        </Button>
-                    </Link>
-                </div>
-
-                <Link to="/sets" onClick={(e) => handleAuthCheck(e, '/sets')} className={cn("flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors", location.pathname.startsWith('/sets') ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-primary')}>
-                    <Library className="h-5 w-5" />
-                    <span className="text-xs font-medium">Sets</span>
-                </Link>
-                <Link to="/profile" onClick={(e) => handleAuthCheck(e, '/profile')} className={cn("flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors", location.pathname.startsWith('/profile') ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-primary')}>
-                    <User className="h-5 w-5" />
-                    <span className="text-xs font-medium">Profile</span>
-                </Link>
-
-                {/* Mobile Menu */}
-                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                    <SheetTrigger asChild>
-                        <button className="flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors text-zinc-500 dark:text-zinc-400 hover:text-primary">
-                            <Menu className="h-5 w-5" />
-                            <span className="text-xs font-medium">Menu</span>
-                        </button>
-                    </SheetTrigger>
-                    <SheetContent side="bottom" className="h-[80vh] overflow-y-auto">
-                        <SheetHeader>
-                            <SheetTitle>Navigation Menu</SheetTitle>
-                        </SheetHeader>
-                        <div className="mt-6 space-y-2">
-                            {navItems.map((item) => (
-                                <Link
-                                    key={item.path}
-                                    to={item.path}
-                                    onClick={(e) => {
-                                        handleAuthCheck(e, item.path);
-                                        setMobileMenuOpen(false);
-                                    }}
-                                    className={cn(
-                                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                                        location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path))
-                                            ? 'bg-primary/10 text-primary font-medium'
-                                            : 'hover:bg-muted'
-                                    )}
-                                >
-                                    <item.icon className="h-5 w-5" />
-                                    <span>{item.label}</span>
-                                </Link>
-                            ))}
-                            <div className="border-t pt-2 mt-2">
-                                {bottomNavItems.map((item) => (
-                                    <Link
-                                        key={item.path}
-                                        to={item.path}
-                                        onClick={(e) => {
-                                            handleAuthCheck(e, item.path);
-                                            setMobileMenuOpen(false);
-                                        }}
-                                        className={cn(
-                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                                            location.pathname === item.path
-                                                ? 'bg-primary/10 text-primary font-medium'
-                                                : 'hover:bg-muted'
-                                        )}
-                                    >
-                                        <item.icon className="h-5 w-5" />
-                                        <span>{item.label}</span>
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-                    </SheetContent>
-                </Sheet>
-            </div>
+                </MobileDashboardLayout>
+            ) : (
+                <WebDashboardLayout {...sharedProps}>
+                    {children}
+                </WebDashboardLayout>
+            )}
 
             <Chatbot />
             <InstallPrompt />
-        </div>
+
+            {/* Global Nova Redirect Effect */}
+            {showNovaPulse && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/95 backdrop-blur-3xl animate-in fade-in duration-300 overflow-hidden">
+                    <div className="absolute inset-0 z-0">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-500/30 to-transparent -skew-x-12 animate-shimmer-wave" />
+                    </div>
+                    <div className="relative z-10 flex flex-col items-center justify-center font-heading text-center">
+                        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-2xl shadow-purple-500/20">
+                            <div className="w-24 h-24 bg-black/40 backdrop-blur-xl rounded-2xl flex items-center justify-center text-white">
+                                <Search className="w-12 h-12 animate-pulse" />
+                            </div>
+                        </div>
+                        <span className="mt-8 text-3xl font-black tracking-widest uppercase bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-pulse px-4">
+                            Nova
+                        </span>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 

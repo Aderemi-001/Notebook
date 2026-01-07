@@ -17,6 +17,10 @@ export interface ExtractedCard {
 }
 
 export class NovaFileProcessor {
+    // Prevent UI lock-up by limiting the amount of text processed at once
+    private static readonly MAX_LOCAL_CHARS = 100000; // ~40 pages
+    private static readonly MAX_AI_CHARS = 250000;    // ~100 pages, well within AI context but safe for DOM
+
 
     private static cleanText(text: string): string {
         let clean = text;
@@ -67,8 +71,13 @@ export class NovaFileProcessor {
      * Main entry point to process text content into study material.
      */
     static processContent(text: string): { cards: ExtractedCard[], concepts: any[] } {
+        // Yield to prevent main thread block if text is massive
+        const truncatedText = text.length > this.MAX_LOCAL_CHARS
+            ? text.substring(0, this.MAX_LOCAL_CHARS)
+            : text;
+
         // Phase 1: Heavy Cleaning
-        const fullText = this.cleanText(text.replace(/\r/g, ' '));
+        const fullText = this.cleanText(truncatedText.replace(/\r/g, ' '));
         const cards: ExtractedCard[] = [];
         const concepts: any[] = [];
         const generatedTerms = new Set<string>();
@@ -216,12 +225,17 @@ export class NovaFileProcessor {
      * Combines the speed of local heuristics with the intelligence of LLMs
      */
     static async processWithAI(text: string): Promise<{ cards: ExtractedCard[], concepts: any[], relationships?: any[] }> {
+        // Limit text to avoid massive payloads and UI lag
+        const safeText = text.length > this.MAX_AI_CHARS
+            ? text.substring(0, this.MAX_AI_CHARS)
+            : text;
+
         // 1. Get local results (Fast baseline)
-        const localResults = this.processContent(text);
+        const localResults = this.processContent(safeText);
 
         try {
             // 2. Supplement with AI (Intelligence)
-            const aiContent = await NovaAI.generateStudyContent(text);
+            const aiContent = await NovaAI.generateStudyContent(safeText);
 
             if (aiContent && aiContent.cards.length > 0) {
                 // PRIMARILY use AI cards (Higher Quality)
