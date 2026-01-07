@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useCallback } from 'react';
-import { NovaReviewLoader } from "@/components/NovaReviewLoader";
+import { NovaSimpleLoader } from "@/components/NovaSimpleLoader";
 import { gamificationService } from '@/services/gamificationService';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -305,7 +305,7 @@ const DailyReview: React.FC = () => {
   if (isLoading || isLoadingPreferences) {
     return (
       <div className="container mx-auto py-6 sm:py-8 md:py-10 flex flex-col items-center animate-fade-in">
-        <NovaReviewLoader />
+        <NovaSimpleLoader message="Nova AI Analyzing" subMessage="Preparing your customized review session..." />
       </div>
     );
   }
