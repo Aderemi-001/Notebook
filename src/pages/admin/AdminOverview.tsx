@@ -12,19 +12,31 @@ interface AdminStats {
 
 export const AdminOverview = () => {
     const [stats, setStats] = useState<AdminStats | null>(null);
+    const [revenue, setRevenue] = useState<{ total: number; today: number } | null>(null);
+    const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const { data, error } = await supabase.rpc('admin_get_stats');
-                if (error) throw error;
-                // admin_get_stats returns Json, assert it's AdminStats structure
-                if (data && Array.isArray(data) && data.length > 0) {
-                    setStats(data[0] as unknown as AdminStats);
-                } else if (data && typeof data === 'object' && !Array.isArray(data)) {
-                    setStats(data as unknown as AdminStats);
+                // 1. General Stats
+                const { data: statsData } = await supabase.rpc('admin_get_stats');
+                if (statsData && Array.isArray(statsData) && statsData.length > 0) {
+                    setStats(statsData[0] as unknown as AdminStats);
                 }
+
+                // 2. Revenue Stats
+                const { data: revData } = await supabase.rpc('admin_get_revenue');
+                if (revData) {
+                    setRevenue(revData as any);
+                }
+
+                // 3. Recent Transactions
+                const { data: txns } = await supabase.rpc('admin_get_recent_transactions', { limit_count: 5 });
+                if (txns) {
+                    setRecentTransactions(txns);
+                }
+
             } catch (error) {
                 console.error('Error fetching admin stats:', error);
             } finally {
@@ -53,20 +65,20 @@ export const AdminOverview = () => {
             bg: "bg-indigo-100"
         },
         {
+            title: "Total Profit",
+            value: revenue ? `R${revenue.total.toLocaleString()}` : "R0.00",
+            icon: Activity,
+            description: `+R${revenue?.today.toLocaleString() || 0} today`,
+            color: "text-emerald-600",
+            bg: "bg-emerald-100"
+        },
+        {
             title: "Banned Users",
             value: stats?.banned_users || 0,
             icon: ShieldAlert,
             description: "Restricted accounts",
             color: "text-red-600",
             bg: "bg-red-100"
-        },
-        {
-            title: "Admin Staff",
-            value: stats?.admins || 0,
-            icon: Activity,
-            description: "System administrators",
-            color: "text-emerald-600",
-            bg: "bg-emerald-100"
         }
     ];
 
@@ -100,35 +112,57 @@ export const AdminOverview = () => {
                 ))}
             </div>
 
-            {/* Placeholder for Activity Feed */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="col-span-4 border-none shadow-sm">
                     <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
+                        <CardTitle>Recent Payments</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center justify-center h-[200px] text-muted-foreground border-2 border-dashed rounded-lg">
-                            Activity Feed Coming Soon
+                        <div className="space-y-4">
+                            {recentTransactions.length === 0 ? (
+                                <div className="text-sm text-muted-foreground text-center py-8">
+                                    No recent transactions found.
+                                </div>
+                            ) : (
+                                recentTransactions.map((txn) => (
+                                    <div key={txn.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-full ${txn.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
+                                                <CreditCard className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium">{txn.user_email || 'Unknown User'}</div>
+                                                <div className="text-xs text-muted-foreground">{txn.plan || 'Payment'}</div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm font-bold">R{txn.amount}</div>
+                                            <div className="text-xs text-muted-foreground">{new Date(txn.created_at).toLocaleDateString()}</div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </CardContent>
                 </Card>
                 <Card className="col-span-3 border-none shadow-sm">
                     <CardHeader>
-                        <CardTitle>System Health</CardTitle>
+                        <CardTitle>Live Revenue</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
+                        <div className="flex flex-col items-center justify-center py-8 space-y-2">
+                            <span className="text-muted-foreground text-sm uppercase tracking-wider">Today's Earnings</span>
+                            <span className="text-4xl font-extrabold text-emerald-600">R{revenue?.today.toLocaleString() || '0.00'}</span>
+                            <span className="text-xs text-muted-foreground">Real-time synced</span>
+                        </div>
+                        <div className="space-y-4 mt-4">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium">Database Status</span>
-                                <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-bold">HEALTHY</span>
+                                <span className="text-sm font-medium">Gateway</span>
+                                <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-bold">PAYFAST ONLINE</span>
                             </div>
                             <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium">API Latency</span>
-                                <span className="text-sm text-muted-foreground">24ms</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium">Storage Usage</span>
-                                <span className="text-sm text-muted-foreground">45%</span>
+                                <span className="text-sm font-medium">Last Sync</span>
+                                <span className="text-sm text-muted-foreground">{new Date().toLocaleTimeString()}</span>
                             </div>
                         </div>
                     </CardContent>
