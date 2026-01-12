@@ -196,6 +196,52 @@ export class PayFastService {
             cycles: '0', // Indefinite
         });
     }
+
+    /**
+     * Checkout for Lifetime Deal (One-time)
+     */
+    async checkoutNovaLifetime(userEmail: string, userName: string, userId: string) {
+        const [firstName, ...lastNameParts] = userName.split(' ');
+        const lastName = lastNameParts.join(' ') || 'User';
+
+        const price = '1999.00';
+        const itemName = 'Nova Pro Lifetime Access';
+
+        // 1. Log transaction
+        let transactionId = '';
+        try {
+            const { supabase } = await import('@/integrations/supabase/client');
+            const { data: txn, error } = await (supabase as any)
+                .from('payment_transactions')
+                .insert({
+                    user_id: userId,
+                    amount: parseFloat(price),
+                    status: 'pending',
+                    provider: 'payfast',
+                    metadata: { plan: 'lifetime', item: itemName }
+                })
+                .select()
+                .single();
+
+            if (txn) transactionId = txn.id;
+            if (error) console.error('Error logging transaction:', error);
+        } catch (e) {
+            console.warn('Txn log failed', e);
+        }
+
+        // Reuse the generic checkout method (ignoring the 'Subscription' name implication)
+        await this.createSubscriptionCheckout({
+            amount: price,
+            item_name: itemName,
+            item_description: 'Lifetime access to Nova Pro - Pay Once, Use Forever',
+            email_address: userEmail,
+            name_first: firstName,
+            name_last: lastName,
+            custom_str1: userId,
+            m_payment_id: transactionId || undefined,
+            // No subscription fields for one-time payment
+        });
+    }
 }
 
 export const payfast = new PayFastService();
