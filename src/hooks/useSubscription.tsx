@@ -10,6 +10,7 @@ interface SubscriptionContextType {
     isPremium: boolean;
     trialEndsAt: Date | null;
     hasUsedTrial: boolean;
+    planId: string | null;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -20,6 +21,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [loading, setLoading] = useState(true);
     const [trialEndsAt, setTrialEndsAt] = useState<Date | null>(null);
     const [hasUsedTrial, setHasUsedTrial] = useState(false);
+    const [planId, setPlanId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!user) {
@@ -57,6 +59,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     }
                     else {
                         setStatus(data.status as SubscriptionStatus);
+                        setPlanId(data.plan_id);
                     }
                 } else {
                     setStatus('none');
@@ -101,12 +104,13 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         loading,
         isPremium,
         trialEndsAt,
-        hasUsedTrial
+        hasUsedTrial,
+        planId
     };
 
     return (
-        <SubscriptionContext.Provider value= { value } >
-        { children }
+        <SubscriptionContext.Provider value={value} >
+            {children}
         </SubscriptionContext.Provider>
     );
 };

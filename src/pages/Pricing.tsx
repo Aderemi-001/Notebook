@@ -9,7 +9,7 @@ import { showError, showLoading, showSuccess, dismissToast } from '@/utils/toast
 import { supabase } from '@/integrations/supabase/client';
 
 const Pricing = () => {
-    const { status, trialEndsAt, hasUsedTrial } = useSubscription();
+    const { status, trialEndsAt, hasUsedTrial, planId } = useSubscription();
     const { user } = useAuth();
     const [isStartingTrial, setIsStartingTrial] = useState(false);
 
@@ -65,7 +65,7 @@ const Pricing = () => {
             features: ["Unlimited AI Generations", "Unlimited Study Sets", "Massive 100MB Uploads", "Slides, Docs & Image Support", "Advanced Voice (TTS)", "Direct Support"],
             icon: Zap,
             color: "blue",
-            current: (status === 'active' || status === 'trialing') && false, // Logic simplified for grid
+            current: (status === 'active' || status === 'trialing') && (planId === 'pro-monthly' || !planId), // Default to monthly if no planId
             billingCycle: 'monthly' as const,
             trialAvailable: !hasUsedTrial && status !== 'active' && status !== 'trialing'
         },
@@ -76,7 +76,7 @@ const Pricing = () => {
             features: ["All Pro Features", "Save R100 instantly", "Priority Support", "Early Access to New Features"],
             icon: Crown,
             color: "amber",
-            current: false,
+            current: (status === 'active' || status === 'trialing') && planId === 'pro-annual',
             recommended: true,
             billingCycle: 'annual' as const,
             tag: "Save R100"
