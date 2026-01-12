@@ -20,7 +20,7 @@ const Pricing = () => {
             showError('Please log in to upgrade to Nova Pro');
             return;
         }
-        payfast.checkoutNovaPro(user.email, user.user_metadata?.full_name || 'User', billingCycle);
+        payfast.checkoutNovaPro(user.email, user.user_metadata?.full_name || 'User', user.id, billingCycle);
     };
 
     const handlePlanClick = (plan: typeof plans[0]) => {

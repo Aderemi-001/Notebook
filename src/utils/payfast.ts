@@ -19,6 +19,7 @@ interface PayFastPaymentData {
     email_address: string;
     name_first: string;
     name_last: string;
+    custom_str1?: string; // User ID
     subscription_type?: '1'; // 1 = subscription
     billing_date?: string; // YYYY-MM-DD
     recurring_amount?: string;
@@ -84,7 +85,7 @@ export class PayFastService {
             merchant_key: this.config.merchantKey,
             return_url: `${window.location.origin}/payment-result?success=true`,
             cancel_url: `${window.location.origin}/payment-result?canceled=true`,
-            notify_url: 'https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/payfast-webhook',
+            notify_url: `${window.location.origin}/api/payfast-itn`,
             ...paymentData,
         };
 
@@ -124,7 +125,7 @@ export class PayFastService {
     /**
      * Quick checkout for Nova Pro subscription
      */
-    async checkoutNovaPro(userEmail: string, userName: string, billingCycle: 'monthly' | 'annual' = 'monthly') {
+    async checkoutNovaPro(userEmail: string, userName: string, userId: string, billingCycle: 'monthly' | 'annual' = 'monthly') {
         const [firstName, ...lastNameParts] = userName.split(' ');
         const lastName = lastNameParts.join(' ') || 'User';
 
@@ -155,6 +156,7 @@ export class PayFastService {
             email_address: userEmail,
             name_first: firstName,
             name_last: lastName,
+            custom_str1: userId,
             subscription_type: '1',
             billing_date: billingDate,
             recurring_amount: price,
