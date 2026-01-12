@@ -4,12 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { Settings, CheckCircle2, AlertCircle, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
-import { analyzeEssay, EssayMetrics } from '@/utils/essayGrader';
+import { analyzeEssay } from '@/utils/essayGrader';
 
 interface GradingConfig {
     id: string;
@@ -23,7 +21,7 @@ export const EssayGraderSettings: React.FC<{ onConfigUpdate: () => void }> = ({ 
     const [isOpen, setIsOpen] = useState(false);
     const [calibrationText, setCalibrationText] = useState('');
     const [config, setConfig] = useState<GradingConfig | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [, setIsLoading] = useState(false);
     const [isCalibrating, setIsCalibrating] = useState(false);
 
     // Fetch existing config
@@ -46,7 +44,15 @@ export const EssayGraderSettings: React.FC<{ onConfigUpdate: () => void }> = ({ 
             console.error('Error fetching config:', error);
         }
 
-        if (data) setConfig(data);
+        if (data) {
+            setConfig({
+                id: data.id,
+                target_grade_level: data.target_grade_level ?? 0,
+                target_sentence_length: data.target_sentence_length ?? 0,
+                target_transition_density: data.target_transition_density ?? 0,
+                is_calibrated: data.is_calibrated ?? false,
+            });
+        }
         setIsLoading(false);
     };
 

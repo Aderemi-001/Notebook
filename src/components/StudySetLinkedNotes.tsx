@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 interface LinkedNote {
   id: string;
   title: string;
-  updated_at: string;
+  updated_at: string | null;
 }
 
 interface StudySetLinkedNotesProps {
@@ -78,7 +78,7 @@ const StudySetLinkedNotes: React.FC<StudySetLinkedNotesProps> = ({ linkedNotes, 
                       Last Revised
                     </span>
                     <span className="text-xs font-bold text-foreground/70">
-                      {format(new Date(note.updated_at), 'MMM d, yyyy')}
+                      {note.updated_at ? format(new Date(note.updated_at), 'MMM d, yyyy') : 'No date'}
                     </span>
                   </div>
                 </div>

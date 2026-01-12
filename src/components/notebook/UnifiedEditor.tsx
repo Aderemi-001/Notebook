@@ -76,7 +76,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
         if (note) {
             setTitle(note.title);
 
-            const c = note.content || {};
+            const c = (note.content as any) || {};
 
             let initialMode: 'text' | 'canvas' = 'text';
 

@@ -1,49 +1,126 @@
-
-import md5 from 'crypto-js/md5';
-
-export const config = {
-    runtime: 'edge',
-};
+import crypto from 'crypto';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const PASSPHRASE = process.env.PAYFAST_PASSPHRASE;
 
-export default async function handler(request: Request) {
-    if (request.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-            status: 405,
-            headers: { 'Content-Type': 'application/json' },
-        });
+export default function handler(req: VercelRequest, res: VercelResponse) {
+    console.log('[PayFast API] Handler started');
+    console.log('[PayFast API] Method:', req.method);
+    console.log('[PayFast API] Origin:', req.headers.origin);
+
+    // Set CORS headers for all requests
+    const origin = req.headers.origin || '*';
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Max-Age', '86400');
+
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+        console.log('[PayFast API] Handling OPTIONS preflight');
+        return res.status(200).end();
+    }
+
+    if (req.method !== 'POST') {
+        console.log('[PayFast API] Method not allowed:', req.method);
+        return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
-        const data = await request.json();
+        const data = req.body || {};
+        console.log('[PayFast API] Body received:', JSON.stringify(data));
 
-        // 1. Sort the object by key
-        // 2. Create parameter string: key=value&key2=value2
-        const paramString = Object.keys(data)
-            .filter(key => key !== 'signature') // Ensure signature isn't in the data being signed
-            .sort()
-            .map(key => `${key}=${encodeURIComponent(data[key]).replace(/%20/g, '+')}`)
+        // Helper to mimic PHP's urlencode exactly (PayFast requirement)
+        // strict encoding: spaces to +, special chars to %XX
+        const pfUrlEncode = (str: string) => {
+            return encodeURIComponent(str)
+                .replace(/[!'()*~]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase())
+                .replace(/%20/g, '+');
+        };
+
+        // 1. Filter out empty/null values and signature field
+        const cleanData: Record<string, string> = {};
+        Object.keys(data).forEach(key => {
+            const value = data[key];
+            if (key !== 'signature' && value !== undefined && value !== null && String(value).trim() !== '') {
+                cleanData[key] = String(value).trim();
+            }
+        });
+
+        // 2. Build Query String in PayFast's REQUIRED ORDER
+        // CRITICAL: PayFast does NOT use alphabetical ordering!
+        // Order must be: merchant details → buyer details → transaction details → subscription details
+        const orderedKeys = [
+            // Merchant details
+            'merchant_id',
+            'merchant_key',
+            'return_url',
+            'cancel_url',
+            'notify_url',
+            // Buyer details
+            'name_first',
+            'name_last',
+            'email_address',
+            'cell_number',
+            // Transaction details
+            'amount',
+            'item_name',
+            'item_description',
+            // Subscription details
+            'subscription_type',
+            'billing_date',
+            'recurring_amount',
+            'frequency',
+            'cycles',
+            // Custom fields
+            'm_payment_id',
+            'custom_str1',
+            'custom_str2',
+            'custom_str3',
+            'custom_str4',
+            'custom_str5',
+            'custom_int1',
+            'custom_int2',
+            'custom_int3',
+            'custom_int4',
+            'custom_int5',
+        ];
+
+        // Build param string using ONLY the keys that exist in cleanData, in the correct order
+        const paramString = orderedKeys
+            .filter(key => key in cleanData)
+            .map(key => `${key}=${pfUrlEncode(cleanData[key])}`)
             .join('&');
+
+        console.log(`[PayFast API] Using Passphrase: ${PASSPHRASE ? 'YES' : 'NO'}`);
 
         // 3. Append passphrase if it exists
         const signatureString = PASSPHRASE
-            ? `${paramString}&passphrase=${encodeURIComponent(PASSPHRASE)}`
+            ? `${paramString}&passphrase=${pfUrlEncode(PASSPHRASE.trim())}`
             : paramString;
 
-        // 4. Generate MD5 signature
-        const signature = md5(signatureString).toString();
+        // Debug: Log the string being hashed (masking sensitive info)
+        const maskedDebugString = signatureString
+            .replace(/passphrase=[^&]*/, 'passphrase=***')
+            .replace(/merchant_key=[^&]*/, 'merchant_key=***');
 
-        return new Response(JSON.stringify({ signature }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
+        console.log(`[PayFast API] String to Hash: ${maskedDebugString}`);
+
+        // 4. Generate MD5 signature
+        const signature = crypto.createHash('md5').update(signatureString).digest('hex');
+        console.log('[PayFast API] Signature generated:', signature);
+
+        return res.status(200).json({
+            signature,
+            debugString: maskedDebugString,
+            passphraseConfigured: !!PASSPHRASE
         });
 
     } catch (error: any) {
-        console.error('PayFast Signature Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' },
+        console.error('[PayFast API] Critical Error:', error);
+        return res.status(500).json({
+            error: error.message || 'Internal Server Error',
+            stack: error.stack
         });
     }
 }

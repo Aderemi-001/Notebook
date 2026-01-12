@@ -5,7 +5,7 @@ export interface StudySetGroup {
   id: string;
   name: string;
   description: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 const fetchUserStudySetGroups = async (): Promise<StudySetGroup[]> => {
@@ -22,7 +22,10 @@ const fetchUserStudySetGroups = async (): Promise<StudySetGroup[]> => {
     console.error("Error fetching study set groups:", error);
     throw new Error("Failed to fetch your study set groups.");
   }
-  return data || [];
+  return (data || []).map(item => ({
+    ...item,
+    created_at: item.created_at || new Date().toISOString()
+  }));
 };
 
 export const useStudySetGroups = () => {

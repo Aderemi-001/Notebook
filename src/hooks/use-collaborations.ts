@@ -10,21 +10,21 @@ export interface CollaborationInvitation {
     title: string;
     description: string | null;
     user_id: string;
-  }[] | null; // Changed to array of objects or null
+  } | null;
   inviter_id: string;
   inviter_profile: {
     id: string;
     display_name: string | null;
-  }[] | null; // Changed to array of objects or null
+  } | null;
   invitee_id: string;
   invitee_profile: {
     id: string;
     display_name: string | null;
-  }[] | null; // Changed to array of objects or null
+  } | null;
   permission_level: 'viewer' | 'editor';
   status: 'pending' | 'accepted' | 'rejected' | 'revoked';
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 const fetchCollaborationInvitations = async (): Promise<CollaborationInvitation[]> => {
@@ -54,8 +54,23 @@ const fetchCollaborationInvitations = async (): Promise<CollaborationInvitation[
     console.error("Error fetching collaboration invitations:", error);
     throw new Error("Failed to fetch collaboration invitations.");
   }
-  // Ensure data is cast to the correct array type
-  return data as CollaborationInvitation[] || [];
+  // Transform data to match interface (Supabase returns single objects for FK relations)
+  // Handle potential SelectQueryError for profile relations
+  return (data || []).map(item => {
+    const inviterProfile = (item.inviter_profile && typeof item.inviter_profile === 'object' && !('code' in item.inviter_profile))
+      ? item.inviter_profile as { id: string; display_name: string | null }
+      : null;
+    const inviteeProfile = (item.invitee_profile && typeof item.invitee_profile === 'object' && !('code' in item.invitee_profile))
+      ? item.invitee_profile as { id: string; display_name: string | null }
+      : null;
+    
+    return {
+      ...item,
+      study_sets: item.study_sets || null,
+      inviter_profile: inviterProfile,
+      invitee_profile: inviteeProfile,
+    } as CollaborationInvitation;
+  });
 };
 
 const updateInvitationStatus = async ({ id, status }: { id: string; status: 'accepted' | 'rejected' | 'revoked' }) => {
@@ -63,11 +78,36 @@ const updateInvitationStatus = async ({ id, status }: { id: string; status: 'acc
     .from('study_set_collaborators')
     .update({ status, updated_at: new Date().toISOString() })
     .eq('id', id)
-    .select()
+    .select(`
+      id,
+      study_set_id,
+      study_sets (id, title, description, user_id),
+      inviter_id,
+      inviter_profile:profiles!study_set_collaborators_inviter_id_fkey(id, display_name),
+      invitee_id,
+      invitee_profile:profiles!study_set_collaborators_invitee_id_fkey(id, display_name),
+      permission_level,
+      status,
+      created_at,
+      updated_at
+    `)
     .single();
 
   if (error) throw error;
-  return data;
+  // Transform to match interface (handle potential SelectQueryError for profile relations)
+  const inviterProfile = (data.inviter_profile && typeof data.inviter_profile === 'object' && !('code' in data.inviter_profile))
+    ? data.inviter_profile as { id: string; display_name: string | null }
+    : null;
+  const inviteeProfile = (data.invitee_profile && typeof data.invitee_profile === 'object' && !('code' in data.invitee_profile))
+    ? data.invitee_profile as { id: string; display_name: string | null }
+    : null;
+  
+  return {
+    ...data,
+    study_sets: data.study_sets || null,
+    inviter_profile: inviterProfile,
+    invitee_profile: inviteeProfile,
+  } as CollaborationInvitation;
 };
 
 const deleteInvitation = async (id: string) => {

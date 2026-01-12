@@ -5,9 +5,9 @@ export interface SearchResult {
     id: string;
     type: 'set' | 'note';
     title: string;
-    description?: string;
+    description?: string | null;
     url: string;
-    updated_at: string;
+    updated_at: string | null;
     icon?: React.ReactNode;
 }
 
@@ -45,9 +45,9 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             id: set.id,
             type: 'set' as const,
             title: set.title,
-            description: set.description,
+            description: set.description ?? undefined,
             url: `/sets/${set.id}`,
-            updated_at: set.updated_at,
+            updated_at: set.updated_at ?? new Date().toISOString(),
         })));
     }
 
@@ -58,10 +58,14 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             title: note.title,
             description: 'Note',
             url: `/notebook?noteId=${note.id}`, // Assuming this is how we deep link to a note
-            updated_at: note.updated_at,
+            updated_at: note.updated_at ?? new Date().toISOString(),
         })));
     }
 
     // Sort by updated_at descending
-    return results.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    return results.sort((a, b) => {
+        const aTime = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+        const bTime = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+        return bTime - aTime;
+    });
 };

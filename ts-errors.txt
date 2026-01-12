@@ -1,0 +1,11 @@
+﻿src/components/dashboard/SmartStudySuggestions.test.tsx(2,18): error TS2305: Module '"@testing-library/react"' has no exported member 'screen'.
+src/components/dashboard/SmartStudySuggestions.test.tsx(2,26): error TS2305: Module '"@testing-library/react"' has no exported member 'waitFor'.
+src/components/dashboard/SmartStudySuggestions.test.tsx(102,31): error TS2339: Property 'toHaveTextContent' does not exist on type 'Assertion<any>'.
+src/components/dashboard/SmartStudySuggestions.test.tsx(103,31): error TS2339: Property 'toHaveTextContent' does not exist on type 'Assertion<any>'.
+src/components/dashboard/SmartStudySuggestions.test.tsx(106,62): error TS2339: Property 'toBeInTheDocument' does not exist on type 'Assertion<any>'.
+src/components/dashboard/SmartStudySuggestions.test.tsx(125,50): error TS2339: Property 'toBeInTheDocument' does not exist on type 'Assertion<any>'.
+src/components/dashboard/SmartStudySuggestions.test.tsx(126,62): error TS2339: Property 'toBeInTheDocument' does not exist on type 'Assertion<any>'.
+src/components/dashboard/SmartStudySuggestions.test.tsx(153,57): error TS2339: Property 'toBeInTheDocument' does not exist on type 'Assertion<any>'.
+src/components/dashboard/SmartStudySuggestions.test.tsx(155,56): error TS2339: Property 'toBeInTheDocument' does not exist on type 'Assertion<any>'.
+src/components/dashboard/SmartStudySuggestions.test.tsx(181,51): error TS2339: Property 'toBeInTheDocument' does not exist on type 'Assertion<any>'.
+src/components/dashboard/SmartStudySuggestions.test.tsx(182,62): error TS2339: Property 'toBeInTheDocument' does not exist on type 'Assertion<any>'.

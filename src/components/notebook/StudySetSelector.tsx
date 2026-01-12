@@ -35,6 +35,10 @@ interface StudySetSelectorProps {
     onSelectSet: (setId: string | null) => void;
 }
 
+import { useSubscription } from "@/hooks/useSubscription";
+
+
+
 export const StudySetSelector: React.FC<StudySetSelectorProps> = ({
     selectedSetId,
     onSelectSet,
@@ -44,6 +48,7 @@ export const StudySetSelector: React.FC<StudySetSelectorProps> = ({
     const [newSetTitle, setNewSetTitle] = React.useState("");
     const isMobile = useIsMobile();
     const queryClient = useQueryClient();
+    const { isPremium } = useSubscription(); // Add hook
 
     const { data: studySets = [] } = useQuery({
         queryKey: ['my-study-sets-list'],
@@ -71,6 +76,12 @@ export const StudySetSelector: React.FC<StudySetSelectorProps> = ({
 
     const handleCreate = () => {
         if (!newSetTitle.trim()) return;
+
+        if (!isPremium && studySets.length >= 5) {
+            showError("Free Limit: Max 5 Study Sets. Upgrade to create more.");
+            return;
+        }
+
         createSetMutation.mutate(newSetTitle);
     };
 

@@ -1,5 +1,5 @@
 
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw, AlertTriangle } from "lucide-react";
 
@@ -24,6 +24,16 @@ export class ErrorBoundary extends Component<Props, State> {
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error("Uncaught error:", error, errorInfo);
+
+        // Log to database
+        import('@/utils/errorLogger').then(({ logErrorToDB }) => {
+            logErrorToDB({
+                error_message: error.message,
+                component_stack: errorInfo.componentStack || undefined,
+                url: window.location.href,
+                user_agent: navigator.userAgent
+            });
+        });
     }
 
     private handleReload = () => {
@@ -41,7 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
                     <p className="text-muted-foreground mb-8 max-w-md">
                         We encountered an unexpected error. Our team has been notified.
                         <br />
-                        <span className="text-xs opacity-70 mt-2 block font-mono bg-muted p-2 rounded">
+                        <span className="text-xs opacity-70 mt-2 block font-mono bg-muted p-2 rounded max-w-full overflow-hidden text-ellipsis">
                             {this.state.error?.message || "Unknown Error"}
                         </span>
                     </p>

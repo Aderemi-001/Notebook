@@ -1,10 +1,20 @@
-import { useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 export type SubscriptionStatus = 'active' | 'trialing' | 'expired' | 'canceled' | 'none';
 
-export const useSubscription = () => {
+interface SubscriptionContextType {
+    status: SubscriptionStatus;
+    loading: boolean;
+    isPremium: boolean;
+    trialEndsAt: Date | null;
+    hasUsedTrial: boolean;
+}
+
+const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
+
+export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, profile } = useAuth();
     const [status, setStatus] = useState<SubscriptionStatus>('none');
     const [loading, setLoading] = useState(true);
@@ -43,8 +53,6 @@ export const useSubscription = () => {
                     }
                     // Check if active subscription has ended (and not renewed/grace period logic handled by backend usually, but client-side safety)
                     else if (data.status === 'active' && periodEnd && periodEnd < now) {
-                        // If it's active but past period end, likely expired or payment failed. Treat as expired/grace.
-                        // Ideally we respect the 'status' column from DB, but for immediate UI feedback:
                         setStatus('expired');
                     }
                     else {
@@ -88,5 +96,25 @@ export const useSubscription = () => {
 
     const isPremium = profile?.is_admin || status === 'active' || status === 'trialing';
 
-    return { status, loading, isPremium, trialEndsAt, hasUsedTrial };
+    const value = {
+        status,
+        loading,
+        isPremium,
+        trialEndsAt,
+        hasUsedTrial
+    };
+
+    return (
+        <SubscriptionContext.Provider value= { value } >
+        { children }
+        </SubscriptionContext.Provider>
+    );
+};
+
+export const useSubscription = () => {
+    const context = useContext(SubscriptionContext);
+    if (context === undefined) {
+        throw new Error('useSubscription must be used within a SubscriptionProvider');
+    }
+    return context;
 };

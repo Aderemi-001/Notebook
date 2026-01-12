@@ -70,6 +70,7 @@ export const useFileImport = () => {
       selectedFile.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
       selectedFile.name.endsWith('.pptx')
     ) {
+      if (!isPremium) throw new Error("PowerPoint (`.pptx`) support is a Pro feature. Upgrade to unlock.");
       try {
         setProgressMessage("Extracting content from Slides (PPTX)...");
         extractedFileContent = await NovaOffice.extractTextFromPptx(selectedFile);
@@ -81,6 +82,7 @@ export const useFileImport = () => {
       selectedFile.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       selectedFile.name.endsWith('.docx')
     ) {
+      if (!isPremium) throw new Error("Word Document (`.docx`) support is a Pro feature. Upgrade to unlock.");
       try {
         setProgressMessage("Extracting text from Document (DOCX)...");
         extractedFileContent = await NovaOffice.extractTextFromDocx(selectedFile);
@@ -89,6 +91,7 @@ export const useFileImport = () => {
         throw new Error("Failed to parse Word document.");
       }
     } else if (selectedFile.type.startsWith("image/")) {
+      if (!isPremium) throw new Error("Image-to-Flashcards is a Pro feature. Upgrade to unlock.");
       try {
         setProgressMessage("Nova is reading the image (OCR)...");
         extractedFileContent = await NovaImage.extractText(selectedFile);
@@ -192,6 +195,18 @@ export const useFileImport = () => {
       return null;
     }
 
+    // Daily AI Quota Check (Free Tier: 3/day)
+    if (!isPremium) {
+      const today = new Date().toDateString();
+      const storageKey = `nova_ai_daily_usage_${currentUser.id}`;
+      const usage = JSON.parse(localStorage.getItem(storageKey) || '{"count": 0, "date": ""}');
+
+      if (usage.date === today && usage.count >= 3) {
+        showError("Daily Magic Create Limit Reached (3/3). Upgrade to Pro for unlimited AI.");
+        return null;
+      }
+    }
+
     setProgressState('extracting');
     setProgressMessage("Extracting text from file...");
 
@@ -251,6 +266,12 @@ export const useFileImport = () => {
       }
 
       const newCards = data.cards;
+
+      // Enforce Card Limit for Free Users (Max 20)
+      if (!isPremium && newCards && newCards.length > 20) {
+        newCards.length = 20; // Truncate array in place
+        showError("Free Plan: Set limited to 20 cards. Upgrade for full sets.");
+      }
       const newConcepts = data.concepts;
 
       if (!newCards || newCards.length === 0) {
@@ -295,7 +316,9 @@ export const useFileImport = () => {
                     type: rel.type,
                     strength: rel.strength
                   }))
-                  .filter(rel => rel.source_concept_id && rel.target_concept_id); // Only allow complete links
+                  .filter((rel): rel is { user_id: string; source_concept_id: string; target_concept_id: string; type: string; strength: number | undefined } => 
+                    !!rel.source_concept_id && !!rel.target_concept_id
+                  );
 
                 if (validRelationships.length > 0) {
                   const { error: relError } = await supabase
@@ -311,6 +334,23 @@ export const useFileImport = () => {
         } catch (conceptError) {
           console.warn("Concept processing skipped.", conceptError);
         }
+      }
+
+
+
+      // Increment Daily Usage for Free Users on Success
+      if (!isPremium) {
+        const today = new Date().toDateString();
+        const storageKey = `nova_ai_daily_usage_${currentUser.id}`;
+        const usage = JSON.parse(localStorage.getItem(storageKey) || '{"count": 0, "date": ""}');
+
+        if (usage.date !== today) {
+          usage.date = today;
+          usage.count = 1;
+        } else {
+          usage.count += 1;
+        }
+        localStorage.setItem(storageKey, JSON.stringify(usage));
       }
 
       queryClient.invalidateQueries({ queryKey: ['cognitiveConstellation'] });

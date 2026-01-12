@@ -492,5 +492,40 @@ Tone: Professional, helpful, and direct.`;
             };
         }
     }
+    /**
+     * AI-powered Knowledge Graph Generation
+     */
+    static async generateKnowledgeGraph(contextText: string): Promise<{ concepts: AIExtractedConcept[], relationships: AIExtractedRelationship[] }> {
+        const systemPrompt = `You are a Knowledge Graph Architect.
+Task: Analyze the provided study material and build a concept map.
+Output: JSON object with "concepts" and "relationships".
+Structure:
+{
+  "concepts": [ { "name": "Concept Name", "description": "Brief definition" } ],
+  "relationships": [ { "source_name": "Concept A", "target_name": "Concept B", "type": "relates_to" | "causes" | "is_a" | "part_of", "strength": 0.1-1.0 } ]
+}
+Guidelines:
+1. Identify 15-30 high-level concepts that connect different topics.
+2. Find hidden connections between terms.
+3. Consolidate similar terms (e.g. "Photosynthesis" and "Plant Energy" -> "Photosynthesis").`;
+
+        try {
+            return await this.executeWithFallback(
+                'generateKnowledgeGraph',
+                async () => {
+                    return await this.runGroqViaBackend([
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: `Material to Map: \n\n${contextText}` }
+                    ], "llama-3.3-70b-versatile", true);
+                },
+                async () => {
+                    return await this.runGeminiWithRetry(systemPrompt, `Material to Map: \n\n${contextText}`, true);
+                }
+            );
+        } catch (e) {
+            console.error("Knowledge Graph Error:", e);
+            return { concepts: [], relationships: [] };
+        }
+    }
 }
 

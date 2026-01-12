@@ -44,7 +44,8 @@ export class NovaBrain {
     private static async handleLocalQuery(query: string, context: NovaContext): Promise<NovaResponse | null> {
         // Normalize: lowercase and remove punctuation (keeping alphanumeric and spaces)
         const lowerQuery = query.toLowerCase().replace(/[?!.,]/g, '').trim();
-        const userName = context.user?.user_metadata?.full_name?.split(' ')[0] || 'friend';
+        // Privacy: Only use first name or default to 'Student'
+        const userName = context.user?.user_metadata?.full_name?.split(' ')[0] || 'Student';
 
         // 1. Greetings
         if (['hi', 'hello', 'hey', 'start', 'sup', 'yo', 'how are you', "how's it going", 'how are you doing'].includes(lowerQuery)) {
@@ -168,7 +169,8 @@ export class NovaBrain {
         }
 
         // Complex query - use AI
-        const userName = context.user?.user_metadata?.full_name?.split(' ')[0] || 'friend';
+        // Privacy: Only use first name or default to 'Student'
+        const userName = context.user?.user_metadata?.full_name?.split(' ')[0] || 'Student';
         const aiContext: NovaAIContext = {
             route: context.route,
             userName,

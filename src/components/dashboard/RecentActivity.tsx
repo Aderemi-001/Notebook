@@ -39,10 +39,10 @@ const RecentActivity: React.FC = () => {
                 .order('updated_at', { ascending: false })
                 .limit(3);
 
-            // Combine and sort
+            // Combine and sort, filtering out items with null updated_at
             const combined: ActivityItem[] = [
-                ...(sets || []).map(s => ({ ...s, type: 'set' as const })),
-                ...(notes || []).map(n => ({ ...n, type: 'note' as const }))
+                ...(sets || []).filter(s => s.updated_at).map(s => ({ ...s, type: 'set' as const, updated_at: s.updated_at! })),
+                ...(notes || []).filter(n => n.updated_at).map(n => ({ ...n, type: 'note' as const, updated_at: n.updated_at! }))
             ];
 
             return combined

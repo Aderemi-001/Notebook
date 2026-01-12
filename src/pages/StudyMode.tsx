@@ -230,7 +230,14 @@ const StudyMode = () => {
         throw fetchProgressError;
       }
 
-      const newProgress = calculateNextReview(existingProgress || null, quality);
+      // Transform existingProgress to match UserProgress interface (handle nulls)
+      const transformedProgress = existingProgress ? {
+        repetition_level: existingProgress.repetition_level ?? 0,
+        ease_factor: existingProgress.ease_factor ?? 2.5,
+        next_review_at: existingProgress.next_review_at ?? new Date().toISOString(),
+        status: (existingProgress.status === 'mastered' ? 'mastered' : 'learning') as 'learning' | 'mastered'
+      } : null;
+      const newProgress = calculateNextReview(transformedProgress, quality);
 
       const { error: upsertError } = await supabase
         .from('user_progress')

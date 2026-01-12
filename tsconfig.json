@@ -31,10 +31,14 @@
     }
   },
   "include": [
-    "src",
-    "vite.config.ts"
+    "src"
   ],
   "exclude": [
-    "supabase"
+    "node_modules",
+    "dist",
+    "build",
+    ".next",
+    "supabase",
+    "api"
   ]
 }

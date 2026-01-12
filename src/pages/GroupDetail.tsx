@@ -39,7 +39,7 @@ interface StudySet {
 
 interface UserProgressData {
   card_id: string;
-  next_review_at: string;
+  next_review_at: string | null;
   status: string;
 }
 
@@ -110,7 +110,12 @@ const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
         console.error(`Error fetching progress for set ${set.id}:`, progressError);
       }
 
-      const progressMap = new Map<string, UserProgressData>(progressData?.map((p: UserProgressData) => [p.card_id, p]));
+      // Transform to handle nulls
+      const transformedProgress = (progressData || []).map((p: any) => ({
+        ...p,
+        next_review_at: p.next_review_at || new Date().toISOString()
+      }));
+      const progressMap = new Map<string, UserProgressData>(transformedProgress.map((p: UserProgressData) => [p.card_id, p]));
 
       let tempEarliestReviewAt: Date | null = null;
 
@@ -123,7 +128,7 @@ const fetchStudySetsInGroup = async (groupId: string): Promise<StudySet[]> => {
             tempEarliestReviewAt = now;
           }
         } else {
-          const cardNextReviewDate = new Date(progress.next_review_at);
+          const cardNextReviewDate = progress.next_review_at ? new Date(progress.next_review_at) : now;
           if (cardNextReviewDate <= now && progress.status === 'learning') {
             dueCardsCount++;
           }

@@ -16,7 +16,7 @@ interface UserProfile {
   location?: string | null;
   website?: string | null;
   twitter_handle?: string | null;
-  linkedin_handle?: string | null;
+  instagram_handle?: string | null;
   is_public_profile?: boolean;
   terms_accepted_at?: string | null;
 }
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const [profileRes, subRes] = await Promise.all([
         supabase
           .from('profiles')
-          .select('id, display_name, avatar_url, is_admin, bio, location, website, twitter_handle, linkedin_handle, is_public_profile, terms_accepted_at')
+          .select('id, display_name, avatar_url, is_admin, bio, location, website, twitter_handle, instagram_handle, is_public_profile, terms_accepted_at')
           .eq('id', currentSession.user.id)
           .single(),
         supabase
@@ -94,8 +94,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           location: userProfile.location,
           website: userProfile.website,
           twitter_handle: userProfile.twitter_handle,
-          linkedin_handle: userProfile.linkedin_handle,
-          is_public_profile: userProfile.is_public_profile,
+          instagram_handle: userProfile.instagram_handle,
+          is_public_profile: userProfile.is_public_profile ?? undefined,
           is_premium: isPremium,
           subscription_status: subscription?.status || null,
           terms_accepted_at: userProfile.terms_accepted_at

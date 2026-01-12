@@ -8,9 +8,9 @@ export interface Badge {
     id: string;
     slug: string;
     name: string;
-    description: string;
-    icon_name: string;
-    category: 'general' | 'streak' | 'mastery' | 'creation';
+    description: string | null;
+    icon_name: string | null;
+    category: 'general' | 'streak' | 'mastery' | 'creation' | null;
     awarded_at?: string; // If present, user has this badge
 }
 
@@ -34,7 +34,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 export const BadgeItem: React.FC<BadgeItemProps> = ({ badge, size = 'md', showLabel = true, className }) => {
     const isUnlocked = !!badge.awarded_at;
-    const Icon = iconMap[badge.icon_name] || Trophy;
+    const Icon = (badge.icon_name && iconMap[badge.icon_name]) ? iconMap[badge.icon_name] : Trophy;
 
     const sizeClasses = {
         sm: "w-10 h-10",

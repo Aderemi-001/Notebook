@@ -14,11 +14,19 @@ const Pricing = () => {
     const [isStartingTrial, setIsStartingTrial] = useState(false);
 
     const handleUpgrade = (billingCycle: 'monthly' | 'annual' = 'monthly') => {
+        console.log('Initiating upgrade for cycle:', billingCycle);
         if (!user?.email) {
+            console.warn('User not logged in, cannot upgrade');
             showError('Please log in to upgrade to Nova Pro');
             return;
         }
         payfast.checkoutNovaPro(user.email, user.user_metadata?.full_name || 'User', billingCycle);
+    };
+
+    const handlePlanClick = (plan: typeof plans[0]) => {
+        if (plan.price === 'R0') return;
+        console.log('Plan clicked:', plan.name);
+        handleUpgrade(plan.billingCycle);
     };
 
     const handleStartTrial = async () => {
@@ -156,7 +164,7 @@ const Pricing = () => {
                                         <Button
                                             variant="outline"
                                             className="w-full font-bold"
-                                            onClick={() => handleUpgrade(plan.billingCycle)}
+                                            onClick={() => handlePlanClick(plan)}
                                         >
                                             Skip Trial & Subscribe
                                         </Button>
@@ -165,7 +173,10 @@ const Pricing = () => {
                                     <Button
                                         className={`w-full py-6 text-lg font-bold transition-all ${plan.recommended ? 'bg-amber-500 hover:bg-amber-600 shadow-lg' : 'bg-primary hover:bg-primary/90'}`}
                                         disabled={plan.current || (status !== 'none' && status !== 'expired' && plan.price === 'R0')}
-                                        onClick={() => plan.price === 'R0' ? undefined : handleUpgrade(plan.billingCycle)}
+                                        onClick={() => {
+                                            console.log("DEBUG: Clicked plan " + plan.name);
+                                            handlePlanClick(plan);
+                                        }}
                                     >
                                         {plan.current ? 'Current Plan' : plan.price === 'R0' ? 'Active' : 'Choose ' + plan.name}
                                     </Button>

@@ -50,8 +50,9 @@ const Notebook: React.FC = () => {
     // Create Note Mutation
     const createNoteMutation = useMutation({
         mutationFn: async (type: 'text' | 'canvas') => {
+            if (!user?.id) throw new Error("User not authenticated");
             const newNote = {
-                user_id: user?.id,
+                user_id: user.id,
                 title: "Untitled Note",
                 content: type === 'canvas'
                     ? { type: 'canvas', version: 1, image: null, background: 'lined' }

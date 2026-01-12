@@ -19,7 +19,12 @@ export const AdminOverview = () => {
             try {
                 const { data, error } = await supabase.rpc('admin_get_stats');
                 if (error) throw error;
-                setStats(data as AdminStats);
+                // admin_get_stats returns Json, assert it's AdminStats structure
+                if (data && Array.isArray(data) && data.length > 0) {
+                    setStats(data[0] as unknown as AdminStats);
+                } else if (data && typeof data === 'object' && !Array.isArray(data)) {
+                    setStats(data as unknown as AdminStats);
+                }
             } catch (error) {
                 console.error('Error fetching admin stats:', error);
             } finally {

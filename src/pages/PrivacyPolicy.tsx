@@ -36,10 +36,12 @@ export default function PrivacyPolicy() {
           <ul>
             <li><strong>Account Information:</strong> When you create an account, we collect your email address and display name.</li>
             <li><strong>Usage Data:</strong> We collect information about how you use the Service, such as study sets created, cards reviewed, and progress.</li>
+            <li><strong>AI Interaction Data:</strong> We process the content you submit to our AI features (Nova), including study notes, essays, and chat queries.</li>
           </ul>
           <h3>Non-Personal Information:</h3>
           <ul>
             <li><strong>Technical Data:</strong> This includes IP addresses, browser type, operating system, and device information.</li>
+            <li><strong>Cookies and Local Storage:</strong> We use cookies and local storage tokens to maintain your session and authentication state.</li>
           </ul>
 
           <h2>2. How We Use Your Information</h2>
@@ -57,7 +59,13 @@ export default function PrivacyPolicy() {
           <h2>3. How We Share Your Information</h2>
           <p>We may share your information in the following situations:</p>
           <ul>
-            <li><strong>With Service Providers:</strong> We may share your information with third-party vendors, service providers, contractors, or agents who perform services for us or on our behalf and require access to such information to do that work.</li>
+            <li><strong>With Service Providers:</strong> We may share your information with third-party vendors, service providers, contractors, or agents who perform services for us or on our behalf.
+              <ul className="list-disc pl-5 mt-1">
+                <li><strong>Supabase:</strong> For authentication and database hosting.</li>
+                <li><strong>Google (Gemini AI):</strong> For AI-powered study assistance and content generation.</li>
+                <li><strong>Groq:</strong> For high-speed AI inference.</li>
+              </ul>
+            </li>
             <li><strong>For Business Transfers:</strong> We may share or transfer your personal information in connection with, or during negotiations of, any merger, sale of company assets, financing, or acquisition of all or a portion of our business to another company.</li>
             <li><strong>With Affiliates:</strong> We may share your information with our affiliates, in which case we will require those affiliates to honor this Privacy Policy.</li>
             <li><strong>With Business Partners:</strong> We may share your information with our business partners to offer you certain products, services, or promotions.</li>

@@ -100,19 +100,19 @@ const CollaborationInvitations: React.FC = () => {
               <Card key={inv.id} className="glass-card shadow-premium rounded-[2.5rem] border-white/20 flex flex-col">
                 <CardHeader className="flex-grow">
                   <CardTitle className="text-lg font-semibold flex items-center justify-between">
-                    <span>{inv.study_sets?.[0]?.title || 'Unknown Study Set'}</span> {/* Access first item in array */}
+                    <span>{inv.study_sets?.title || 'Unknown Study Set'}</span>
                     <Badge variant={inv.status === 'pending' ? 'default' : inv.status === 'accepted' ? 'default' : 'destructive'}> {/* Changed 'success' to 'default' */}
                       {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
                     </Badge>
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground">
-                    Invited by: {inv.inviter_profile?.[0]?.display_name || 'Unknown User'} {/* Access first item in array */}
+                    Invited by: {inv.inviter_profile?.display_name || 'Unknown User'}
                   </CardDescription>
                   <CardDescription className="text-sm text-muted-foreground">
                     Permission: {inv.permission_level.charAt(0).toUpperCase() + inv.permission_level.slice(1)}
                   </CardDescription>
                   <CardDescription className="text-xs text-muted-foreground flex items-center mt-1">
-                    <Clock className="h-3 w-3 mr-1" /> Received {formatDistanceToNowStrict(new Date(inv.created_at), { addSuffix: true })}
+                    <Clock className="h-3 w-3 mr-1" /> Received {inv.created_at ? formatDistanceToNowStrict(new Date(inv.created_at), { addSuffix: true }) : 'recently'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex justify-end gap-2 pt-0">
@@ -144,9 +144,9 @@ const CollaborationInvitations: React.FC = () => {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
-                  {inv.study_sets?.[0]?.id && (
+                  {inv.study_sets?.id && (
                     <Button asChild variant="secondary">
-                      <Link to={`/sets/${inv.study_sets[0].id}`}>
+                      <Link to={`/sets/${inv.study_sets.id}`}>
                         <BookOpen className="mr-2 h-4 w-4" /> View Set
                       </Link>
                     </Button>
@@ -174,19 +174,19 @@ const CollaborationInvitations: React.FC = () => {
               <Card key={inv.id} className="glass-card shadow-premium rounded-[2.5rem] border-white/20 flex flex-col">
                 <CardHeader className="flex-grow">
                   <CardTitle className="text-lg font-semibold flex items-center justify-between">
-                    <span>{inv.study_sets?.[0]?.title || 'Unknown Study Set'}</span> {/* Access first item in array */}
+                    <span>{inv.study_sets?.title || 'Unknown Study Set'}</span>
                     <Badge variant={inv.status === 'pending' ? 'default' : inv.status === 'accepted' ? 'default' : 'destructive'}> {/* Changed 'success' to 'default' */}
                       {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
                     </Badge>
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground">
-                    Invitee: {inv.invitee_profile?.[0]?.display_name || 'Unknown User'} {/* Access first item in array */}
+                    Invitee: {inv.invitee_profile?.display_name || 'Unknown User'}
                   </CardDescription>
                   <CardDescription className="text-sm text-muted-foreground">
                     Permission: {inv.permission_level.charAt(0).toUpperCase() + inv.permission_level.slice(1)}
                   </CardDescription>
                   <CardDescription className="text-xs text-muted-foreground flex items-center mt-1">
-                    <Clock className="h-3 w-3 mr-1" /> Sent {formatDistanceToNowStrict(new Date(inv.created_at), { addSuffix: true })}
+                    <Clock className="h-3 w-3 mr-1" /> Sent {inv.created_at ? formatDistanceToNowStrict(new Date(inv.created_at), { addSuffix: true }) : 'recently'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex justify-end gap-2 pt-0">
@@ -209,9 +209,9 @@ const CollaborationInvitations: React.FC = () => {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
-                  {inv.study_sets?.[0]?.id && (
+                  {inv.study_sets?.id && (
                     <Button asChild variant="secondary">
-                      <Link to={`/sets/${inv.study_sets[0].id}`}>
+                      <Link to={`/sets/${inv.study_sets.id}`}>
                         <BookOpen className="mr-2 h-4 w-4" /> View Set
                       </Link>
                     </Button>
@@ -234,15 +234,15 @@ const CollaborationInvitations: React.FC = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {dialogAction === 'accept' && `Accept Invitation for "${selectedInvitation?.study_sets?.[0]?.title}"?`}
-              {dialogAction === 'reject' && `Reject Invitation for "${selectedInvitation?.study_sets?.[0]?.title}"?`}
-              {dialogAction === 'revoke' && `Revoke Invitation for "${selectedInvitation?.study_sets?.[0]?.title}"?`}
-              {dialogAction === 'delete' && `Delete Invitation for "${selectedInvitation?.study_sets?.[0]?.title}"?`}
+              {dialogAction === 'accept' && `Accept Invitation for "${selectedInvitation?.study_sets?.title}"?`}
+              {dialogAction === 'reject' && `Reject Invitation for "${selectedInvitation?.study_sets?.title}"?`}
+              {dialogAction === 'revoke' && `Revoke Invitation for "${selectedInvitation?.study_sets?.title}"?`}
+              {dialogAction === 'delete' && `Delete Invitation for "${selectedInvitation?.study_sets?.title}"?`}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {dialogAction === 'accept' && `By accepting, you will gain ${selectedInvitation?.permission_level} access to "${selectedInvitation?.study_sets?.[0]?.title}".`}
-              {dialogAction === 'reject' && `This will decline the invitation from ${selectedInvitation?.inviter_profile?.[0]?.display_name}.`}
-              {dialogAction === 'revoke' && `This will cancel the pending invitation sent to ${selectedInvitation?.invitee_profile?.[0]?.display_name}.`}
+              {dialogAction === 'accept' && `By accepting, you will gain ${selectedInvitation?.permission_level} access to "${selectedInvitation?.study_sets?.title}".`}
+              {dialogAction === 'reject' && `This will decline the invitation from ${selectedInvitation?.inviter_profile?.display_name}.`}
+              {dialogAction === 'revoke' && `This will cancel the pending invitation sent to ${selectedInvitation?.invitee_profile?.display_name}.`}
               {dialogAction === 'delete' && `This action cannot be undone. This will permanently remove the invitation record.`}
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Settings as SettingsIcon, BarChart2, Trash2, Loader2, Globe, Twitter, Linkedin, MapPin, Info, Trophy, LayoutGrid, Crown, Camera, Mail } from 'lucide-react';
+import { Settings as SettingsIcon, BarChart2, Trash2, Loader2, Globe, Twitter, Instagram, MapPin, Info, Trophy, LayoutGrid, Crown, Camera, Mail } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AvatarSelector } from '@/components/profile/AvatarSelector';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,7 +42,15 @@ const BadgeListWrapper = ({ userId }: { userId?: string }) => {
     enabled: !!userId
   });
 
-  return <BadgeList badges={badges || []} isLoading={isLoading} />;
+  // Transform badges to match Badge interface (cast category to union type, handle awarded_at)
+  const transformedBadges = (badges || []).map(badge => ({
+    ...badge,
+    category: (badge.category === 'general' || badge.category === 'streak' || badge.category === 'mastery' || badge.category === 'creation' 
+      ? badge.category 
+      : null) as 'general' | 'streak' | 'mastery' | 'creation' | null,
+    awarded_at: (typeof badge.awarded_at === 'string' ? badge.awarded_at : undefined)
+  }));
+  return <BadgeList badges={transformedBadges} isLoading={isLoading} />;
 };
 
 const profileSchema = z.object({
@@ -51,7 +59,7 @@ const profileSchema = z.object({
   location: z.string().max(100, 'Location cannot exceed 100 characters').optional().nullable(),
   website: z.string().url('Must be a valid URL').or(z.literal('')).optional().nullable(),
   twitter_handle: z.string().max(30).optional().nullable(),
-  linkedin_handle: z.string().max(50).optional().nullable(),
+  instagram_handle: z.string().max(30).optional().nullable(),
   is_public_profile: z.boolean().default(false),
 });
 
@@ -66,7 +74,7 @@ interface UserProfile {
   location: string | null;
   website: string | null;
   twitter_handle: string | null;
-  linkedin_handle: string | null;
+  instagram_handle: string | null;
   is_public_profile: boolean;
   subscriptions: { status: string }[];
   stats?: {
@@ -88,7 +96,7 @@ const fetchUserProfile = async (): Promise<UserProfile | null> => {
   // Fetch profile
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, display_name, avatar_url, is_admin, bio, location, website, twitter_handle, linkedin_handle, is_public_profile')
+    .select('id, display_name, avatar_url, is_admin, bio, location, website, twitter_handle, instagram_handle, is_public_profile')
     .eq('id', user.id)
     .single();
 
@@ -136,7 +144,7 @@ const Profile = () => {
       location: '',
       website: '',
       twitter_handle: '',
-      linkedin_handle: '',
+      instagram_handle: '',
       is_public_profile: false,
     },
   });
@@ -150,7 +158,7 @@ const Profile = () => {
         location: profile.location || '',
         website: profile.website || '',
         twitter_handle: profile.twitter_handle || '',
-        linkedin_handle: profile.linkedin_handle || '',
+        instagram_handle: profile.instagram_handle || '',
         is_public_profile: profile.is_public_profile || false,
       });
     }
@@ -367,11 +375,11 @@ const Profile = () => {
                       />
                       <FormField
                         control={form.control}
-                        name="linkedin_handle"
+                        name="instagram_handle"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="flex items-center gap-2 font-normal text-muted-foreground">
-                              <Linkedin className="h-3 w-3" /> LinkedIn /in/
+                              <Instagram className="h-3 w-3" /> Instagram @
                             </FormLabel>
                             <FormControl>
                               <Input placeholder="username" {...field} value={field.value || ''} />

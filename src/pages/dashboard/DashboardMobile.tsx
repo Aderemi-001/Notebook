@@ -44,54 +44,54 @@ const DashboardMobile: React.FC = () => {
             // We count a set as mastered if the user has mastered >90% of the cards in it.
             // We consider ALL sets the user has studied, not just ones they created.
 
-            // 1. Get all progress entries to identify study_set_ids
+            // 1. Get all progress entries with card->set relationship
             const { data: progressEntries } = await supabase
                 .from('user_progress')
-                .select('study_set_id, status, repetition_level')
+                .select('card_id, status, repetition_level, cards(set_id)')
                 .eq('user_id', user.id);
 
             let setsMastered = 0;
 
             if (progressEntries && progressEntries.length > 0) {
-                // Group by study_set_id
+                // Group by set_id from cards relationship
                 const setProgress: Record<string, { total: number, mastered: number }> = {};
 
                 progressEntries.forEach(p => {
-                    if (!p.study_set_id) return;
-                    if (!setProgress[p.study_set_id]) setProgress[p.study_set_id] = { total: 0, mastered: 0 };
+                    const cardData = p.cards as any;
+                    const setId = cardData?.set_id;
+                    if (!setId) return;
+                    if (!setProgress[setId]) setProgress[setId] = { total: 0, mastered: 0 };
 
-                    setProgress[p.study_set_id].total++; // Total CARDS studied in this set (might not be full set size yet)
+                    setProgress[setId].total++; // Total CARDS studied in this set
 
                     if (p.status === 'mastered' || (p.repetition_level || 0) >= 4) {
-                        setProgress[p.study_set_id].mastered++;
+                        setProgress[setId].mastered++;
                     }
                 });
 
                 const setIds = Object.keys(setProgress);
 
                 if (setIds.length > 0) {
-                    // 2. Fetch set details to get ACTUAL cards_count (to handle partial study)
-                    const { data: setsInfo } = await supabase
-                        .from('study_sets')
-                        .select('id, cards_count')
-                        .in('id', setIds);
+                    // 2. Count cards per set
 
-                    if (setsInfo) {
-                        setsInfo.forEach(set => {
-                            const progress = setProgress[set.id];
-                            if (!progress) return;
+                    // Count cards per set
+                    const cardCounts = await Promise.all(setIds.map(async (setId) => {
+                        const { count } = await supabase
+                            .from('cards')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('set_id', setId);
+                        return { setId, count: count || 0 };
+                    }));
 
-                            // A set is mastered if:
-                            // 1. We have mastered a significant portion of its TOTAL cards (e.g. 95%)
-                            // 2. Fallback: if cards_count is missing (rare), use progress.total
-                            const totalCards = set.cards_count || progress.total;
+                    cardCounts.forEach(({ setId, count: totalCards }) => {
+                        const progress = setProgress[setId];
+                        if (!progress) return;
 
-                            if (totalCards > 0) {
-                                const rate = progress.mastered / totalCards;
-                                if (rate >= 0.80) setsMastered++;
-                            }
-                        });
-                    }
+                        if (totalCards > 0) {
+                            const rate = progress.mastered / totalCards;
+                            if (rate >= 0.80) setsMastered++;
+                        }
+                    });
                 }
             }
 

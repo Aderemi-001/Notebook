@@ -227,7 +227,7 @@ const EssayPractice: React.FC = () => {
           score: result.score,
           letter_grade: result.letterGrade,
           feedback: result.feedback,
-          metrics: result.metrics
+          metrics: result.metrics as any
         });
         if (error) console.error("Failed to save submission:", error);
       }

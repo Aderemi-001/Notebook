@@ -55,10 +55,19 @@ export class PayFastService {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to generate signature');
+                const errorText = await response.text();
+                console.error('PayFast API Error details:', errorText);
+                throw new Error(`Failed to generate signature: ${response.status} ${response.statusText} - ${errorText}`);
             }
 
             const result = await response.json();
+
+            console.group('🔐 PayFast Signature Debug');
+            console.log('Passphrase Configured on Server:', result.passphraseConfigured ? '✅ YES' : '❌ NO');
+            console.log('String Hashed by Server:', result.debugString);
+            console.log('Generated Signature:', result.signature);
+            console.groupEnd();
+
             return result.signature;
         } catch (error) {
             console.error('PayFast Signature Error:', error);
@@ -75,9 +84,19 @@ export class PayFastService {
             merchant_key: this.config.merchantKey,
             return_url: `${window.location.origin}/payment-result?success=true`,
             cancel_url: `${window.location.origin}/payment-result?canceled=true`,
-            notify_url: `${window.location.origin}/api/payfast-webhook`,
+            notify_url: 'https://juosdmecldzlvrinnzwf.supabase.co/functions/v1/payfast-webhook',
             ...paymentData,
         };
+
+        // Remove empty/null/undefined values to match PayFast signature rules
+        Object.keys(data).forEach(key => {
+            if (data[key] === null || data[key] === undefined || data[key] === '') {
+                delete data[key];
+            } else {
+                // Ensure strings are trimmed
+                data[key] = data[key].trim();
+            }
+        });
 
         // Generate signature on server
         const signature = await this.generateSignature(data);
@@ -123,6 +142,12 @@ export class PayFastService {
         const itemName = isAnnual ? 'Nova Pro Annual Subscription' : 'Nova Pro Monthly Subscription';
         const frequency = isAnnual ? '6' : '3'; // 3 = Monthly, 6 = Annual
 
+        // Calculate billing date (tomorrow)
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const billingDate = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
+
         await this.createSubscriptionCheckout({
             amount: price,
             item_name: itemName,
@@ -131,6 +156,7 @@ export class PayFastService {
             name_first: firstName,
             name_last: lastName,
             subscription_type: '1',
+            billing_date: billingDate,
             recurring_amount: price,
             frequency: frequency,
             cycles: '0', // Indefinite

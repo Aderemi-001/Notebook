@@ -44,7 +44,7 @@ interface CardItem {
 interface LinkedNote {
   id: string;
   title: string;
-  updated_at: string;
+  updated_at: string | null;
 }
 
 const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
@@ -158,7 +158,11 @@ const fetchLinkedNotes = async (setId: string): Promise<LinkedNote[]> => {
     console.error("Error fetching linked notes:", error);
     throw new Error("Failed to fetch linked notes.");
   }
-  return data || [];
+  // Transform to match LinkedNote interface (handle nulls)
+  return (data || []).map(note => ({
+    ...note,
+    updated_at: note.updated_at || new Date().toISOString()
+  }));
 };
 
 interface StudySetDetailProps {
@@ -239,7 +243,7 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
 
   // Derived permissions
   const canEdit = isOwner || (profile?.is_admin ?? false);
-  const canDelete = isOwner || (profile?.is_admin ?? false);
+
 
   const handleDeleteSet = async () => {
     if (!studySet?.id) return;

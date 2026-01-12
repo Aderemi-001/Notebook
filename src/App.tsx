@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as React from "react";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { SubscriptionProvider } from "./hooks/useSubscription";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import PublicLayout from "@/layouts/PublicLayout";
@@ -79,6 +80,8 @@ const queryClient = new QueryClient();
 
 import LoadingScreen from "@/components/LoadingScreen";
 
+import { ReloadPrompt } from "@/components/ReloadPrompt";
+
 const App: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
 
@@ -95,81 +98,84 @@ const App: React.FC = () => {
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
           <LanguageProvider>
-            <Routes>
-              {/* Standalone Route for Login (No Public Header) */}
-              <Route path="/login" element={<Login />} />
+            <SubscriptionProvider>
+              <ReloadPrompt />
+              <Routes>
+                {/* Standalone Route for Login (No Public Header) */}
+                <Route path="/login" element={<Login />} />
 
-              {/* Public Routes with Header/Footer */}
-              <Route element={<PublicLayoutWrapper />}>
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsAndConditions />} />
-                <Route path="/confirm-email" element={<EmailConfirmation />} />
-                <Route path="/reset-password" element={<PasswordReset />} />
-              </Route>
+                {/* Public Routes with Header/Footer */}
+                <Route element={<PublicLayoutWrapper />}>
+                  <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsAndConditions />} />
+                  <Route path="/confirm-email" element={<EmailConfirmation />} />
+                  <Route path="/reset-password" element={<PasswordReset />} />
+                </Route>
 
-              {/* Standalone Route for Agreement (No Header/Sidebar to force focus) */}
-              <Route path="/user-agreement" element={<UserAgreement />} />
+                {/* Standalone Route for Agreement (No Header/Sidebar to force focus) */}
+                <Route path="/user-agreement" element={<UserAgreement />} />
 
-              {/* Dashboard Layout Routes */}
-              <Route element={<DashboardLayoutWrapper />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/dashboard" element={<Statistics />} />
-                <Route path="/daily-review" element={<DailyReview />} />
-                <Route path="/constellation" element={<CognitiveConstellation />} />
-                <Route path="/collaborations" element={<Collaborations />} />
-                <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
-                <Route path="/textbook-finder" element={<TextbookFinder />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/payment-result" element={<PaymentResult />} />
-                <Route path="/test" element={<TestPage />} />
+                {/* Dashboard Layout Routes */}
+                <Route element={<DashboardLayoutWrapper />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/dashboard" element={<Statistics />} />
+                  <Route path="/daily-review" element={<DailyReview />} />
+                  <Route path="/constellation" element={<CognitiveConstellation />} />
+                  <Route path="/collaborations" element={<Collaborations />} />
+                  <Route path="/explore-public-sets" element={<ExplorePublicSets />} />
+                  <Route path="/textbook-finder" element={<TextbookFinder />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/payment-result" element={<PaymentResult />} />
+                  <Route path="/test" element={<TestPage />} />
 
-                {/* Study Sets */}
-                <Route path="/create" element={<CreateStudySet />} />
-                <Route path="/sets" element={<StudySetsLayout />} />
-                <Route path="/sets/:setId" element={<StudySetsLayout />} />
-                <Route path="/sets/:setId/edit" element={<EditSet />} />
-                <Route path="/sets/:setId/study" element={<StudyMode />} />
+                  {/* Study Sets */}
+                  <Route path="/create" element={<CreateStudySet />} />
+                  <Route path="/sets" element={<StudySetsLayout />} />
+                  <Route path="/sets/:setId" element={<StudySetsLayout />} />
+                  <Route path="/sets/:setId/edit" element={<EditSet />} />
+                  <Route path="/sets/:setId/study" element={<StudyMode />} />
 
-                {/* Pro Notebook */}
-                <Route path="/notebook" element={<Notebook />} />
-                <Route path="/notebook/:noteId" element={<Notebook />} />
+                  {/* Pro Notebook */}
+                  <Route path="/notebook" element={<Notebook />} />
+                  <Route path="/notebook/:noteId" element={<Notebook />} />
 
-                {/* Study Set Groups */}
-                <Route path="/groups" element={<GroupsIndex />} />
-                <Route path="/groups/create" element={<CreateGroup />} />
-                <Route path="/groups/:groupId" element={<GroupDetail />} />
-                <Route path="/groups/:groupId/edit" element={<EditGroup />} />
+                  {/* Study Set Groups */}
+                  <Route path="/groups" element={<GroupsIndex />} />
+                  <Route path="/groups/create" element={<CreateGroup />} />
+                  <Route path="/groups/:groupId" element={<GroupDetail />} />
+                  <Route path="/groups/:groupId/edit" element={<EditGroup />} />
 
-                {/* Exams / Quiz */}
-                <Route path="/exams" element={<ExamsIndex />} />
-                <Route path="/quiz/:examId" element={<TakeExam />} />
+                  {/* Exams / Quiz */}
+                  <Route path="/exams" element={<ExamsIndex />} />
+                  <Route path="/quiz/:examId" element={<TakeExam />} />
 
-                {/* Essay Practice */}
-                <Route path="/essays" element={<EssayIndex />} />
-                <Route path="/essay-practice/:questionId" element={<EssayPractice />} />
-              </Route>
+                  {/* Essay Practice */}
+                  <Route path="/essays" element={<EssayIndex />} />
+                  <Route path="/essay-practice/:questionId" element={<EssayPractice />} />
+                </Route>
 
-              {/* Admin Routes */}
-              <Route element={<AdminLayout />}>
-                <Route path="/admin" element={<AdminOverview />} />
-                <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/content" element={<AdminContent />} />
-                <Route path="/admin/broadcasts" element={<AdminBroadcasts />} />
-                <Route path="/admin/logs" element={<AdminLogs />} />
-                <Route path="/admin/settings" element={<AdminSettings />} />
-              </Route>
+                {/* Admin Routes */}
+                <Route element={<AdminLayout />}>
+                  <Route path="/admin" element={<AdminOverview />} />
+                  <Route path="/admin/users" element={<AdminUsers />} />
+                  <Route path="/admin/content" element={<AdminContent />} />
+                  <Route path="/admin/broadcasts" element={<AdminBroadcasts />} />
+                  <Route path="/admin/logs" element={<AdminLogs />} />
+                  <Route path="/admin/settings" element={<AdminSettings />} />
+                </Route>
 
-              {/* Catch-all for 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                {/* Catch-all for 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </SubscriptionProvider>
           </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>
-    </QueryClientProvider>
+    </QueryClientProvider >
   );
 };
 

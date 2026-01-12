@@ -42,6 +42,7 @@ export const BadgeList: React.FC<BadgeListProps> = ({ badges, isLoading, classNa
             <div className="space-y-8">
                 {categories.map((category) => {
                     const categoryBadges = badges.filter(b => b.category === category);
+                    if (!category) return null;
                     return (
                         <div key={category} className="space-y-4">
                             <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground/70 border-b border-border/50 pb-2">

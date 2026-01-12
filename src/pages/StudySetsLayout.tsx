@@ -12,8 +12,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { showSuccess, showError } from "@/utils/toast";
 import { studySetService, StudySet } from '@/services/studySetService';
 
+import { useSubscription } from "@/hooks/useSubscription";
+
+
+
 const StudySetsLayout: React.FC = () => {
     const { user } = useAuth();
+    const { isPremium } = useSubscription();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const { setId } = useParams<{ setId?: string }>();
@@ -46,6 +51,10 @@ const StudySetsLayout: React.FC = () => {
     });
 
     const handleCreateSet = () => {
+        if (!isPremium && sets && sets.length >= 5) {
+            showError("Free Plan Limit Reached: You can only create 5 Study Sets. Upgrade to Pro for unlimited sets.");
+            return;
+        }
         setIsCreating(true);
         createSetMutation.mutate();
     };

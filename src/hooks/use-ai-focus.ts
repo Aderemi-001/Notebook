@@ -18,7 +18,7 @@ export function useAIFocus() {
             if (!user) return null;
 
             // 1. Look for weaknesses (low ease factor, previously studied)
-            const { data: weakCards, error } = await supabase
+            const { data: weakCards, error: _weakCardsError } = await supabase
                 .from('user_progress')
                 .select(`
           card_id,

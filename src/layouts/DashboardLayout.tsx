@@ -18,7 +18,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess } from '@/utils/toast';
 import { useAuth } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useSubscription } from '../hooks/useSubscription';
 import { useRealtime } from '@/hooks/useRealtime';
 import { useIsMobile } from '@/hooks/use-mobile';
 import WebDashboardLayout from './WebDashboardLayout';
@@ -59,7 +59,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 .in('key', ['global_broadcast', 'maintenance_mode']);
 
             if (data) {
-                const broadcastData = data.find(d => d.key === 'global_broadcast')?.value as BroadcastData;
+                const broadcastValue = data.find(d => d.key === 'global_broadcast')?.value;
+                const broadcastData = broadcastValue && typeof broadcastValue === 'object' && !Array.isArray(broadcastValue) 
+                    ? broadcastValue as unknown as BroadcastData 
+                    : null;
                 const maintenanceData = data.find(d => d.key === 'maintenance_mode')?.value;
 
                 // Check broadcast validity
@@ -166,6 +169,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 <p className="text-muted-foreground text-center max-w-md px-4">
                     We are currently performing scheduled maintenance. The application is temporarily unavailable. Please check back soon.
                 </p>
+                <div className="pt-6">
+                    <button
+                        onClick={handleLogout}
+                        className="text-sm text-red-500 hover:text-red-700 font-medium underline underline-offset-4"
+                    >
+                        Sign Out / Switch Account
+                    </button>
+                </div>
             </div>
         );
     }

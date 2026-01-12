@@ -97,7 +97,11 @@ const fetchDailyReviewCards = async (hideMastered: boolean, sortOrder: string): 
     throw error;
   }
 
-  let filteredCards = data || [];
+  // Transform data to match CardItem interface (ensure status is 'learning' | 'mastered')
+  let filteredCards: CardItem[] = (data || []).map((card: any) => ({
+    ...card,
+    status: (card.status === 'mastered' ? 'mastered' : 'learning') as 'learning' | 'mastered'
+  }));
 
   if (hideMastered) {
     filteredCards = filteredCards.filter((card: CardItem) => card.status !== 'mastered');
@@ -148,6 +152,13 @@ const DailyReview: React.FC = () => {
           fetchDailyReviewCards(preferences?.hide_mastered_from_daily_review || false, preferences?.default_card_sort_order || 'next_review_at_asc'),
           timeoutPromise
         ]);
+
+        // Enforce Free Plan Limit (10 cards)
+        if (!isPremium && result.length > 10) {
+          showError("Free Plan Review Limit: Maximized to 10 cards. Upgrade for unlimited review.");
+          return result.slice(0, 10);
+        }
+
         return result;
       } catch (err) {
         console.error("Daily Review fetch failed:", err);
@@ -240,7 +251,14 @@ const DailyReview: React.FC = () => {
         throw fetchProgressError;
       }
 
-      const newProgress = calculateNextReview(existingProgress || null, quality);
+      // Transform existingProgress to match UserProgress interface (handle nulls)
+      const transformedProgress = existingProgress ? {
+        repetition_level: existingProgress.repetition_level ?? 0,
+        ease_factor: existingProgress.ease_factor ?? 2.5,
+        next_review_at: existingProgress.next_review_at ?? new Date().toISOString(),
+        status: (existingProgress.status === 'mastered' ? 'mastered' : 'learning') as 'learning' | 'mastered'
+      } : null;
+      const newProgress = calculateNextReview(transformedProgress, quality);
 
       const { error: upsertError } = await supabase
         .from('user_progress')

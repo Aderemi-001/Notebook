@@ -37,7 +37,19 @@ const TermsAndConditions: React.FC = () => {
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">2. Use of Service</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">2. AI Disclaimer</h3>
+                                <p>
+                                    Our Service utilizes Artificial Intelligence (AI) technologies ("Nova") to provide study assistance, content generation, and grading.
+                                </p>
+                                <ul className="list-disc pl-5 mt-2 space-y-1">
+                                    <li><strong>Accuracy:</strong> AI-generated content is for educational purposes only. Machine learning models can make mistakes ("hallucinations"). You should always verify critical information with official sources.</li>
+                                    <li><strong>No Professional Advice:</strong> Nova is a study tool, not a substitute for professional legal, medical, or financial advice.</li>
+                                    <li><strong>Automated Processing:</strong> By using the AI features, you acknowledge that your inputs (notes, essays, queries) will be processed by third-party AI providers (Google, Groq) to generate responses.</li>
+                                </ul>
+                            </section>
+
+                            <section>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">3. Use of Service</h3>
                                 <p>
                                     You agree to use the Service for lawful purposes only. You are responsible for all content, including study sets, notes, and messages, that you upload, post, email, or otherwise transmit via the Service.
                                 </p>
@@ -49,49 +61,49 @@ const TermsAndConditions: React.FC = () => {
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">3. Intellectual Property</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">4. Intellectual Property</h3>
                                 <p>
                                     The Service and its original content (excluding Content provided by users), features, and functionality are and will remain the exclusive property of Notebook and its licensors. The Service is protected by copyright, trademark, and other laws of both the country and foreign countries.
                                 </p>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">4. User Content</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">5. User Content</h3>
                                 <p>
                                     You retain ownership of any intellectual property rights that you hold in that content. In short, what belongs to you stays yours. However, by uploading content to Notebook, you grant us a worldwide, non-exclusive, royalty-free license to use, reproduce, and display such content in connection with providing the Service.
                                 </p>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">5. Privacy</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">6. Privacy</h3>
                                 <p>
                                     Your privacy is important to us. Please read our Privacy Policy to understand how we collect, use, and share information about you.
                                 </p>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">6. Subscription Cancellation</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">7. Subscription Cancellation</h3>
                                 <p>
                                     You may cancel your Nova Pro subscription at any time. If you cancel, you will continue to have access to the pro features until the end of your current billing period. No further charges will be applied after cancellation. To cancel, verify your subscription status on the Pricing page or contact support.
                                 </p>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">7. Termination</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">8. Termination</h3>
                                 <p>
                                     We may terminate or suspend your account and bar access to the Service immediately, without prior notice or liability, under our sole discretion, for any reason whatsoever and without limitation, including but not limited to a breach of the Terms.
                                 </p>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">8. Changes to Terms</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">9. Changes to Terms</h3>
                                 <p>
                                     We reserve the right, at our sole discretion, to modify or replace these Terms at any time. What constitutes a material change will be determined at our sole discretion. By continuing to access or use our Service after those revisions become effective, you agree to be bound by the revised terms.
                                 </p>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">9. Contact Us</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">10. Contact Us</h3>
                                 <p>
                                     If you have any questions about these Terms, please contact us at my.notebook.by.remi@gmail.com.
                                 </p>
