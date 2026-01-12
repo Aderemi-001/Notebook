@@ -13,17 +13,22 @@ const Pricing = () => {
     const { user } = useAuth();
     const [isStartingTrial, setIsStartingTrial] = useState(false);
 
-    const handleUpgrade = (billingCycle: 'monthly' | 'annual' = 'monthly') => {
+    const handleUpgrade = (billingCycle: 'monthly' | 'annual' | 'lifetime' = 'monthly') => {
         console.log('Initiating upgrade for cycle:', billingCycle);
         if (!user?.email) {
             console.warn('User not logged in, cannot upgrade');
             showError('Please log in to upgrade to Nova Pro');
             return;
         }
-        payfast.checkoutNovaPro(user.email, user.user_metadata?.full_name || 'User', user.id, billingCycle);
+
+        if (billingCycle === 'lifetime') {
+            payfast.checkoutNovaLifetime(user.email, user.user_metadata?.full_name || 'User', user.id);
+        } else {
+            payfast.checkoutNovaPro(user.email, user.user_metadata?.full_name || 'User', user.id, billingCycle);
+        }
     };
 
-    const handlePlanClick = (plan: typeof plans[0]) => {
+    const handlePlanClick = (plan: any) => {
         if (plan.price === 'R0') return;
         console.log('Plan clicked:', plan.name);
         handleUpgrade(plan.billingCycle);
@@ -79,7 +84,21 @@ const Pricing = () => {
             current: (status === 'active' || status === 'trialing') && planId === 'pro-annual',
             recommended: true,
             billingCycle: 'annual' as const,
+            billingCycle: 'annual' as const,
             tag: "Save R100"
+        },
+        {
+            name: "Lifetime Access",
+            price: "R1,999",
+            duration: "one-time",
+            features: ["Pay once, own forever", "All Future Pro Features", "VIP Support Channel", "Founding Member Badge"],
+            icon: Crown,
+            color: "purple",
+            current: planId === 'pro-lifetime',
+            recommended: false,
+            billingCycle: 'lifetime' as const,
+            tag: "Launch Special",
+            originalPrice: "R3,499"
         }
     ];
 
@@ -116,7 +135,7 @@ const Pricing = () => {
                     )}
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8 mt-8">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
                     {plans.map((plan) => (
                         <Card key={plan.name} className={`relative flex flex-col overflow-hidden border-2 transition-all hover:shadow-xl ${plan.recommended ? 'border-amber-500 shadow-lg scale-105 z-10' : 'border-border'}`}>
                             {plan.recommended && (

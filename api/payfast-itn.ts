@@ -109,11 +109,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 3. Update Subscription in Supabase
 
         // Determine Plan Type based on Amount
-        // Monthly = R15.00, Annual = R619.99
+        // Monthly = R15.00, Annual = R619.99, Lifetime = R1999.00
         const paidAmount = parseFloat(data.amount_gross || data.amount);
-        const isAnnual = paidAmount > 100; // Safe threshold
-        const planId = isAnnual ? 'pro-annual' : 'pro-monthly';
-        const durationDays = isAnnual ? 365 : 30;
+
+        let planId = 'pro-monthly';
+        let durationDays = 30;
+
+        if (paidAmount > 1500) {
+            planId = 'pro-lifetime';
+            durationDays = 365 * 100; // 100 Years
+        } else if (paidAmount > 100) {
+            planId = 'pro-annual';
+            durationDays = 365;
+        }
 
         const { error: subError } = await supabaseAdmin
             .from('subscriptions')
