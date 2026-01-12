@@ -121,6 +121,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 user_id: userId,
                 status: 'active',
                 plan_id: planId,
+                // Save the PayFast Token for future cancellations
+                payfast_token: data.token,
                 current_period_end: new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString(),
                 updated_at: new Date().toISOString()
             });
