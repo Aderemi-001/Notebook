@@ -138,7 +138,7 @@ export class PayFastService {
 
         // Pricing Configuration
         const isAnnual = billingCycle === 'annual';
-        const price = isAnnual ? '619.99' : '59.99';
+        const price = isAnnual ? '619.99' : '15.00';
         const itemName = isAnnual ? 'Nova Pro Annual Subscription' : 'Nova Pro Monthly Subscription';
         const frequency = isAnnual ? '6' : '3'; // 3 = Monthly, 6 = Annual
 

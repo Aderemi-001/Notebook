@@ -60,7 +60,7 @@ const Pricing = () => {
         },
         {
             name: "Pro Monthly",
-            price: "R59.99",
+            price: "R15.00",
             duration: "per month",
             features: ["Unlimited AI Generations", "Unlimited Study Sets", "Massive 100MB Uploads", "Slides, Docs & Image Support", "Advanced Voice (TTS)", "Direct Support"],
             icon: Zap,
