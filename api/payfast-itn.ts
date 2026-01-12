@@ -108,14 +108,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // 3. Update Subscription in Supabase
 
-        // Strategy 1: Update 'subscriptions' table
+        // Determine Plan Type based on Amount
+        // Monthly = R15.00, Annual = R619.99
+        const paidAmount = parseFloat(data.amount_gross || data.amount);
+        const isAnnual = paidAmount > 100; // Safe threshold
+        const planId = isAnnual ? 'pro-annual' : 'pro-monthly';
+        const durationDays = isAnnual ? 365 : 30;
+
         const { error: subError } = await supabaseAdmin
             .from('subscriptions')
             .upsert({
                 user_id: userId,
                 status: 'active',
-                plan_id: 'pro-monthly', // or check amount for annual
-                current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // +30 days approx
+                plan_id: planId,
+                current_period_end: new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString(),
                 updated_at: new Date().toISOString()
             });
 
