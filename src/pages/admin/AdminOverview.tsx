@@ -26,14 +26,14 @@ export const AdminOverview = () => {
                 }
 
                 // 2. Revenue Stats
-                const { data: revData } = await supabase.rpc('admin_get_revenue');
+                const { data: revData } = await supabase.rpc('admin_get_revenue' as any);
                 if (revData) {
                     setRevenue(revData as any);
                 }
 
                 // 3. Recent Transactions
-                const { data: txns } = await supabase.rpc('admin_get_recent_transactions', { limit_count: 5 });
-                if (txns) {
+                const { data: txns } = await supabase.rpc('admin_get_recent_transactions' as any, { limit_count: 5 });
+                if (txns && Array.isArray(txns)) {
                     setRecentTransactions(txns);
                 }
 
