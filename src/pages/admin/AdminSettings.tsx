@@ -3,6 +3,25 @@ import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, Lock, Server } from 'lucide-react';
 
 export const AdminSettings = () => {
+    const [security, setSecurity] = useState({ rls_enabled: false, escalation_protection: false });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const checkSecurity = async () => {
+            try {
+                const { data, error } = await supabase.rpc('admin_get_security_status' as any);
+                if (data) {
+                    setSecurity(data as any);
+                }
+            } catch (e) {
+                console.error('Security check failed', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        checkSecurity();
+    }, []);
+
     return (
         <div className="space-y-6 max-w-4xl">
             <div>
@@ -32,11 +51,13 @@ export const AdminSettings = () => {
                                 <div>
                                     <p className="font-semibold text-green-900 dark:text-green-100">Privilege Escalation Protection</p>
                                     <p className="text-sm text-green-700 dark:text-green-300/80">
-                                        Database triggers are active. <code>is_admin</code> column is immutable via API.
+                                        Database triggers preventing unauthorized admin promotion.
                                     </p>
                                 </div>
                             </div>
-                            <Badge className="bg-green-600 hover:bg-green-700">ACTIVE</Badge>
+                            <Badge variant={security.escalation_protection ? 'default' : 'destructive'} className={security.escalation_protection ? "bg-green-600" : ""}>
+                                {loading ? '...' : security.escalation_protection ? 'ACTIVE' : 'INACTIVE'}
+                            </Badge>
                         </div>
 
                         <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
@@ -47,11 +68,13 @@ export const AdminSettings = () => {
                                 <div>
                                     <p className="font-semibold">Row Level Security (RLS)</p>
                                     <p className="text-sm text-muted-foreground">
-                                        Strict policies enforced on all admin tables.
+                                        Strict policies enforced on user data tables.
                                     </p>
                                 </div>
                             </div>
-                            <Badge variant="outline" className="border-green-500 text-green-600">ENFORCED</Badge>
+                            <Badge variant={security.rls_enabled ? 'outline' : 'destructive'} className={security.rls_enabled ? "border-green-500 text-green-600" : ""}>
+                                {loading ? '...' : security.rls_enabled ? 'ENFORCED' : 'DISABLED'}
+                            </Badge>
                         </div>
                     </CardContent>
                 </Card>
