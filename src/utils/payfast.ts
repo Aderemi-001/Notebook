@@ -20,6 +20,7 @@ interface PayFastPaymentData {
     name_first: string;
     name_last: string;
     custom_str1?: string; // User ID
+    m_payment_id?: string; // Merchant Payment ID (our UUID)
     subscription_type?: '1'; // 1 = subscription
     billing_date?: string; // YYYY-MM-DD
     recurring_amount?: string;
@@ -149,6 +150,34 @@ export class PayFastService {
         tomorrow.setDate(tomorrow.getDate() + 1);
         const billingDate = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
 
+        // 1. Log transaction as PENDING in database
+        // We use the supabase client to insert (RLS allows insert for own user)
+        // If table doesn't exist yet, we catch error and proceed (fallback)
+        let transactionId = '';
+        try {
+            const { supabase } = await import('@/integrations/supabase/client');
+            // Cast to any because types are not yet generated for the new table
+            const { data: txn, error } = await (supabase as any)
+                .from('payment_transactions')
+                .insert({
+                    user_id: userId,
+                    amount: parseFloat(price),
+                    status: 'pending',
+                    provider: 'payfast',
+                    metadata: { plan: billingCycle, item: itemName }
+                })
+                .select()
+                .single();
+
+            if (txn) {
+                transactionId = txn.id;
+                console.log('Transaction logged:', transactionId);
+            }
+            if (error) console.error('Error logging transaction:', error);
+        } catch (e) {
+            console.warn('Could not log transaction (table might be missing):', e);
+        }
+
         await this.createSubscriptionCheckout({
             amount: price,
             item_name: itemName,
@@ -157,6 +186,9 @@ export class PayFastService {
             name_first: firstName,
             name_last: lastName,
             custom_str1: userId,
+            // Pass the transaction ID (if created) as Merchant Payment ID
+            // If table missing, PayFast just sees empty string (harmless)
+            ...(transactionId ? { m_payment_id: transactionId } : {}),
             subscription_type: '1',
             billing_date: billingDate,
             recurring_amount: price,

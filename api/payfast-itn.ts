@@ -126,7 +126,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // Strategy 2: Update 'profiles' table (if exists) or 'user_metadata'
-        // Let's try to update user_metadata as a fallback/primary Check
         const { error: userError } = await supabaseAdmin.auth.admin.updateUserById(
             userId,
             { user_metadata: { is_pro: true, subscription_status: 'active' } }
@@ -136,6 +135,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             console.error('Error updating user metadata:', userError);
         } else {
             console.log('✅ User metadata updated.');
+        }
+
+        // Strategy 3: Update Transaction Log (if exists)
+        if (data.m_payment_id) {
+            const { error: txnError } = await supabaseAdmin
+                .from('payment_transactions')
+                .update({
+                    status: 'completed',
+                    provider_ref: data.pf_payment_id,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', data.m_payment_id);
+
+            if (txnError) console.error('Error closing transaction log:', txnError);
+            else console.log('✅ Transaction log marked completed.');
+        } else {
+            // Fallback: Try to log a new "completed" transaction if we didn't have a pending one?
+            // Or just log it for record keeping.
+            await supabaseAdmin.from('payment_transactions').insert({
+                user_id: userId,
+                amount: parseFloat(data.amount_gross || data.amount),
+                status: 'completed',
+                provider: 'payfast',
+                provider_ref: data.pf_payment_id
+            });
         }
 
     } else {
