@@ -8,7 +8,8 @@ import {
     Settings,
     LogOut,
     Menu,
-    FileText
+    FileText,
+    CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -37,6 +38,7 @@ export const AdminLayout = () => {
         { name: 'Content Moderation', href: '/admin/content', icon: FileText },
         { name: 'System Broadcasts', href: '/admin/broadcasts', icon: Radio },
         { name: 'System Logs', href: '/admin/logs', icon: ShieldAlert },
+        { name: 'Transactions', href: '/admin/transactions', icon: CreditCard },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
     ];
 

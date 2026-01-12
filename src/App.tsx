@@ -75,6 +75,7 @@ import { AdminContent } from "@/pages/admin/AdminContent";
 import { AdminBroadcasts } from "@/pages/admin/AdminBroadcasts";
 import { AdminLogs } from "@/pages/admin/AdminLogs";
 import { AdminSettings } from "@/pages/admin/AdminSettings";
+import AdminTransactions from "@/pages/admin/AdminTransactions";
 
 const queryClient = new QueryClient();
 
@@ -165,6 +166,7 @@ const App: React.FC = () => {
                   <Route path="/admin/content" element={<AdminContent />} />
                   <Route path="/admin/broadcasts" element={<AdminBroadcasts />} />
                   <Route path="/admin/logs" element={<AdminLogs />} />
+                  <Route path="/admin/transactions" element={<AdminTransactions />} />
                   <Route path="/admin/settings" element={<AdminSettings />} />
                 </Route>
 
