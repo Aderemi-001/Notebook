@@ -4,12 +4,14 @@ import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { Toaster } from "sonner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider defaultTheme="light" attribute="class">
     <ErrorBoundary>
       <App />
       <Toaster />
+      <SpeedInsights />
     </ErrorBoundary>
   </ThemeProvider>
 );
