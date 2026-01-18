@@ -19,7 +19,8 @@ begin
   select exists(
     select 1 from pg_trigger t
     join pg_class c on t.tgrelid = c.oid
-    where c.relname = 'profiles' and t.tgname = 'prevent_admin_escalation'
+    where c.relname = 'profiles' 
+    and (t.tgname = 'prevent_admin_escalation' or t.tgname = 'protect_admin_column')
   ) into trigger_active;
   
   -- If specific trigger doesn't exist, we might check for the function instead or just report false

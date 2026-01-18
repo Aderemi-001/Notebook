@@ -50,6 +50,7 @@ export class PayFastService {
      */
     private async generateSignature(data: Record<string, string>): Promise<string> {
         try {
+            console.log('📝 Requesting signature for:', JSON.stringify(data, null, 2));
             const response = await fetch('/api/payfast', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -63,13 +64,6 @@ export class PayFastService {
             }
 
             const result = await response.json();
-
-            console.group('🔐 PayFast Signature Debug');
-            console.log('Passphrase Configured on Server:', result.passphraseConfigured ? '✅ YES' : '❌ NO');
-            console.log('String Hashed by Server:', result.debugString);
-            console.log('Generated Signature:', result.signature);
-            console.groupEnd();
-
             return result.signature;
         } catch (error) {
             console.error('PayFast Signature Error:', error);
@@ -78,9 +72,10 @@ export class PayFastService {
     }
 
     /**
-     * Create a subscription checkout
+     * Generic Checkout Handler (Process Payment)
      */
-    async createSubscriptionCheckout(paymentData: PayFastPaymentData): Promise<string> {
+    private async processCheckout(paymentData: Record<string, string | undefined>) {
+        // Prepare base data
         const data: Record<string, string> = {
             merchant_id: this.config.merchantId,
             merchant_key: this.config.merchantKey,
@@ -88,15 +83,14 @@ export class PayFastService {
             cancel_url: `${window.location.origin}/payment-result?canceled=true`,
             notify_url: `${window.location.origin}/api/payfast-itn`,
             ...paymentData,
-        };
+        } as Record<string, string>; // Cast initially, clean up below
 
-        // Remove empty/null/undefined values to match PayFast signature rules
+        // Remove empty/null/undefined values required for clean signature
         Object.keys(data).forEach(key => {
-            if (data[key] === null || data[key] === undefined || data[key] === '') {
+            if (data[key] === null || data[key] === undefined || String(data[key]).trim() === '') {
                 delete data[key];
             } else {
-                // Ensure strings are trimmed
-                data[key] = data[key].trim();
+                data[key] = String(data[key]).trim();
             }
         });
 
@@ -124,39 +118,67 @@ export class PayFastService {
     }
 
     /**
+     * Create a specific ONE-TIME payment checkout
+     */
+    async createOneTimeCheckout(paymentData: PayFastPaymentData): Promise<string> {
+        return this.processCheckout({
+            amount: paymentData.amount,
+            item_name: paymentData.item_name,
+            item_description: paymentData.item_description,
+            email_address: paymentData.email_address,
+            name_first: paymentData.name_first,
+            name_last: paymentData.name_last,
+            custom_str1: paymentData.custom_str1,
+            m_payment_id: paymentData.m_payment_id
+        });
+    }
+
+    /**
+     * Create a SUBSCRIPTION checkout
+     */
+    async createSubscriptionCheckout(paymentData: PayFastPaymentData): Promise<string> {
+        return this.processCheckout({
+            ...paymentData, // Include basic fields
+            // Explicitly ensure subscription fields are passed
+            subscription_type: '1',
+            billing_date: paymentData.billing_date,
+            recurring_amount: paymentData.recurring_amount,
+            frequency: paymentData.frequency,
+            cycles: paymentData.cycles
+        });
+    }
+
+    /**
      * Quick checkout for Nova Pro subscription
      */
     async checkoutNovaPro(userEmail: string, userName: string, userId: string, billingCycle: 'monthly' | 'annual' = 'monthly') {
         const [firstName, ...lastNameParts] = userName.split(' ');
         const lastName = lastNameParts.join(' ') || 'User';
 
-        // Validate credentials
         if (!this.config.merchantId || !this.config.merchantKey) {
             console.error('PayFast credentials not configured.');
             return;
         }
 
-        console.log(`Initiating PayFast checkout for ${billingCycle}...`);
-
-        // Pricing Configuration
         const isAnnual = billingCycle === 'annual';
-        const price = isAnnual ? '619.99' : '15.00';
+        const price = isAnnual ? '619.99' : '59.99';
         const itemName = isAnnual ? 'Nova Pro Annual Subscription' : 'Nova Pro Monthly Subscription';
-        const frequency = isAnnual ? '6' : '3'; // 3 = Monthly, 6 = Annual
+        const frequency = isAnnual ? '6' : '3';
 
-        // Calculate billing date (tomorrow)
         const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const billingDate = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
+        const billingDateObj = new Date(today);
 
-        // 1. Log transaction as PENDING in database
-        // We use the supabase client to insert (RLS allows insert for own user)
-        // If table doesn't exist yet, we catch error and proceed (fallback)
+        if (isAnnual) {
+            billingDateObj.setFullYear(billingDateObj.getFullYear() + 1);
+        } else {
+            billingDateObj.setMonth(billingDateObj.getMonth() + 1);
+        }
+
+        const billingDate = billingDateObj.toISOString().split('T')[0];
+
         let transactionId = '';
         try {
             const { supabase } = await import('@/integrations/supabase/client');
-            // Cast to any because types are not yet generated for the new table
             const { data: txn, error } = await (supabase as any)
                 .from('payment_transactions')
                 .insert({
@@ -169,31 +191,26 @@ export class PayFastService {
                 .select()
                 .single();
 
-            if (txn) {
-                transactionId = txn.id;
-                console.log('Transaction logged:', transactionId);
-            }
+            if (txn) transactionId = txn.id;
             if (error) console.error('Error logging transaction:', error);
         } catch (e) {
-            console.warn('Could not log transaction (table might be missing):', e);
+            console.warn('Could not log transaction:', e);
         }
 
         await this.createSubscriptionCheckout({
             amount: price,
             item_name: itemName,
-            item_description: `${billingCycle === 'annual' ? 'Annual' : 'Monthly'} subscription to Nova Pro - Unlimited AI study tools`,
+            item_description: `${billingCycle === 'annual' ? 'Annual' : 'Monthly'} subscription to Nova Pro`,
             email_address: userEmail,
             name_first: firstName,
             name_last: lastName,
             custom_str1: userId,
-            // Pass the transaction ID (if created) as Merchant Payment ID
-            // If table missing, PayFast just sees empty string (harmless)
-            ...(transactionId ? { m_payment_id: transactionId } : {}),
+            m_payment_id: transactionId,
             subscription_type: '1',
             billing_date: billingDate,
             recurring_amount: price,
             frequency: frequency,
-            cycles: '0', // Indefinite
+            cycles: '0',
         });
     }
 
@@ -207,7 +224,6 @@ export class PayFastService {
         const price = '1999.00';
         const itemName = 'Nova Pro Lifetime Access';
 
-        // 1. Log transaction
         let transactionId = '';
         try {
             const { supabase } = await import('@/integrations/supabase/client');
@@ -229,18 +245,48 @@ export class PayFastService {
             console.warn('Txn log failed', e);
         }
 
-        // Reuse the generic checkout method (ignoring the 'Subscription' name implication)
-        await this.createSubscriptionCheckout({
+        // Use One-Time Checkout method
+        await this.createOneTimeCheckout({
             amount: price,
             item_name: itemName,
-            item_description: 'Lifetime access to Nova Pro - Pay Once, Use Forever',
+            item_description: 'Lifetime access to Nova Pro - Pay Once Use Forever', // Removed comma just in case
             email_address: userEmail,
             name_first: firstName,
             name_last: lastName,
             custom_str1: userId,
-            m_payment_id: transactionId || undefined,
-            // No subscription fields for one-time payment
+            m_payment_id: transactionId
         });
+    }
+    /**
+     * Cancels a subscription via the backend API.
+     * @param userId The user's ID
+     */
+    async cancelSubscription(userId: string) {
+        try {
+            const response = await fetch('/api/payfast-cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                console.group('Cancellation Fetch Error');
+                console.error(`Status: ${response.status} ${response.statusText}`);
+                console.error('URL:', response.url);
+                console.error('Body:', result);
+                console.groupEnd();
+                throw new Error(result.error || `Failed to cancel subscription (HTTP ${response.status})`);
+            }
+
+            return result;
+        } catch (error) {
+            console.error('Cancellation Error:', error);
+            throw error;
+        }
     }
 }
 

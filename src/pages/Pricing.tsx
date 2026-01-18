@@ -7,11 +7,22 @@ import { payfast } from '@/utils/payfast';
 import { useAuth } from '@/hooks/useAuth';
 import { showError, showLoading, showSuccess, dismissToast } from '@/utils/toast';
 import { supabase } from '@/integrations/supabase/client';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Pricing = () => {
     const { status, trialEndsAt, hasUsedTrial, planId } = useSubscription();
     const { user } = useAuth();
     const [isStartingTrial, setIsStartingTrial] = useState(false);
+    const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
     const handleUpgrade = (billingCycle: 'monthly' | 'annual' | 'lifetime' = 'monthly') => {
         console.log('Initiating upgrade for cycle:', billingCycle);
@@ -43,6 +54,16 @@ const Pricing = () => {
         try {
             const { error } = await supabase.rpc('start_pro_trial');
             if (error) throw error;
+
+            // Send Welcome Notification
+            await supabase.from('notifications').insert({
+                user_id: user.id,
+                title: 'Welcome to Nova Pro!',
+                message: 'Your 3-day free trial has started. Enjoy unlimited access to all AI features.',
+                type: 'system',
+                read: false
+            });
+
             window.location.reload(); // Refresh to show trial status
         } catch (error: any) {
             console.error("Trial error:", error);
@@ -57,7 +78,13 @@ const Pricing = () => {
             name: "Free Plan",
             price: "R0",
             duration: "Forever",
-            features: ["All Nova AI features", "Quiz Generation", "Essay Practice", "5 Study Sets max", "10MB Upload Limit"],
+            features: [
+                "10 Cards per Day (AI/Manual)",
+                "3 Lifetime Essay Grades",
+                "3 Generated Essay Questions",
+                "10MB Upload Limit",
+                "Basic Focus Timer (Midnight)"
+            ],
             icon: Rocket,
             color: "blue",
             current: status === 'none' || status === 'expired',
@@ -65,9 +92,16 @@ const Pricing = () => {
         },
         {
             name: "Pro Monthly",
-            price: "R15.00",
+            price: "R59.99",
             duration: "per month",
-            features: ["Unlimited AI Generations", "Unlimited Study Sets", "Massive 100MB Uploads", "Slides, Docs & Image Support", "Advanced Voice (TTS)", "Direct Support"],
+            features: [
+                "500 Cards per Day",
+                "100 Graded Essays",
+                "300 Generated Questions",
+                "45MB Uploads",
+                "Premium Focus Timer (All Themes)",
+                "Unlimited Magic Fix"
+            ],
             icon: Zap,
             color: "blue",
             current: (status === 'active' || status === 'trialing') && (planId === 'pro-monthly' || !planId), // Default to monthly if no planId
@@ -78,12 +112,11 @@ const Pricing = () => {
             name: "Annual",
             price: "R619.99",
             duration: "per year",
-            features: ["All Pro Features", "Save R100 instantly", "Priority Support", "Early Access to New Features"],
+            features: ["All Pro Features", "Priority Support", "Early Access to New Features"],
             icon: Crown,
             color: "amber",
             current: (status === 'active' || status === 'trialing') && planId === 'pro-annual',
             recommended: true,
-            billingCycle: 'annual' as const,
             billingCycle: 'annual' as const,
             tag: "Save R100"
         },
@@ -103,16 +136,36 @@ const Pricing = () => {
     ];
 
     const handleCancelSubscription = async () => {
-        if (!confirm("Are you sure you want to cancel your subscription? You will lose access to Pro features at the end of your billing period.")) return;
+        // Native confirm removed, handled by AlertDialog
 
-        const toastId = showLoading("Canceling subscription...");
+        if (!user?.id) {
+            showError("User not found.");
+            return;
+        }
+
+        const toastId = showLoading("Contacting PayFast to cancel...");
         try {
-            const { error } = await supabase.rpc('cancel_subscription');
-            if (error) throw error;
-            showSuccess("Subscription canceled. You have access until the period ends.");
-            window.location.reload();
+            // Call our new backend API to cancel at PayFast + Update DB
+            await payfast.cancelSubscription(user.id);
+
+            // Send Cancellation Notification
+            await supabase.from('notifications').insert({
+                user_id: user.id,
+                title: 'Subscription Canceled',
+                message: 'Your subscription has been canceled. You will retain access until the end of your current billing period.',
+                type: 'system',
+                read: false
+            });
+
+            showSuccess("Subscription canceled successfully. No further charges will be made.");
+            // Slight delay before reload to ensure toast is visible and avoid DOM race conditions
+            setTimeout(() => {
+                console.log("Reloading after successful cancellation...");
+                window.location.reload();
+            }, 2000);
         } catch (error: any) {
-            showError("Failed to cancel: " + error.message);
+            console.error("Cancellation failed:", error);
+            showError("Cancellation failed: " + (error.message || "Please contact support."));
         } finally {
             dismissToast(toastId);
         }
@@ -120,7 +173,7 @@ const Pricing = () => {
 
     return (
         <>
-            <div className="max-w-5xl mx-auto py-12 px-4 pb-32 md:pb-12 animate-fade-in">
+            <div className="w-full max-w-[1600px] mx-auto py-12 px-4 pb-32 md:pb-12 animate-fade-in">
                 <div className="text-center mb-12 space-y-4">
                     <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
                         Power Up Your <span className="text-primary italic">Learning</span>
@@ -135,9 +188,9 @@ const Pricing = () => {
                     )}
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-8 mt-8 p-4">
                     {plans.map((plan) => (
-                        <Card key={plan.name} className={`relative flex flex-col overflow-hidden border-2 transition-all hover:shadow-xl ${plan.recommended ? 'border-amber-500 shadow-lg scale-105 z-10' : 'border-border'}`}>
+                        <Card key={plan.name} className={`relative flex flex-col overflow-hidden border-2 transition-all duration-300 hover:shadow-xl ${plan.recommended ? 'border-amber-500 shadow-lg md:scale-105 z-10' : 'border-border'}`}>
                             {plan.recommended && (
                                 <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] sm:text-xs font-bold px-4 py-1 rounded-bl-lg uppercase tracking-widest shadow-sm">
                                     Best Value
@@ -162,42 +215,46 @@ const Pricing = () => {
                             </CardHeader>
                             <CardContent className="flex-grow pt-6 space-y-4">
                                 {plan.features.map((feature) => (
-                                    <div key={feature} className="flex items-center gap-3">
-                                        <div className="bg-green-100 p-1 rounded-full shrink-0">
-                                            <Check className="h-4 w-4 text-green-600" />
+                                    <div key={feature} className="flex items-start gap-3 text-left">
+                                        <div className="bg-green-100 p-1 rounded-full shrink-0 mt-0.5">
+                                            <Check className="h-3 w-3 text-green-600" />
                                         </div>
-                                        <span className="text-sm font-medium">{feature}</span>
+                                        <span className="text-sm font-medium leading-tight">{feature}</span>
                                     </div>
                                 ))}
                             </CardContent>
-                            <CardFooter className="pt-6 flex flex-col gap-3">
+                            <CardFooter className="pt-6 flex flex-col gap-3 pb-8">
                                 {plan.trialAvailable ? (
                                     <>
                                         <Button
-                                            className="w-full py-6 text-lg font-bold bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg transition-all hover:scale-[1.02]"
+                                            className="w-full h-auto min-h-[3.5rem] py-3 px-4 text-base font-bold bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg transition-all hover:scale-[1.02] whitespace-normal leading-tight"
                                             onClick={handleStartTrial}
                                             disabled={isStartingTrial}
                                         >
-                                            {isStartingTrial ? "Starting..." : "Start 3-Day Free Trial"}
+                                            <span className="flex-1">
+                                                {isStartingTrial ? "Starting..." : "Start 3-Day Free Trial"}
+                                            </span>
                                         </Button>
                                         <Button
                                             variant="outline"
                                             className="w-full font-bold"
                                             onClick={() => handlePlanClick(plan)}
                                         >
-                                            Skip Trial & Subscribe
+                                            Skip Trial
                                         </Button>
                                     </>
                                 ) : (
                                     <Button
-                                        className={`w-full py-6 text-lg font-bold transition-all ${plan.recommended ? 'bg-amber-500 hover:bg-amber-600 shadow-lg' : 'bg-primary hover:bg-primary/90'}`}
+                                        className={`w-full h-auto min-h-[3.5rem] py-3 px-4 text-base font-bold transition-all whitespace-normal leading-tight ${plan.recommended ? 'bg-amber-500 hover:bg-amber-600 shadow-lg' : 'bg-primary hover:bg-primary/90'}`}
                                         disabled={plan.current || (status !== 'none' && status !== 'expired' && plan.price === 'R0')}
                                         onClick={() => {
                                             console.log("DEBUG: Clicked plan " + plan.name);
                                             handlePlanClick(plan);
                                         }}
                                     >
-                                        {plan.current ? 'Current Plan' : plan.price === 'R0' ? 'Active' : 'Choose ' + plan.name}
+                                        <span className="flex-1">
+                                            {plan.current ? 'Current Plan' : plan.price === 'R0' ? 'Active' : 'Choose ' + plan.name}
+                                        </span>
                                     </Button>
                                 )}
                             </CardFooter>
@@ -213,7 +270,7 @@ const Pricing = () => {
                         <Button
                             variant="outline"
                             className="text-red-500 border-red-200 hover:bg-red-50"
-                            onClick={handleCancelSubscription}
+                            onClick={() => setIsCancelDialogOpen(true)}
                         >
                             Cancel Subscription
                         </Button>
@@ -223,6 +280,26 @@ const Pricing = () => {
                     </div>
                 )}
             </div>
+
+            <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+                <AlertDialogContent className="rounded-2xl shadow-xl">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Cancel Subscription?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to cancel your subscription? You will lose access to Pro features at the end of your billing period.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-xl">Keep Subscription</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleCancelSubscription}
+                            className="bg-red-500 hover:bg-red-600 rounded-xl"
+                        >
+                            Yes, Cancel
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 };
