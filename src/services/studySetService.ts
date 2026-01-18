@@ -1,5 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
+import { handleSafeAction } from '@/utils/safe-action';
 
 export interface StudySet {
     id: string;
@@ -15,69 +15,149 @@ export interface StudySet {
 
 export const studySetService = {
     /**
-     * Fetch all study sets for the current user (including owned)
+     * Fetch all study sets for the current user (including owned and library)
      */
     async getMyStudySets(): Promise<StudySet[]> {
+        return handleSafeAction(async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return [];
+
+            // Fetch owned sets
+            const { data: ownedData, error: ownedError } = await supabase
+                .from('study_sets')
+                .select(`
+                    *,
+                    cards:cards(count)
+                `)
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (ownedError) throw ownedError;
+
+            // Fetch library sets (those added from others)
+            const { data: libraryData, error: libraryError } = await supabase
+                .from('user_study_set_library')
+                .select(`
+                    set_id,
+                    study_sets (
+                        *,
+                        cards:cards(count)
+                    )
+                `)
+                .eq('user_id', user.id);
+
+            if (libraryError) throw libraryError;
+
+            const ownedSets = (ownedData as any[]).map(set => ({
+                ...set,
+                cards_count: set.cards ? set.cards[0]?.count : 0,
+                is_owner: true
+            }));
+
+            const librarySets = (libraryData as any[])
+                .filter(item => item.study_sets) // Ensure set still exists
+                .map(item => ({
+                    ...item.study_sets,
+                    cards_count: item.study_sets.cards ? item.study_sets.cards[0]?.count : 0,
+                    is_owner: false
+                }));
+
+            // Combine and unique by ID (if someone added their own set, though RLS/UI should prevent clutter)
+            const combined = [...ownedSets];
+            librarySets.forEach(ls => {
+                if (!combined.some(os => os.id === ls.id)) {
+                    combined.push(ls);
+                }
+            });
+
+            return combined;
+        }, "Failed to load your study sets", []) as Promise<StudySet[]>;
+    },
+
+    /**
+     * Add a set to user's library
+     */
+    async addToLibrary(setId: string) {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return [];
+        if (!user) throw new Error('User not authenticated');
 
-        // Use reliable manual join strategy to avoid RPC issues
+        const { error } = await supabase
+            .from('user_study_set_library')
+            .upsert({ user_id: user.id, set_id: setId });
+
+        if (error) throw error;
+    },
+
+    /**
+     * Remove a set from user's library
+     */
+    async removeFromLibrary(setId: string) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        const { error } = await supabase
+            .from('user_study_set_library')
+            .delete()
+            .match({ user_id: user.id, set_id: setId });
+
+        if (error) throw error;
+    },
+
+    /**
+     * Check if a set is in user's library
+     */
+    async isInLibrary(setId: string) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return false;
+
         const { data, error } = await supabase
-            .from('study_sets')
-            .select(`
-                *,
-                cards:cards(count)
-            `)
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
+            .from('user_study_set_library')
+            .select('set_id')
+            .match({ user_id: user.id, set_id: setId })
+            .maybeSingle();
 
-        if (error) {
-            console.error('Error fetching study sets:', error);
-            throw error;
-        }
-
-        // Map the count from the joined relation
-        return (data as any[]).map(set => ({
-            ...set,
-            cards_count: set.cards ? set.cards[0]?.count : 0,
-            is_owner: set.user_id === user.id
-        }));
+        if (error) return false;
+        return !!data;
     },
 
     /**
      * Get a single study set by ID
      */
     async getStudySetById(id: string) {
-        const { data, error } = await supabase
-            .from('study_sets')
-            .select('*, cards(*)')
-            .eq('id', id)
-            .single();
+        return handleSafeAction(async () => {
+            const { data, error } = await supabase
+                .from('study_sets')
+                .select('*, cards(*)')
+                .eq('id', id)
+                .single();
 
-        if (error) throw error;
-        return data;
+            if (error) throw error;
+            return data;
+        }, "Failed to load study set");
     },
 
     /**
      * Create a new study set
      */
     async createStudySet(title: string, description: string = '', isPublic: boolean = false) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('User not authenticated');
+        return handleSafeAction(async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('User not authenticated');
 
-        const { data, error } = await supabase
-            .from('study_sets')
-            .insert({
-                title,
-                description,
-                is_public: isPublic,
-                user_id: user.id
-            })
-            .select()
-            .single();
+            const { data, error } = await supabase
+                .from('study_sets')
+                .insert({
+                    title,
+                    description,
+                    is_public: isPublic,
+                    user_id: user.id
+                })
+                .select()
+                .single();
 
-        if (error) throw error;
-        return data;
+            if (error) throw error;
+            return data;
+        }, "Failed to create study set");
     },
 
     /**

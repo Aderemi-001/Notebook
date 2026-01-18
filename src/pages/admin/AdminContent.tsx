@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Table,
     TableBody,
@@ -50,33 +50,32 @@ export const AdminContent = () => {
     const [results, setResults] = useState<StudySetResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [showViolations, setShowViolations] = useState(false);
 
     const handleSearch = async () => {
-        if (!query.trim()) return;
         setLoading(true);
+        setShowViolations(false);
         try {
-            // Use search_user_cards which returns card results, then map to study sets
-            const { data: cardResults, error } = await supabase.rpc('search_user_cards', { search_query: query });
-            if (error) throw error;
-            // Transform card results to study set results (simplified - you may want to fetch full set details)
-            const uniqueSetIds = new Set(cardResults?.map((c: any) => c.set_id) || []);
-            const transformedResults = Array.from(uniqueSetIds).map((setId: string) => {
-                const card = cardResults?.find((c: any) => c.set_id === setId);
-                return {
-                    id: setId,
-                    title: card?.set_title || 'Unknown',
-                    description: null,
-                    is_public: false,
-                    user_id: '',
-                    created_at: '',
-                    updated_at: '',
-                    cards_count: cardResults?.filter((c: any) => c.set_id === setId).length || 0,
-                    card_count: cardResults?.filter((c: any) => c.set_id === setId).length || 0,
-                    creator_name: null,
-                    creator_email: null
-                } as StudySetResult;
+            // New Secure RPC that fetches Creator Info correctly
+            const { data, error } = await supabase.rpc('admin_search_content', {
+                search_query: query
             });
-            setResults(transformedResults);
+
+            if (error) throw error;
+
+            // Map RPC result to interface (RPC returns flat structure)
+            const mappedResults = (data || []).map((item: any) => ({
+                id: item.id,
+                title: item.title,
+                description: item.description,
+                is_public: item.is_public,
+                created_at: item.created_at, // Real DB Date
+                creator_name: item.creator_name, // Real Name
+                creator_email: item.creator_email, // Real Email
+                card_count: item.card_count
+            }));
+
+            setResults(mappedResults);
         } catch (error: any) {
             console.error('Error searching content:', error);
             showError(`Search failed: ${error.message}`);
@@ -85,12 +84,53 @@ export const AdminContent = () => {
         }
     };
 
+    const handleScanViolations = async () => {
+        setLoading(true);
+        setShowViolations(true);
+        try {
+            const { data, error } = await supabase.rpc('admin_scan_violations');
+            if (error) throw error;
+
+            const mappedResults = (data || []).map((item: any) => ({
+                id: item.set_id,
+                title: item.title,
+                description: item.context, // Use context as description for violations
+                is_public: false, // Assume false or mixed for list view
+                created_at: item.created_at,
+                creator_name: 'FLAGGED',
+                creator_email: item.creator_email,
+                card_count: 0 // Not returned by violation scan
+            }));
+
+            setResults(mappedResults);
+            if (mappedResults.length > 0) {
+                showSuccess(`Found ${mappedResults.length} potential violations.`);
+            } else {
+                showSuccess("Clean sweep! No flagged terms found.");
+            }
+        } catch (e: any) {
+            showError("Scan failed: " + e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Initial load
+    useEffect(() => {
+        handleSearch();
+    }, []);
+
     const handleDelete = async (setId: string) => {
         setDeletingId(setId);
         try {
-            // Delete via direct table delete since admin_delete_set doesn't exist in types
-            const { error } = await supabase.from('study_sets').delete().eq('id', setId);
-            if (error) throw error;
+            // Use Admin RPC for guaranteed deletion (active bypass)
+            const { error } = await supabase.rpc('admin_delete_content', { target_set_id: setId });
+            if (error) {
+                // Fallback to table delete if RPC fails (though RPC is preferred)
+                console.warn("RPC delete failed, trying direct...", error);
+                const { error: directError } = await supabase.from('study_sets').delete().eq('id', setId);
+                if (directError) throw directError;
+            }
 
             showSuccess('Study set deleted permanently.');
             setResults(results.filter(s => s.id !== setId));
@@ -110,19 +150,26 @@ export const AdminContent = () => {
                 </p>
             </div>
 
-            <div className="flex gap-4 max-w-xl">
-                <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search by title, description, or user..."
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        className="pl-9"
-                    />
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                <div className="flex gap-4 max-w-xl w-full">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by title, description, or user..."
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            className="pl-9"
+                        />
+                    </div>
+                    <Button onClick={handleSearch} disabled={loading}>
+                        {loading && !showViolations ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+                    </Button>
                 </div>
-                <Button onClick={handleSearch} disabled={loading}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+
+                <Button variant="destructive" onClick={handleScanViolations} disabled={loading} className="w-full sm:w-auto">
+                    {loading && showViolations ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <AlertTriangle className="h-4 w-4 mr-2" />}
+                    Scan for Violations
                 </Button>
             </div>
 

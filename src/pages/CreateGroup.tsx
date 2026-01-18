@@ -45,13 +45,41 @@ const CreateGroup: React.FC = () => {
   }, []);
 
   const onSubmit = async (values: CreateGroupFormValues) => {
+    console.log("onSubmit called with values:", values);
+
     if (!currentUser) {
-      showError("You must be logged in to create a group.");
+      console.error("No current user found");
+      const msg = "You must be logged in to create a group.";
+      showError(msg);
+      form.setError('root', { message: msg }); // Show in UI
       return;
     }
 
     const toastId = showLoading("Creating group...");
     try {
+      console.log("Checking for existing groups...");
+      // Check if group name already exists for this user
+      const { data: existingGroups, error: checkError } = await supabase
+        .from('study_set_groups')
+        .select('name')
+        .eq('user_id', currentUser.id)
+        .ilike('name', values.name);
+
+      if (checkError) {
+        console.error("Check error:", checkError);
+        throw checkError;
+      }
+
+      if (existingGroups && existingGroups.length > 0) {
+        console.warn("Group already exists");
+        dismissToast(toastId);
+        const msg = `A group named "${values.name}" already exists. Please choose a different name.`;
+        showError(msg);
+        form.setError('root', { message: msg });
+        return;
+      }
+
+      console.log("Inserting new group...");
       const { data, error } = await supabase
         .from('study_set_groups')
         .insert({
@@ -62,16 +90,27 @@ const CreateGroup: React.FC = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Insert error details:", error);
+        // Handle unique constraint violation from database
+        if (error.code === '23505') { // PostgreSQL unique violation code
+          throw new Error(`A group named "${values.name}" already exists. Please choose a different name.`);
+        }
+        throw error;
+      }
 
+      console.log("Group created successfully:", data);
       dismissToast(toastId);
       showSuccess(`Group "${data.name}" created successfully!`);
       queryClient.invalidateQueries({ queryKey: ['studySetGroups'] });
       navigate('/groups');
     } catch (err: any) {
       dismissToast(toastId);
-      showError(err.message || "Failed to create group.");
-      console.error("Create group error:", err);
+      const errorMessage = err.message || "Failed to create group.";
+      showError(errorMessage);
+      console.error("Create group catch block:", err);
+      // Set visible form error for the user
+      form.setError('root', { message: errorMessage });
     }
   };
 
@@ -120,11 +159,33 @@ const CreateGroup: React.FC = () => {
                   </FormItem>
                 )}
               />
-              <div className="flex justify-end">
-                <Button type="submit" disabled={isLoadingUser || form.formState.isSubmitting}>
+              <div className="flex flex-col items-end gap-3 mt-6">
+                {/* Explicit type=button to prevent default submit, handle manually to debug */}
+                <Button
+                  type="button"
+                  size="lg"
+                  disabled={isLoadingUser || form.formState.isSubmitting}
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    console.log("Create Group button clicked");
+                    // Manual trigger to debug validation
+                    const isValid = await form.trigger();
+                    console.log("Form validity:", isValid, form.formState.errors);
+
+                    if (isValid) {
+                      form.handleSubmit(onSubmit)(e);
+                    } else {
+                      // Force error display if validation fails
+                      const errors = form.formState.errors;
+                      const errorMsg = Object.values(errors).map((e: any) => e.message).join(", ");
+                      form.setError('root', { message: `Validation failed: ${errorMsg}` });
+                    }
+                  }}
+                  className="w-full sm:w-auto font-bold shadow-lg hover:shadow-xl transition-all"
+                >
                   {form.formState.isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating Group...
                     </>
                   ) : (
                     <>
@@ -132,12 +193,20 @@ const CreateGroup: React.FC = () => {
                     </>
                   )}
                 </Button>
+
+                {form.formState.errors.root && (
+                  <div className="p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm font-medium animate-in fade-in slide-in-from-top-1">
+                    Error: {form.formState.errors.root.message}
+                  </div>
+                )}
+
+                <div id="debug-error-area" className="text-red-500 text-sm mt-2 text-right empty:hidden"></div>
               </div>
             </form>
           </Form>
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 };
 

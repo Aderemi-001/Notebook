@@ -12,8 +12,7 @@ interface AgreementGuardProps {
  * 
  * Protects routes by ensuring the user has accepted the Terms and Conditions.
  * If not accepted, redirects to /user-agreement.
- * Allow bypassing for specific public/auth routes if needed, 
- * but generally this wraps the main dashboard/app area.
+ * Users only need to accept once. Manual intervention required for future updates.
  */
 const AgreementGuard: React.FC<AgreementGuardProps> = ({ children }) => {
     const { user, profile, loading } = useAuth();
@@ -22,19 +21,43 @@ const AgreementGuard: React.FC<AgreementGuardProps> = ({ children }) => {
     const [isChecking, setIsChecking] = useState(true);
 
     useEffect(() => {
+        // Wait for auth to finish loading
         if (!loading) {
             if (user) {
-                // If user is logged in, check if they have accepted terms
-                // We use the profile data which should now contain terms_accepted_at
-                if (profile && !profile.terms_accepted_at) {
-                    // Redirect to agreement page if not accepted
-                    // Prevent infinite loop if already there (though this guard usually wraps other routes)
+                // CRITICAL: Wait for profile to be loaded before checking
+                // If user exists but profile is null, we're still loading
+                if (profile === null) {
+                    console.log('AgreementGuard: Waiting for profile to load...');
+                    setIsChecking(true); // Keep checking state active
+                    return; // Don't proceed until profile is loaded
+                }
+
+                // Simply check if user has accepted terms at any point
+                const hasAccepted = profile && profile.terms_accepted_at;
+
+                console.log('AgreementGuard check:', {
+                    hasProfile: !!profile,
+                    termsAcceptedAt: profile?.terms_accepted_at,
+                    hasAccepted,
+                    currentPath: location.pathname
+                });
+
+                if (!hasAccepted) {
+                    // Redirect to agreement page if never accepted
                     if (location.pathname !== '/user-agreement') {
+                        console.log('Redirecting to user agreement page');
                         navigate('/user-agreement', { replace: true });
                     }
+                } else {
+                    // User has accepted, allow them to leave agreement page
+                    console.log('User has accepted terms, allowing navigation');
                 }
+
+                setIsChecking(false); // Only set to false when profile is loaded
+            } else {
+                // No user, stop checking
+                setIsChecking(false);
             }
-            setIsChecking(false);
         }
     }, [user, profile, loading, navigate, location]);
 

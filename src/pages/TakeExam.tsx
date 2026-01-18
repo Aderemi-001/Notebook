@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
@@ -18,6 +19,7 @@ interface QuizQuestion {
 
 const TakeExam: React.FC = () => {
   const { examId } = useParams<{ examId: string }>(); // This is actually the studySetId
+  const { preferences } = useUserPreferences();
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -76,9 +78,10 @@ const TakeExam: React.FC = () => {
         return;
       }
 
-      // Shuffle and pick 10
+      // Shuffle and pick based on preferences (default 10)
+      const numQuestions = preferences?.default_num_exam_questions || 10;
       const shuffled = [...cards].sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, Math.min(10, shuffled.length));
+      const selected = shuffled.slice(0, Math.min(numQuestions, shuffled.length));
 
       const quizQuestions: QuizQuestion[] = selected.map(card => {
         // Generate distractors from other cards

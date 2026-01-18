@@ -8,6 +8,10 @@ import { Trash2, Sparkles, Loader2 } from 'lucide-react';
 import { NovaAI } from '@/utils/NovaAI';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useSubscription } from '@/hooks/useSubscription';
+import { toast } from "sonner";
+
+import { supabase } from '@/integrations/supabase/client';
 
 interface FlashcardEditorProps {
   form: UseFormReturn<any>;
@@ -50,18 +54,44 @@ const FlashcardEditor: React.FC<FlashcardEditorProps> = ({ form }) => {
   });
 
   // Track loading state per card index
+  // Subscription & Limits
+  const { isPremium } = useSubscription();
   const [loadingCardIndex, setLoadingCardIndex] = useState<number | null>(null);
 
   const handleMagicDefinition = async (index: number) => {
     const term = form.getValues(`cards.${index}.term`);
     if (!term) return;
 
+    if (!isPremium) {
+      try {
+        const { data, error } = await supabase.rpc('check_magic_fix_usage' as any);
+        if (error) {
+          console.warn("Magic Fix Limit Check failed:", error);
+          // If RPC missing, fallbox to allow or just warn. We permit for now to avoid locking if SQL delayed.
+        } else if (data && !(data as any).allowed) {
+          toast.error("Daily Magic Fix limit reached (3/3)", {
+            description: "Upgrade to Pro for unlimited usage."
+          });
+          return;
+        }
+      } catch (e) {
+        console.error("Limit check error", e);
+      }
+    }
+
     setLoadingCardIndex(index);
     try {
       const definition = await NovaAI.generateDefinition(term);
       form.setValue(`cards.${index}.definition`, definition);
+
+      // Increment Usage
+      if (!isPremium) {
+        await supabase.rpc('increment_magic_fix_usage' as any);
+      }
+
     } catch (error) {
       console.error("Magic Def Error", error);
+      toast.error("Failed to generate definition");
     } finally {
       setLoadingCardIndex(null);
     }

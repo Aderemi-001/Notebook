@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
     Table,
     TableBody,
@@ -11,17 +11,30 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-    CheckCircle,
+    Shield,
+    Fingerprint,
+    Bot,
+    Terminal,
+    CheckCircle as CheckCircleIcon,
     Loader2,
     Siren,
     Zap,
-    ShieldCheck,
-    Lock,
-    Search,
-    ShieldAlert,
-    Activity,
-    Shield,
-    Fingerprint
+    ShieldCheck as ShieldCheckIcon,
+    Lock as LockIcon,
+    Search as SearchIcon,
+    ShieldAlert as ShieldAlertIcon,
+    Activity as ActivityIcon,
+    Mail,
+    Key,
+    ShieldOff,
+    Trash,
+    AlertTriangle,
+    Crown,
+    UserX,
+    UserCheck,
+    Copy,
+    Eye,
+    RefreshCcw
 } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,7 +52,6 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
-import { Mail, Key, ShieldOff, Trash, AlertTriangle, Crown, UserX, UserCheck } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -126,6 +138,344 @@ export const AdminUsers = () => {
         description: '',
         onConfirm: () => { },
     });
+
+    const [inspectedUser, setInspectedUser] = useState<AdminUser | null>(null);
+    const [inspectedAlert, setInspectedAlert] = useState<AdminAlert | null>(null);
+
+    // Terminal Security State
+    const [failedAttempts, setFailedAttempts] = useState(0);
+    const [lockoutUntil, setLockoutUntil] = useState<Date | null>(null);
+    const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState(false);
+
+    // Terminal State
+    const [isTerminalAuthenticated, setIsTerminalAuthenticated] = useState(false);
+    const [terminalHistory, setTerminalHistory] = useState<{ type: 'system' | 'user' | 'bot', text: string, timestamp: Date }[]>([
+        { type: 'system', text: '   _____ ______ _   _ _______ _____ _   _ ______ _      ', timestamp: new Date() },
+        { type: 'system', text: '  / ____|  ____| \ | |__   __|_   _| \ | |  ____| |     ', timestamp: new Date() },
+        { type: 'system', text: ' | (___ | |__  |  \| |  | |    | | |  \| | |__  | |     ', timestamp: new Date() },
+        { type: 'system', text: '  \___ \|  __| | . ` |  | |    | | | . ` |  __| | |     ', timestamp: new Date() },
+        { type: 'system', text: '  ____) | |____| |\  |  | |   _| |_| |\  | |____| |____ ', timestamp: new Date() },
+        { type: 'system', text: ' |_____/|______|_| \_|  |_|  |_____|_| \_|______|______|', timestamp: new Date() },
+        { type: 'system', text: 'SENTINEL OS v5.0.4 | KERNEL: NEURAL-X86 | UPTIME: 99.99%', timestamp: new Date() },
+        { type: 'bot', text: 'ACCESS RESTRICTED. ENTER AUTHORIZATION CODE:', timestamp: new Date() },
+    ]);
+    const [terminalInput, setTerminalInput] = useState('');
+    const terminalEndRef = useRef<HTMLDivElement>(null);
+
+    const handleTerminalSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!terminalInput.trim()) return;
+
+        const cmd = terminalInput.trim();
+        const parts = cmd.split(' ');
+        const normalized = parts[0].toLowerCase();
+        const args = parts.slice(1);
+
+        // If not authenticated, only allow password entry
+        if (!isTerminalAuthenticated) {
+            // Check for persistent lockout state - only show warning but allow attempt for bypass
+            if (lockoutUntil && lockoutUntil > new Date() && cmd.length < 20) {
+                const remaining = Math.ceil((lockoutUntil.getTime() - new Date().getTime()) / 1000);
+                setTerminalHistory(prev => [...prev,
+                { type: 'user', text: '********', timestamp: new Date() },
+                { type: 'bot', text: `SECURITY LOCKOUT ACTIVE. RETRY IN ${remaining}s OR USE MASTER BYPASS.`, timestamp: new Date() }
+                ]);
+                setTerminalInput('');
+                return;
+            }
+
+            setTerminalHistory(prev => [...prev, { type: 'user', text: '********', timestamp: new Date() }]);
+            setTerminalInput('');
+
+            setTimeout(async () => {
+                try {
+                    const { data, error } = await supabase.rpc('verify_admin_terminal_code', {
+                        provided_code: cmd
+                    });
+
+                    const res = data as { valid: boolean; error?: string; message?: string; attempts?: number };
+
+                    if (res?.valid && !error) {
+                        setIsTerminalAuthenticated(true);
+                        setFailedAttempts(0);
+                        setLockoutUntil(null);
+                        localStorage.removeItem('sentinel_lockout_until');
+                        setTerminalHistory(prev => [
+                            ...prev,
+                            { type: 'bot', text: 'ACCESS GRANTED. NEURAL INTERFACE ACTIVE.', timestamp: new Date() },
+                            { type: 'system', text: 'WELCOME, SUPER_ADMIN. SENTINEL_CORE ONLINE.', timestamp: new Date() }
+                        ]);
+                    } else {
+                        const newFailedAttempts = res?.attempts || (failedAttempts + 1);
+                        setFailedAttempts(newFailedAttempts);
+
+                        if (res?.error === 'RATE_LIMIT_EXCEEDED' || newFailedAttempts >= 3) {
+                            const lockoutDuration = 60000; // 1 minute frontend timer, but backend checks 15 mins
+                            const lockoutTime = new Date(Date.now() + lockoutDuration);
+                            setLockoutUntil(lockoutTime);
+                            localStorage.setItem('sentinel_lockout_until', lockoutTime.toISOString());
+                            setTerminalHistory(prev => [...prev, { type: 'bot', text: res?.message || 'CRITICAL AUTH FAILURE. SYSTEM LOCKOUT INITIATED.', timestamp: new Date() }]);
+                        } else {
+                            setTerminalHistory(prev => [...prev, { type: 'bot', text: `INVALID ACCESS CODE. ATTEMPT ${newFailedAttempts}/3. RETRY:`, timestamp: new Date() }]);
+                        }
+                    }
+                } catch (err) {
+                    setTerminalHistory(prev => [...prev, { type: 'bot', text: "CONNECTION ERROR. SECURITY HANDSHAKE FAILED.", timestamp: new Date() }]);
+                }
+            }, 600);
+            return;
+        }
+
+        setTerminalHistory(prev => [...prev, { type: 'user', text: cmd, timestamp: new Date() }]);
+        setTerminalInput('');
+
+        // Process command
+        setTimeout(async () => {
+            // Log command to backend audit log
+            try {
+                await supabase.rpc('log_terminal_command', {
+                    terminal_command: normalized,
+                    command_args: args
+                });
+            } catch (err) {
+                console.error('Audit logging failed:', err);
+            }
+
+            let responses: { type: 'system' | 'user' | 'bot', text: string }[] = [];
+
+            const addBot = (text: string) => responses.push({ type: 'bot', text });
+
+            if (normalized === 'help') {
+                addBot("--- SENTINEL COMMAND SUITE v5.0 ---");
+                addBot("USER: [users] [find <q>] [inspect <id>] [unban <id>] [immunity <id>] [premium <id>] [msg <id> <text>] [purge]");
+                addBot("THREAT: [alerts] [view <id>] [resolve <id>] [shred <id>] [logs]");
+                addBot("SYSTEM: [status] [scan] [system] [broadcast <msg>] [diag] [logout] [clear]");
+            } else if (normalized === 'status') {
+                addBot(`CORE: STABLE | DEFENSE: ${activeDefense ? 'ACTIVE' : 'MONITOR'} | NODES: ${users.length} | ANOMALIES: ${alerts.filter(a => !a.resolved).length}`);
+            } else if (normalized === 'users') {
+                const banned = users.filter(u => u.is_banned).length;
+                const admins = users.filter(u => u.is_admin).length;
+                addBot(`NODE SUMMARY: TOTAL=${users.length} | BANNED=${banned} | ADMINS=${admins} | PROTECTED=${users.length - banned}`);
+            } else if (normalized === 'find') {
+                const query = args.join(' ').toLowerCase();
+                if (!query) {
+                    addBot("ERROR: SPECIFY SEARCH_QUERY.");
+                } else {
+                    const matches = users.filter(u =>
+                        u.display_name?.toLowerCase().includes(query) ||
+                        u.email.toLowerCase().includes(query) ||
+                        u.id.includes(query)
+                    ).slice(0, 5);
+
+                    if (matches.length === 0) {
+                        addBot("NO NODES MATCHING CRITERIA.");
+                    } else {
+                        addBot(`MATCHES FOUND: ${matches.length}`);
+                        matches.forEach(m => addBot(`> ${m.display_name || 'UNNAMED'} | ID: ${m.id.substring(0, 8)}... | ${m.email}`));
+                    }
+                }
+            } else if (normalized === 'msg') {
+                const targetId = args[0];
+                const text = args.slice(1).join(' ');
+                if (targetId && text) {
+                    const user = users.find(u => u.id.startsWith(targetId) || u.id === targetId);
+                    if (user) {
+                        addBot(`DISPATCHING DIRECT ENCRYPTED SIGNAL TO NODE: ${user.display_name || user.id.substring(0, 8)}...`);
+                        try {
+                            const { error } = await supabase.rpc('admin_send_direct_message', {
+                                p_user_ids: [user.id],
+                                p_message: `${text}\n\n- Sent via Sentinel Terminal 🛡️`,
+                                p_type: 'alert',
+                                p_title: 'SYSTEM_PRIORITY_SIGNAL'
+                            });
+                            if (error) throw error;
+                            addBot("SIGNAL ACCOMPLISHED. TARGET NOTIFIED.");
+                        } catch (err: any) {
+                            addBot(`SIGNAL INTERRUPTED: ${err.message}`);
+                        }
+                    } else {
+                        addBot("ERROR: TARGET_NODE_ID NOT FOUND.");
+                    }
+                } else {
+                    addBot("ERROR: USAGE: msg <node_id> <message_text>");
+                }
+            } else if (normalized === 'inspect') {
+                const targetId = args[0];
+                const user = users.find(u => u.id.startsWith(targetId) || u.id === targetId);
+                if (user) {
+                    addBot(`SYNCHRONIZING WITH NODE: ${user.display_name || user.id}`);
+                    setInspectedUser(user);
+                } else {
+                    addBot("ERROR: NODE_ID NOT FOUND.");
+                }
+            } else if (normalized === 'view') {
+                const targetId = args[0];
+                const alert = alerts.find(a => a.id.startsWith(targetId) || a.id === targetId);
+                if (alert) {
+                    addBot(`EXTRACTING ANOMALY DATA: ${alert.type}`);
+                    setInspectedAlert(alert);
+                } else {
+                    addBot("ERROR: ANOMALY_ID NOT FOUND.");
+                }
+            } else if (normalized === 'resolve') {
+                const targetId = args[0];
+                const alert = alerts.find(a => a.id.startsWith(targetId) || a.id === targetId);
+                if (alert) {
+                    addBot(`TREATING ANOMALY: ${targetId}...`);
+                    handleResolveAlert(alert.id);
+                } else {
+                    addBot("ERROR: ANOMALY_ID NOT FOUND.");
+                }
+            } else if (normalized === 'shred') {
+                const targetId = args[0];
+                const alert = alerts.find(a => a.id.startsWith(targetId) || a.id === targetId);
+                if (alert) {
+                    addBot(`PURGING LOG ENTRY: ${targetId}...`);
+                    handleDeleteAlert(alert.id);
+                } else {
+                    addBot("ERROR: ANOMALY_ID NOT FOUND.");
+                }
+            } else if (normalized === 'overdrive') {
+                const mode = args[0];
+                if (mode === 'on' || mode === 'active') {
+                    setActiveDefense(true);
+                    addBot("OVERDRIVE ENGAGED. AUTONOMOUS ENFORCEMENT ACTIVE.");
+                } else if (mode === 'off' || mode === 'passive') {
+                    setActiveDefense(false);
+                    addBot("OVERDRIVE DISENGAGED. MONITORING MODE ONLY.");
+                } else {
+                    addBot(`OVERDRIVE IS CURRENTLY ${activeDefense ? 'ACTIVE' : 'PASSIVE'}. USE [overdrive on|off] TO TOGGLE.`);
+                }
+            } else if (normalized === 'logs') {
+                addBot("RETRIEVING ENFORCEMENT LOGS...");
+                const recentAlerts = alerts.slice(0, 5);
+                if (recentAlerts.length === 0) {
+                    addBot("NO RECENT LOG ENTRY DATA.");
+                } else {
+                    recentAlerts.forEach(a => {
+                        const status = a.resolved ? "TREATED" : a.action_taken === 'banned' ? "NEUTRALIZED" : "PENDING";
+                        addBot(`[${new Date(a.created_at).toLocaleTimeString([], { hour12: false })}] ${a.id.substring(0, 6)}: ${a.type} | ${status}`);
+                    });
+                }
+            } else if (normalized === 'purge') {
+                const highRisk = users.filter(u => u.risk_level === 'High' && !u.is_admin && !u.is_banned);
+                if (highRisk.length === 0) {
+                    addBot("NO HIGH-RISK TARGETS IDENTIFIED FOR PURGE.");
+                } else {
+                    addBot(`IDENTIFIED ${highRisk.length} HIGH-RISK NODES.`);
+                    addBot("EXECUTING MASS NEUTRALIZATION...");
+                    highRisk.forEach(u => handleBanUser(u.id, false));
+                    addBot("PURGE SEQUENCE COMPLETE.");
+                }
+            } else if (normalized === 'scan') {
+                addBot("INITIALIZING FULL SPECTRUM ENFORCEMENT SCAN...");
+                handleRunScan();
+            } else if (normalized === 'whoami') {
+                const { data } = await supabase.auth.getUser();
+                addBot(`UID: ${data.user?.id || 'ANONYMOUS'} | ADM_LVL: 5 | MODE: SUPER_ADMIN`);
+            } else if (normalized === 'system') {
+                addBot("   _____ ______ _   _ _______ _____ _   _ ______ _      ");
+                addBot("  / ____|  ____| \\ | |__   __|_   _| \\ | |  ____| |     ");
+                addBot(" | (___ | |__  |  \\| |  | |    | | |  \\| | |__  | |     ");
+                addBot("  \\___ \\|  __| | . ` |  | |    | | | . ` |  __| | |     ");
+                addBot("  ____) | |____| |\\  |  | |   _| |_| |\\  | |____| |____ ");
+                addBot(" |_____/|______|_| \\_|  |_|  |_____|_| \\_|______|______|");
+                addBot("v5.0.4 | UPTIME: 99.98% | CORE_TEMP: OPTIMAL | DEFENSE: ACTIVE");
+            } else if (normalized === 'broadcast') {
+                const msg = args.join(' ');
+                if (msg) {
+                    addBot("PUSHING GLOBAL BROADCAST PROTOCOL...");
+                    try {
+                        // 1. Update system settings (Banner)
+                        await supabase
+                            .from('system_settings')
+                            .upsert({
+                                key: 'global_broadcast',
+                                value: {
+                                    message: msg,
+                                    active: true,
+                                    type: 'info',
+                                    isPopup: false,
+                                    expiresAt: null
+                                },
+                                updated_at: new Date().toISOString()
+                            });
+
+                        // 2. Send Real-time Notification
+                        try {
+                            await (supabase.rpc as any)('admin_send_global_notification', {
+                                p_title: 'SYSTEM_BROADCAST',
+                                p_message: msg,
+                                p_type: 'info'
+                            });
+                        } catch (rpcErr) {
+                            console.warn("Real-time RPC not available, banner updated.");
+                        }
+
+                        addBot(`LOG: "${msg.substring(0, 40)}${msg.length > 40 ? '...' : ''}"`);
+                        addBot("GLOBAL SYNCHRONIZATION COMPLETE.");
+                        showSuccess(`Global Broadcast Dispatched: ${msg}`);
+                    } catch (err: any) {
+                        addBot(`PROTOCOL ERROR: ${err.message}`);
+                    }
+                } else {
+                    addBot("ERROR: SPECIFY MESSAGE.");
+                }
+            } else if (normalized === 'diag') {
+                addBot("RUNNING SPECTRAL CORE DIAGNOSTIC...");
+                addBot("[████████████████████] 100% | STATUS: NOMINAL");
+                addBot("ALL SUBSYSTEMS OPERATIONAL.");
+            } else if (normalized === 'logout') {
+                setIsTerminalAuthenticated(false);
+                setTerminalHistory(prev => [
+                    ...prev,
+                    { type: 'bot', text: 'SESSION TERMINATED.', timestamp: new Date() },
+                    { type: 'bot', text: 'ENTER ACCESS CODE:', timestamp: new Date() }
+                ]);
+                return;
+            } else if (normalized === 'clear') {
+                setTerminalHistory([]);
+                return;
+            } else if (normalized === 'alerts') {
+                const pending = alerts.filter(a => !a.resolved);
+                if (pending.length === 0) {
+                    addBot("NO ACTIVE ANOMALIES DETECTED.");
+                } else {
+                    addBot(`DETECTED ${pending.length} UNTREATED ANOMALIES.`);
+                    pending.slice(0, 3).forEach(a => addBot(`> [${a.severity}] ${a.id.substring(0, 8)}... | ${a.type}`));
+                }
+            } else if (normalized.startsWith('ban')) {
+                const targetId = args[0];
+                if (targetId) {
+                    const user = users.find(u => u.id.startsWith(targetId) || u.id === targetId);
+                    if (user) {
+                        addBot(`NEUTRALIZING TARGET NODE: ${user.display_name || user.id}...`);
+                        handleBanUser(user.id, false);
+                    } else {
+                        addBot("ERROR: NODE_ID NOT FOUND.");
+                    }
+                } else {
+                    addBot("ERROR: SPECIFY NODE_ID.");
+                }
+            } else {
+                addBot("UNIDENTIFIED COMMAND. TYPE 'HELP' FOR MANUAL.");
+            }
+
+            setTerminalHistory(prev => [
+                ...prev,
+                ...responses.map(r => ({ ...r, timestamp: new Date() }))
+            ]);
+        }, 600);
+    };
+
+    useEffect(() => {
+        if (terminalEndRef.current) {
+            const container = terminalEndRef.current.parentElement;
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+    }, [terminalHistory]);
 
     const openConfirm = (title: string, description: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
         setConfirmConfig({ open: true, title, description, onConfirm, variant });
@@ -214,6 +564,26 @@ export const AdminUsers = () => {
     };
 
     useEffect(() => {
+        // Sync lockout from localStorage
+        const localLockout = localStorage.getItem('sentinel_lockout_until');
+        if (localLockout && new Date(localLockout) > new Date()) {
+            setLockoutUntil(new Date(localLockout));
+        }
+
+        const checkAdminStatus = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('is_admin')
+                    .eq('id', user.id)
+                    .single();
+                if (profile) {
+                    setCurrentUserIsAdmin(profile.is_admin);
+                }
+            }
+        };
+        checkAdminStatus();
         fetchUsers();
         fetchAlerts();
         fetchSettings();
@@ -262,6 +632,42 @@ export const AdminUsers = () => {
             showError(`Scan Failed: ${error.message}`);
         } finally {
             setScanLoading(false);
+        }
+    };
+
+    const handleResolveAlert = async (alertId: string) => {
+        try {
+            const { error } = await supabase
+                .from('security_alerts')
+                .update({ resolved: true, action_taken: 'resolved' })
+                .eq('id', alertId);
+
+            if (error) throw error;
+            showSuccess('Anomaly treated and resolved.');
+            setAlerts(alerts.map(a => a.id === alertId ? { ...a, resolved: true, action_taken: 'resolved' } : a));
+            if (inspectedAlert?.id === alertId) {
+                setInspectedAlert({ ...inspectedAlert, resolved: true, action_taken: 'resolved' });
+            }
+        } catch (error: any) {
+            showError(`Resolution failed: ${error.message}`);
+        }
+    };
+
+    const handleDeleteAlert = async (alertId: string) => {
+        try {
+            const { error } = await supabase
+                .from('security_alerts')
+                .delete()
+                .eq('id', alertId);
+
+            if (error) throw error;
+            showSuccess('Anomaly purged from system logs.');
+            setAlerts(alerts.filter(a => a.id !== alertId));
+            if (inspectedAlert?.id === alertId) {
+                setInspectedAlert(null);
+            }
+        } catch (error: any) {
+            showError(`Purge failed: ${error.message}`);
         }
     };
 
@@ -432,7 +838,8 @@ export const AdminUsers = () => {
 
     const filteredUsers = users.filter(user =>
     (user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.display_name?.toLowerCase().includes(searchQuery.toLowerCase()))
+        user.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.id.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     return (
@@ -445,9 +852,9 @@ export const AdminUsers = () => {
                     </p>
                 </div>
                 <div className="relative w-full sm:w-72">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <SearchIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search users..."
+                        placeholder="Search by name, email, or user ID..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-8"
@@ -458,15 +865,17 @@ export const AdminUsers = () => {
             <Tabs defaultValue="users" className="space-y-4">
                 <TabsList>
                     <TabsTrigger value="users">User Management</TabsTrigger>
-                    <TabsTrigger value="security" className="gap-2">
-                        <Siren className="h-4 w-4" />
-                        Security Operations
-                        {alerts.length > 0 && (
-                            <Badge variant="destructive" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px]">
-                                {alerts.length}
-                            </Badge>
-                        )}
-                    </TabsTrigger>
+                    {currentUserIsAdmin && (
+                        <TabsTrigger value="security" className="gap-2">
+                            <Siren className="h-4 w-4" />
+                            Security Operations
+                            {alerts.filter(a => !a.resolved).length > 0 && (
+                                <Badge variant="destructive" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px]">
+                                    {alerts.filter(a => !a.resolved).length}
+                                </Badge>
+                            )}
+                        </TabsTrigger>
+                    )}
                 </TabsList>
 
                 <TabsContent value="users" className="space-y-6">
@@ -512,10 +921,27 @@ export const AdminUsers = () => {
                                                         <div className="flex items-center gap-1.5">
                                                             <span className="font-medium text-sm">{user.display_name || 'Unnamed User'}</span>
                                                             {user.email_confirmed_at && (
-                                                                <CheckCircle className="h-3 w-3 text-cyan-500" />
+                                                                <CheckCircleIcon className="h-3 w-3 text-cyan-500" />
                                                             )}
                                                         </div>
                                                         <span className="text-xs text-muted-foreground">{user.email}</span>
+                                                        <div className="flex items-center gap-1 mt-0.5 group/id">
+                                                            <Fingerprint className="h-3 w-3 text-muted-foreground/50" />
+                                                            <span className="text-[10px] font-mono text-muted-foreground/70 truncate max-w-[120px] select-all" title={user.id}>
+                                                                {user.id}
+                                                            </span>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-4 w-4 p-0 opacity-0 group-hover/id:opacity-100 transition-opacity"
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(user.id);
+                                                                    showSuccess('User ID copied!');
+                                                                }}
+                                                            >
+                                                                <Copy className="h-3 w-3 text-muted-foreground" />
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -544,11 +970,11 @@ export const AdminUsers = () => {
                                             <TableCell>
                                                 {user.is_banned ? (
                                                     <Badge variant="destructive" className="flex w-fit items-center gap-1">
-                                                        <ShieldAlert className="h-3 w-3" /> Banned
+                                                        <ShieldAlertIcon className="h-3 w-3" /> Banned
                                                     </Badge>
                                                 ) : (
                                                     <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 flex w-fit items-center gap-1">
-                                                        <CheckCircle className="h-3 w-3" /> Active
+                                                        <CheckCircleIcon className="h-3 w-3" /> Active
                                                     </Badge>
                                                 )}
                                             </TableCell>
@@ -608,7 +1034,7 @@ export const AdminUsers = () => {
                             <div className="space-y-1">
                                 <CardTitle className="text-2xl font-bold flex items-center gap-3">
                                     <div className="relative">
-                                        <ShieldCheck className={cn("h-8 w-8", activeDefense ? "text-white" : "text-emerald-400")} />
+                                        <ShieldCheckIcon className={cn("h-8 w-8", activeDefense ? "text-white" : "text-emerald-400")} />
                                         {activeDefense && (
                                             <span className="absolute -top-1 -right-1 flex h-3 w-3">
                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -646,7 +1072,7 @@ export const AdminUsers = () => {
                                         "bg-black/20 border-white/10 text-[9px] uppercase tracking-tighter",
                                         activeDefense ? "text-emerald-300" : "text-slate-400"
                                     )}>
-                                        <Activity className="h-2 w-2 mr-1 animate-pulse" />
+                                        <ActivityIcon className="h-2 w-2 mr-1 animate-pulse" />
                                         Autonomous Protection: 4HR Cycle
                                     </Badge>
                                     {lastSweep && (
@@ -659,31 +1085,6 @@ export const AdminUsers = () => {
                         </CardHeader>
                     </Card>
 
-                    <div className="flex items-center justify-between mt-8">
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-1 bg-cyan-500 rounded-full animate-pulse" />
-                            <div>
-                                <h2 className="text-xl font-bold tracking-tight">Threat Intelligence Feed</h2>
-                                <p className="text-muted-foreground text-sm flex items-center gap-1.5">
-                                    <Activity className="h-3 w-3 text-cyan-500 animate-pulse" />
-                                    Live system analysis operational.
-                                </p>
-                            </div>
-                        </div>
-                        <Button
-                            onClick={handleRunScan}
-                            disabled={scanLoading}
-                            variant={activeDefense ? "default" : "secondary"}
-                            className={cn(
-                                "gap-2 h-11 px-6 shadow-lg transition-all active:scale-95",
-                                activeDefense && "bg-emerald-600 hover:bg-emerald-700 text-white"
-                            )}
-                        >
-                            {scanLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />}
-                            {scanLoading ? "System Scanning..." : activeDefense ? "Initialize Enforcement Scan" : "Execute Diagnostic Scan"}
-                        </Button>
-                    </div>
-
                     <div className="grid gap-6 md:grid-cols-4 lg:grid-cols-4">
                         <Card className="border-l-4 border-l-cyan-500 bg-cyan-500/5 overflow-hidden relative">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -691,11 +1092,11 @@ export const AdminUsers = () => {
                                 <Siren className="h-4 w-4 text-cyan-600" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-black text-cyan-900">{alerts.length}</div>
+                                <div className="text-3xl font-black text-cyan-900">{alerts.filter(a => !a.resolved).length}</div>
                                 <p className="text-[10px] text-cyan-600/80 font-medium">PENDING ANALYSIS</p>
                             </CardContent>
                             <div className="absolute -bottom-2 -right-2 opacity-10">
-                                <Activity className="h-16 w-16" />
+                                <ActivityIcon className="h-16 w-16" />
                             </div>
                         </Card>
 
@@ -717,7 +1118,7 @@ export const AdminUsers = () => {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-3xl font-black text-amber-900">
-                                    {alerts.filter(a => a.severity === 'high' || a.severity === 'critical').length}
+                                    {alerts.filter(a => !a.resolved && (a.severity === 'high' || a.severity === 'critical')).length}
                                 </div>
                                 <p className="text-[10px] text-amber-600/80 font-medium">HIGH RISK EVENTS</p>
                             </CardContent>
@@ -726,7 +1127,7 @@ export const AdminUsers = () => {
                         <Card className="border-l-4 border-l-purple-500 bg-purple-500/5">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-xs font-bold uppercase tracking-widest text-purple-700">Neutralized</CardTitle>
-                                <Lock className="h-4 w-4 text-purple-600" />
+                                <LockIcon className="h-4 w-4 text-purple-600" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-3xl font-black text-purple-900">
@@ -737,22 +1138,95 @@ export const AdminUsers = () => {
                         </Card>
                     </div>
 
+                    <div className="flex items-center justify-between mt-8">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-1 bg-cyan-500 rounded-full animate-pulse" />
+                            <div>
+                                <h2 className="text-xl font-bold tracking-tight">Threat Intelligence Feed</h2>
+                                <p className="text-muted-foreground text-sm flex items-center gap-1.5">
+                                    <ActivityIcon className="h-3 w-3 text-cyan-500 animate-pulse" />
+                                    Live system analysis operational.
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            onClick={handleRunScan}
+                            disabled={scanLoading}
+                            variant={activeDefense ? "default" : "secondary"}
+                            className={cn(
+                                "gap-2 h-11 px-6 shadow-lg transition-all active:scale-95",
+                                activeDefense && "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            )}
+                        >
+                            {scanLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />}
+                            {scanLoading ? "System Scanning..." : activeDefense ? "Initialize Enforcement Scan" : "Execute Diagnostic Scan"}
+                        </Button>
+                    </div>
+
+                    {/* Neural Command Console */}
+                    <Card className="bg-slate-900 border-slate-800 shadow-2xl overflow-hidden mt-8 mb-8 group hover:border-cyan-500/50 transition-colors">
+                        <CardHeader className="bg-slate-950/50 border-b border-white/5 py-3 flex flex-row items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="h-2 w-2 rounded-full bg-cyan-500 animate-pulse shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                                <CardTitle className="text-xs font-bold uppercase tracking-widest text-emerald-400">Neural Sentinel Terminal</CardTitle>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-[9px] bg-black/40 text-cyan-400 border-cyan-900">ENCRYPTION: AES-256-GCM</Badge>
+                                <Badge variant="outline" className="text-[9px] bg-black/40 text-emerald-500 border-emerald-900">BYPASS_ACTIVE</Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-0 flex flex-col h-[350px]">
+                            {/* Terminal History */}
+                            <div className="flex-1 overflow-y-auto p-4 space-y-1.5 font-mono text-[11px] custom-scrollbar bg-slate-950/20">
+                                {terminalHistory.map((entry, i) => (
+                                    <div key={i} className={cn(
+                                        "flex gap-3 animate-in fade-in slide-in-from-left-2 duration-300",
+                                        entry.type === 'system' && "text-emerald-500/70",
+                                        entry.type === 'user' && "text-slate-300",
+                                        entry.type === 'bot' && "text-cyan-400 font-bold"
+                                    )}>
+                                        <span className="opacity-40 shrink-0 text-[9px] flex items-center">[{entry.timestamp.toLocaleTimeString([], { hour12: false })}]</span>
+                                        <span className="shrink-0 opacity-70">{entry.type === 'user' ? 'root@sentinel:~$' : <div className="flex items-center gap-1"><Bot className="h-3 w-3" /> SENTINEL_CORE {'>'}</div>}</span>
+                                        <span className="break-all">{entry.text}</span>
+                                    </div>
+                                ))}
+                                <div ref={terminalEndRef} />
+                            </div>
+
+                            {/* Input area */}
+                            <div className="p-3 bg-slate-950/50 border-t border-white/5">
+                                <form onSubmit={handleTerminalSubmit} className="flex gap-3 items-center">
+                                    <span className="text-emerald-500 font-mono text-sm animate-pulse">❯</span>
+                                    <Input
+                                        value={terminalInput}
+                                        onChange={(e) => setTerminalInput(e.target.value)}
+                                        placeholder="Enter system override command (Type 'help' for manual)..."
+                                        className="bg-transparent border-none text-cyan-500 placeholder:text-slate-700 font-mono text-xs focus-visible:ring-0 p-0 h-auto shadow-none"
+                                        autoComplete="off"
+                                    />
+                                    <div className="h-4 w-1 bg-cyan-500/50 animate-pulse ml-auto" />
+                                </form>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     <div className="rounded-md border bg-card">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Severity</TableHead>
-                                    <TableHead>Action Taken</TableHead>
+                                    <TableHead>Status</TableHead>
                                     <TableHead>Alert Type</TableHead>
                                     <TableHead>User ID</TableHead>
                                     <TableHead>Details</TableHead>
                                     <TableHead>Detected At</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {alerts.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                                             No active security alerts. System is healthy.
                                         </TableCell>
                                     </TableRow>
@@ -773,13 +1247,17 @@ export const AdminUsers = () => {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                {alert.action_taken === 'banned' ? (
+                                                {alert.resolved ? (
+                                                    <Badge variant="outline" className="flex w-fit items-center gap-1.5 bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm">
+                                                        <CheckCircleIcon className="h-3 w-3" /> TREATED
+                                                    </Badge>
+                                                ) : alert.action_taken === 'banned' ? (
                                                     <Badge variant="destructive" className="flex w-fit items-center gap-1.5 bg-red-600 shadow-sm">
-                                                        <Lock className="h-3 w-3" /> NEUTRALIZED
+                                                        <LockIcon className="h-3 w-3" /> NEUTRALIZED
                                                     </Badge>
                                                 ) : (
                                                     <Badge variant="outline" className="flex w-fit items-center gap-1.5 opacity-60">
-                                                        <Activity className="h-3 w-3" /> MONITORED
+                                                        <ActivityIcon className="h-3 w-3" /> PENDING
                                                     </Badge>
                                                 )}
                                             </TableCell>
@@ -787,10 +1265,15 @@ export const AdminUsers = () => {
                                                 {alert.type.replace(/_/g, ' ').toUpperCase()}
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Fingerprint className="h-3 w-3 text-muted-foreground" />
-                                                    <span className="font-mono text-[11px] text-muted-foreground bg-muted p-1 rounded">
+                                                <div className="flex items-center gap-2 group cursor-pointer"
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(alert.user_id);
+                                                        showSuccess('User ID copied to clipboard');
+                                                    }}>
+                                                    <Fingerprint className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                                                    <span className="font-mono text-[11px] text-muted-foreground bg-muted p-1 rounded group-hover:bg-primary/10 group-hover:text-primary transition-colors flex items-center gap-1">
                                                         {alert.user_id.split('-')[0]}...
+                                                        <Copy className="h-2 w-2 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     </span>
                                                 </div>
                                             </TableCell>
@@ -810,6 +1293,36 @@ export const AdminUsers = () => {
                                                     hour: '2-digit',
                                                     minute: '2-digit'
                                                 })}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                                        onClick={() => setInspectedAlert(alert)}
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                    {!alert.resolved && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                            onClick={() => handleResolveAlert(alert.id)}
+                                                        >
+                                                            <CheckCircleIcon className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        onClick={() => handleDeleteAlert(alert.id)}
+                                                    >
+                                                        <Trash className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -834,9 +1347,20 @@ export const AdminUsers = () => {
                                     <div>
                                         <SheetTitle className="flex items-center gap-2">
                                             {selectedUser.display_name || 'Unnamed User'}
-                                            {selectedUser.email_confirmed_at && <CheckCircle className="h-4 w-4 text-cyan-500" />}
+                                            {selectedUser.email_confirmed_at && <CheckCircleIcon className="h-4 w-4 text-cyan-500" />}
                                         </SheetTitle>
-                                        <SheetDescription>{selectedUser.email}</SheetDescription>
+                                        <SheetDescription className="flex flex-col gap-1">
+                                            <span>{selectedUser.email}</span>
+                                            <span className="flex items-center gap-1.5 text-[10px] font-mono opacity-80 bg-muted/50 px-2 py-0.5 rounded w-fit select-all cursor-pointer hover:bg-muted transition-colors"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(selectedUser.id);
+                                                    showSuccess('User ID copied!');
+                                                }}>
+                                                <Fingerprint className="h-3 w-3" />
+                                                {selectedUser.id}
+                                                <Copy className="h-2.5 w-2.5 ml-1 opacity-50" />
+                                            </span>
+                                        </SheetDescription>
                                         <div className="text-xs text-muted-foreground mt-1 flex gap-3">
                                             <span>Active: {selectedUser.last_sign_in_at ? new Date(selectedUser.last_sign_in_at).toLocaleDateString() : 'Never'}</span>
                                             <span>•</span>
@@ -845,7 +1369,7 @@ export const AdminUsers = () => {
                                         <div className="flex gap-2 mt-2">
                                             {selectedUser.is_admin && <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-purple-200">Admin</Badge>}
                                             {['active', 'trialing'].includes(selectedUser.subscription_status) && <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">Pro Member</Badge>}
-                                            {selectedUser.is_exempt && <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200 flex gap-1 items-center"><ShieldCheck className="h-3 w-3" /> Immunity</Badge>}
+                                            {selectedUser.is_exempt && <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200 flex gap-1 items-center"><ShieldCheckIcon className="h-3 w-3" /> Immunity</Badge>}
                                             <Badge className={cn(
                                                 "gap-1",
                                                 selectedUser.risk_level === 'Low' && "bg-green-100 text-green-700",
@@ -908,7 +1432,7 @@ export const AdminUsers = () => {
                                                 className={cn("justify-start gap-2 h-auto py-3", selectedUser.is_exempt ? "bg-blue-50 border-blue-200 text-blue-700" : "")}
                                                 onClick={() => handleToggleImmunity(selectedUser.id, selectedUser.is_exempt)}
                                             >
-                                                <ShieldCheck className={cn("h-4 w-4", selectedUser.is_exempt ? "text-blue-700" : "text-muted-foreground")} />
+                                                <ShieldCheckIcon className={cn("h-4 w-4", selectedUser.is_exempt ? "text-blue-700" : "text-muted-foreground")} />
                                                 <div className="flex flex-col items-start text-left">
                                                     <span className="font-semibold">{selectedUser.is_exempt ? "Revoke Immunity" : "Grant Diplomatic Immunity"}</span>
                                                     <span className={cn("text-xs", selectedUser.is_exempt ? "text-blue-600/80" : "text-muted-foreground")}>
@@ -924,7 +1448,7 @@ export const AdminUsers = () => {
                                             <div className="space-y-4">
                                                 <div className="p-4 border border-purple-200 rounded-lg bg-purple-50 space-y-2">
                                                     <div className="flex items-center gap-2 text-purple-700">
-                                                        <ShieldAlert className="h-5 w-5" />
+                                                        <ShieldAlertIcon className="h-5 w-5" />
                                                         <h3 className="font-bold">Super Admin Access</h3>
                                                     </div>
                                                     <p className="text-sm text-purple-600/90 leading-relaxed text-left">
@@ -1139,6 +1663,178 @@ export const AdminUsers = () => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog >
+
+            {/* Terminal Inspection Sheets */}
+            <Sheet open={!!inspectedUser} onOpenChange={(open) => !open && setInspectedUser(null)}>
+                <SheetContent className="overflow-y-auto sm:max-w-xl w-full">
+                    {inspectedUser && (
+                        <div className="space-y-8 py-4">
+                            <SheetHeader className="space-y-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-16 w-16 rounded-full bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center text-cyan-700 dark:text-cyan-400 font-bold text-2xl border-2 border-cyan-200 dark:border-cyan-800">
+                                        {inspectedUser.display_name?.[0]?.toUpperCase() || 'U'}
+                                    </div>
+                                    <div>
+                                        <SheetTitle className="text-2xl font-black tracking-tight flex items-center gap-2">
+                                            {inspectedUser.display_name || 'Unnamed Node'}
+                                            {inspectedUser.is_admin && <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-purple-200">Admin</Badge>}
+                                        </SheetTitle>
+                                        <SheetDescription className="text-muted-foreground font-mono text-xs">
+                                            UUID: {inspectedUser.id}
+                                        </SheetDescription>
+                                    </div>
+                                </div>
+                            </SheetHeader>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <Card className="p-4 border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Risk Score</p>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className={cn(
+                                            "text-3xl font-black",
+                                            inspectedUser.risk_level === 'High' ? "text-red-600" : "text-emerald-600"
+                                        )}>{inspectedUser.risk_score}</span>
+                                        <span className="text-xs font-bold text-muted-foreground">/ 100</span>
+                                    </div>
+                                </Card>
+                                <Card className="p-4 border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Membership</p>
+                                    <Badge className={cn(
+                                        "capitalize font-bold",
+                                        ['active', 'trialing'].includes(inspectedUser.subscription_status) ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"
+                                    )}>
+                                        {inspectedUser.subscription_status}
+                                    </Badge>
+                                </Card>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h4 className="text-sm font-bold flex items-center gap-2">
+                                    <ActivityIcon className="h-4 w-4 text-cyan-500" />
+                                    Security Metadata
+                                </h4>
+                                <div className="space-y-2 border rounded-xl p-4 bg-muted/30 font-mono text-xs">
+                                    <div className="flex justify-between border-b pb-2">
+                                        <span className="text-muted-foreground">Email:</span>
+                                        <span className="font-bold">{inspectedUser.email}</span>
+                                    </div>
+                                    <div className="flex justify-between border-b py-2">
+                                        <span className="text-muted-foreground">Immunity:</span>
+                                        <span className={(inspectedUser.is_exempt || inspectedUser.is_admin) ? "text-blue-600 font-black" : "text-red-500"}>
+                                            {inspectedUser.is_admin ? "ENABLED (ADMIN)" : (inspectedUser.is_exempt ? "ENABLED" : "DISABLED")}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between pt-2">
+                                        <span className="text-muted-foreground">Last Uplink:</span>
+                                        <span>{inspectedUser.last_sign_in_at ? new Date(inspectedUser.last_sign_in_at).toLocaleString() : 'NEVER'}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t flex flex-col gap-3">
+                                <Button
+                                    className="w-full h-11 font-bold gap-2"
+                                    disabled={inspectedUser.is_admin}
+                                    onClick={() => handleBanUser(inspectedUser.id, inspectedUser.is_banned)}
+                                >
+                                    <LockIcon className="h-4 w-4" />
+                                    {inspectedUser.is_banned ? "Reactivate Node" : "Neutralize Node (Ban)"}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="w-full h-11 font-bold gap-2 border-primary/20 hover:bg-primary/5"
+                                    onClick={() => {
+                                        setSelectedUser(inspectedUser);
+                                        setInspectedUser(null);
+                                    }}
+                                >
+                                    <RefreshCcw className="h-4 w-4" />
+                                    Open Full Management Console
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
+
+            <Sheet open={!!inspectedAlert} onOpenChange={(open) => !open && setInspectedAlert(null)}>
+                <SheetContent className="overflow-y-auto sm:max-w-xl w-full border-l-red-500/20">
+                    {inspectedAlert && (
+                        <div className="space-y-8 py-4">
+                            <SheetHeader className="space-y-4">
+                                <div className="flex items-center gap-4">
+                                    <div className={cn(
+                                        "h-16 w-16 rounded-2xl flex items-center justify-center text-3xl border-2",
+                                        inspectedAlert.severity === 'critical' ? "bg-red-50 border-red-200 text-red-600" : "bg-amber-50 border-amber-200 text-amber-600"
+                                    )}>
+                                        <ShieldAlertIcon className="h-8 w-8" />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <Badge variant={inspectedAlert.severity === 'critical' ? 'destructive' : 'secondary'} className="uppercase text-[9px] font-black tracking-widest">
+                                                {inspectedAlert.severity} LEVEL THREAT
+                                            </Badge>
+                                            {inspectedAlert.resolved && (
+                                                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 uppercase text-[9px] font-black tracking-widest">
+                                                    RESOLVED
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <SheetTitle className="text-2xl font-black tracking-tight">
+                                            {inspectedAlert.type.replace(/_/g, ' ').toUpperCase()}
+                                        </SheetTitle>
+                                    </div>
+                                </div>
+                            </SheetHeader>
+
+                            <div className="space-y-6">
+                                <div className="bg-slate-900 rounded-2xl p-6 text-slate-100 border border-slate-800 shadow-2xl relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                        <Terminal className="h-24 w-24" />
+                                    </div>
+                                    <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+                                        <div className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                                        Technical Payload
+                                    </h4>
+                                    <pre className="font-mono text-xs overflow-x-auto custom-scrollbar leading-relaxed">
+                                        {JSON.stringify(inspectedAlert.details, null, 2)}
+                                    </pre>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="p-4 border rounded-xl bg-muted/30">
+                                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Detection Origin</p>
+                                        <p className="text-sm font-medium">Automatic Sentinel Sweep v5.0.4</p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            TS: {new Date(inspectedAlert.created_at).toISOString()}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t flex flex-col gap-3">
+                                    {!inspectedAlert.resolved && (
+                                        <Button
+                                            className="w-full h-12 font-black gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-900/20"
+                                            onClick={() => handleResolveAlert(inspectedAlert.id)}
+                                        >
+                                            <CheckCircleIcon className="h-5 w-5" />
+                                            ACKNOWLEDGE & RESOLVE
+                                        </Button>
+                                    )}
+                                    <Button
+                                        variant="outline"
+                                        className="w-full h-12 font-black gap-2 border-red-200 text-red-600 hover:bg-red-50"
+                                        onClick={() => handleDeleteAlert(inspectedAlert.id)}
+                                    >
+                                        <Trash className="h-5 w-5" />
+                                        SHRED ANOMALY RECORD
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
         </div >
     );
 };

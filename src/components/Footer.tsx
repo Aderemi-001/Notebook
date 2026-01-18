@@ -56,7 +56,7 @@ export const Footer: React.FC<{ className?: string }> = ({ className }) => {
 
           <div className="text-center md:text-right">
             <p className="text-[10px] text-muted-foreground font-medium">
-              &copy; {currentYear} Notebook AI <span className="mx-1">|</span> Supernova Edition
+              &copy; {currentYear} Notebook <span className="mx-1">|</span> Nova V2
             </p>
           </div>
         </div>

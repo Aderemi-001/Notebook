@@ -3,7 +3,7 @@ import React from 'react';
 
 export interface SearchResult {
     id: string;
-    type: 'set' | 'note';
+    type: 'set' | 'note' | 'card';
     title: string;
     description?: string | null;
     url: string;
@@ -20,7 +20,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
     const searchTerm = `%${query}%`;
 
     // Parallel queries
-    const [setsResponse, notesResponse] = await Promise.all([
+    const [setsResponse, notesResponse, cardsResponse] = await Promise.all([
         supabase
             .from('study_sets')
             .select('id, title, description, updated_at')
@@ -32,11 +32,24 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             .select('id, title, updated_at')
             .eq('user_id', user.id)
             .ilike('title', searchTerm)
-            .limit(5)
+            .limit(5),
+        supabase
+            .from('cards')
+            .select(`
+                id,
+                term,
+                definition,
+                set_id,
+                study_sets!inner(id, title, user_id)
+            `)
+            .eq('study_sets.user_id', user.id)
+            .or(`term.ilike.${searchTerm},definition.ilike.${searchTerm}`)
+            .limit(10)
     ]);
 
     if (setsResponse.error) console.error('Error searching sets:', setsResponse.error);
     if (notesResponse.error) console.error('Error searching notes:', notesResponse.error);
+    if (cardsResponse.error) console.error('Error searching cards:', cardsResponse.error);
 
     const results: SearchResult[] = [];
 
@@ -57,8 +70,19 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             type: 'note' as const,
             title: note.title,
             description: 'Note',
-            url: `/notebook?noteId=${note.id}`, // Assuming this is how we deep link to a note
+            url: `/notebook?noteId=${note.id}`,
             updated_at: note.updated_at ?? new Date().toISOString(),
+        })));
+    }
+
+    if (cardsResponse.data) {
+        results.push(...cardsResponse.data.map((card: any) => ({
+            id: card.id,
+            type: 'card' as const,
+            title: card.term.substring(0, 60) + (card.term.length > 60 ? '...' : ''),
+            description: `in "${card.study_sets.title}"`,
+            url: `/sets/${card.set_id}`,
+            updated_at: new Date().toISOString(),
         })));
     }
 

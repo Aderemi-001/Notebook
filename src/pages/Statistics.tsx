@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { format, subDays } from 'date-fns';
 import { gamificationService } from '@/services/gamificationService';
 import { BadgeList } from '@/components/gamification/BadgeList';
+import { useSubscription } from '@/hooks/useSubscription';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 // --- Types ---
@@ -85,11 +86,42 @@ const Statistics: React.FC = () => {
     enabled: !!user && !isLoadingAuth,
   });
 
+  const { isPremium } = useSubscription();
+
   const { data: badges, isLoading: isLoadingBadges } = useQuery({
     queryKey: ['badges', user?.id],
     queryFn: () => gamificationService.getBadges(user!.id),
     enabled: !!user && !isLoadingAuth,
   });
+
+  const enrichedBadges = useMemo(() => {
+    if (!badges || !stats) return [];
+
+    // Create a compatible profile object for the shared rules
+    const profileProxy = {
+      current_streak: streakData?.current_streak || 0,
+      stats: {
+        total_sets: stats.total_study_sets || 0,
+        mastered_cards: stats.total_mastered_cards || 0
+      }
+    };
+
+    return gamificationService.enrichBadges(badges, profileProxy, isPremium);
+  }, [badges, stats, streakData, isPremium]);
+
+  // Sync badges in background when data is ready
+  useEffect(() => {
+    if (user && streakData && stats && badges) {
+      const profileProxy = {
+        current_streak: streakData.current_streak || 0,
+        stats: {
+          total_sets: stats.total_study_sets || 0,
+          mastered_cards: stats.total_mastered_cards || 0
+        }
+      };
+      gamificationService.syncBadges(user.id, profileProxy, isPremium);
+    }
+  }, [user, streakData, stats, badges, isPremium]);
 
   // --- Derived Data ---
 
@@ -263,12 +295,6 @@ const Statistics: React.FC = () => {
 
           {/* Level Progress */}
           <div className="glass-card p-8 rounded-[2.5rem] relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-secondary">
-              <div
-                className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-1000"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-bold">Level {level} Progress</h3>
               <span className="text-sm font-medium text-muted-foreground">{Math.round(progress)}% to Level {level + 1}</span>
@@ -299,10 +325,10 @@ const Statistics: React.FC = () => {
             </CardHeader>
             <CardContent>
               {/* Transform badges to match Badge interface (cast category to union type, handle awarded_at) */}
-              <BadgeList badges={(badges || []).map(badge => ({
+              <BadgeList badges={enrichedBadges.map(badge => ({
                 ...badge,
-                category: (badge.category === 'general' || badge.category === 'streak' || badge.category === 'mastery' || badge.category === 'creation' 
-                  ? badge.category 
+                category: (badge.category === 'general' || badge.category === 'streak' || badge.category === 'mastery' || badge.category === 'creation'
+                  ? badge.category
                   : null) as 'general' | 'streak' | 'mastery' | 'creation' | null,
                 awarded_at: (typeof badge.awarded_at === 'string' ? badge.awarded_at : undefined)
               }))} isLoading={isLoadingBadges} className="h-[500px]" />

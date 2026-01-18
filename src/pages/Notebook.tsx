@@ -1,16 +1,19 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, FileText, PenTool, Loader2, NotebookPen } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatDistanceToNow } from "date-fns";
+import { safeFormatDistanceToNow } from "@/utils/dateUtils";
 import { cn } from "@/lib/utils";
 import UnifiedEditor from "@/components/notebook/UnifiedEditor";
 import { useAuth } from "@/hooks/useAuth";
 import { showSuccess, showError } from "@/utils/toast";
+import { notebookService } from "@/services/notebookService";
+
 
 // Types
 export interface NoteSummary {
@@ -33,38 +36,22 @@ const Notebook: React.FC = () => {
     // Fetch Notes List
     const { data: notes, isLoading } = useQuery({
         queryKey: ['notebook-list', user?.id],
-        queryFn: async () => {
-            if (!user) return [];
-            const { data, error } = await supabase
-                .from('notes')
-                .select('id, title, updated_at, content')
-                .eq('user_id', user.id)
-                .order('updated_at', { ascending: false });
-
-            if (error) throw error;
-            return data as NoteSummary[];
-        },
+        queryFn: () => user ? notebookService.getMyNotes(user.id) : Promise.resolve([]),
         enabled: !!user,
     });
 
+
     // Create Note Mutation
     const createNoteMutation = useMutation({
-        mutationFn: async (type: 'text' | 'canvas') => {
+        mutationFn: (type: 'text' | 'canvas') => {
             if (!user?.id) throw new Error("User not authenticated");
-            const newNote = {
-                user_id: user.id,
-                title: "Untitled Note",
-                content: type === 'canvas'
-                    ? { type: 'canvas', version: 1, image: null, background: 'lined' }
-                    : { type: 'doc', content: [{ type: 'paragraph' }] }
-            };
-            const { data, error } = await supabase.from('notes').insert(newNote).select().single();
-            if (error) throw error;
-            return data;
+            return notebookService.createNote(user.id, type);
         },
+
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['notebook-list'] });
             navigate(`/notebook/${data.id}`);
+
             setIsCreating(false);
             showSuccess("New note created");
         },
@@ -80,7 +67,7 @@ const Notebook: React.FC = () => {
         createNoteMutation.mutate('text');
     };
 
-    const filteredNotes = notes?.filter(n => n.title.toLowerCase().includes(searchQuery.toLowerCase())) || [];
+    const filteredNotes = notes?.filter(n => (n.title || "").toLowerCase().includes(searchQuery.toLowerCase())) || [];
 
     return (
         <div className="h-[calc(100vh-8rem)] md:h-[calc(100vh-6rem)] w-full flex flex-col md:flex-row overflow-hidden">
@@ -109,7 +96,7 @@ const Notebook: React.FC = () => {
                     <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search..."
+                            placeholder="Search notes..."
                             className="pl-8 bg-background/50 backdrop-blur-sm"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -123,7 +110,7 @@ const Notebook: React.FC = () => {
                         {isLoading && <div className="p-4 text-center text-muted-foreground">Loading...</div>}
                         {!isLoading && filteredNotes.length === 0 && (
                             <div className="p-8 text-center text-muted-foreground text-sm">
-                                No notes found.
+                                {searchQuery ? "No matches found." : "No notes yet. Create one!"}
                             </div>
                         )}
                         {filteredNotes.map(note => (
@@ -146,7 +133,7 @@ const Notebook: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2 w-full text-xs text-muted-foreground">
-                                    <span>{formatDistanceToNow(new Date(note.updated_at), { addSuffix: true })}</span>
+                                    <span>{safeFormatDistanceToNow(note.updated_at)}</span>
                                     <span className="truncate max-w-[120px]">
                                         {note.content?.type === 'canvas' || note.content?.activeMode === 'canvas' ? "Handwritten" : "Text Note"}
                                     </span>

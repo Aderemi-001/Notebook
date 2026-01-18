@@ -1,13 +1,14 @@
-
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2, FileText } from 'lucide-react';
+import { PlusCircle, Trash2, FileText, MoreHorizontal } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess } from '@/utils/toast';
+import { essayService } from '@/services/essayService';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,24 +19,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const fetchEssayQuestions = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
-
-  const { data, error } = await supabase
-    .from('essay_questions')
-    .select('*, study_sets(title)')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-  return data;
+  return essayService.getEssayQuestions(user.id);
 };
+
 
 const EssayIndex: React.FC = () => {
   const queryClient = useQueryClient();
-  const { data: questions, isLoading } = useQuery({
+  const { data: questions, isLoading: isLoadingQuestions } = useQuery({
     queryKey: ['essayQuestions'],
     queryFn: fetchEssayQuestions
   });
@@ -43,16 +43,15 @@ const EssayIndex: React.FC = () => {
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
+  // Separate delete for questions and responses if needed, but for now we only have delete on questions in UI.
+  // Actually PastEssays might need delete too? The original PastEssays.tsx didn't have delete. I'll stick to mostly display.
+
   const handleDelete = async () => {
     if (!deleteId) return;
 
     try {
-      const { error } = await supabase
-        .from('essay_questions')
-        .delete()
-        .eq('id', deleteId);
-
-      if (error) throw error;
+      const success = await essayService.deleteEssayQuestion(deleteId);
+      if (!success) return;
 
       showSuccess("Question deleted");
       queryClient.invalidateQueries({ queryKey: ['essayQuestions'] });
@@ -61,6 +60,7 @@ const EssayIndex: React.FC = () => {
     } catch (err: any) {
       showError("Failed to delete: " + err.message);
     }
+
   };
 
   const confirmDelete = (id: string, e: React.MouseEvent) => {
@@ -71,14 +71,36 @@ const EssayIndex: React.FC = () => {
 
   return (
     <div className="w-full px-4 md:px-8 py-10 animate-fade-in">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <FileText className="h-8 w-8 text-primary" /> Essay Practice
         </h1>
-        <Button asChild><Link to="/generate-essay-questions"><PlusCircle className="mr-2 h-4 w-4" /> New Question</Link></Button>
+
+        {/* Desktop Actions */}
+        <div className="hidden md:flex gap-2">
+          <Button asChild><Link to="/generate-essay-questions"><PlusCircle className="mr-2 h-4 w-4" /> New Question</Link></Button>
+        </div>
+
+        {/* Mobile Menu */}
+        <div className="md:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-6 w-6" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link to="/generate-essay-questions" className="cursor-pointer">
+                  <PlusCircle className="mr-2 h-4 w-4" /> New Question
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
-      {isLoading ? (
+      {isLoadingQuestions ? (
         <div className="grid gap-4 md:grid-cols-2">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 w-full" />)}
         </div>
@@ -92,7 +114,7 @@ const EssayIndex: React.FC = () => {
               </CardHeader>
               <CardContent className="flex-grow">
                 <p className="text-sm text-muted-foreground">
-                  {new Date(q.created_at).toLocaleDateString()}
+                  Created: {new Date(q.created_at).toLocaleDateString()}
                 </p>
               </CardContent>
               <CardFooter className="flex gap-2">
@@ -109,9 +131,11 @@ const EssayIndex: React.FC = () => {
       ) : (
         <div className="text-center py-20 border-dashed border-2 rounded-lg">
           <h2 className="text-xl font-semibold mb-2">No Essay Questions Yet</h2>
+          <p className="text-muted-foreground mb-4">Generate questions from your study sets to start practicing.</p>
           <Button asChild><Link to="/generate-essay-questions">Create One</Link></Button>
         </div>
       )}
+
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

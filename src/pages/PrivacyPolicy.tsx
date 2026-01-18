@@ -29,76 +29,37 @@ export default function PrivacyPolicy() {
           </p>
 
           <h2>1. Information We Collect</h2>
+          <p>We collect information to provide a personalized study experience.</p>
+
+          <h3>2. AI Processing Transparency</h3>
           <p>
-            We collect information to provide and improve our Service.
-          </p>
-          <h3>Personal Information:</h3>
-          <ul>
-            <li><strong>Account Information:</strong> When you create an account, we collect your email address and display name.</li>
-            <li><strong>Usage Data:</strong> We collect information about how you use the Service, such as study sets created, cards reviewed, and progress.</li>
-            <li><strong>AI Interaction Data:</strong> We process the content you submit to our AI features (Nova), including study notes, essays, and chat queries.</li>
-          </ul>
-          <h3>Non-Personal Information:</h3>
-          <ul>
-            <li><strong>Technical Data:</strong> This includes IP addresses, browser type, operating system, and device information.</li>
-            <li><strong>Cookies and Local Storage:</strong> We use cookies and local storage tokens to maintain your session and authentication state.</li>
-          </ul>
-
-          <h2>2. How We Use Your Information</h2>
-          <p>We use the information we collect for various purposes, including:</p>
-          <ul>
-            <li>To provide, operate, and maintain our Service.</li>
-            <li>To improve, personalize, and expand our Service.</li>
-            <li>To understand and analyze how you use our Service.</li>
-            <li>To develop new products, services, features, and functionality.</li>
-            <li>To communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the Service, and for marketing and promotional purposes.</li>
-            <li>To process your transactions.</li>
-            <li>To find and prevent fraud.</li>
-          </ul>
-
-          <h2>3. How We Share Your Information</h2>
-          <p>We may share your information in the following situations:</p>
-          <ul>
-            <li><strong>With Service Providers:</strong> We may share your information with third-party vendors, service providers, contractors, or agents who perform services for us or on our behalf.
-              <ul className="list-disc pl-5 mt-1">
-                <li><strong>Supabase:</strong> For authentication and database hosting.</li>
-                <li><strong>Google (Gemini AI):</strong> For AI-powered study assistance and content generation.</li>
-                <li><strong>Groq:</strong> For high-speed AI inference.</li>
-              </ul>
-            </li>
-            <li><strong>For Business Transfers:</strong> We may share or transfer your personal information in connection with, or during negotiations of, any merger, sale of company assets, financing, or acquisition of all or a portion of our business to another company.</li>
-            <li><strong>With Affiliates:</strong> We may share your information with our affiliates, in which case we will require those affiliates to honor this Privacy Policy.</li>
-            <li><strong>With Business Partners:</strong> We may share your information with our business partners to offer you certain products, services, or promotions.</li>
-            <li><strong>With Other Users:</strong> When you share personal information or otherwise interact in the public areas with other users, such personal information may be viewed by all users and may be publicly distributed outside.</li>
-            <li><strong>With Your Consent:</strong> We may disclose your personal information for any other purpose with your consent.</li>
-          </ul>
-
-          <h2>4. Data Security</h2>
-          <p>
-            We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.
-          </p>
-
-          <h2>5. Your Data Protection Rights</h2>
-          <p>
-            Depending on your location, you may have the following rights regarding your personal data:
+            Notebook uses generative AI to power features like "Magic Fix" and "Card Generation."
           </p>
           <ul>
-            <li>The right to access, update, or delete the information we have on you.</li>
-            <li>The right of rectification.</li>
-            <li>The right to object.</li>
-            <li>The right of restriction.</li>
-            <li>The right to data portability.</li>
-            <li>The right to withdraw consent.</li>
+            <li><strong>Data Transmit:</strong> When you use AI features, the relevant portion of your content (notes, card terms, or essays) is sent to our AI partners (Google Gemini/LLM, Groq).</li>
+            <li><strong>Privacy of Inputs:</strong> We use API-level access which, per our providers' standard terms, ensures your data is NOT used to train their public models. Your data remains your own.</li>
           </ul>
 
-          <h2>6. Changes to This Privacy Policy</h2>
+          <h3>3. How We Share Data</h3>
+          <ul>
+            <li><strong>Infrastructure:</strong> Supabase (Database/Auth).</li>
+            <li><strong>AI Partners:</strong> Google (for complex reasoning and grading), Groq (for fast card generation).</li>
+            <li><strong>Payments:</strong> PayFast (for subscription processing). We do not store your full credit card details.</li>
+          </ul>
+
+          <h2>5. Data Security & Retention</h2>
           <p>
-            We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.
+            We use industry-standard encryption to protect your data. Your content is stored until you choose to delete your account or specific items within the application.
+          </p>
+
+          <h2>6. Your Rights</h2>
+          <p>
+            You have the right to access, export, or delete your personal data at any time. If you wish to permanently delete your account, you can do so in the Profile or Settings section (where available) or by contacting support.
           </p>
 
           <h2>7. Contact Us</h2>
           <p>
-            If you have any questions about this Privacy Policy, please contact us at my.notebook.by.remi@gmail.com.
+            Questions? Contact <strong>my.notebook.by.remi@gmail.com</strong>.
           </p>
         </CardContent>
       </Card>

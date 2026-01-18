@@ -12,7 +12,7 @@ import {
     CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import BrandLogo from '@/components/BrandLogo';
 
 export const AdminLayout = () => {
@@ -111,6 +111,10 @@ export const AdminLayout = () => {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="p-0 w-64">
+                        <SheetTitle className="sr-only">Admin Navigation</SheetTitle>
+                        <SheetDescription className="sr-only">
+                            Access dashboard, users, and settings.
+                        </SheetDescription>
                         <SidebarContent />
                     </SheetContent>
                 </Sheet>

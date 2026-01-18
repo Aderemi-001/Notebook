@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trash2, FileText, PenTool, MoreHorizontal, Loader2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 import DigitalCanvas from '@/components/DigitalCanvas';
 import { showSuccess, showError } from '@/utils/toast';
 import { Editor } from '@tiptap/react';
@@ -37,6 +39,7 @@ interface UnifiedEditorProps {
 const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete, onUpdate, isSidebarOpen, onToggleSidebar }) => {
     const queryClient = useQueryClient();
     const editorRef = useRef<Editor | null>(null);
+    const isMobile = useIsMobile();
 
     // Fetch Note Details
     const { data: note, isLoading } = useQuery({
@@ -61,6 +64,17 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
     const [mode, setMode] = useState<'text' | 'canvas'>('text');
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [userHasToggledMode, setUserHasToggledMode] = useState(false); // Track user interaction
+    const [isImmersive, setIsImmersive] = useState(false);
+
+    // Auto-enter immersive mode on mobile when switching to canvas
+    useEffect(() => {
+        if (isMobile && mode === 'canvas') {
+            setIsImmersive(true);
+        } else {
+            setIsImmersive(false);
+        }
+    }, [mode, isMobile]);
 
     // Refs for Stale Closure Protection (Crucial for unmount saves)
     const modeRef = useRef(mode);
@@ -71,9 +85,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
     useEffect(() => { textContentRef.current = textContent; }, [textContent]);
     useEffect(() => { canvasContentRef.current = canvasContent; }, [canvasContent]);
 
-    // Initialize state when note loads
+    const lastInitializedNoteId = useRef<string | null>(null);
+
+    // Initialize state when note loads - only purely on fresh note load
     useEffect(() => {
-        if (note) {
+        if (note && note.id !== lastInitializedNoteId.current) {
             setTitle(note.title);
 
             const c = (note.content as any) || {};
@@ -97,16 +113,27 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
                 setCanvasContent({ type: 'canvas', version: 1, image: null });
                 initialMode = 'text';
             }
-            setMode(initialMode);
+
+            // Only set mode if user hasn't manually toggled it (or if it's a fresh load)
+            if (!userHasToggledMode) {
+                setMode(initialMode);
+            }
+
+            lastInitializedNoteId.current = note.id;
         }
     }, [note]);
 
     // Construct the Unified Payload
     const getPayload = (t: any, c: any, m: any) => ({
         textContent: t,
-        canvasContent: c,
+        // Ensure we strictly pass the object structure we want
+        canvasContent: {
+            ...c,
+            // If we have strokes, prioritize them (new format)
+            // If using older format, they might still be in c.image, but DigitalCanvas now expects JSON string of strokes
+            // We should ensure that whatever DigitalCanvas gives us (which is a JSON string) is stored securely
+        },
         activeMode: m,
-        // Tag for easier identifying
         type: 'unified',
         version: 2
     });
@@ -202,21 +229,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
         saveMutation.mutate({ content: getPayload(newText, canvasContentRef.current, modeRef.current) });
     };
 
-    const handleSaveCanvas = (newCanvasData: any) => {
-        // Construct canvas object (image dataUrl)
-        const newCanvasCtx = { ...canvasContentRef.current, image: newCanvasData, type: 'canvas' };
-        setCanvasContent(newCanvasCtx);
 
-        setIsSaving(true);
-        // CRITICAL: specific Check - if we are saving canvas, we typically want to preserve the mode OR 
-        // if this was triggered effectively by an unmount due to a mode switch, we want the NEW mode.
-        // modeRef.current will be the NEW mode if setMode was called.
-        saveMutation.mutate({ content: getPayload(textContentRef.current, newCanvasCtx, modeRef.current) });
-    };
 
     const toggleMode = () => {
         const newMode = mode === 'text' ? 'canvas' : 'text';
         setMode(newMode);
+        setUserHasToggledMode(true); // Mark that user has manually toggled
         // We don't need to explicitly save here.
         // 1. If we are leaving Canvas, DigitalCanvas.unmount -> handleSaveCanvas -> Save with new modeRef.
         // 2. If we are leaving Text, DebounceSaver.unmount -> handleSaveText -> Save with new modeRef.
@@ -225,9 +243,13 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
     if (isLoading) return <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-muted-foreground" /></div>;
 
     return (
-        <div className="flex flex-col h-full">
+        <div className={cn("flex flex-col h-full transition-all duration-300", isImmersive && "fixed inset-0 z-[9999] bg-background h-[100dvh] w-screen touch-none overscroll-none")}>
+
             {/* Header */}
-            <div className="flex items-center p-4 border-b border-border/40 bg-background/60 backdrop-blur-md z-50 h-16 shrink-0">
+            <div className={cn(
+                "flex items-center p-4 border-b border-border/40 bg-background/60 backdrop-blur-md z-50 h-16 shrink-0 transition-all duration-300",
+                isImmersive && "h-0 p-0 overflow-hidden opacity-0"
+            )}>
                 <div className="flex items-center gap-2 flex-1 min-w-0 mr-4">
                     <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden shrink-0">
                         <ArrowLeft className="h-4 w-4" />
@@ -331,10 +353,28 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ noteId, onBack, onDelete,
                 ) : (
                     <div className="h-full w-full bg-transparent overflow-hidden">
                         <DigitalCanvas
-                            // Width/Height removed for responsive fill
-                            initialData={canvasContent?.image}
+                            // Use .strokes if valid, otherwise fallback to .image if it looks like JSON?
+                            // DigitalCanvas now parses JSON string.
+                            // If c.image was the old DataURL, DigitalCanvas will ignore it (safe).
+                            // If c.strokes is our new JSON string, pass it.
+                            initialData={canvasContent?.strokes || canvasContent?.image}
                             onSave={(data) => {
-                                handleSaveCanvas(data);
+                                // data is the JSON string of strokes
+                                // Update local state
+                                const newCanvas = {
+                                    ...canvasContentRef.current,
+                                    type: 'canvas',
+                                    version: 2, // Bump version
+                                    strokes: data, // Store raw JSON string here
+                                    image: null // Clear legacy image to avoid confusion
+                                };
+                                setCanvasContent(newCanvas);
+
+                                // Trigger Save
+                                setIsSaving(true);
+                                saveMutation.mutate({
+                                    content: getPayload(textContentRef.current, newCanvas, modeRef.current)
+                                });
                             }}
                             className="shadow-md bg-white rounded-lg"
                         />

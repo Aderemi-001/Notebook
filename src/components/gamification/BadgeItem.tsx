@@ -1,7 +1,23 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { LucideIcon, Trophy, Star, Flame, Zap, Target, BookOpen, Brain, Sparkles, Lock } from 'lucide-react';
+import {
+    LucideIcon,
+    Trophy,
+    Star,
+    Flame,
+    Zap,
+    Target,
+    BookOpen,
+    Brain,
+    Sparkles,
+    Lock,
+    Crown as CrownIcon,
+    Library,
+    Award,
+    Gem,
+    GraduationCap,
+    Pencil
+} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface Badge {
@@ -30,11 +46,18 @@ const iconMap: Record<string, LucideIcon> = {
     'book-open': BookOpen,
     'brain': Brain,
     'sparkles': Sparkles,
+    'crown': CrownIcon,
+    'library': Library,
+    'award': Award,
+    'gem': Gem,
+    'graduation-cap': GraduationCap,
+    'pen-tool': Pencil,
 };
 
 export const BadgeItem: React.FC<BadgeItemProps> = ({ badge, size = 'md', showLabel = true, className }) => {
     const isUnlocked = !!badge.awarded_at;
     const Icon = (badge.icon_name && iconMap[badge.icon_name]) ? iconMap[badge.icon_name] : Trophy;
+    const [isOpen, setIsOpen] = useState(false);
 
     const sizeClasses = {
         sm: "w-10 h-10",
@@ -50,9 +73,15 @@ export const BadgeItem: React.FC<BadgeItemProps> = ({ badge, size = 'md', showLa
 
     return (
         <TooltipProvider>
-            <Tooltip>
+            <Tooltip delayDuration={0} open={isOpen} onOpenChange={setIsOpen}>
                 <TooltipTrigger asChild>
-                    <div className={cn("flex flex-col items-center gap-2 group cursor-help", className)}>
+                    <div
+                        className={cn("flex flex-col items-center gap-2 group cursor-help select-none", className)}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setIsOpen(!isOpen);
+                        }}
+                    >
                         <div className={cn(
                             "relative flex items-center justify-center rounded-full transition-all duration-500",
                             sizeClasses[size],
@@ -80,7 +109,7 @@ export const BadgeItem: React.FC<BadgeItemProps> = ({ badge, size = 'md', showLa
                             )}
                         </div>
 
-                        {showLabel && (
+                        {showLabel && isOpen && (
                             <div className="text-center space-y-0.5">
                                 <p className={cn(
                                     "text-xs font-bold leading-tight",
@@ -97,7 +126,7 @@ export const BadgeItem: React.FC<BadgeItemProps> = ({ badge, size = 'md', showLa
                         )}
                     </div>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[200px] text-center p-4">
+                <TooltipContent side="top" className="max-w-[200px] text-center p-4 z-[100]">
                     <p className="font-bold text-sm mb-1">{badge.name}</p>
                     <p className="text-xs text-muted-foreground">{badge.description}</p>
                     {isUnlocked && (

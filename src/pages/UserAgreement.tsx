@@ -15,7 +15,7 @@ const UserAgreement: React.FC = () => {
     const [hasAccepted, setHasAccepted] = useState(false);
     const [acceptedDate, setAcceptedDate] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const { user } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const navigate = useNavigate();
 
     // Check if user has already accepted
@@ -33,6 +33,7 @@ const UserAgreement: React.FC = () => {
                     .eq('id', user.id)
                     .single();
 
+                // Simply check if they've accepted at any point
                 if (profile?.terms_accepted_at) {
                     setHasAccepted(true);
                     setAcceptedDate(profile.terms_accepted_at);
@@ -48,7 +49,11 @@ const UserAgreement: React.FC = () => {
     }, [user]);
 
     const handleAgree = async () => {
-        if (!user) return;
+        if (!user) {
+            showError("Please sign in to continue. You'll be redirected to the login page.");
+            setTimeout(() => navigate('/login'), 2000);
+            return;
+        }
         if (!agreed) {
             showError("You must agree to the Terms and Conditions to proceed.");
             return;
@@ -73,6 +78,9 @@ const UserAgreement: React.FC = () => {
                 .eq('id', user.id);
 
             if (error) throw error;
+
+            // Refresh the profile to ensure AgreementGuard sees the updated data
+            await refreshProfile();
 
             dismissToast(toastId);
             showSuccess("Welcome to Notebook!");
@@ -112,18 +120,24 @@ const UserAgreement: React.FC = () => {
                     <CardContent>
                         <div className="bg-muted/30 border rounded-lg p-1 mb-4">
                             <ScrollArea className="h-64 rounded bg-background/50 p-4 text-sm text-muted-foreground">
-                                <h4 className="font-bold text-foreground mb-2">User Agreement Summary</h4>
+                                <h4 className="font-bold text-foreground mb-2">Study Agreement Overview</h4>
                                 <p className="mb-2">
-                                    1. <strong>Respect the Community:</strong> Be kind and respectful to other learners.
+                                    1. <strong>Academic Honesty:</strong> I will use Notebook as a study aid to enhance my learning, not to facilitate cheating or dishonesty.
                                 </p>
                                 <p className="mb-2">
-                                    2. <strong>Original Content:</strong> Only upload content you have the right to share.
+                                    2. <strong>AI Verification:</strong> I understand that "Nova" (AI) can make mistakes. I will verify important facts with my teacher or textbooks.
                                 </p>
                                 <p className="mb-2">
-                                    3. <strong>Educational Use:</strong> This platform is designed for learning and personal growth.
+                                    3. <strong>Data Respect:</strong> I will only upload content that I have the right to use and will respect the intellectual property of others.
                                 </p>
                                 <p className="mb-2">
-                                    4. <strong>Data Privacy:</strong> We value your data. Your notes and progress are yours.
+                                    4. <strong>Privacy First:</strong> I understand how my data is used (processed by AI to help me learn) as described in the Privacy Policy.
+                                </p>
+                                <p className="mb-2">
+                                    5. <strong>Usage Limits:</strong> I will respect the daily usage limits for my account tier and will not abuse the Service or create multiple accounts to circumvent limits.
+                                </p>
+                                <p className="mb-2">
+                                    6. <strong>File Uploads:</strong> I will only upload files that I have the legal right to use and that do not contain copyrighted material belonging to others.
                                 </p>
                                 <p className="mb-4">
                                     View our full <a href="/terms" target="_blank" className="text-primary hover:underline">Terms and Conditions</a> and <a href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</a>.
@@ -136,9 +150,24 @@ const UserAgreement: React.FC = () => {
                         <Button
                             className="w-full text-lg h-12"
                             size="lg"
-                            onClick={() => navigate('/')}
+                            disabled={loading}
+                            onClick={async () => {
+                                setLoading(true);
+                                try {
+                                    await refreshProfile();
+                                    // Small delay to ensure state updates
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+                                    navigate('/', { replace: true });
+                                } catch (error) {
+                                    console.error('Navigation error:', error);
+                                    // Force navigation even if refresh fails
+                                    navigate('/', { replace: true });
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
                         >
-                            Return to Dashboard
+                            {loading ? 'Loading...' : 'Return to Dashboard'}
                         </Button>
                     </CardFooter>
                 </Card>
@@ -166,18 +195,24 @@ const UserAgreement: React.FC = () => {
                 <CardContent>
                     <div className="bg-muted/30 border rounded-lg p-1 mb-4">
                         <ScrollArea className="h-64 rounded bg-background/50 p-4 text-sm text-muted-foreground">
-                            <h4 className="font-bold text-foreground mb-2">User Agreement Summary</h4>
+                            <h4 className="font-bold text-foreground mb-2">Study Agreement Overview</h4>
                             <p className="mb-2">
-                                1. <strong>Respect the Community:</strong> Be kind and respectful to other learners.
+                                1. <strong>Academic Honesty:</strong> Use Notebook to enhance learning, not for academic dishonesty.
                             </p>
                             <p className="mb-2">
-                                2. <strong>Original Content:</strong> Only upload content you have the right to share.
+                                2. <strong>AI Verification:</strong> "Nova" (AI) is a tool for learning; always verify facts before exams.
                             </p>
                             <p className="mb-2">
-                                3. <strong>Educational Use:</strong> This platform is designed for learning and personal growth.
+                                3. <strong>Content Rights:</strong> Only upload notes and materials you are authorized to use.
                             </p>
                             <p className="mb-2">
-                                4. <strong>Data Privacy:</strong> We value your data. Your notes and progress are yours.
+                                4. <strong>Data Processing:</strong> AI assists you by processing your notes in a secure, private environment.
+                            </p>
+                            <p className="mb-2">
+                                5. <strong>Usage Limits:</strong> Respect daily usage limits and do not create multiple accounts to bypass restrictions.
+                            </p>
+                            <p className="mb-2">
+                                6. <strong>File Uploads:</strong> Only upload files you have legal rights to use.
                             </p>
                             <p className="mb-4">
                                 By clicking "I Agree", you acknowledge that you have read and understood our full <a href="/terms" target="_blank" className="text-primary hover:underline">Terms and Conditions</a> and <a href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</a>.

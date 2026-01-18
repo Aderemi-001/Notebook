@@ -73,16 +73,25 @@ serve(async (req: Request) => {
     });
   }
 
-  const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+  const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
   try {
-    const { textContent, imageParts, numCards, mode, filePath, bucketName } = await req.json();
+    const body = await req.json();
+    console.log("DEBUG: Received Request Body:", JSON.stringify(body, null, 2));
+
+    // Support both camelCase and snake_case for flexibility
+    const textContent = body.textContent || body.text_content;
+    const imageParts = body.imageParts || body.image_parts;
+    const numCards = body.numCards || body.num_cards;
+    const mode = body.mode || body.operation || 'generate';
+    const filePath = body.filePath || body.file_path;
+    const bucketName = body.bucketName || body.bucket_name || body.bucket;
 
     const parts = [];
 
     // --- CASE 1: File Path Provided (Storage Download -> Gemini File API) ---
     if (filePath && bucketName) {
-      console.log(`Processing file from storage: ${bucketName}/${filePath}`);
+      console.log(`DEBUG: CASE 1 - Processing from storage: ${bucketName}/${filePath}`);
 
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -112,15 +121,27 @@ serve(async (req: Request) => {
     }
     // --- CASE 2: Inline Text/Images (Legacy/Small files) ---
     else if ((!textContent || typeof textContent !== 'string' || !textContent.trim()) && (!imageParts || imageParts.length === 0)) {
-      return new Response(JSON.stringify({ error: "No content provided." }), {
+      console.error("DEBUG: CASE 2 - No content provided and no file path.");
+      return new Response(JSON.stringify({
+        error: "No content provided.",
+        debug: {
+          hasFilePath: !!filePath,
+          hasBucket: !!bucketName,
+          hasText: !!textContent,
+          hasImages: !!imageParts,
+          receivedBody: body
+        }
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     } else {
+      console.log("DEBUG: CASE 2 - Processing inline content");
       // ... (Existing text/image logic)
-      // Add text content if available
+      // Add text content if available (Truncate for reliability)
       if (textContent && textContent.trim()) {
-        parts.push({ text: textContent });
+        const safeText = textContent.length > 60000 ? textContent.substring(0, 60000) : textContent;
+        parts.push({ text: safeText });
       }
       // Add image parts if available
       if (imageParts && imageParts.length > 0) {
@@ -226,10 +247,23 @@ serve(async (req: Request) => {
     }
 
     const geminiData = await geminiResponse.json();
-    let resultText = geminiData.candidates[0].content.parts[0].text;
+    console.log("DEBUG: Gemini Full Response:", JSON.stringify(geminiData, null, 2));
+
+    if (!geminiData.candidates || geminiData.candidates.length === 0) {
+      console.error("DEBUG: Gemini returned no candidates.");
+      throw new Error(`AI failed to generate a response. Reasons: ${JSON.stringify(geminiData.promptFeedback || 'No feedback provided')}`);
+    }
+
+    const candidate = geminiData.candidates[0];
+    if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
+      console.error("DEBUG: Gemini candidate has no content/parts.");
+      throw new Error(`AI returned an empty candidate. Finish Reason: ${candidate.finishReason || 'Unknown'}`);
+    }
+
+    let resultText = candidate.content.parts[0].text;
 
     if (!resultText) {
-      throw new Error("AI failed to generate a response.");
+      throw new Error("AI failed to generate a text response.");
     }
 
     // Attempt to extract JSON from markdown if present

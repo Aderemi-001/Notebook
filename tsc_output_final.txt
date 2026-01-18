@@ -1,0 +1,401 @@
+src/components/AddExistingSetToGroupDialog.tsx(121,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ id: string; title: string; description: string | null; group_id: string; user_id: string; }[]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Argument of type '{ id: string; title: string; description: string | null; group_id: string; user_id: string; }[]' is not assignable to parameter of type 'never[]'.
+      Type '{ id: string; title: string; description: string | null; group_id: string; user_id: string; }' is not assignable to type 'never'.
+src/components/Chatbot.tsx(54,25): error TS2339: Property 'id' does not exist on type 'never'.
+src/components/Chatbot.tsx(55,28): error TS2339: Property 'title' does not exist on type 'never'.
+src/components/Chatbot.tsx(56,34): error TS2339: Property 'description' does not exist on type 'never'.
+src/components/Chatbot.tsx(57,31): error TS2339: Property 'cards' does not exist on type 'never'.
+src/components/dashboard/DashboardStats.tsx(49,63): error TS2339: Property 'status' does not exist on type 'never'.
+src/components/dashboard/DashboardStats.tsx(49,91): error TS2339: Property 'repetition_level' does not exist on type 'never'.
+src/components/dashboard/DashboardStats.tsx(60,42): error TS2339: Property 'current_streak' does not exist on type 'never'.
+src/components/dashboard/NotificationsSheet.tsx(101,75): error TS2345: Argument of type '{ is_read: boolean; }' is not assignable to parameter of type 'never'.
+src/components/dashboard/NotificationsSheet.tsx(127,75): error TS2345: Argument of type '{ is_read: boolean; }' is not assignable to parameter of type 'never'.
+src/components/dashboard/QuickActions.tsx(35,51): error TS2339: Property 'title' does not exist on type 'never'.
+src/components/dashboard/QuickActions.tsx(35,79): error TS2339: Property 'title' does not exist on type 'never'.
+src/components/dashboard/QuickActions.tsx(35,120): error TS2339: Property 'title' does not exist on type 'never'.
+src/components/dashboard/QuickActions.tsx(36,64): error TS2339: Property 'id' does not exist on type 'never'.
+src/components/dashboard/RecentActivity.tsx(44,47): error TS2339: Property 'updated_at' does not exist on type 'never'.
+src/components/dashboard/RecentActivity.tsx(44,71): error TS2698: Spread types may only be created from object types.
+src/components/dashboard/RecentActivity.tsx(44,113): error TS2339: Property 'updated_at' does not exist on type 'never'.
+src/components/dashboard/RecentActivity.tsx(45,48): error TS2339: Property 'updated_at' does not exist on type 'never'.
+src/components/dashboard/RecentActivity.tsx(45,72): error TS2698: Spread types may only be created from object types.
+src/components/dashboard/RecentActivity.tsx(45,115): error TS2339: Property 'updated_at' does not exist on type 'never'.
+src/components/essay/EssayGraderSettings.tsx(49,26): error TS2339: Property 'id' does not exist on type 'never'.
+src/components/essay/EssayGraderSettings.tsx(50,42): error TS2339: Property 'target_grade_level' does not exist on type 'never'.
+src/components/essay/EssayGraderSettings.tsx(51,46): error TS2339: Property 'target_sentence_length' does not exist on type 'never'.
+src/components/essay/EssayGraderSettings.tsx(52,49): error TS2339: Property 'target_transition_density' does not exist on type 'never'.
+src/components/essay/EssayGraderSettings.tsx(53,37): error TS2339: Property 'is_calibrated' does not exist on type 'never'.
+src/components/essay/EssayGraderSettings.tsx(84,18): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ target_grade_level: number; target_sentence_length: number; target_transition_density: number; is_calibrated: boolean; calibration_essay_text: string; user_id: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/components/notebook/StudySetSelector.tsx(66,25): error TS18047: 'newSet' is possibly 'null'.
+src/components/notebook/UnifiedEditor.tsx(92,26): error TS2339: Property 'id' does not exist on type 'never'.
+src/components/notebook/UnifiedEditor.tsx(93,27): error TS2339: Property 'title' does not exist on type 'never'.
+src/components/notebook/UnifiedEditor.tsx(95,29): error TS2339: Property 'content' does not exist on type 'never'.
+src/components/notebook/UnifiedEditor.tsx(122,50): error TS2339: Property 'id' does not exist on type 'never'.
+src/components/notebook/UnifiedEditor.tsx(146,25): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/components/notebook/UnifiedEditor.tsx(175,37): error TS2339: Property 'title' does not exist on type 'never'.
+src/components/notebook/UnifiedEditor.tsx(284,46): error TS2339: Property 'study_set_id' does not exist on type 'never'.
+src/components/profile/AvatarSelector.tsx(64,25): error TS2345: Argument of type '{ avatar_url: string; }' is not assignable to parameter of type 'never'.
+src/components/profile/AvatarSelector.tsx(110,25): error TS2345: Argument of type '{ avatar_url: string; }' is not assignable to parameter of type 'never'.
+src/components/StudySetFormFields.tsx(54,36): error TS2339: Property 'name' does not exist on type 'never'.
+src/components/StudySetFormFields.tsx(58,40): error TS2339: Property 'id' does not exist on type 'never'.
+src/hooks/use-ai-focus.ts(42,39): error TS2339: Property 'cards' does not exist on type 'never'.
+src/hooks/use-ai-focus.ts(70,39): error TS2339: Property 'cards' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(60,34): error TS2339: Property 'inviter_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(60,65): error TS2339: Property 'inviter_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(60,114): error TS2339: Property 'inviter_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(61,14): error TS2339: Property 'inviter_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(63,34): error TS2339: Property 'invitee_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(63,65): error TS2339: Property 'invitee_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(63,114): error TS2339: Property 'invitee_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(64,14): error TS2339: Property 'invitee_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(68,7): error TS2698: Spread types may only be created from object types.
+src/hooks/use-collaborations.ts(69,24): error TS2339: Property 'study_sets' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(79,13): error TS2345: Argument of type '{ status: "accepted" | "rejected" | "revoked"; updated_at: string; }' is not assignable to parameter of type 'never'.
+src/hooks/use-collaborations.ts(98,32): error TS2339: Property 'inviter_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(98,63): error TS2339: Property 'inviter_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(98,112): error TS2339: Property 'inviter_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(99,12): error TS2339: Property 'inviter_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(101,32): error TS2339: Property 'invitee_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(101,63): error TS2339: Property 'invitee_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(101,112): error TS2339: Property 'invitee_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(102,12): error TS2339: Property 'invitee_profile' does not exist on type 'never'.
+src/hooks/use-collaborations.ts(106,5): error TS2698: Spread types may only be created from object types.
+src/hooks/use-collaborations.ts(107,22): error TS2339: Property 'study_sets' does not exist on type 'never'.
+src/hooks/use-due-cards-count.ts(12,36): error TS2345: Argument of type '{ p_user_id: string; }' is not assignable to parameter of type 'undefined'.
+src/hooks/use-due-cards-count.ts(20,28): error TS2339: Property 'length' does not exist on type 'never'.
+src/hooks/use-file-import.ts(54,103): error TS2345: Argument of type '{ p_user_id: any; p_file_type: string; p_file_size: number; }' is not assignable to parameter of type 'undefined'.
+src/hooks/use-file-import.ts(65,23): error TS2339: Property 'allowed' does not exist on type 'never'.
+src/hooks/use-file-import.ts(66,36): error TS2339: Property 'error' does not exist on type 'never'.
+src/hooks/use-file-import.ts(230,98): error TS2345: Argument of type '{ p_user_id: any; }' is not assignable to parameter of type 'undefined'.
+src/hooks/use-file-import.ts(238,38): error TS2339: Property 'remaining' does not exist on type 'never'.
+src/hooks/use-file-import.ts(239,35): error TS2339: Property 'limit' does not exist on type 'never'.
+src/hooks/use-file-import.ts(241,74): error TS2339: Property 'remaining' does not exist on type 'never'.
+src/hooks/use-file-import.ts(245,73): error TS2339: Property 'remaining' does not exist on type 'never'.
+src/hooks/use-file-import.ts(415,13): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ user_id: any; name: string; description: string | undefined; }[]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Argument of type '{ user_id: any; name: string; description: string | undefined; }[]' is not assignable to parameter of type 'never[]'.
+      Type '{ user_id: any; name: string; description: string | undefined; }' is not assignable to type 'never'.
+src/hooks/use-file-import.ts(436,68): error TS2339: Property 'name' does not exist on type 'never'.
+src/hooks/use-file-import.ts(436,76): error TS2339: Property 'id' does not exist on type 'never'.
+src/hooks/use-file-import.ts(453,29): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ user_id: string; source_concept_id: string; target_concept_id: string; type: string; strength: number | undefined; }[]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Argument of type '{ user_id: string; source_concept_id: string; target_concept_id: string; type: string; strength: number | undefined; }[]' is not assignable to parameter of type 'never[]'.
+      Type '{ user_id: string; source_concept_id: string; target_concept_id: string; type: string; strength: number | undefined; }' is not assignable to type 'never'.
+src/hooks/use-file-import.ts(470,93): error TS2345: Argument of type '{ p_user_id: any; p_cards_generated: number; }' is not assignable to parameter of type 'undefined'.
+src/hooks/use-study-set-data.ts(33,22): error TS2339: Property 'is_admin' does not exist on type 'never'.
+src/hooks/use-study-set-data.ts(70,24): error TS2339: Property 'user_id' does not exist on type 'never'.
+src/hooks/use-study-set-data.ts(72,12): error TS2698: Spread types may only be created from object types.
+src/hooks/use-study-set-groups.ts(26,5): error TS2698: Spread types may only be created from object types.
+src/hooks/use-study-set-groups.ts(27,22): error TS2339: Property 'created_at' does not exist on type 'never'.
+src/hooks/use-study-set-groups.ts(46,10): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "study_set_groups", never, "POST">', gave the following error.
+    Argument of type '{ name: string; user_id: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "study_set_groups", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'name' does not exist in type 'never[]'.
+src/hooks/use-user-preferences.ts(61,6): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ user_id: string; default_flashcard_side?: "term" | "definition" | undefined; confirm_deletion?: boolean | undefined; default_num_exam_questions?: number | undefined; default_exam_question_types?: string[] | undefined; ... 9 more ...; preferred_language?: string | undefined; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/hooks/useAuth.tsx(85,39): error TS2339: Property 'status' does not exist on type 'never'.
+src/hooks/useAuth.tsx(85,76): error TS2339: Property 'status' does not exist on type 'never'.
+src/hooks/useAuth.tsx(85,116): error TS2339: Property 'is_admin' does not exist on type 'never'.
+src/hooks/useAuth.tsx(89,27): error TS2339: Property 'id' does not exist on type 'never'.
+src/hooks/useAuth.tsx(90,37): error TS2339: Property 'display_name' does not exist on type 'never'.
+src/hooks/useAuth.tsx(91,35): error TS2339: Property 'avatar_url' does not exist on type 'never'.
+src/hooks/useAuth.tsx(92,33): error TS2339: Property 'is_admin' does not exist on type 'never'.
+src/hooks/useAuth.tsx(93,28): error TS2339: Property 'bio' does not exist on type 'never'.
+src/hooks/useAuth.tsx(94,33): error TS2339: Property 'location' does not exist on type 'never'.
+src/hooks/useAuth.tsx(95,32): error TS2339: Property 'website' does not exist on type 'never'.
+src/hooks/useAuth.tsx(96,39): error TS2339: Property 'twitter_handle' does not exist on type 'never'.
+src/hooks/useAuth.tsx(97,41): error TS2339: Property 'instagram_handle' does not exist on type 'never'.
+src/hooks/useAuth.tsx(98,42): error TS2339: Property 'is_public_profile' does not exist on type 'never'.
+src/hooks/useAuth.tsx(100,46): error TS2339: Property 'status' does not exist on type 'never'.
+src/hooks/useAuth.tsx(101,42): error TS2339: Property 'terms_accepted_at' does not exist on type 'never'.
+src/hooks/useAuth.tsx(110,46): error TS2339: Property 'status' does not exist on type 'never'.
+src/hooks/useSubscription.tsx(44,43): error TS2339: Property 'trial_ends_at' does not exist on type 'never'.
+src/hooks/useSubscription.tsx(44,73): error TS2339: Property 'trial_ends_at' does not exist on type 'never'.
+src/hooks/useSubscription.tsx(45,44): error TS2339: Property 'current_period_end' does not exist on type 'never'.
+src/hooks/useSubscription.tsx(45,79): error TS2339: Property 'current_period_end' does not exist on type 'never'.
+src/hooks/useSubscription.tsx(48,42): error TS2339: Property 'has_used_trial' does not exist on type 'never'.
+src/hooks/useSubscription.tsx(53,30): error TS2339: Property 'status' does not exist on type 'never'.
+src/hooks/useSubscription.tsx(57,35): error TS2339: Property 'status' does not exist on type 'never'.
+src/hooks/useSubscription.tsx(61,40): error TS2339: Property 'status' does not exist on type 'never'.
+src/hooks/useSubscription.tsx(62,40): error TS2339: Property 'plan_id' does not exist on type 'never'.
+src/layouts/DashboardLayout.tsx(59,57): error TS2339: Property 'key' does not exist on type 'never'.
+src/layouts/DashboardLayout.tsx(59,86): error TS2339: Property 'value' does not exist on type 'never'.
+src/layouts/DashboardLayout.tsx(63,58): error TS2339: Property 'key' does not exist on type 'never'.
+src/layouts/DashboardLayout.tsx(63,87): error TS2339: Property 'value' does not exist on type 'never'.
+src/pages/admin/AdminBroadcasts.tsx(152,57): error TS2339: Property 'key' does not exist on type 'never'.
+src/pages/admin/AdminBroadcasts.tsx(152,86): error TS2339: Property 'value' does not exist on type 'never'.
+src/pages/admin/AdminBroadcasts.tsx(153,59): error TS2339: Property 'key' does not exist on type 'never'.
+src/pages/admin/AdminBroadcasts.tsx(153,88): error TS2339: Property 'value' does not exist on type 'never'.
+src/pages/admin/AdminBroadcasts.tsx(183,57): error TS2339: Property 'filter' does not exist on type 'never'.
+src/pages/admin/AdminBroadcasts.tsx(261,18): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ key: string; value: any; updated_at: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, but 'key' does not exist in type 'never[]'. Did you mean to write 'keys'?
+src/pages/admin/AdminBroadcasts.tsx(299,18): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ key: string; value: { active: boolean; }; updated_at: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, but 'key' does not exist in type 'never[]'. Did you mean to write 'keys'?
+src/pages/admin/AdminBroadcasts.tsx(338,79): error TS2345: Argument of type '{ p_user_ids: string[]; p_message: string; p_type: "success" | "info" | "alert" | "warning"; p_title: string; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminContent.tsx(60,80): error TS2345: Argument of type '{ search_query: string; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminContent.tsx(67,48): error TS2339: Property 'map' does not exist on type 'never'.
+src/pages/admin/AdminContent.tsx(94,48): error TS2339: Property 'map' does not exist on type 'never'.
+src/pages/admin/AdminContent.tsx(127,74): error TS2345: Argument of type '{ target_set_id: string; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminLogs.tsx(39,17): error TS2698: Spread types may only be created from object types.
+src/pages/admin/AdminLogs.tsx(40,26): error TS2339: Property 'url' does not exist on type 'never'.
+src/pages/admin/AdminLogs.tsx(41,33): error TS2339: Property 'user_agent' does not exist on type 'never'.
+src/pages/admin/AdminLogs.tsx(42,34): error TS2339: Property 'is_resolved' does not exist on type 'never'.
+src/pages/admin/AdminLogs.tsx(56,21): error TS2345: Argument of type '{ is_resolved: boolean; }' is not assignable to parameter of type 'never'.
+src/pages/admin/AdminOverview.tsx(94,88): error TS2345: Argument of type '{ limit_count: number; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminUsers.tsx(192,94): error TS2345: Argument of type '{ provided_code: string; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminUsers.tsx(196,33): error TS2352: Conversion of type 'null' to type '{ valid: boolean; error?: string | undefined; message?: string | undefined; attempts?: number | undefined; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/pages/admin/AdminUsers.tsx(236,60): error TS2345: Argument of type '{ terminal_command: string; command_args: string[]; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminUsers.tsx(285,95): error TS2345: Argument of type '{ p_user_ids: string[]; p_message: string; p_type: string; p_title: string; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminUsers.tsx(392,30): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ key: string; value: { message: string; active: boolean; type: string; isPopup: boolean; expiresAt: null; }; updated_at: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, but 'key' does not exist in type 'never[]'. Did you mean to write 'keys'?
+src/pages/admin/AdminUsers.tsx(546,23): error TS2339: Property 'value' does not exist on type 'never'.
+src/pages/admin/AdminUsers.tsx(547,40): error TS2339: Property 'value' does not exist on type 'never'.
+src/pages/admin/AdminUsers.tsx(559,41): error TS2339: Property 'created_at' does not exist on type 'never'.
+src/pages/admin/AdminUsers.tsx(582,51): error TS2339: Property 'is_admin' does not exist on type 'never'.
+src/pages/admin/AdminUsers.tsx(597,18): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ key: string; value: { active_defense: boolean; }; updated_by: string | undefined; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, but 'key' does not exist in type 'never[]'. Did you mean to write 'keys'?
+src/pages/admin/AdminUsers.tsx(612,77): error TS2345: Argument of type '{ p_active_defense: boolean; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminUsers.tsx(642,25): error TS2345: Argument of type '{ resolved: boolean; action_taken: string; }' is not assignable to parameter of type 'never'.
+src/pages/admin/AdminUsers.tsx(677,68): error TS2345: Argument of type '{ target_user_id: string; ban: boolean; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminUsers.tsx(696,73): error TS2345: Argument of type '{ target_user_id: string; duration_interval: string; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminUsers.tsx(719,82): error TS2345: Argument of type '{ target_user_id: string; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminUsers.tsx(770,79): error TS2345: Argument of type '{ target_user_id: string; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminUsers.tsx(793,78): error TS2345: Argument of type '{ target_user_id: string; }' is not assignable to parameter of type 'undefined'.
+src/pages/admin/AdminUsers.tsx(818,78): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "security_exceptions", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; reason: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "security_exceptions", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/pages/CognitiveConstellation.tsx(65,9): error TS2698: Spread types may only be created from object types.
+src/pages/CognitiveConstellation.tsx(66,24): error TS2339: Property 'description' does not exist on type 'never'.
+src/pages/CognitiveConstellation.tsx(71,58): error TS2339: Property 'id' does not exist on type 'never'.
+src/pages/CognitiveConstellation.tsx(71,79): error TS2339: Property 'id' does not exist on type 'never'.
+src/pages/CreateGroup.tsx(85,10): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "study_set_groups", never, "POST">', gave the following error.
+    Argument of type '{ user_id: any; name: string; description: string | undefined; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "study_set_groups", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/pages/CreateGroup.tsx(104,34): error TS2339: Property 'name' does not exist on type 'never'.
+src/pages/CreateStudySet.tsx(122,32): error TS2339: Property 'id' does not exist on type 'never'.
+src/pages/DailyReview.tsx(67,36): error TS2345: Argument of type '{ p_user_id: string; p_set_ids: string[] | null; }' is not assignable to parameter of type 'undefined'.
+src/pages/DailyReview.tsx(77,43): error TS2339: Property 'map' does not exist on type 'never'.
+src/pages/DailyReview.tsx(632,44): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ repetition_level: number; ease_factor: number; next_review_at: string; status: "learning" | "mastered"; user_id: string; card_id: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/pages/dashboard/DashboardMobile.tsx(63,63): error TS2339: Property 'status' does not exist on type 'never'.
+src/pages/dashboard/DashboardMobile.tsx(63,91): error TS2339: Property 'repetition_level' does not exist on type 'never'.
+src/pages/dashboard/DashboardMobile.tsx(78,39): error TS2339: Property 'current_streak' does not exist on type 'never'.
+src/pages/EditGroup.tsx(116,17): error TS2345: Argument of type '{ name: string; description: string | undefined; }' is not assignable to parameter of type 'never'.
+src/pages/GenerateEssayQuestions.tsx(152,72): error TS2339: Property 'term' does not exist on type 'never'.
+src/pages/GenerateEssayQuestions.tsx(168,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "essay_questions", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; study_set_id: string; question_text: string; suggested_points: string[]; }[]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "essay_questions", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; study_set_id: string; question_text: string; suggested_points: string[]; }[]' is not assignable to parameter of type 'never[]'.
+      Type '{ user_id: string; study_set_id: string; question_text: string; suggested_points: string[]; }' is not assignable to type 'never'.
+src/pages/GenerateEssayQuestions.tsx(175,15): error TS2339: Property 'id' does not exist on type 'never'.
+src/pages/GenerateEssayQuestions.tsx(176,26): error TS2339: Property 'question_text' does not exist on type 'never'.
+src/pages/GenerateEssayQuestions.tsx(177,30): error TS2339: Property 'suggested_points' does not exist on type 'never'.
+src/pages/GenerateEssayQuestions.tsx(179,21): error TS2339: Property 'suggested_points' does not exist on type 'never'.
+src/pages/Index.tsx(127,66): error TS2345: Argument of type '{ title: string; description: string | null; is_public: boolean; }' is not assignable to parameter of type 'never'.
+src/pages/Login.tsx(89,21): error TS2345: Argument of type '{ terms_accepted_at: string; }' is not assignable to parameter of type 'never'.
+src/pages/PaymentResult.tsx(36,58): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "notifications", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; message: string; type: string; is_read: boolean; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "notifications", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/pages/Pricing.tsx(59,50): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "notifications", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; title: string; message: string; type: string; read: boolean; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "notifications", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/pages/Pricing.tsx(152,50): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "notifications", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; title: string; message: string; type: string; read: boolean; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "notifications", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/pages/Profile.tsx(155,5): error TS2698: Spread types may only be created from object types.
+src/pages/Profile.tsx(213,17): error TS2345: Argument of type '{ display_name: string; is_public_profile: boolean; bio?: string | null | undefined; location?: string | null | undefined; website?: string | null | undefined; twitter_handle?: string | null | undefined; instagram_handle?: string | ... 1 more ... | undefined; }' is not assignable to parameter of type 'never'.
+src/pages/Statistics.tsx(33,75): error TS2345: Argument of type '{ p_user_id: string; }' is not assignable to parameter of type 'undefined'.
+src/pages/Statistics.tsx(39,64): error TS2345: Argument of type '{ p_user_id: string; }' is not assignable to parameter of type 'undefined'.
+src/pages/StudyMode.tsx(252,44): error TS2339: Property 'repetition_level' does not exist on type 'never'.
+src/pages/StudyMode.tsx(253,39): error TS2339: Property 'ease_factor' does not exist on type 'never'.
+src/pages/StudyMode.tsx(254,42): error TS2339: Property 'next_review_at' does not exist on type 'never'.
+src/pages/StudyMode.tsx(255,35): error TS2339: Property 'status' does not exist on type 'never'.
+src/pages/StudyMode.tsx(261,10): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ user_id: string; card_id: string; status: "mastered" | "learning"; repetition_level: number; ease_factor: number; next_review_at: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/pages/StudySetDetail.tsx(72,24): error TS2339: Property 'is_admin' does not exist on type 'never'.
+src/pages/StudySetDetail.tsx(132,43): error TS2339: Property 'cards' does not exist on type 'never'.
+src/pages/StudySetDetail.tsx(162,12): error TS2698: Spread types may only be created from object types.
+src/pages/StudySetDetail.tsx(184,5): error TS2698: Spread types may only be created from object types.
+src/pages/StudySetDetail.tsx(185,22): error TS2339: Property 'updated_at' does not exist on type 'never'.
+src/pages/StudySetDetail.tsx(222,17): error TS2345: Argument of type '{ term: string; definition: string; }' is not assignable to parameter of type 'never'.
+src/pages/StudySetDetail.tsx(349,17): error TS2345: Argument of type '{ is_flagged: boolean; }' is not assignable to parameter of type 'never'.
+src/pages/StudySetsLayout.tsx(43,31): error TS18047: 'data' is possibly 'null'.
+src/pages/TakeExam.tsx(55,32): error TS2339: Property 'is_public' does not exist on type 'never'.
+src/pages/TakeExam.tsx(55,63): error TS2339: Property 'user_id' does not exist on type 'never'.
+src/pages/TakeExam.tsx(60,22): error TS2339: Property 'is_admin' does not exist on type 'never'.
+src/pages/TakeExam.tsx(88,48): error TS2339: Property 'id' does not exist on type 'never'.
+src/pages/TakeExam.tsx(88,60): error TS2339: Property 'id' does not exist on type 'never'.
+src/pages/TakeExam.tsx(92,23): error TS2339: Property 'definition' does not exist on type 'never'.
+src/pages/TakeExam.tsx(94,47): error TS2339: Property 'definition' does not exist on type 'never'.
+src/pages/TakeExam.tsx(97,20): error TS2339: Property 'id' does not exist on type 'never'.
+src/pages/TakeExam.tsx(98,26): error TS2339: Property 'term' does not exist on type 'never'.
+src/pages/TakeExam.tsx(99,24): error TS2339: Property 'definition' does not exist on type 'never'.
+src/pages/UserAgreement.tsx(37,30): error TS2339: Property 'terms_accepted_at' does not exist on type 'never'.
+src/pages/UserAgreement.tsx(39,45): error TS2339: Property 'terms_accepted_at' does not exist on type 'never'.
+src/pages/UserAgreement.tsx(74,25): error TS2345: Argument of type '{ terms_accepted_at: string; }' is not assignable to parameter of type 'never'.
+src/services/analyticsService.ts(20,39): error TS2339: Property 'last_reviewed_at' does not exist on type 'never'.
+src/services/analyticsService.ts(45,53): error TS2339: Property 'next_review_at' does not exist on type 'never'.
+src/services/analyticsService.ts(45,82): error TS2339: Property 'next_review_at' does not exist on type 'never'.
+src/services/analyticsService.ts(50,69): error TS2339: Property 'repetition_level' does not exist on type 'never'.
+src/services/analyticsService.ts(56,60): error TS2339: Property 'last_reviewed_at' does not exist on type 'never'.
+src/services/analyticsService.ts(56,91): error TS2339: Property 'last_reviewed_at' does not exist on type 'never'.
+src/services/constellationService.ts(44,55): error TS2339: Property 'term' does not exist on type 'never'.
+src/services/constellationService.ts(44,78): error TS2339: Property 'definition' does not exist on type 'never'.
+src/services/constellationService.ts(63,71): error TS2339: Property 'name' does not exist on type 'never'.
+src/services/constellationService.ts(63,93): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/constellationService.ts(81,25): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "concepts", never, "POST">', gave the following error.
+    Argument of type 'any[]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "concepts", never, "POST">', gave the following error.
+    Argument of type 'any[]' is not assignable to parameter of type 'never[]'.
+      Type 'any' is not assignable to type 'never'.
+src/services/constellationService.ts(87,52): error TS2339: Property 'name' does not exist on type 'never'.
+src/services/constellationService.ts(87,74): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/constellationService.ts(114,25): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "concept_relationships", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; source_concept_id: any; target_concept_id: any; type: string; strength: number; }[]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "concept_relationships", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; source_concept_id: any; target_concept_id: any; type: string; strength: number; }[]' is not assignable to parameter of type 'never[]'.
+      Type '{ user_id: string; source_concept_id: any; target_concept_id: any; type: string; strength: number; }' is not assignable to type 'never'.
+src/services/constellationService.ts(147,27): error TS2339: Property 'source_concept_id' does not exist on type 'never'.
+src/services/constellationService.ts(148,27): error TS2339: Property 'target_concept_id' does not exist on type 'never'.
+src/services/constellationService.ts(149,25): error TS2339: Property 'type' does not exist on type 'never'.
+src/services/constellationService.ts(150,29): error TS2339: Property 'strength' does not exist on type 'never'.
+src/services/essayService.ts(37,49): error TS2339: Property 'study_sets' does not exist on type 'never'.
+src/services/essayService.ts(37,68): error TS2339: Property 'study_sets' does not exist on type 'never'.
+src/services/essayService.ts(37,89): error TS2339: Property 'study_sets' does not exist on type 'never'.
+src/services/essayService.ts(40,42): error TS2339: Property 'is_admin' does not exist on type 'never'.
+src/services/gamificationService.ts(28,43): error TS2339: Property 'last_study_date' does not exist on type 'never'.
+src/services/gamificationService.ts(44,42): error TS2339: Property 'current_streak' does not exist on type 'never'.
+src/services/gamificationService.ts(55,60): error TS2339: Property 'longest_streak' does not exist on type 'never'.
+src/services/gamificationService.ts(60,25): error TS2345: Argument of type '{ current_streak: number; longest_streak: number; last_study_date: string; }' is not assignable to parameter of type 'never'.
+src/services/gamificationService.ts(78,52): error TS2339: Property 'current_streak' does not exist on type 'never'.
+src/services/gamificationService.ts(126,17): error TS2698: Spread types may only be created from object types.
+src/services/gamificationService.ts(127,51): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/gamificationService.ts(166,42): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/gamificationService.ts(171,26): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "badges", never, "POST">', gave the following error.
+    Argument of type '{ slug: string; name: string; description: string; icon_name: string; category: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "badges", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'slug' does not exist in type 'never[]'.
+src/services/gamificationService.ts(182,45): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/gamificationService.ts(186,42): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/gamificationService.ts(194,26): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "user_badges", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; badge_id: any; awarded_at: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "user_badges", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/services/notebookService.ts(28,73): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "notes", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; title: string; content: { type: string; version: number; image: null; background: string; content?: undefined; } | { type: string; content: { type: string; }[]; version?: undefined; image?: undefined; background?: undefined; }; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "notes", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; title: string; content: { type: string; version: number; image: null; background: string; content?: undefined; } | { type: string; content: { type: string; }[]; version?: undefined; image?: undefined; background?: undefined; }; }' is not assignable to parameter of type 'never[]'.
+      Type '{ user_id: string; title: string; content: { type: string; version: number; image: null; background: string; content?: undefined; } | { type: string; content: { type: string; }[]; version?: undefined; image?: undefined; background?: undefined; }; }' is missing the following properties from type 'never[]': length, pop, push, concat, and 29 more.
+src/services/notebookService.ts(38,25): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/services/searchService.ts(58,21): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/searchService.ts(60,24): error TS2339: Property 'title' does not exist on type 'never'.
+src/services/searchService.ts(61,30): error TS2339: Property 'description' does not exist on type 'never'.
+src/services/searchService.ts(62,31): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/searchService.ts(63,29): error TS2339: Property 'updated_at' does not exist on type 'never'.
+src/services/searchService.ts(69,22): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/searchService.ts(71,25): error TS2339: Property 'title' does not exist on type 'never'.
+src/services/searchService.ts(73,43): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/searchService.ts(74,30): error TS2339: Property 'updated_at' does not exist on type 'never'.
+src/services/studySetService.ts(86,14): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ user_id: string; set_id: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/services/studySetService.ts(149,18): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "study_sets", never, "POST">', gave the following error.
+    Argument of type '{ title: string; description: string; is_public: boolean; user_id: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "study_sets", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'title' does not exist in type 'never[]'.
+src/services/studySetService.ts(169,21): error TS2345: Argument of type 'Partial<Pick<StudySet, "title" | "description" | "is_public">>' is not assignable to parameter of type 'never'.
+src/services/studySetService.ts(201,14): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "study_sets", never, "POST">', gave the following error.
+    Argument of type '{ title: string; description: string | undefined; is_public: boolean; group_id: string | null | undefined; source_text: string | null | undefined; user_id: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "study_sets", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'title' does not exist in type 'never[]'.
+src/services/studySetService.ts(218,29): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/studySetService.ts(225,25): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "cards", never, "POST">', gave the following error.
+    Argument of type '{ set_id: any; term: string; definition: string; }[]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "cards", never, "POST">', gave the following error.
+    Argument of type '{ set_id: any; term: string; definition: string; }[]' is not assignable to parameter of type 'never[]'.
+      Type '{ set_id: any; term: string; definition: string; }' is not assignable to type 'never'.
+src/services/studySetService.ts(254,21): error TS2345: Argument of type '{ title: string; description: string | undefined; is_public: boolean; group_id: string | null | undefined; source_text: string | null | undefined; }' is not assignable to parameter of type 'never'.
+src/services/studySetService.ts(277,69): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/studySetService.ts(292,25): error TS2345: Argument of type '{ term: string; definition: string; }' is not assignable to parameter of type 'never'.
+src/services/studySetService.ts(306,25): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "cards", never, "POST">', gave the following error.
+    Argument of type '{ set_id: string; term: string; definition: string; }[]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "cards", never, "POST">', gave the following error.
+    Argument of type '{ set_id: string; term: string; definition: string; }[]' is not assignable to parameter of type 'never[]'.
+      Type '{ set_id: string; term: string; definition: string; }' is not assignable to type 'never'.
+src/services/studySetService.ts(346,74): error TS2339: Property 'name' does not exist on type 'never'.
+src/services/studySetService.ts(346,82): error TS2339: Property 'id' does not exist on type 'never'.
+src/services/studySetService.ts(363,75): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "card_concepts", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; card_id: string; concept_id: any; }[]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "card_concepts", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string; card_id: string; concept_id: any; }[]' is not assignable to parameter of type 'never[]'.
+      Type '{ user_id: string; card_id: string; concept_id: any; }' is not assignable to type 'never'.
+src/utils/errorLogger.ts(14,43): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "error_logs", never, "POST">', gave the following error.
+    Argument of type '{ user_id: string | null; error_message: string; component_stack: string | undefined; url: string; user_agent: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "error_logs", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type 'never[]'.
+src/utils/NovaMemory.ts(113,18): error TS2339: Property 'easiness_factor' does not exist on type 'never'.
+src/utils/NovaMemory.ts(114,18): error TS2339: Property 'interval_days' does not exist on type 'never'.
+src/utils/NovaMemory.ts(115,18): error TS2339: Property 'repetitions' does not exist on type 'never'.
+src/utils/NovaMemory.ts(121,21): error TS2345: Argument of type '{ easiness_factor: number; interval_days: number; repetitions: number; next_review: string; }' is not assignable to parameter of type 'never'.
+src/utils/NovaMemory.ts(157,47): error TS2339: Property 'next_review' does not exist on type 'never'.
+src/utils/NovaMemory.ts(157,64): error TS2339: Property 'next_review' does not exist on type 'never'.
+src/utils/NovaMemory.ts(158,47): error TS2339: Property 'easiness_factor' does not exist on type 'never'.
+src/utils/NovaMemory.ts(158,83): error TS2339: Property 'interval_days' does not exist on type 'never'.
+src/utils/NovaMemory.ts(159,47): error TS2339: Property 'repetitions' does not exist on type 'never'.

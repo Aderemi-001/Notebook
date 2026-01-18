@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Loader2, Library } from "lucide-react";
+import { Plus, Search, Loader2, Library, Folder } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatDistanceToNow } from "date-fns";
+import { safeFormatDistanceToNow } from "@/utils/dateUtils";
 import { cn } from "@/lib/utils";
 import StudySetDetail from "@/pages/StudySetDetail";
 import { useAuth } from "@/hooks/useAuth";
@@ -92,14 +92,25 @@ const StudySetsLayout: React.FC = () => {
                                 Explorer
                             </h2>
                         </div>
-                        <Button
-                            size="icon"
-                            onClick={handleCreateSet}
-                            disabled={isCreating}
-                            className="h-10 w-10 rounded-xl shadow-premium hover:shadow-premium-hover transition-all active:scale-95 bg-primary"
-                        >
-                            {isCreating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => navigate('/groups')}
+                                className="h-10 w-10 rounded-xl hover:bg-secondary"
+                                title="Manage Groups"
+                            >
+                                <Folder className="h-5 w-5" />
+                            </Button>
+                            <Button
+                                size="icon"
+                                onClick={handleCreateSet}
+                                disabled={isCreating}
+                                className="h-10 w-10 rounded-xl shadow-premium hover:shadow-premium-hover transition-all active:scale-95 bg-primary"
+                            >
+                                {isCreating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Premium Search */}
@@ -172,7 +183,7 @@ const StudySetsLayout: React.FC = () => {
                                             "text-[10px] font-medium opacity-60",
                                             setId === set.id ? "text-white" : "text-muted-foreground"
                                         )}>
-                                            {formatDistanceToNow(new Date(set.created_at), { addSuffix: true })}
+                                            {safeFormatDistanceToNow(set.created_at)}
                                         </span>
                                     </div>
                                 </button>

@@ -42,7 +42,7 @@ export const CHATBOT_INTENTS: Intent[] = [
     {
         id: 'NAV_EXPLORE',
         keywords: ['explore', 'public sets', 'search sets', 'find sets', 'community', 'other users'],
-        response: "Check out **Explore Sets** to find public study materials created by the community. You can search by topic and save them to your library!"
+        response: "Check out **Public Study Sets** to find public study materials created by the community. You can search by topic and save them to your library!"
     },
 
     // --- Study & Practice ---

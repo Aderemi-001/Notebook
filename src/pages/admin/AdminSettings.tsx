@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, Lock, Server } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export const AdminSettings = () => {
     const [security, setSecurity] = useState({ rls_enabled: false, escalation_protection: false });
@@ -9,7 +11,7 @@ export const AdminSettings = () => {
     useEffect(() => {
         const checkSecurity = async () => {
             try {
-                const { data, error } = await supabase.rpc('admin_get_security_status' as any);
+                const { data } = await supabase.rpc('admin_get_security_status' as any);
                 if (data) {
                     setSecurity(data as any);
                 }

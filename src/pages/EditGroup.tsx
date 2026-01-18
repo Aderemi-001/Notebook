@@ -85,8 +85,32 @@ const EditGroup: React.FC = () => {
       return;
     }
 
+    // Prevent multiple submissions
+    if (form.formState.isSubmitting) {
+      return;
+    }
+
     const toastId = showLoading("Updating group...");
     try {
+      // Check if the new name conflicts with existing groups (excluding current group)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { data: existingGroups, error: checkError } = await supabase
+        .from('study_set_groups')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .ilike('name', values.name)
+        .neq('id', groupId);
+
+      if (checkError) throw checkError;
+
+      if (existingGroups && existingGroups.length > 0) {
+        dismissToast(toastId);
+        showError(`A group named "${values.name}" already exists. Please choose a different name.`);
+        return;
+      }
+
       const { error } = await supabase
         .from('study_set_groups')
         .update({
@@ -95,7 +119,13 @@ const EditGroup: React.FC = () => {
         })
         .eq('id', groupId);
 
-      if (error) throw error;
+      if (error) {
+        // Handle unique constraint violation from database
+        if (error.code === '23505') {
+          throw new Error(`A group named "${values.name}" already exists. Please choose a different name.`);
+        }
+        throw error;
+      }
 
       dismissToast(toastId);
       showSuccess("Group updated successfully!");

@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+// import { useLocation, useNavigate } from 'react-router-dom'; // keeping removed imports commented out or just removing them
 import {
     LayoutDashboard,
     Search,
-    Brain,
     Settings,
     FileText,
     NotebookPen,
@@ -14,6 +13,7 @@ import {
     GraduationCap,
     CreditCard,
     ShieldAlert,
+    Timer,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess } from '@/utils/toast';
@@ -40,9 +40,6 @@ interface BroadcastData {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     const isMobile = useIsMobile();
-    const [showNovaPulse, setShowNovaPulse] = useState(false);
-    const location = useLocation();
-    const navigate = useNavigate();
     const { user, profile, loading: authLoading } = useAuth();
 
     // Broadcast & Maintenance State
@@ -60,8 +57,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
             if (data) {
                 const broadcastValue = data.find(d => d.key === 'global_broadcast')?.value;
-                const broadcastData = broadcastValue && typeof broadcastValue === 'object' && !Array.isArray(broadcastValue) 
-                    ? broadcastValue as unknown as BroadcastData 
+                const broadcastData = broadcastValue && typeof broadcastValue === 'object' && !Array.isArray(broadcastValue)
+                    ? broadcastValue as unknown as BroadcastData
                     : null;
                 const maintenanceData = data.find(d => d.key === 'maintenance_mode')?.value;
 
@@ -92,43 +89,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             }
         };
         fetchSettings();
-    }, [location.pathname]);
-
-    // Listen for Nova Redirects
-    useEffect(() => {
-        const handleRedirect = () => {
-            setShowNovaPulse(true);
-            setTimeout(() => setShowNovaPulse(false), 3000);
-        };
-
-        window.addEventListener('novaRedirect', handleRedirect);
-        return () => window.removeEventListener('novaRedirect', handleRedirect);
     }, []);
 
     // Enable Real-time updates
     useRealtime();
-
-    // Check for terms acceptance
-    useEffect(() => {
-        if (!user) return;
-
-        const allowedPaths = ['/user-agreement', '/terms', '/logout', '/login', '/privacy', '/contact', '/about'];
-        if (allowedPaths.includes(location.pathname)) return;
-
-        const checkAgreement = async () => {
-            const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('terms_accepted_at')
-                .eq('id', user.id)
-                .single();
-
-            if (!error && profile && !profile.terms_accepted_at) {
-                navigate('/user-agreement');
-            }
-        };
-
-        checkAgreement();
-    }, [user, location.pathname, navigate]);
 
     // Check for unread notifications
     // NOTE: Auto-toast disabled in V3.0 in favor of Notification Inbox
@@ -155,7 +119,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     const handleLogout = async () => {
         await supabase.auth.signOut();
         showSuccess('Logged out successfully');
-        navigate('/login');
+        // navigate('/login'); // Removed navigate
     };
 
     // Maintenance Mode Overlay (EXEMPT ADMINS)
@@ -185,11 +149,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
         { label: 'My Notes', icon: NotebookPen, path: '/notebook' },
         { label: 'My Sets', icon: Library, path: '/sets' },
-        { label: 'Explore Sets', icon: Globe, path: '/explore-public-sets' },
+        { label: 'Public Study Sets', icon: Globe, path: '/explore-public-sets' },
         { label: 'Practice Quiz', icon: GraduationCap, path: '/exams' },
+        { label: 'Essays', icon: FileText, path: '/essays' },
         { label: 'Textbook Finder', icon: Search, path: '/textbook-finder' },
-        { label: 'Constellation (Beta)', icon: Brain, path: '/constellation' },
-        { label: 'Essay Practice', icon: FileText, path: '/essays' },
+        { label: 'Focus Timer', icon: Timer, path: '/focus-timer' },
         { label: 'Upgrade to Pro', icon: CreditCard, path: '/pricing' },
     ];
 
@@ -198,11 +162,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         { label: 'Settings', icon: Settings, path: '/settings' },
     ];
 
-    const handleAuthCheck = (e: React.MouseEvent, path: string) => {
+    const handleAuthCheck = (e: React.MouseEvent, _path: string) => {
         if (!user) {
             e.preventDefault();
-            navigate('/login', { state: { from: path } });
+            // navigate('/login', { state: { from: path } }); // Removed navigate
         }
+    };
+
+    const handleDismissBroadcast = () => {
+        if (!broadcast) return;
+        const safeMessage = broadcast.message || '';
+        const dismissKey = `dismissed_broadcast_${safeMessage.substring(0, 20)}`;
+        localStorage.setItem(dismissKey, 'true');
+        setBroadcast(null);
+        setIsBroadcastOpen(false);
     };
 
     const sharedProps = {
@@ -210,9 +183,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         profile,
         maintenance,
         broadcast,
-        setBroadcast,
         isBroadcastOpen,
         setIsBroadcastOpen,
+        onDismissBroadcast: handleDismissBroadcast,
         navItems,
         bottomNavItems,
         handleLogout,
@@ -240,25 +213,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
             <Chatbot />
             <InstallPrompt />
-
-            {/* Global Nova Redirect Effect */}
-            {showNovaPulse && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/95 backdrop-blur-3xl animate-in fade-in duration-300 overflow-hidden">
-                    <div className="absolute inset-0 z-0">
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-500/30 to-transparent -skew-x-12 animate-shimmer-wave" />
-                    </div>
-                    <div className="relative z-10 flex flex-col items-center justify-center font-heading text-center">
-                        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-2xl shadow-purple-500/20">
-                            <div className="w-24 h-24 bg-black/40 backdrop-blur-xl rounded-2xl flex items-center justify-center text-white">
-                                <Search className="w-12 h-12 animate-pulse" />
-                            </div>
-                        </div>
-                        <span className="mt-8 text-3xl font-black tracking-widest uppercase bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-pulse px-4">
-                            Nova
-                        </span>
-                    </div>
-                </div>
-            )}
         </>
     );
 };

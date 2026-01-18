@@ -177,30 +177,53 @@ const AddExistingSetToGroupDialog: React.FC<AddExistingSetToGroupDialogProps> = 
                 No sets found matching your search.
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {filteredSets?.map((set: StudySet) => (
                   <div
                     key={set.id}
                     className={cn(
-                      "flex items-center justify-between p-3 border rounded-md",
-                      selectedSetIds.has(set.id) ? "bg-primary/10 border-primary" : "bg-background"
+                      "relative flex flex-col p-4 border-2 rounded-2xl transition-all duration-200 cursor-pointer group",
+                      selectedSetIds.has(set.id)
+                        ? "bg-primary/5 border-primary shadow-[0_0_0_1px_rgba(var(--primary),1)]"
+                        : "bg-card border-transparent hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
                     )}
+                    onClick={() => handleCheckboxChange(set.id, !selectedSetIds.has(set.id))}
                   >
-                    <div className="flex items-center space-x-2">
+                    <div className="absolute top-4 left-4">
                       <Checkbox
                         id={`set-${set.id}`}
                         checked={selectedSetIds.has(set.id)}
                         onCheckedChange={(checked: boolean) => handleCheckboxChange(set.id, checked)}
+                        className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground border-2 h-5 w-5 rounded-md"
                       />
-                      <Label htmlFor={`set-${set.id}`} className="cursor-pointer">
-                        <span className="font-medium">{set.title}</span>
-                        {set.group_id && set.group_id !== groupId && (
-                          <span className="text-sm text-muted-foreground ml-2">(Currently in another group)</span>
-                        )}
-                        {!set.group_id && (
-                          <span className="text-sm text-muted-foreground ml-2">(No group)</span>
-                        )}
+                    </div>
+
+                    <div className="ml-8 space-y-1">
+                      <Label htmlFor={`set-${set.id}`} className="font-bold text-base line-clamp-1 cursor-pointer">
+                        {set.title}
                       </Label>
+
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {set.group_id && set.group_id !== groupId ? (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                            External Group
+                          </span>
+                        ) : !set.group_id ? (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                            Available
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-secondary text-secondary-foreground">
+                            Already Added
+                          </span>
+                        )}
+                      </div>
+
+                      {set.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                          {set.description}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}

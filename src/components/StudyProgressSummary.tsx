@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { CheckCircle2, AlertCircle, Target, BrainCircuit } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Target, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StudyProgressSummaryProps {
@@ -63,7 +63,7 @@ const StudyProgressSummary: React.FC<StudyProgressSummaryProps> = ({
             </div>
 
             <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 hover:border-primary/20 transition-all group/stat">
-              <BrainCircuit className="h-6 w-6 mb-4 text-primary transition-transform group-hover/stat:scale-110" />
+              <BookOpen className="h-6 w-6 mb-4 text-primary transition-transform group-hover/stat:scale-110" />
               <div className="text-2xl font-black tracking-tighter">{totalCards - masteredCardsCount}</div>
               <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Remaining Knowledge</div>
             </div>

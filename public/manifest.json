@@ -1,17 +1,79 @@
 {
+    "id": "notebook-remi",
+    "name": "Notebook",
     "short_name": "Notebook",
-    "name": "Notebook - Smart AI Learning Assistant",
+    "description": "AI study companion for students",
+    "lang": "en-US",
+    "dir": "ltr",
     "icons": [
         {
-            "src": "/notebook-icon.png",
-            "sizes": "192x192 512x512",
-            "type": "image/png",
+            "src": "/notebook-icon.jpg",
+            "sizes": "192x192",
+            "type": "image/jpeg"
+        },
+        {
+            "src": "/notebook-icon.jpg",
+            "sizes": "512x512",
+            "type": "image/jpeg",
             "purpose": "any maskable"
         }
     ],
     "start_url": "/",
-    "background_color": "#ffffff",
+    "scope": "/",
     "display": "standalone",
+    "display_override": [
+        "window-controls-overlay",
+        "standalone",
+        "minimal-ui"
+    ],
+    "orientation": "portrait-primary",
     "theme_color": "#3b82f6",
-    "description": "Master any subject with Nova, your Hybrid AI study partner."
+    "background_color": "#ffffff",
+    "shortcuts": [
+        {
+            "name": "Daily Review",
+            "short_name": "Review",
+            "description": "Start your daily spaced repetition session",
+            "url": "/daily-review",
+            "icons": [
+                {
+                    "src": "/notebook-icon.jpg",
+                    "sizes": "192x192",
+                    "type": "image/jpeg"
+                }
+            ]
+        },
+        {
+            "name": "Create Set",
+            "short_name": "Create",
+            "description": "Create a new study set",
+            "url": "/create",
+            "icons": [
+                {
+                    "src": "/notebook-icon.jpg",
+                    "sizes": "192x192",
+                    "type": "image/jpeg"
+                }
+            ]
+        }
+    ],
+    "categories": [
+        "education",
+        "productivity"
+    ],
+    "launch_handler": {
+        "client_mode": [
+            "focus-existing",
+            "auto"
+        ]
+    },
+    "screenshots": [
+        {
+            "src": "/notebook-icon.jpg",
+            "sizes": "512x512",
+            "type": "image/jpeg",
+            "form_factor": "wide",
+            "label": "Notebook AI Study Dashboard"
+        }
+    ]
 }

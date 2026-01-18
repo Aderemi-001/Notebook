@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flip Clock Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #000;
+            color: #fff;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+
+        h1 {
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .clock {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .digit {
+            position: relative;
+            width: 120px;
+            height: 180px;
+            perspective: 1000px;
+        }
+
+        /* Static top half */
+        .top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(180deg, #444 0%, #333 100%);
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .top::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #000;
+        }
+
+        /* Static bottom half */
+        .bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(180deg, #333 0%, #222 100%);
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Flipping card */
+        .flip-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            transform-style: preserve-3d;
+            transform-origin: bottom;
+            z-index: 10;
+        }
+
+        .flip-card.flipping {
+            animation: flip 0.6s cubic-bezier(0.15, 0.45, 0.2, 1);
+        }
+
+        @keyframes flip {
+            0% {
+                transform: rotateX(0deg);
+            }
+
+            100% {
+                transform: rotateX(-180deg);
+            }
+        }
+
+        .flip-card-front {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #444 0%, #333 100%);
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 4px;
+            backface-visibility: hidden;
+        }
+
+        .digit span {
+            font-size: 100px;
+            font-weight: 800;
+            color: #e0e0e0;
+            line-height: 1;
+        }
+
+        .info {
+            margin-top: 2rem;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Flip Clock Animation Test</h1>
+    <div class="clock">
+        <div class="digit" id="digit1">
+            <div class="top"><span>0</span></div>
+            <div class="bottom"><span>0</span></div>
+        </div>
+        <div class="digit" id="digit2">
+            <div class="top"><span>0</span></div>
+            <div class="bottom"><span>0</span></div>
+        </div>
+    </div>
+    <div class="info">Counter: <span id="counter">0</span></div>
+
+    <script>
+        let counter = 0;
+
+        function updateDigit(digitElement, newValue) {
+            const top = digitElement.querySelector('.top span');
+            const bottom = digitElement.querySelector('.bottom span');
+            const currentValue = top.textContent;
+
+            if (currentValue !== newValue) {
+                // Create flipping card
+                const flipCard = document.createElement('div');
+                flipCard.className = 'flip-card flipping';
+
+                const flipCardFront = document.createElement('div');
+                flipCardFront.className = 'flip-card-front';
+                flipCardFront.innerHTML = `<span>${currentValue}</span>`;
+
+                flipCard.appendChild(flipCardFront);
+                digitElement.appendChild(flipCard);
+
+                // Update static halves after animation starts
+                setTimeout(() => {
+                    top.textContent = newValue;
+                    bottom.textContent = newValue;
+                }, 300);
+
+                // Remove flip card after animation
+                setTimeout(() => {
+                    flipCard.remove();
+                }, 600);
+            }
+        }
+
+        function updateClock() {
+            counter = (counter + 1) % 60;
+            const counterStr = String(counter).padStart(2, '0');
+
+            updateDigit(document.getElementById('digit1'), counterStr[0]);
+            updateDigit(document.getElementById('digit2'), counterStr[1]);
+
+            document.getElementById('counter').textContent = counter;
+        }
+
+        // Update every second
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+
+</html>

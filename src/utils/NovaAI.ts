@@ -8,6 +8,8 @@
 
 
 
+import { supabase } from "@/integrations/supabase/client";
+
 export interface NovaAIContext {
     route: string;
     userName: string;
@@ -108,65 +110,45 @@ export class NovaAI {
     }
 
     /**
-     * Resilient Gemini Executor using Backend Proxy
-     * Recursively tries models via /api/gemini until one works.
+     * Resilient Gemini Executor using Supabase Edge Function
+     * Single try as requested by user ("one gemini").
      */
     private static async runGeminiWithRetry(
         systemPrompt: string,
         userPrompt: string,
         jsonMode: boolean = false
     ): Promise<any> {
-        const models = [
-            "gemini-1.5-flash",
-            "gemini-1.5-flash-001",
-            "gemini-1.5-pro"
-        ];
+        console.log("🔍 [NovaAI] Requesting Gemini via Edge Function...");
 
-        console.log("🔍 [NovaAI Debug] Starting Gemini Request via Backend Proxy...");
+        const { data, error } = await supabase.functions.invoke('nova-engine', {
+            body: {
+                provider: 'gemini',
+                model: 'gemini-2.5-flash',
+                systemPrompt,
+                userPrompt,
+                jsonMode
+            }
+        });
 
-        let lastError: any = null;
+        if (error) {
+            console.error("❌ [NovaAI] Gemini Edge Function Error:", error);
+            throw new Error(`Gemini Edge Function Failed: ${error.message}`);
+        }
 
-        for (const modelName of models) {
+        const responseText = data.text;
+
+        if (jsonMode) {
             try {
-                const response = await fetch('/api/gemini', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        systemPrompt,
-                        userPrompt,
-                        modelName,
-                        jsonMode
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Server responded with ${response.status}`);
-                }
-
-                const data = await response.json();
-                const responseText = data.text;
-
-                if (jsonMode) {
-                    try {
-                        // Clean up markdown code blocks if present (common in 1.0 pro)
-                        const cleaned = responseText.replace(/```json/g, '').replace(/```/g, '');
-                        return JSON.parse(cleaned);
-                    } catch (parseError) {
-                        console.error("JSON Parse Error:", parseError);
-                        throw new Error("Received invalid JSON from AI");
-                    }
-                }
-                return responseText;
-
-            } catch (e: any) {
-                console.warn(`⚠️ Model ${modelName} failed:`, e.message);
-                lastError = e;
+                // Clean up markdown code blocks if present
+                const cleaned = responseText.replace(/```json/g, '').replace(/```/g, '');
+                return JSON.parse(cleaned);
+            } catch (parseError) {
+                console.error("JSON Parse Error:", parseError);
+                throw new Error("Received invalid JSON from AI");
             }
         }
 
-        console.error("❌ [NovaAI Debug] All models failed.");
-        throw lastError || new Error("All Gemini models failed via backend.");
+        return responseText;
     }
 
     /**
@@ -177,25 +159,32 @@ export class NovaAI {
         model: string = "llama-3.3-70b-versatile",
         jsonMode: boolean = false
     ): Promise<any> {
-        const response = await fetch('/api/groq', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages, model, jsonMode })
+
+        const { data, error } = await supabase.functions.invoke('nova-engine', {
+            body: {
+                provider: 'groq',
+                model,
+                messages,
+                jsonMode
+            }
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || "Groq Backend Error");
+        if (error) {
+            console.error("❌ [NovaAI] Groq Edge Function Error:", error);
+            throw new Error(`Groq Edge Function Failed: ${error.message}`);
         }
 
-        const data = await response.json();
-        return jsonMode ? JSON.parse(data.content) : data.content;
+        if (jsonMode && typeof data.content === 'string') {
+            return JSON.parse(data.content);
+        }
+
+        return data.content;
     }
 
     /**
      * AI-powered Content Extraction
      */
-    public static async generateStudyContent(text: string): Promise<AIStudyContent> {
+    public static async generateStudyContent(text: string, maxCards: number = 50): Promise<AIStudyContent> {
         const systemPrompt = `You are an expert educational content creator.
 Task: Deeply analyze the provided text to create a comprehensive study graph.
 Output: Return ONLY a valid JSON object.
@@ -206,7 +195,7 @@ Structure:
   "relationships": [ { "source_name": "Concept A", "target_name": "Concept B", "type": "causes/part_of/related_to", "strength": 0.1-1.0 } ]
 }
 Guidelines:
-1. Extract up to 50 flashcards.
+1. Extract up to ${maxCards} flashcards (MAXIMUM ${maxCards}, do not exceed this limit).
 2. Ignore citations, headers, footers.
 3. Identify top 10-20 core concepts.
 4. Return ONLY raw JSON code, no markdown formatting.`;
@@ -229,10 +218,15 @@ Guidelines:
                         throw new Error("Text too long for Groq. Switching to Gemini (Large Doc Mode).");
                     }
 
-                    return await this.runGroqViaBackend([
+                    const result = await this.runGroqViaBackend([
                         { role: "system", content: systemPrompt },
                         { role: "user", content: `Analyze this content: \n\n${text}` }
                     ], "llama-3.3-70b-versatile", true);
+
+                    if (!result || !result.cards || result.cards.length === 0) {
+                        throw new Error("Groq returned empty results (0 cards). Switching to Gemini.");
+                    }
+                    return result;
                 },
                 async () => {
                     return await this.runGeminiWithRetry(systemPrompt, "Analyze this content: \n\n" + text, true);
@@ -309,7 +303,38 @@ ${context.activeStudySet ? `6. **Active Study Set**: User is looking at set "${c
    - Top Cards/Context: ${JSON.stringify(context.activeStudySet.topCards?.slice(0, 5) || [])}
    - USE THIS CONTEXT to answer specific questions about the material.` : ""}
 
-Site Map (Use these for navigation):
+**CRITICAL: ONLY suggest features that ACTUALLY EXIST. DO NOT hallucinate or invent features.**
+
+ACTUAL FEATURES (What the app CAN do):
+ Create Study Sets (manually add flashcards)
+ Import from Files (PDF, Word, PowerPoint, Excel, TXT)
+ Study with Flashcards (spaced repetition system)
+ Daily Review (cards due today)
+ Practice Quizzes (AI-generated multiple choice)
+ Essay Practice (AI grading and feedback)
+ Textbook Finder (search for textbooks)
+ Cognitive Constellation (3D knowledge visualization)
+ My Notes (handwritten/typed notes)
+ Explore Public Sets (browse community sets)
+ Profile & Settings
+ Pricing/Upgrade to Pro
+
+FEATURES THAT DO NOT EXIST (Never suggest these):
+ NO " Import from Textbook\ feature
+ NO \Note Templates\ feature
+ NO \Pre-designed Templates\ for notes
+ NO \Class Notes\ or \Study Guide\ templates
+ NO \Research Notes\ or \Concept Map\ templates
+ NO direct textbook content import
+ NO template browsing system
+
+When users ask about creating notes or sets:
+- Guide them to /create (Create Set) for flashcards
+- Guide them to /notebook (My Notes) for freeform notes
+- Explain they can import files (PDF, Word, etc.) but NOT from textbooks directly
+- DO NOT mention templates, textbook import, or any non-existent features
+
+
 - / (Dashboard)
 - /create (Create Set)
 - /sets (My Sets)
@@ -528,4 +553,5 @@ Guidelines:
         }
     }
 }
+
 

@@ -51,39 +51,49 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
         // CRITICAL: PayFast does NOT use alphabetical ordering!
         // Order must be: merchant details → buyer details → transaction details → subscription details
         const orderedKeys = [
-            // Merchant details
+            // M_PAYMENT_ID MUST BE FIRST in transaction/custom section for some integrations, 
+            // but standard docs say: merchant -> buyer -> transaction -> custom -> subscription
+            // Let's follow the PayFast ITN order which is known to work for others:
+
+            // 1. Merchant Details
             'merchant_id',
             'merchant_key',
             'return_url',
             'cancel_url',
             'notify_url',
-            // Buyer details
+
+            // 2. Buyer Details
             'name_first',
             'name_last',
             'email_address',
             'cell_number',
-            // Transaction details
+
+            // 3. Transaction Details
+            'm_payment_id', // Moved up to join transaction details
             'amount',
             'item_name',
             'item_description',
-            // Subscription details
-            'subscription_type',
-            'billing_date',
-            'recurring_amount',
-            'frequency',
-            'cycles',
-            // Custom fields
-            'm_payment_id',
-            'custom_str1',
-            'custom_str2',
-            'custom_str3',
-            'custom_str4',
-            'custom_str5',
+
+            // 4. Custom Integers (1-5)
             'custom_int1',
             'custom_int2',
             'custom_int3',
             'custom_int4',
             'custom_int5',
+
+            // 5. Custom Strings (1-5)
+            'custom_str1',
+            'custom_str2',
+            'custom_str3',
+            'custom_str4',
+            'custom_str5',
+
+            // 6. Subscription Details (Must be last for subscriptions)
+            'subscription_type',
+            'billing_date',
+            'recurring_amount',
+            'frequency',
+            'cycles'
         ];
 
         // Build param string using ONLY the keys that exist in cleanData, in the correct order

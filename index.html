@@ -1,19 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-US" dir="ltr">
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="/notebook-icon.png" />
-  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" href="/pwa-192.png" />
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, interactive-widget=resizes-content" />
   <meta name="author" content="Aderemi Adesanmi" />
   <meta name="version" content="3.0" />
   <meta name="theme-color" content="#3b82f6" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Notebook" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <!-- Google Fonts for Retro Flip Clock -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 
   <title>Notebook - Smart AI Learning Assistant</title>
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self' https://*.supabase.co https://vercel.live; script-src 'self' 'unsafe-inline' https://apis.google.com https://kit.fontawesome.com https://*.fontawesome.com https://vercel.live https://vercel.com; script-src-elem 'self' 'unsafe-inline' https://vercel.live https://vercel.com https://apis.google.com https://kit.fontawesome.com https://*.fontawesome.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.fontawesome.com https://vercel.live; font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai https://*.fontawesome.com https://vercel.live; img-src 'self' data: https://*.supabase.co https://*.googleusercontent.com https://vercel.live https://vercel.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.groq.com https://generativelanguage.googleapis.com https://*.fontawesome.com https://vercel.live https://vercel.com;">
+
   <meta name="description"
     content="Master any subject with Nova, your Hybrid AI study partner. Create flashcards, notes, and exams in seconds using Groq and Gemini speed." />
 
@@ -22,7 +29,7 @@
   <meta property="og:title" content="Notebook - Smart AI Learning Assistant" />
   <meta property="og:description"
     content="Flashcards, notes, and exams powered by Hybrid AI. Revolutionize your study routine with Nova." />
-  <meta property="og:image" content="/notebook-icon.png" />
+  <meta property="og:image" content="/pwa-512.png" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
@@ -34,6 +41,58 @@
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
+  <script>
+    async function registerPeriodicSync(registration) {
+      try {
+        // Check if periodicSync is supported (already checked in caller but good for safety)
+        if (!('periodicSync' in registration)) return;
+
+        // Query permission
+        const status = await navigator.permissions.query({
+          name: 'periodic-background-sync',
+        });
+
+        if (status.state === 'granted') {
+          await registration.periodicSync.register('content-sync', {
+            minInterval: 24 * 60 * 60 * 1000, // 1 day
+          });
+          console.log('Periodic background sync registered: content-sync');
+        } else {
+          console.info('Periodic background sync permission not granted yet. Usually requires app installation.');
+        }
+      } catch (error) {
+        console.error('Periodic background sync registration failed:', error);
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(registration => {
+            console.log('SW registered: ', registration);
+
+            // Check for Background Sync
+            if ('sync' in registration) {
+              console.log('Background Sync supported');
+            }
+
+            // Check for Periodic Sync
+            if ('periodicSync' in registration) {
+              console.log('Periodic Sync supported');
+              registerPeriodicSync(registration);
+            }
+
+            // Check for Push
+            if ('pushManager' in registration) {
+              console.log('Push Notifications supported');
+            }
+          })
+          .catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+  </script>
 </body>
 
 </html>

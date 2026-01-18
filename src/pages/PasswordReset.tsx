@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, XCircle } from 'lucide-react';
+import { Loader2, XCircle, ShieldCheck, Lock, ArrowRight, Stars } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
@@ -11,6 +11,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import BrandLogo from '@/components/BrandLogo';
 
 // Schema for password reset form
 const passwordResetSchema = z.object({
@@ -30,6 +33,7 @@ const PasswordReset: React.FC = () => {
   const [message, setMessage] = useState('Verifying password reset link...');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const { user: authUser, loading: isLoadingAuth } = useAuth();
+  const { t } = useLanguage();
 
   const form = useForm<PasswordResetFormValues>({
     resolver: zodResolver(passwordResetSchema),
@@ -40,7 +44,7 @@ const PasswordReset: React.FC = () => {
   });
 
   useEffect(() => {
-    if (isLoadingAuth) return; // Wait for auth to load
+    if (isLoadingAuth) return;
 
     const handleRecovery = async () => {
       const hash = window.location.hash.substring(1);
@@ -50,11 +54,11 @@ const PasswordReset: React.FC = () => {
       const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
       const type = hashParams.get('type') || searchParams.get('type');
 
-      // If user is already logged in, and this is not a recovery flow, redirect to home
-      // This prevents a logged-in user from accidentally landing here via a stale link
-      if (authUser && type !== 'recovery') {
-        console.log("Already logged in and not in recovery flow. Redirecting to home.");
-        navigate('/');
+      // If we're already logged in via a recovery flow (thanks to global listener)
+      // we can proceed directly to the reset form.
+      if (authUser) {
+        setStatus('ready_to_reset');
+        setMessage(t('auth.resetReady'));
         return;
       }
 
@@ -66,21 +70,19 @@ const PasswordReset: React.FC = () => {
           });
 
           if (error) {
-            console.error("Error setting session for recovery:", error);
             setStatus('error');
             setMessage(`Failed to process password reset link: ${error.message}`);
             return;
           }
           setStatus('ready_to_reset');
-          setMessage('Please enter your new password.');
+          setMessage(t('auth.resetReady'));
         } catch (err: any) {
-          console.error("Unexpected error during recovery session setting:", err);
           setStatus('error');
           setMessage(`An unexpected error occurred: ${err.message}`);
         }
       } else {
         setStatus('error');
-        setMessage('Invalid password reset link. Missing access or refresh tokens, or incorrect type.');
+        setMessage('Invalid or expired password reset link. Please request a new one from the login page.');
       }
     };
 
@@ -94,89 +96,199 @@ const PasswordReset: React.FC = () => {
         password: values.newPassword,
       });
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       showSuccess('Your password has been reset successfully! Redirecting to login...');
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
+      setTimeout(() => navigate('/login'), 3000);
     } catch (err: any) {
       showError(err.message || 'Failed to reset password.');
-      console.error('Password reset error:', err);
     } finally {
       setIsUpdatingPassword(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
-      <div className="max-w-md w-full space-y-8">
-        <Card className="glass-card shadow-premium rounded-[2.5rem] p-8 text-center bg-white/50 dark:bg-black/20 border-white/20">
-          <CardHeader>
-            <CardTitle className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">
-              Reset Your Password
-            </CardTitle>
-            <CardDescription className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              {message}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center space-y-4">
-            {status === 'loading' && (
-              <Loader2 className="h-12 w-12 text-primary animate-spin" />
-            )}
-            {status === 'error' && (
-              <>
-                <XCircle className="h-12 w-12 text-red-500" />
-                <Button asChild className="mt-4">
-                  <Link to="/login">Go to Login</Link>
-                </Button>
-              </>
-            )}
-            {status === 'ready_to_reset' && (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handlePasswordReset)} className="w-full space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="newPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="confirmNewPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={isUpdatingPassword}>
-                    {isUpdatingPassword ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resetting...
-                      </>
-                    ) : (
-                      'Reset Password'
-                    )}
+    <div className="relative min-h-screen overflow-hidden flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background">
+      {/* Hyper-Premium Background System */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] rounded-full bg-primary/15 blur-[130px] animate-wave-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[45%] rounded-full bg-nova-purple/15 blur-[130px] animate-wave-pulse" style={{ animationDelay: '-2s' }} />
+        <div className="absolute top-[20%] right-[10%] w-[35%] h-[35%] rounded-full bg-nova-blue/10 blur-[110px] animate-wave-pulse" style={{ animationDelay: '-4s' }} />
+
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
+          style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+      </div>
+
+      {/* Floating Orbs */}
+      <motion.div
+        animate={{ y: [0, -30, 0], x: [0, 10, 0], opacity: [0.1, 0.3, 0.1] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-1/4 left-1/4 w-3 h-3 rounded-full bg-primary blur-sm z-0"
+      />
+      <motion.div
+        animate={{ y: [0, 40, 0], x: [0, -15, 0], opacity: [0.05, 0.25, 0.05] }}
+        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute bottom-1/4 right-1/4 w-5 h-5 rounded-full bg-nova-purple blur-md z-0"
+      />
+
+      <div className="relative z-10 max-w-xl w-full">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Card className="glass-card overflow-hidden border-white/20 dark:border-white/10 rounded-[2.5rem] p-1 shadow-2xl">
+            <div className="bg-white/40 dark:bg-black/20 backdrop-blur-2xl px-8 py-10 rounded-[2.3rem] text-center border border-white/10">
+              <CardHeader className="p-0 mb-8 items-center">
+                <div className="mb-6">
+                  <BrandLogo size="md" rounded="xl" shadow glow />
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {status === 'loading' ? (
+                    <motion.div
+                      key="loading"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                      className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mb-6"
+                    >
+                      <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                    </motion.div>
+                  ) : status === 'ready_to_reset' ? (
+                    <motion.div
+                      key="ready"
+                      initial={{ scale: 0, rotate: -45 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                      className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mb-6 relative"
+                    >
+                      <ShieldCheck className="h-10 w-10 text-primary" />
+                      <motion.div
+                        animate={{ scale: [1, 1.2, 1], opacity: [0, 1, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="absolute inset-0 bg-primary/20 rounded-3xl"
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="error"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center mb-6"
+                    >
+                      <XCircle className="h-10 w-10 text-red-500" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <CardTitle className="text-3xl md:text-4xl font-heading font-black tracking-tight text-foreground mb-4">
+                  {status === 'ready_to_reset' ? 'Secure' : 'Password'} <span className="text-primary italic">{status === 'ready_to_reset' ? 'Update' : 'Reset'}</span>
+                </CardTitle>
+
+                <CardDescription className="text-base text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                  {message}
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="p-0 flex flex-col items-center">
+                {status === 'ready_to_reset' && (
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handlePasswordReset)} className="w-full space-y-5 text-left">
+                      <FormField
+                        control={form.control}
+                        name="newPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-semibold text-foreground/80">New Password</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                  type="password"
+                                  placeholder="••••••••"
+                                  {...field}
+                                  className="h-12 pl-10 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 transition-all shadow-inner"
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="confirmNewPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-semibold text-foreground/80">Confirm New Password</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                  type="password"
+                                  placeholder="••••••••"
+                                  {...field}
+                                  className="h-12 pl-10 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 transition-all shadow-inner"
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="submit"
+                        size="lg"
+                        className="w-full h-14 mt-4 rounded-xl text-lg font-bold shadow-xl shadow-primary/20 group overflow-hidden relative"
+                        disabled={isUpdatingPassword}
+                      >
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          {isUpdatingPassword ? 'Updating Your Security...' : 'Complete Reset'}
+                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </span>
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-primary to-nova-purple z-0"
+                          whileHover={{ scale: 1.05 }}
+                        />
+                      </Button>
+                    </form>
+                  </Form>
+                )}
+
+                {status === 'error' && (
+                  <Button asChild className="w-full h-12 rounded-xl text-base font-semibold">
+                    <Link to="/login" className="flex items-center justify-center gap-2">
+                      Back to Secure Login
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
                   </Button>
-                </form>
-              </Form>
-            )}
-          </CardContent>
-        </Card>
+                )}
+
+                <div className="mt-8 pt-8 border-t border-border/30 w-full flex flex-col items-center gap-4">
+                  <div className="flex items-center gap-2 bg-muted/40 px-4 py-2 rounded-full border border-border/40">
+                    <Stars className="w-4 h-4 text-primary animate-pulse" />
+                    <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80">Nova V2 Security Protocol</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/60 leading-relaxed text-center">
+                    Need help? Contact our support team at <br />
+                    <a href="mailto:my.notebook.by.remi@gmail.com" className="text-primary font-semibold hover:underline">my.notebook.by.remi@gmail.com</a>
+                  </p>
+                </div>
+              </CardContent>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Brand Support */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="mt-8 text-center text-xs font-medium text-muted-foreground/50"
+        >
+          © 2026 Nova V2 · Project Novea · Supernova Ultra Design System
+        </motion.p>
       </div>
     </div>
   );

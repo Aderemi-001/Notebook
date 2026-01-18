@@ -1,0 +1,5 @@
+api/gemini.ts(43,15): error TS6133: 'targetModel' is declared but its value is never read.
+api/payfast-cancel.ts(78,15): error TS6133: 'headerData' is declared but its value is never read.
+src/integrations/supabase/client.ts(3,31): error TS2306: File 'C:/Users/antho/dyad-apps/Notebook/src/integrations/supabase/types.ts' is not a module.
+src/pages/admin/AdminSettings.tsx(14,31): error TS6133: 'error' is declared but its value is never read.
+src/pages/admin/AdminTransactions.tsx(68,11): error TS6133: 'getStatusBadge' is declared but its value is never read.

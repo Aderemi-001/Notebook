@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 
 const TermsAndConditions: React.FC = () => {
     return (
-        <div className="w-full px-4 md:px-8 py-10 max-w-4xl animate-fade-in">
+        <div className="w-full mx-auto px-4 md:px-8 py-10 max-w-4xl animate-fade-in">
             <div className="mb-6 flex items-center justify-between">
                 <Button variant="ghost" asChild>
                     <Link to="/">
@@ -32,80 +32,82 @@ const TermsAndConditions: React.FC = () => {
                             <section>
                                 <h3 className="text-lg font-semibold text-foreground mb-2">1. Acceptance of Terms</h3>
                                 <p>
-                                    By accessing and using Notebook ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services.
+                                    By accessing and using Notebook (the "Service"), you accept and agree to be bound by the terms and provisions of this agreement. Our Service is designed to provide AI-assisted study tools, including card generation, essay analysis, and focus management. If you do not agree to these terms, please do not use the Service.
                                 </p>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">2. AI Disclaimer</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">2. AI Service Disclosure ("Nova")</h3>
                                 <p>
-                                    Our Service utilizes Artificial Intelligence (AI) technologies ("Nova") to provide study assistance, content generation, and grading.
+                                    Our Service utilizes advanced Artificial Intelligence (AI) technologies, referred to as "Nova," powered by third-party providers including Google Gemini and Groq.
                                 </p>
-                                <ul className="list-disc pl-5 mt-2 space-y-1">
-                                    <li><strong>Accuracy:</strong> AI-generated content is for educational purposes only. Machine learning models can make mistakes ("hallucinations"). You should always verify critical information with official sources.</li>
-                                    <li><strong>No Professional Advice:</strong> Nova is a study tool, not a substitute for professional legal, medical, or financial advice.</li>
-                                    <li><strong>Automated Processing:</strong> By using the AI features, you acknowledge that your inputs (notes, essays, queries) will be processed by third-party AI providers (Google, Groq) to generate responses.</li>
+                                <ul className="list-disc pl-5 mt-2 space-y-2">
+                                    <li><strong>Information Accuracy:</strong> AI-generated content (e.g., flashcards, essay grades, magic fixes) is for educational purposes only. Machine learning models may produce inaccurate, incomplete, or biased information (commonly known as "hallucinations"). Users must verify critical information with official textbooks or instructors.</li>
+                                    <li><strong>User Responsibility:</strong> You are solely responsible for how you use AI-generated outputs. Notebook is not liable for academic consequences resulting from the use of the Service.</li>
+                                    <li><strong>Not Professional Advice:</strong> The Service provides study assistance and is not a substitute for professional legal, medical, financial, or academic advice.</li>
                                 </ul>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">3. Use of Service</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">3. Service Features and Limitations</h3>
                                 <p>
-                                    You agree to use the Service for lawful purposes only. You are responsible for all content, including study sets, notes, and messages, that you upload, post, email, or otherwise transmit via the Service.
+                                    Notebook offers both Free and Pro ("Nova Pro") subscription tiers with different feature access and usage limits.
                                 </p>
-                                <ul className="list-disc pl-5 mt-2 space-y-1">
-                                    <li>You must not transmit any content that is unlawful, harmful, threatening, abusive, harassing, defamatory, vulgar, obscene, or libellous.</li>
-                                    <li>You must not violate any applicable local, state, national, or international law.</li>
-                                    <li>You must not imposter any person or entity.</li>
+                                <ul className="list-disc pl-5 mt-2 space-y-2">
+                                    <li><strong>Daily Usage Limits:</strong> Free users have daily limits on AI-powered features (essay questions, grading, card generation). Pro users receive significantly higher limits. Limits reset daily at midnight UTC.</li>
+                                    <li><strong>File Uploads:</strong> Free users may upload files up to 10MB. Pro users may upload files up to 45MB. Uploaded files are processed for AI card generation and must not contain copyrighted material you don't have rights to use.</li>
+                                    <li><strong>Text-to-Speech (TTS):</strong> Auto-play TTS for flashcards is a Pro-exclusive feature.</li>
+                                    <li><strong>Gamification:</strong> Badges, streaks, and "Concept Gems" are for engagement and motivation only. They have no monetary value and cannot be exchanged for goods or services.</li>
+                                    <li><strong>Focus Timer:</strong> The Pomodoro timer feature includes audio notifications. You are responsible for managing your device's volume settings.</li>
                                 </ul>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">4. Intellectual Property</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">4. Subscription and Billing</h3>
                                 <p>
-                                    The Service and its original content (excluding Content provided by users), features, and functionality are and will remain the exclusive property of Notebook and its licensors. The Service is protected by copyright, trademark, and other laws of both the country and foreign countries.
+                                    Notebook offers a "Nova Pro" tier with enhanced features. By subscribing, you agree to the following:
+                                </p>
+                                <ul className="list-disc pl-5 mt-2 space-y-2">
+                                    <li><strong>Pricing:</strong> Nova Pro is currently priced at R59.99 per month (South African Rand). Prices are subject to change with 30 days' notice to active subscribers.</li>
+                                    <li><strong>Payment Processing:</strong> Subscriptions are processed via PayFast, a South African payment gateway. By subscribing, you agree to PayFast's terms of service. We do not store your full credit card details.</li>
+                                    <li><strong>Billing Cycle:</strong> Subscriptions renew automatically on a monthly basis unless canceled.</li>
+                                    <li><strong>Refund Policy:</strong> Payments are non-refundable unless required by law. If you experience technical issues preventing service access, contact support for assistance.</li>
+                                    <li><strong>Cancellation:</strong> You may cancel at any time via the Pricing page. Access remains active until the end of the current billing cycle.</li>
+                                    <li><strong>Free Trials:</strong> New users receive one 3-day free trial of Nova Pro. Only one trial is permitted per user. Trial abuse or creating multiple accounts to access additional trials may result in account termination.</li>
+                                    <li><strong>Lifetime Access:</strong> If you purchased "lifetime access" to Notebook, this grants you access to the core features available at the time of purchase. We reserve the right to modify, discontinue, or sunset features with 90 days' notice. Lifetime access does not guarantee perpetual access to third-party AI services (Google, Groq) if those partnerships end or become cost-prohibitive. In such cases, we will provide reasonable alternatives or migration options.</li>
+                                    <li><strong>Service Continuity:</strong> We reserve the right to discontinue the Service entirely with 180 days' notice. In such an event, active monthly subscribers will receive a pro-rated refund for unused time. Lifetime access holders will not receive refunds but will be provided with data export tools.</li>
+                                </ul>
+                            </section>
+
+                            <section>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">4. User Content and Conduct</h3>
+                                <p>
+                                    You retain ownership of the data you upload. You grant Notebook a license to process your content solely to provide and improve the Service.
+                                </p>
+                                <ul className="list-disc pl-5 mt-2 space-y-2">
+                                    <li><strong>Prohibited Use:</strong> You may not use the Service to generate harmful, illegal, or deceptive content.</li>
+                                    <li><strong>Academic Integrity:</strong> You agree to use the Service in compliance with your educational institution's academic integrity policies.</li>
+                                </ul>
+                            </section>
+
+                            <section>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">6. Intellectual Property</h3>
+                                <p>
+                                    The Service's interface, branding, and proprietary algorithms are the property of Notebook. AI-generated outputs created for you are generally yours to use for personal educational purposes, subject to the underlying rights of third-party AI providers.
                                 </p>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">5. User Content</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">7. Limitation of Liability</h3>
                                 <p>
-                                    You retain ownership of any intellectual property rights that you hold in that content. In short, what belongs to you stays yours. However, by uploading content to Notebook, you grant us a worldwide, non-exclusive, royalty-free license to use, reproduce, and display such content in connection with providing the Service.
+                                    Notebook is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the Service or reliance on AI outputs.
                                 </p>
                             </section>
 
                             <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">6. Privacy</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">8. Contact</h3>
                                 <p>
-                                    Your privacy is important to us. Please read our Privacy Policy to understand how we collect, use, and share information about you.
-                                </p>
-                            </section>
-
-                            <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">7. Subscription Cancellation</h3>
-                                <p>
-                                    You may cancel your Nova Pro subscription at any time. If you cancel, you will continue to have access to the pro features until the end of your current billing period. No further charges will be applied after cancellation. To cancel, verify your subscription status on the Pricing page or contact support.
-                                </p>
-                            </section>
-
-                            <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">8. Termination</h3>
-                                <p>
-                                    We may terminate or suspend your account and bar access to the Service immediately, without prior notice or liability, under our sole discretion, for any reason whatsoever and without limitation, including but not limited to a breach of the Terms.
-                                </p>
-                            </section>
-
-                            <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">9. Changes to Terms</h3>
-                                <p>
-                                    We reserve the right, at our sole discretion, to modify or replace these Terms at any time. What constitutes a material change will be determined at our sole discretion. By continuing to access or use our Service after those revisions become effective, you agree to be bound by the revised terms.
-                                </p>
-                            </section>
-
-                            <section>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">10. Contact Us</h3>
-                                <p>
-                                    If you have any questions about these Terms, please contact us at my.notebook.by.remi@gmail.com.
+                                    For inquiries regarding these terms, please contact: <strong>my.notebook.by.remi@gmail.com</strong>.
                                 </p>
                             </section>
                         </div>

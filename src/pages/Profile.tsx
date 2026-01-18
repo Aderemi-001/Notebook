@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useLanguage } from '@/contexts/LanguageContext';
 import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -28,29 +29,65 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { AdminBadge } from '@/components/AdminBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { BadgeList } from '@/components/gamification/BadgeList';
 import { gamificationService } from '@/services/gamificationService';
+import { studySetService } from '@/services/studySetService';
 
-const BadgeListWrapper = ({ userId }: { userId?: string }) => {
-  const { data: badges, isLoading } = useQuery({
+import { toast } from "sonner";
+
+
+
+const BadgeListWrapper = ({ userId, profile }: { userId?: string, profile?: UserProfile | null }) => {
+  const { isPremium, planId } = useSubscription();
+
+  const { data: serverBadges, isLoading } = useQuery({
     queryKey: ['badges', userId],
     queryFn: () => gamificationService.getBadges(userId || ''),
     enabled: !!userId
   });
 
-  // Transform badges to match Badge interface (cast category to union type, handle awarded_at)
-  const transformedBadges = (badges || []).map(badge => ({
-    ...badge,
-    category: (badge.category === 'general' || badge.category === 'streak' || badge.category === 'mastery' || badge.category === 'creation' 
-      ? badge.category 
-      : null) as 'general' | 'streak' | 'mastery' | 'creation' | null,
-    awarded_at: (typeof badge.awarded_at === 'string' ? badge.awarded_at : undefined)
-  }));
-  return <BadgeList badges={transformedBadges} isLoading={isLoading} />;
+  // Track previous count for notifications
+  const [prevBadgeCount, setPrevBadgeCount] = useState<number>(0);
+
+  // Transform and Merge Badges
+  const displayedBadges = useMemo(() => {
+    if (!serverBadges) return [];
+
+    // Use shared service logic to enrich badges with client-side rules and static goals
+    const enriched = gamificationService.enrichBadges(serverBadges, profile, isPremium, planId);
+
+    // Map for UI display (category typing)
+    return enriched.map(b => ({
+      ...b,
+      category: (['general', 'streak', 'mastery', 'creation'].includes(b.category || '') ? b.category : 'general') as any,
+      awarded_at: typeof b.awarded_at === 'string' ? b.awarded_at : undefined
+    }));
+  }, [serverBadges, profile, isPremium]);
+
+  // Sync Badges Effect (Persistence)
+  useEffect(() => {
+    if (profile && !isLoading) {
+      // We sync in background to ensure permanent unlock
+      gamificationService.syncBadges(userId || '', profile, isPremium, planId);
+    }
+  }, [profile, isPremium, planId, isLoading, userId]);
+
+  // Notification Effect
+  useEffect(() => {
+    const unlockedCount = displayedBadges.filter(b => !!b.awarded_at).length;
+    if (prevBadgeCount > 0 && unlockedCount > prevBadgeCount) {
+      toast.success("🏆 New Badge Unlocked!", {
+        description: "Check your profile achievements!"
+      });
+    }
+    setPrevBadgeCount(unlockedCount);
+  }, [displayedBadges.length, isPremium, profile]); // dependency on length/premium might be enough for this simple check
+
+  return <BadgeList badges={displayedBadges} isLoading={isLoading} />;
 };
 
 const profileSchema = z.object({
@@ -76,6 +113,7 @@ interface UserProfile {
   twitter_handle: string | null;
   instagram_handle: string | null;
   is_public_profile: boolean;
+  current_streak?: number;
   subscriptions: { status: string }[];
   stats?: {
     total_sets: number;
@@ -96,7 +134,7 @@ const fetchUserProfile = async (): Promise<UserProfile | null> => {
   // Fetch profile
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, display_name, avatar_url, is_admin, bio, location, website, twitter_handle, instagram_handle, is_public_profile')
+    .select('id, display_name, avatar_url, is_admin, bio, location, website, twitter_handle, instagram_handle, is_public_profile, current_streak')
     .eq('id', user.id)
     .single();
 
@@ -105,9 +143,9 @@ const fetchUserProfile = async (): Promise<UserProfile | null> => {
   }
 
   // Fetch subscription, total sets, and mastered cards count
-  const [subRes, setsRes, masteredRes] = await Promise.all([
+  const [subRes, setsData, masteredRes] = await Promise.all([
     supabase.from('subscriptions').select('status').eq('user_id', user.id).maybeSingle(),
-    supabase.from('study_sets').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    studySetService.getMyStudySets(),
     supabase.from('user_progress').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'mastered')
   ]);
 
@@ -117,7 +155,7 @@ const fetchUserProfile = async (): Promise<UserProfile | null> => {
     ...profile,
     subscriptions: subRes.data ? [subRes.data] : [],
     stats: {
-      total_sets: setsRes.count || 0,
+      total_sets: setsData.length || 0,
       mastered_cards: masteredRes.count || 0
     }
   } as UserProfile;
@@ -127,6 +165,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, refreshProfile: refreshAuthProfile } = useAuth(); // Rename to avoid confusion
+  const { t } = useLanguage();
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Use local query to get full profile stats
@@ -252,7 +291,7 @@ const Profile = () => {
 
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-bold">{profile?.display_name || 'Profile'}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold">{profile?.display_name || t('profile.title')}</h1>
               {profile?.is_admin && <AdminBadge className="h-6 text-xs" />}
             </div>
 
@@ -264,10 +303,10 @@ const Profile = () => {
             <div className="flex items-center gap-2 mt-1">
               {isPremium ? (
                 <div className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 text-[10px] font-bold uppercase tracking-wider shadow-sm border border-yellow-400/50 flex items-center gap-1">
-                  <Crown className="h-3 w-3" /> <span>PRO MEMBER</span>
+                  <Crown className="h-3 w-3" /> <span>{t('profile.proMember')}</span>
                 </div>
               ) : (
-                <span className="text-sm text-muted-foreground">Free Plan</span>
+                <span className="text-sm text-muted-foreground">{t('profile.freeMember')}</span>
               )}
             </div>
           </div>
@@ -278,8 +317,8 @@ const Profile = () => {
         <div className="lg:col-span-2 space-y-6">
           <Card className="glass-card border-white/20 shadow-premium rounded-[2.5rem]">
             <CardHeader>
-              <h2 className="text-xl font-semibold leading-none tracking-tight">Public Profile Details</h2>
-              <CardDescription>This information may be visible to other users if your profile is set to public.</CardDescription>
+              <h2 className="text-xl font-semibold leading-none tracking-tight">{t('profile.publicDetails')}</h2>
+              <CardDescription>{t('profile.publicDetailsDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -290,7 +329,7 @@ const Profile = () => {
                       name="display_name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Display Name</FormLabel>
+                          <FormLabel>{t('profile.displayName')}</FormLabel>
                           <FormControl>
                             <Input placeholder="Your display name" {...field} />
                           </FormControl>
@@ -304,7 +343,7 @@ const Profile = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4" /> Location
+                            <MapPin className="h-4 w-4" /> {t('profile.location')}
                           </FormLabel>
                           <FormControl>
                             <Input placeholder="City, Country" {...field} value={field.value || ''} />
@@ -321,7 +360,7 @@ const Profile = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          <Info className="h-4 w-4" /> Bio
+                          <Info className="h-4 w-4" /> {t('profile.bio')}
                         </FormLabel>
                         <FormControl>
                           <Textarea
@@ -343,7 +382,7 @@ const Profile = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          <Globe className="h-4 w-4" /> Website
+                          <Globe className="h-4 w-4" /> {t('profile.website')}
                         </FormLabel>
                         <FormControl>
                           <Input placeholder="https://yourwebsite.com" {...field} value={field.value || ''} />
@@ -355,7 +394,7 @@ const Profile = () => {
 
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium flex items-center gap-2">
-                      Social Handles
+                      {t('profile.socialHandles')}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
@@ -400,9 +439,9 @@ const Profile = () => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 w-full">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base">Visibility</FormLabel>
+                            <FormLabel className="text-base">{t('profile.visibility')}</FormLabel>
                             <FormDescription>
-                              Make your profile and study sets visible to the community.
+                              {t('profile.visibilityDesc')}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -418,7 +457,7 @@ const Profile = () => {
 
                   <div className="flex justify-end pt-2">
                     <Button type="submit" size="lg" className="px-8 shadow-md">
-                      Save Profile Changes
+                      {t('profile.saveChanges')}
                     </Button>
                   </div>
                 </form>
@@ -431,36 +470,36 @@ const Profile = () => {
           <Card className="glass-card shadow-premium rounded-[2.5rem] bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 border-indigo-200/50">
             <CardHeader>
               <h2 className="text-xl font-semibold leading-none tracking-tight flex items-center gap-2">
-                <BarChart2 className="h-5 w-5 text-indigo-600" /> Your Impact
+                <BarChart2 className="h-5 w-5 text-indigo-600" /> {t('profile.yourImpact')}
               </h2>
-              <CardDescription>Learning statistics and milestones.</CardDescription>
+              <CardDescription>{t('profile.impactDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-white/80 dark:bg-white/5 backdrop-blur-sm border shadow-sm flex flex-col items-center text-center transition-colors">
                   <LayoutGrid className="h-5 w-5 mb-2 text-blue-500" />
                   <span className="text-2xl font-bold">{profile?.stats?.total_sets || 0}</span>
-                  <p className="text-[10px] uppercase tracking-wider font-black text-muted-foreground">Study Sets</p>
+                  <p className="text-[10px] uppercase tracking-wider font-black text-muted-foreground">{t('profile.studySets')}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-white/80 dark:bg-white/5 backdrop-blur-sm border shadow-sm flex flex-col items-center text-center transition-colors">
                   <Trophy className="h-5 w-5 mb-2 text-amber-500" />
                   <span className="text-2xl font-bold">{profile?.stats?.mastered_cards || 0}</span>
-                  <p className="text-[10px] uppercase tracking-wider font-black text-muted-foreground">Cards Mastered</p>
+                  <p className="text-[10px] uppercase tracking-wider font-black text-muted-foreground">{t('profile.cardsMastered')}</p>
                 </div>
               </div>
 
               <div className="p-4 rounded-xl bg-indigo-600 text-white shadow-lg flex flex-col items-center text-center">
-                <span className="text-sm font-medium opacity-80 mb-1">Current Status</span>
+                <span className="text-sm font-medium opacity-80 mb-1">{t('profile.currentStatus')}</span>
                 <span className="text-lg font-bold flex items-center gap-2">
                   {isPremium ? (
-                    <><Crown className="h-5 w-5 text-amber-300" /> Pro Member</>
+                    <><Crown className="h-5 w-5 text-amber-300" /> {t('profile.proMember')}</>
                   ) : (
-                    "Free Member"
+                    t('profile.free')
                   )}
                 </span>
                 {!isPremium && (
                   <Button variant="secondary" size="sm" className="mt-4 w-full" asChild>
-                    <Link to="/pricing">Upgrade Now</Link>
+                    <Link to="/pricing">{t('profile.upgrade')}</Link>
                   </Button>
                 )}
               </div>
@@ -472,29 +511,29 @@ const Profile = () => {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <h2 className="text-xl font-semibold leading-none tracking-tight flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-amber-500" /> My Achievements
+                  <Trophy className="h-5 w-5 text-amber-500" /> {t('profile.achievements')}
                 </h2>
-                <CardDescription>Badges earned from your learning journey.</CardDescription>
+                <CardDescription>{t('profile.achievementsDesc')}</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
-              <BadgeListWrapper userId={user?.id} />
+              <BadgeListWrapper userId={user?.id} profile={profile} />
             </CardContent>
           </Card>
 
           <Card className="glass-card border-white/20 shadow-premium rounded-[2.5rem]">
             <CardHeader>
-              <h2 className="text-xl font-semibold leading-none tracking-tight">Quick Links</h2>
+              <h2 className="text-xl font-semibold leading-none tracking-tight">{t('profile.quickLinks')}</h2>
             </CardHeader>
             <CardContent className="space-y-2">
               <Link to="/settings">
                 <Button variant="outline" className="w-full justify-start hover:bg-slate-50 transition-colors">
-                  <SettingsIcon className="mr-2 h-4 w-4" /> Settings
+                  <SettingsIcon className="mr-2 h-4 w-4" /> {t('profile.settings')}
                 </Button>
               </Link>
               <Link to="/dashboard">
                 <Button variant="outline" className="w-full justify-start hover:bg-slate-50 transition-colors">
-                  <BarChart2 className="mr-2 h-4 w-4" /> Activity Dashboard
+                  <BarChart2 className="mr-2 h-4 w-4" /> {t('profile.statistics')}
                 </Button>
               </Link>
             </CardContent>
@@ -502,8 +541,8 @@ const Profile = () => {
 
           <Card className="glass-card shadow-premium rounded-[2.5rem] border-red-100 bg-red-50/5">
             <CardHeader>
-              <h2 className="text-xl font-semibold leading-none tracking-tight text-destructive">Danger Zone</h2>
-              <CardDescription>Permanently delete your account and all data.</CardDescription>
+              <h2 className="text-xl font-semibold leading-none tracking-tight text-destructive">{t('profile.dangerZone')}</h2>
+              <CardDescription>{t('profile.dangerDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <AlertDialog>
@@ -514,16 +553,14 @@ const Profile = () => {
                     ) : (
                       <Trash2 className="mr-2 h-4 w-4" />
                     )}
-                    Delete Account
+                    {t('profile.deleteAccount')}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>{t('library.deleteConfirmTitle')}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your account,
-                      all your study sets, notes, progress, and any other associated data.
-                      Please type "DELETE" to confirm.
+                      {t('profile.deleteConfirmDesc')}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <div className="grid gap-4 py-4">
@@ -539,14 +576,14 @@ const Profile = () => {
                     />
                   </div>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>{t('library.cancel')}</AlertDialogCancel>
                     <AlertDialogAction
                       id="confirm-delete-button"
                       onClick={handleDeleteAccount}
                       disabled={true}
                       className="bg-red-600 hover:bg-red-700"
                     >
-                      Confirm Delete
+                      {t('profile.confirmDelete')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

@@ -182,7 +182,7 @@ const GroupsIndex: React.FC = () => {
   return (
     <div className="container mx-auto py-6 sm:py-8 md:py-10 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold">My Study Set Groups</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">My Groups</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">
@@ -197,8 +197,8 @@ const GroupsIndex: React.FC = () => {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link to="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Study Sets
+              <Link to="/sets" className="flex items-center">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sets
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

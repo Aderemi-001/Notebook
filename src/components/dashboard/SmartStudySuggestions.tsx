@@ -30,10 +30,11 @@ export interface SmartSuggestion {
     setId: string;
     title: string;
     reason: string;
-    type: 'review' | 'mastery' | 'decay';
+    type: 'review' | 'mastery' | 'decay' | 'risk';
     priority: number;
     count?: number;
 }
+
 
 // --- Logic ---
 
@@ -127,7 +128,32 @@ function calculateSuggestions(
             }
         }
 
-        // RULE 4: Mastery Push (Close to finishing)
+        // RULE 4: Predictive Risk (Due in less than 48 hours)
+        let riskCount = 0;
+        const fortyEightHoursFromNow = new Date(now.getTime() + (48 * 60 * 60 * 1000));
+
+        setCards.forEach(card => {
+            const p = progressMap.get(card.id);
+            if (p) {
+                const nextReview = new Date(p.next_review_at);
+                if (nextReview > now && nextReview <= fortyEightHoursFromNow) {
+                    riskCount++;
+                }
+            }
+        });
+
+        if (riskCount > 0 && dueCount === 0) {
+            calculatedSuggestions.push({
+                setId: set.id,
+                title: set.title,
+                reason: `${riskCount} concepts starting to fade soon`,
+                type: 'risk',
+                priority: 5 + (riskCount * 0.5),
+                count: riskCount
+            });
+        }
+
+        // RULE 5: Mastery Push (Close to finishing)
         if (masteryRate > 70 && masteryRate < 100) {
             calculatedSuggestions.push({
                 setId: set.id,
@@ -137,6 +163,7 @@ function calculateSuggestions(
                 priority: 10
             });
         }
+
     });
 
     // Deduplicate: If a set triggered multiple rules (unlikely with returns, but safe to keep), take highest priority
@@ -260,11 +287,14 @@ function AIInsightHeader({ suggestions }: { suggestions: SmartSuggestion[] }) {
 
         if (topSuggestion.type === 'review') {
             tip = `I recommend starting with **${topSuggestion.title}** to clear your backlog.`;
+        } else if (topSuggestion.type === 'risk') {
+            tip = `Heads up! **${topSuggestion.title}** will start fading in the next 48 hours.`;
         } else if (topSuggestion.type === 'mastery') {
             tip = `You're so close to mastering **${topSuggestion.title}**. Keep going!`;
         } else {
             tip = `It's been a while since you practiced **${topSuggestion.title}**.`;
         }
+
 
         setInsight(`${greeting} ${tip}`);
     }, [suggestions]);
@@ -333,7 +363,9 @@ const SuggestionBadge: React.FC<{ type: SmartSuggestion['type'] }> = ({ type }) 
         review: { icon: Clock, label: 'Due for Review', color: 'text-orange-500 bg-orange-500/10' },
         mastery: { icon: TrendingUp, label: 'Near Mastery', color: 'text-green-500 bg-green-500/10' },
         decay: { icon: Brain, label: 'Spaced Repetition', color: 'text-blue-500 bg-blue-500/10' },
+        risk: { icon: Sparkles, label: 'Retention Risk', color: 'text-pink-500 bg-pink-500/10' },
     };
+
 
     const { icon: Icon, label, color } = config[type];
 

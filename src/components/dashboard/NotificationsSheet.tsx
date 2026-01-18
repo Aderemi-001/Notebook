@@ -13,7 +13,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bell, Check, Trash2, Clock, Info, ShieldAlert, Sparkles, LogIn, Maximize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { safeFormatDistanceToNow } from '@/utils/dateUtils';
 import { showSuccess, showError } from '@/utils/toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
@@ -33,11 +33,20 @@ interface Notification {
     title?: string;
 }
 
-export const NotificationsSheet = () => {
+interface NotificationsSheetProps {
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+}
+
+export const NotificationsSheet = ({ open, onOpenChange }: NotificationsSheetProps) => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
-    const [isOpen, setIsOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+
+    const isControlled = open !== undefined;
+    const isOpen = isControlled ? open : internalOpen;
+    const setIsOpen = isControlled ? onOpenChange : setInternalOpen;
 
     // 1. Fetch Notifications with React Query (Shared Cache)
     const { data: notifications = [], isLoading } = useQuery({
@@ -165,7 +174,7 @@ export const NotificationsSheet = () => {
                 </Button>
             </SheetTrigger>
             <SheetContent className="w-full sm:max-w-md p-0 overflow-hidden flex flex-col bg-background/95 backdrop-blur-xl border-l border-border/40">
-                <SheetHeader className="p-6 border-b border-border/40 bg-card/50">
+                <SheetHeader className="p-4 border-b border-border/40 bg-card/50">
                     <div className="flex items-center justify-between">
                         <SheetTitle className="text-xl font-black tracking-tight flex items-center gap-2">
                             Inbox
@@ -219,7 +228,7 @@ export const NotificationsSheet = () => {
                             <p className="text-sm">You have no new notifications.</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-border/30">
+                        <div className="divide-y divide-border/30 pb-24">
                             {notifications.map((note) => (
                                 <div
                                     key={note.id}
@@ -261,7 +270,7 @@ export const NotificationsSheet = () => {
                                             <div className="flex items-center justify-between pt-2">
                                                 <div className="flex items-center text-[10px] text-muted-foreground/70 font-medium">
                                                     <Clock className="h-3 w-3 mr-1" />
-                                                    {formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}
+                                                    {safeFormatDistanceToNow(note.created_at)}
                                                 </div>
                                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <Button
@@ -314,7 +323,7 @@ export const NotificationsSheet = () => {
                                     </DialogTitle>
                                     <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
                                         <Clock className="h-3 w-3" />
-                                        {selectedNotification && formatDistanceToNow(new Date(selectedNotification.created_at), { addSuffix: true })}
+                                        {selectedNotification && safeFormatDistanceToNow(selectedNotification.created_at)}
                                     </p>
                                 </div>
                             </div>

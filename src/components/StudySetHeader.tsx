@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Globe, Plus, MoreVertical, Folder, ShieldCheck, Share2, UserPlus, Library, PanelLeftOpen } from 'lucide-react';
+import { ArrowLeft, PlayCircle, Pencil, Trash2, RotateCcw, Globe, Plus, Minus, MoreVertical, Folder, ShieldCheck, Share2, Library, PanelLeftOpen } from 'lucide-react';
 import { UserPreferences } from '@/hooks/use-user-preferences';
 import ShareStudySetDialog from '@/components/collaborations/ShareStudySetDialog';
 import SendCollaborationInvitationDialog from '@/components/collaborations/SendCollaborationInvitationDialog';
@@ -34,6 +34,11 @@ interface StudySetHeaderProps {
     group_id: string | null;
     study_set_groups: { name: string }[] | null; // Changed to array
     cards: any[]; // Simplified for now, actual type is in StudySetDetail
+    profiles?: {
+      display_name: string | null;
+      avatar_url: string | null;
+      is_public_profile: boolean | null;
+    } | null;
   };
   isOwner: boolean;
   isLoggedIn: boolean;
@@ -44,6 +49,7 @@ interface StudySetHeaderProps {
   handleAddToMySets: () => void;
   isSidebarOpen?: boolean;
   onToggleSidebar?: () => void;
+  isInLibrary?: boolean;
 }
 
 const StudySetHeader: React.FC<StudySetHeaderProps> = ({
@@ -57,6 +63,7 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
   handleAddToMySets,
   isSidebarOpen,
   onToggleSidebar,
+  isInLibrary,
 }) => {
   // State to control the open state of the AlertDialogs
   const [isResetProgressDialogOpen, setIsResetProgressDialogOpen] = React.useState(false);
@@ -112,6 +119,21 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
           </div>
 
           <div className="flex items-center gap-4 text-muted-foreground">
+            <div className="flex items-center gap-2 pr-4 border-r border-border/60">
+              <div className="h-6 w-6 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                {studySet.profiles?.is_public_profile ? (
+                  <img src={studySet.profiles.avatar_url || `https://api.dicebear.com/9.x/notionists/svg?seed=${studySet.user_id}`} className="h-full w-full object-cover" alt="Author" />
+                ) : (
+                  <div className="bg-indigo-100 dark:bg-indigo-900/30 w-full h-full flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-indigo-500">?</span>
+                  </div>
+                )}
+              </div>
+              <span className="text-sm font-bold">
+                {(studySet.profiles?.is_public_profile || studySet.is_public) ? (studySet.profiles?.display_name || "Scholar") : "Anonymous"}
+              </span>
+            </div>
+
             <div className="flex items-center gap-1.5 font-bold text-sm">
               <span className="h-2 w-2 rounded-full bg-primary/40" />
               {studySet.cards.length} Flashcards
@@ -128,7 +150,7 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
       </div>
 
       {/* Primary Actions Grid */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-end w-full md:w-auto gap-3">
         {isLoggedIn && studySet.cards.length > 0 && (
           <Button
             asChild
@@ -150,27 +172,24 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-premium border-border/40 backdrop-blur-xl bg-background/80">
             <DropdownMenuItem asChild className="rounded-xl p-3">
-              <Link to="/" className="flex items-center font-bold">
+              <Link to="/sets" className="flex items-center font-bold">
                 <ArrowLeft className="mr-3 h-4 w-4" /> Back to Sets
               </Link>
             </DropdownMenuItem>
 
-            {(isOwner || isAdmin) && (
+            {(isOwner || isAdmin || isLoggedIn) && (
               <>
                 <DropdownMenuSeparator className="my-2 opacity-40" />
-                <DropdownMenuItem asChild className="rounded-xl p-3">
-                  <Link to={`/sets/${studySet.id}/edit`} className="flex items-center font-bold">
-                    <Pencil className="mr-3 h-4 w-4" /> Edit Set Content
-                  </Link>
-                </DropdownMenuItem>
 
                 {isOwner && (
-                  <DropdownMenuItem onSelect={() => setIsSendInvitationDialogOpen(true)} className="rounded-xl p-3 flex items-center font-bold">
-                    <UserPlus className="mr-3 h-4 w-4 text-indigo-500" /> Share with Team
+                  <DropdownMenuItem asChild className="rounded-xl p-3">
+                    <Link to={`/sets/${studySet.id}/edit`} className="flex items-center font-bold">
+                      <Pencil className="mr-3 h-4 w-4" /> Edit Set Content
+                    </Link>
                   </DropdownMenuItem>
                 )}
 
-                {isOwner && (
+                {isLoggedIn && (
                   <DropdownMenuItem onSelect={() => setIsResetProgressDialogOpen(true)} className="rounded-xl p-3 flex items-center font-bold">
                     <RotateCcw className="mr-3 h-4 w-4 text-orange-500" /> Reset All Progress
                   </DropdownMenuItem>
@@ -189,11 +208,25 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
 
             {studySet.is_public && !isOwner && (
               <DropdownMenuItem
-                onClick={handleAddToMySets}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddToMySets();
+                }}
                 disabled={!isLoggedIn}
-                className="rounded-xl p-3 flex items-center font-bold text-primary"
+                className={cn(
+                  "rounded-xl p-3 flex items-center font-bold",
+                  isInLibrary ? "text-red-500 focus:text-red-600" : "text-primary"
+                )}
               >
-                <Plus className="mr-3 h-4 w-4" /> Clone to Library
+                {isInLibrary ? (
+                  <>
+                    <Minus className="mr-3 h-4 w-4" /> Remove from Library
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-3 h-4 w-4" /> Add to My Sets
+                  </>
+                )}
               </DropdownMenuItem>
             )}
 
@@ -249,14 +282,16 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      {isOwner && (
-        <SendCollaborationInvitationDialog
-          studySetId={studySet.id}
-          studySetTitle={studySet.title}
-          open={isSendInvitationDialogOpen}
-          onOpenChange={setIsSendInvitationDialogOpen}
-        />
-      )}
+      {
+        isOwner && (
+          <SendCollaborationInvitationDialog
+            studySetId={studySet.id}
+            studySetTitle={studySet.title}
+            open={isSendInvitationDialogOpen}
+            onOpenChange={setIsSendInvitationDialogOpen}
+          />
+        )
+      }
 
       <ShareStudySetDialog
         studySetId={studySet.id}
@@ -265,7 +300,7 @@ const StudySetHeader: React.FC<StudySetHeaderProps> = ({
         open={isShareDialogOpen}
         onOpenChange={setIsShareDialogOpen}
       />
-    </div>
+    </div >
   );
 };
 

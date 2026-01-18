@@ -11,6 +11,7 @@ import { showSuccess, showError } from '@/utils/toast';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 import StudyProgressBar from '@/components/study/StudyProgressBar';
 import { gamificationService } from '@/services/gamificationService';
 import CompletionCelebration from '@/components/study/CompletionCelebration';
@@ -78,7 +79,7 @@ const calculateNextReview = (
   };
 };
 
-const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortOrder: string, cardsCountGoal: number, targetCardId?: string | null): Promise<CardItem[]> => {
+const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortOrder: string, cardsCountGoal: number, ignoreDueDate: boolean = false, targetCardId?: string | null): Promise<CardItem[]> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
@@ -99,7 +100,8 @@ const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortO
         user_id
       )
     `)
-    .eq('set_id', setId);
+    .eq('set_id', setId)
+    .eq('user_progress.user_id', user.id);
 
   if (targetCardId) {
     query = query.eq('id', targetCardId);
@@ -144,6 +146,10 @@ const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortO
       return false;
     }
 
+    if (ignoreDueDate) {
+      return true;
+    }
+
     return isNewCardForCurrentUser || (card.progress_user_id === user.id && isDueForReview);
   });
 
@@ -174,15 +180,18 @@ const StudyMode = () => {
   const [studyFinished, setStudyFinished] = useState(false);
   const [masteredCount, setMasteredCount] = useState(0);
   const [learningCount, setLearningCount] = useState(0);
+  const [isCramMode, setIsCramMode] = useState(false);
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
 
   const { data: cards, isLoading, isError, error, refetch } = useQuery<CardItem[], Error>({
-    queryKey: ['studyCards', setId, preferences?.hide_mastered_from_daily_review, preferences?.default_card_sort_order, preferences?.default_study_session_cards_count, targetCardId],
+    queryKey: ['studyCards', setId, preferences?.hide_mastered_from_daily_review, preferences?.default_card_sort_order, preferences?.default_study_session_cards_count, targetCardId, isCramMode],
     queryFn: () => fetchCardsForStudySet(
       setId!,
       preferences?.hide_mastered_from_daily_review || false,
       preferences?.default_card_sort_order || 'next_review_at_asc',
       preferences?.default_study_session_cards_count || 20,
+      isCramMode,
       targetCardId
     ),
     enabled: !!setId && !isLoadingAuth && !isLoadingPreferences,
@@ -208,6 +217,14 @@ const StudyMode = () => {
   const currentCard = cards?.[currentCardIndex];
   const totalCards = cards?.length || 0;
 
+  // Auto-play TTS when card changes (if enabled)
+  useEffect(() => {
+    if (currentCard && preferences?.enable_tts && !showDefinition) {
+      // Speak the term when showing the front of the card
+      speak(currentCard.term);
+    }
+  }, [currentCard, showDefinition, preferences?.enable_tts]);
+
   const handleFlipCard = () => {
     setShowDefinition(!showDefinition);
   };
@@ -224,7 +241,7 @@ const StudyMode = () => {
         .select('repetition_level, ease_factor, next_review_at, status')
         .eq('user_id', user.id)
         .eq('card_id', cardId)
-        .single();
+        .maybeSingle();
 
       if (fetchProgressError && fetchProgressError.code !== 'PGRST116') {
         throw fetchProgressError;
@@ -255,19 +272,20 @@ const StudyMode = () => {
 
       if (upsertError) throw upsertError;
 
-      // Update local counts
-      if (newProgress.status === 'mastered') {
+      // Update local counts - only increment if transitioning from learning to mastered
+      const wasAlreadyMastered = transformedProgress?.status === 'mastered';
+      if (newProgress.status === 'mastered' && !wasAlreadyMastered) {
         setMasteredCount(prev => prev + 1);
         setLearningCount(prev => Math.max(0, prev - 1));
       }
 
       let successMessage = "";
       if (quality === 0) {
-        successMessage = "Card marked for immediate re-study.";
+        successMessage = t('study.cardMarkedAgain') || "Card marked for immediate re-study.";
       } else if (quality === 1) {
-        successMessage = "Card marked for review soon.";
+        successMessage = t('study.cardMarkedHard') || "Card marked for review soon.";
       } else {
-        successMessage = "Card mastered! Well done.";
+        successMessage = t('study.cardMastered') || "Card mastered! Well done.";
       }
       showSuccess(successMessage);
 
@@ -277,6 +295,7 @@ const StudyMode = () => {
       }
 
       queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
+      queryClient.invalidateQueries({ queryKey: ['studyCards', setId] });
       queryClient.invalidateQueries({ queryKey: ['studyDays'] });
     } catch (err: any) {
       showError(`Failed to update card progress: ${err.message}`);
@@ -435,15 +454,28 @@ const StudyMode = () => {
 
   if (!cards || cards.length === 0) {
     return (
-      <div className="text-center py-10 border-2 border-dashed rounded-lg animate-fade-in">
-        <p className="text-muted-foreground">This study set has no cards due for review, or no cards at all.</p>
-        <Button asChild className="mt-4">
-          <Link to={`/sets/${setId}`} className="flex items-center">
-            <>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details
-            </>
-          </Link>
-        </Button>
+      <div className="text-center py-10 border-2 border-dashed rounded-lg animate-fade-in max-w-md mx-auto p-8">
+        <p className="text-muted-foreground text-lg mb-6">
+          {isCramMode
+            ? "No cards found even in Cram Mode. This set might be empty."
+            : "You're all caught up! No cards due for review due right now."}
+        </p>
+
+        <div className="flex flex-col gap-3 w-full">
+          {!isCramMode && (
+            <Button onClick={() => setIsCramMode(true)} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-12 rounded-xl shadow-lg transition-all active:scale-95">
+              <Sparkles className="mr-2 h-4 w-4" /> Review Anyway (Cram Mode)
+            </Button>
+          )}
+
+          <Button asChild variant={isCramMode ? "default" : "outline"} className="w-full h-12 rounded-xl">
+            <Link to={`/sets/${setId}`} className="flex items-center justify-center">
+              <>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Set Details
+              </>
+            </Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -476,7 +508,7 @@ const StudyMode = () => {
             </Link>
           </Button>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tighter text-foreground">
-            Active Study <span className="text-primary/40">Mode</span>
+            {t('study.studyMode')} <span className="text-primary/40">{t('study.flashcards')}</span>
           </h1>
         </div>
 
@@ -485,7 +517,7 @@ const StudyMode = () => {
             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Session Data</span>
             <div className="flex gap-1.5">
               <div className="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-lg text-[10px] font-black border border-emerald-500/20">
-                {masteredCount} MASTERY
+                {masteredCount} {t('study.mastery') || 'MASTERY'}
               </div>
             </div>
           </div>
@@ -518,7 +550,7 @@ const StudyMode = () => {
             onClick={handleFlipCard}
             className="w-full h-[45vh] min-h-[350px] transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl"
             frontContent={
-              <div className="flex flex-col items-center justify-center h-full text-center p-8 relative glass-card rounded-[2.5rem] border-white/40 shadow-premium overflow-hidden">
+              <div className="flex flex-col items-center justify-center h-full text-center p-8 relative rounded-[2.5rem] overflow-hidden">
                 {/* Internal Card Branding */}
                 <div className="absolute top-8 left-8 flex items-center gap-2 opacity-50">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
@@ -580,26 +612,26 @@ const StudyMode = () => {
                       </Tooltip>
                     </TooltipProvider>
                     <p className="text-[10px] text-muted-foreground font-bold tracking-[0.25em] uppercase animate-pulse">
-                      Tap To Reveal Definition
+                      {t('study.tapToReveal') || 'Tap To Reveal Definition'}
                     </p>
                   </div>
                 </div>
               </div>
             }
             backContent={
-              <div className="flex flex-col items-center justify-between h-full text-center p-8 glass-card rounded-[2.5rem] border-indigo-100 bg-white/40 shadow-premium overflow-hidden">
-                <div className="absolute top-8 left-8 flex items-center gap-2 opacity-50">
+              <div className="flex flex-col h-full text-center p-6 rounded-[2.5rem] overflow-hidden">
+                <div className="absolute top-6 left-6 flex items-center gap-2 opacity-50">
                   <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
                   <span className="text-[10px] font-black uppercase tracking-[0.2em]">Definition Clarity</span>
                 </div>
 
-                <div className="flex-grow flex flex-col items-center justify-center w-full mt-12 mb-8 overflow-y-auto custom-scrollbar">
+                <div className="flex-1 flex flex-col items-center justify-center w-full mt-8 mb-4 overflow-y-auto custom-scrollbar px-2">
                   <p className="text-lg sm:text-2xl leading-relaxed font-bold text-foreground/90 selection:bg-primary/20">
                     {currentCard?.definition}
                   </p>
                 </div>
 
-                <div className="w-full space-y-6" onClick={(e) => e.stopPropagation()}>
+                <div className="w-full space-y-6 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-center">
                     <TooltipProvider>
                       <Tooltip>
@@ -625,7 +657,7 @@ const StudyMode = () => {
                               }}
                             >
                               <Volume2 className="h-4 w-4" />
-                              <span>Listen</span>
+                              <span>{t('study.listen') || 'Listen'}</span>
                               {!isPremium && <Lock className="h-3 w-3 text-amber-500 ml-1" />}
                             </Button>
                           </div>
@@ -651,21 +683,21 @@ const StudyMode = () => {
                 onClick={() => handleNextCard(0)}
                 className="group/btn relative overflow-hidden h-14 md:h-16 rounded-2xl border-2 border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 hover:bg-red-500 hover:border-red-500 text-red-600 dark:text-red-400 hover:text-white transition-all duration-300 font-black flex flex-col items-center justify-center shadow-sm"
               >
-                <span className="text-sm uppercase tracking-tighter">Again</span>
+                <span className="text-sm uppercase tracking-tighter">{t('study.dontKnowIt')}</span>
               </Button>
               <Button
                 variant="outline"
                 onClick={() => handleNextCard(1)}
                 className="group/btn relative overflow-hidden h-14 md:h-16 rounded-2xl border-2 border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/30 hover:bg-orange-500 hover:border-orange-500 text-orange-600 dark:text-orange-400 hover:text-white transition-all duration-300 font-black flex flex-col items-center justify-center shadow-sm"
               >
-                <span className="text-sm uppercase tracking-tighter">Hard</span>
+                <span className="text-sm uppercase tracking-tighter">{t('study.previous')}</span> {/* Using 'previous' loosely for Hard/review soon, or add specific key if needed */}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => handleNextCard(2)}
                 className="group/btn relative overflow-hidden h-14 md:h-16 rounded-2xl border-2 border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-500 hover:border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:text-white transition-all duration-300 font-black flex flex-col items-center justify-center shadow-sm"
               >
-                <span className="text-sm uppercase tracking-tighter">Good</span>
+                <span className="text-sm uppercase tracking-tighter">{t('study.knowIt')}</span>
               </Button>
             </div>
           )}
@@ -673,17 +705,17 @@ const StudyMode = () => {
           {/* Navigation Feedback */}
           <div className="mt-8 flex items-center justify-between px-2">
             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
-              Card {currentCardIndex + 1} <span className="mx-2 opacity-30">/</span> {cards.length}
+              {t('study.card') || 'Card'} {currentCardIndex + 1} <span className="mx-2 opacity-30">/</span> {cards.length}
             </div>
 
-            <div className="flex gap-4">
+            <div className="hidden md:flex gap-4">
               <div className="flex items-center gap-1.5 opacity-40">
                 <div className="px-1.5 py-1 rounded bg-secondary text-[8px] font-black tracking-tighter border border-border/40">SPACE</div>
-                <span className="text-[9px] font-bold text-muted-foreground">FLIP</span>
+                <span className="text-[9px] font-bold text-muted-foreground">{t('study.flip').toUpperCase()}</span>
               </div>
               <div className="flex items-center gap-1.5 opacity-40">
                 <div className="px-1.5 py-1 rounded bg-secondary text-[8px] font-black tracking-tighter border border-border/40">1-3</div>
-                <span className="text-[9px] font-bold text-muted-foreground">GRADE</span>
+                <span className="text-[9px] font-bold text-muted-foreground">{t('study.grade') || 'GRADE'}</span>
               </div>
             </div>
           </div>

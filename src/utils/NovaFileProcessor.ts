@@ -19,7 +19,7 @@ export interface ExtractedCard {
 export class NovaFileProcessor {
     // Prevent UI lock-up by limiting the amount of text processed at once
     private static readonly MAX_LOCAL_CHARS = 100000; // ~40 pages
-    private static readonly MAX_AI_CHARS = 250000;    // ~100 pages, well within AI context but safe for DOM
+    private static readonly MAX_AI_CHARS = 60000;     // ~25 pages, optimal for AI reliability and context limits
 
 
     private static cleanText(text: string): string {
@@ -224,7 +224,7 @@ export class NovaFileProcessor {
      * Advanced AI processing (Groq)
      * Combines the speed of local heuristics with the intelligence of LLMs
      */
-    static async processWithAI(text: string): Promise<{ cards: ExtractedCard[], concepts: any[], relationships?: any[] }> {
+    static async processWithAI(text: string, maxCards: number = 50): Promise<{ cards: ExtractedCard[], concepts: any[], relationships?: any[] }> {
         // Limit text to avoid massive payloads and UI lag
         const safeText = text.length > this.MAX_AI_CHARS
             ? text.substring(0, this.MAX_AI_CHARS)
@@ -232,14 +232,16 @@ export class NovaFileProcessor {
 
         // 1. Get local results (Fast baseline)
         const localResults = this.processContent(safeText);
+        console.log(`DEBUG: Local Regex found ${localResults.cards.length} cards.`);
 
         try {
             // 2. Supplement with AI (Intelligence)
-            const aiContent = await NovaAI.generateStudyContent(safeText);
+            const aiContent = await NovaAI.generateStudyContent(safeText, maxCards);
 
             if (aiContent && aiContent.cards.length > 0) {
                 // PRIMARILY use AI cards (Higher Quality)
                 // If AI returns good results, we trust it completely and ignore local regex artifacts.
+                console.log(`DEBUG: AI Success. Cards: ${aiContent.cards.length}, Concepts: ${aiContent.concepts.length}`);
 
                 return {
                     cards: aiContent.cards.sort((a: any, b: any) => a.term.localeCompare(b.term)),

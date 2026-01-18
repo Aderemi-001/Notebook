@@ -34,8 +34,20 @@ export const BadgeList: React.FC<BadgeListProps> = ({ badges, isLoading, classNa
         );
     }
 
-    // Group by category for cleaner display
-    const categories = Array.from(new Set(badges.map(b => b.category)));
+    // Group by category for cleaner display with fixed order
+    const categoryOrder = ['mastery', 'streak', 'creation', 'general'];
+    const categories = Array.from(new Set(badges.map(b => b.category)))
+        .sort((a, b) => { // Sort categories by priority
+            const catA = a || 'general';
+            const catB = b || 'general';
+            const indexA = categoryOrder.indexOf(catA);
+            const indexB = categoryOrder.indexOf(catB);
+
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
+            return catA.localeCompare(catB);
+        });
 
     return (
         <ScrollArea className={cn("w-full pr-4 h-full", className)}>
@@ -48,7 +60,7 @@ export const BadgeList: React.FC<BadgeListProps> = ({ badges, isLoading, classNa
                             <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground/70 border-b border-border/50 pb-2">
                                 {category.charAt(0).toUpperCase() + category.slice(1)} Badges
                             </h3>
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-x-4 gap-y-8">
+                            <div className="flex flex-wrap gap-4 justify-start">
                                 {categoryBadges.map((badge) => (
                                     <BadgeItem key={badge.id} badge={badge} size="md" />
                                 ))}

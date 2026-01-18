@@ -65,16 +65,6 @@ export default function AdminTransactions() {
         fetchTransactions();
     }, []);
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'completed': return <Badge className="bg-green-500">Completed</Badge>;
-            case 'pending': return <Badge variant="outline" className="text-yellow-600 border-yellow-600">Pending</Badge>;
-            case 'failed': return <Badge variant="destructive">Failed</Badge>;
-            case 'cancelled': return <Badge variant="secondary">Cancelled</Badge>;
-            default: return <Badge variant="outline">{status}</Badge>;
-        }
-    };
-
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2">
@@ -116,32 +106,56 @@ export default function AdminTransactions() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {transactions.map((txn) => (
-                                        <TableRow key={txn.id}>
-                                            <TableCell className="font-medium">
-                                                {new Date(txn.created_at).toLocaleString()}
-                                            </TableCell>
-                                            <TableCell>
-                                                {getStatusBadge(txn.status)}
-                                            </TableCell>
-                                            <TableCell>
-                                                {txn.currency} {txn.amount.toFixed(2)}
-                                            </TableCell>
-                                            <TableCell className="font-mono text-xs text-muted-foreground" title={txn.user_id}>
-                                                {txn.user_id.slice(0, 8)}...
-                                            </TableCell>
-                                            <TableCell className="font-mono text-xs">
-                                                {txn.provider_ref || '-'}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {txn.status === 'completed' && (
-                                                    <Badge variant="outline" className="border-green-500 text-green-600">
-                                                        Authenticated
-                                                    </Badge>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                    {transactions.map((txn) => {
+                                        const getStatusDetails = (status: string) => {
+                                            switch (status) {
+                                                case 'completed': return { color: 'bg-green-100 text-green-700', icon: CreditCard, label: 'Success' };
+                                                case 'pending': return { color: 'bg-amber-100 text-amber-700', icon: Loader2, label: 'Pending' };
+                                                case 'failed': return { color: 'bg-red-100 text-red-700', icon: CreditCard, label: 'Failed' };
+                                                case 'cancelled': return { color: 'bg-slate-100 text-slate-500', icon: CreditCard, label: 'Cancelled' };
+                                                default: return { color: 'bg-gray-100 text-gray-700', icon: CreditCard, label: status };
+                                            }
+                                        };
+                                        const style = getStatusDetails(txn.status);
+                                        const Icon = style.icon;
+
+                                        return (
+                                            <TableRow key={txn.id} className="group hover:bg-muted/50">
+                                                <TableCell className="font-medium">
+                                                    <div className="flex flex-col">
+                                                        <span>{new Date(txn.created_at).toLocaleDateString()}</span>
+                                                        <span className="text-xs text-muted-foreground">{new Date(txn.created_at).toLocaleTimeString()}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className={`flex items-center gap-2 w-fit px-2.5 py-0.5 rounded-full text-xs font-medium border ${style.color.replace('bg-', 'border-').replace('text-', 'border-').split(' ')[0]} ${style.color}`}>
+                                                        <Icon className="h-3 w-3" />
+                                                        <span className="capitalize">{style.label}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="font-bold">
+                                                    {txn.currency} {txn.amount.toFixed(2)}
+                                                </TableCell>
+                                                <TableCell className="font-mono text-xs text-muted-foreground" title={txn.user_id}>
+                                                    {txn.user_id}
+                                                </TableCell>
+                                                <TableCell className="font-mono text-xs">
+                                                    {txn.provider_ref ? (
+                                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{txn.provider_ref}</span>
+                                                    ) : (
+                                                        <span className="text-muted-foreground italic opacity-50">Pending Ref</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {txn.status === 'completed' && (
+                                                        <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50">
+                                                            Verified
+                                                        </Badge>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         </div>

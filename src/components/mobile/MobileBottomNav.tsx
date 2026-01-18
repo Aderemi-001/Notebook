@@ -19,6 +19,9 @@ interface MobileBottomNavProps {
 const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onMenuClick, onAuthCheck }) => {
     const location = useLocation();
 
+    // Minimized View logic removed - menu always visible
+
+
     const tabs = [
         { label: 'Home', icon: LayoutDashboard, path: '/' },
         { label: 'Notes', icon: NotebookPen, path: '/notebook' },

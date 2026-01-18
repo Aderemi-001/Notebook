@@ -1,7 +1,7 @@
 
 /**
  * ==========================================================================
- * PROJECT NOVEA - SYSTEM CONFIGURATION (HARD-LOCKED)
+ * NOVA V2 - SYSTEM CONFIGURATION (HARD-LOCKED)
  * ==========================================================================
  * VERSION: 2.0 (SUPERNOVA ULTRA)
  * FOUNDATION: AETHER & PULSE DESIGN SYSTEM

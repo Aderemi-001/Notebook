@@ -1,3 +1,4 @@
+import { handleSafeAction } from "@/utils/safe-action";
 
 export interface TextbookResult {
     title: string;
@@ -18,7 +19,7 @@ export const textbookService = {
     async searchBooks(query: string, filterFree: boolean = false): Promise<TextbookResult[]> {
         if (!query.trim()) return [];
 
-        try {
+        return handleSafeAction(async () => {
             let url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=20`;
             if (filterFree) {
                 url += '&filter=free-ebooks';
@@ -50,9 +51,6 @@ export const textbookService = {
                     isbn: isbn
                 };
             });
-        } catch (error) {
-            console.error('Textbook search error:', error);
-            throw error;
-        }
+        }, "Failed to search for textbooks", []) as Promise<TextbookResult[]>;
     }
 };

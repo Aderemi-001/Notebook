@@ -4,7 +4,8 @@ import {
     FileText,
     Plus,
     LayoutDashboard,
-    NotebookPen
+    NotebookPen,
+    CreditCard
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -125,6 +126,8 @@ export function CommandPalette() {
                                 >
                                     {result.type === 'set' ? (
                                         <BookOpen className="mr-2 h-4 w-4 text-blue-500" />
+                                    ) : result.type === 'card' ? (
+                                        <CreditCard className="mr-2 h-4 w-4 text-purple-500" />
                                     ) : (
                                         <FileText className="mr-2 h-4 w-4 text-green-500" />
                                     )}

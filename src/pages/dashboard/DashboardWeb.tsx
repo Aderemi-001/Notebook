@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { BookOpen, Search, Plus, LayoutDashboard, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { StudyRiskScore } from '@/components/dashboard/StudyRiskScore';
+import { analyticsService } from '@/services/analyticsService';
 
 const DashboardWeb: React.FC = () => {
     const { user, profile, loading: isLoadingAuth } = useAuth();
@@ -23,6 +24,12 @@ const DashboardWeb: React.FC = () => {
         queryKey: ['studySets', user?.id],
         queryFn: studySetService.getMyStudySets,
         enabled: !!user && !isLoadingAuth,
+    });
+
+    const { data: riskData } = useQuery({
+        queryKey: ['studyRisk', user?.id],
+        queryFn: () => user ? analyticsService.getStudyRiskScore(user.id) : Promise.resolve({ score: 0, trend: 'stable' as const }),
+        enabled: !!user,
     });
 
     const filteredStudySets = studySets?.filter(set =>
@@ -52,11 +59,11 @@ const DashboardWeb: React.FC = () => {
                     <div className="space-y-4 max-w-2xl">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 backdrop-blur-md text-indigo-200 text-xs font-bold uppercase tracking-widest">
                             <LayoutDashboard className="h-3 w-3" />
-                            Personal Learning Hub
+                            {t('dashboard.personalHub')}
                         </div>
                         <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
                             {t('dashboard.welcome')} <span className="text-nova-blue animate-pulse-glow">
-                                {profile?.display_name || user?.email?.split('@')[0] || 'Scholar'}
+                                {profile?.display_name || user?.email?.split('@')[0] || t('dashboard.scholar')}
                             </span>{t('dashboard.welcomeSuffix')}
                         </h1>
                         <p className="text-indigo-100/80 text-lg md:text-xl font-medium max-w-lg">
@@ -140,9 +147,6 @@ const DashboardWeb: React.FC = () => {
                                                 <span className="text-lg font-black">{set.cards_count || 0}</span>
                                                 <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground transition-colors group-hover:text-primary/70">{t('dashboard.flashcards')}</span>
                                             </div>
-                                            <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-accent opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
-                                                <Plus className="h-5 w-5 text-primary rotate-45" />
-                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -180,6 +184,17 @@ const DashboardWeb: React.FC = () => {
                                     </Button>
                                 )}
                             </div>
+                        )}
+                    </div>
+
+                    {/* Data Insights Layer - Moved below Library */}
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-8">
+                        {riskData && (
+                            <StudyRiskScore
+                                score={riskData.score}
+                                trend={riskData.trend}
+                                lastUpdated={new Date().toLocaleDateString()}
+                            />
                         )}
                     </div>
                 </div>

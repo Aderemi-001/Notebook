@@ -268,13 +268,17 @@ export const AdminBroadcasts = () => {
 
             // If active, also send as a global notification to everyone via RPC
             if (broadcast.active) {
-                // Note: admin_send_global_notification may not exist in DB, using admin_send_direct_message as fallback
-                const { error: rpcError } = await (supabase.rpc as any)('admin_send_global_notification', {
-                    p_title: 'System Announcement',
-                    p_message: broadcast.message,
-                    p_type: broadcast.type
-                }).catch(() => ({ error: null }));
-                if (rpcError) console.warn("Background notification failed, but settings saved.", rpcError);
+                // Note: admin_send_global_notification may not exist in DB, using try-catch as fallback
+                try {
+                    const { error: rpcError } = await (supabase.rpc as any)('admin_send_global_notification', {
+                        p_title: 'System Announcement',
+                        p_message: broadcast.message,
+                        p_type: broadcast.type
+                    });
+                    if (rpcError) console.warn("Background notification failed, but settings saved.", rpcError);
+                } catch (rpcException) {
+                    console.warn("RPC function not available, but settings saved.", rpcException);
+                }
             }
 
             showSuccess('Broadcast settings updated.');
@@ -398,14 +402,14 @@ export const AdminBroadcasts = () => {
             </Card>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-8 p-1 bg-muted/50 rounded-xl">
-                    <TabsTrigger value="broadcasts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-300">
+                <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 h-auto mb-8 p-1 bg-muted/50 rounded-xl gap-1">
+                    <TabsTrigger value="broadcasts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-300 py-2">
                         <Megaphone className="h-4 w-4 mr-2" /> Global Broadcasts
                     </TabsTrigger>
-                    <TabsTrigger value="messages" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-300">
+                    <TabsTrigger value="messages" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-300 py-2">
                         <Send className="h-4 w-4 mr-2" /> Direct Messages
                     </TabsTrigger>
-                    <TabsTrigger value="history" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-300">
+                    <TabsTrigger value="history" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-300 py-2">
                         <History className="h-4 w-4 mr-2" /> History
                     </TabsTrigger>
                 </TabsList>

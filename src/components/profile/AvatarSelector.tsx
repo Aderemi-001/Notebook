@@ -12,6 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from '@/components/ui/select';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
@@ -136,41 +143,45 @@ export const AvatarSelector = ({ currentAvatarUrl, userId, onAvatarUpdate, child
                     </TabsList>
 
                     <TabsContent value="presets" className="space-y-4 py-4">
-                        <div className="flex justify-between items-center">
-                            <div className="text-sm text-muted-foreground">
-                                Style:
-                                <select
-                                    className="ml-2 bg-transparent border rounded p-1"
-                                    value={selectedStyle}
-                                    onChange={(e) => setSelectedStyle(e.target.value)}
-                                >
-                                    {PRESET_STYLES.map(style => (
-                                        <option key={style} value={style}>{style}</option>
-                                    ))}
-                                </select>
+                        <div className="flex justify-between items-center px-1">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground font-medium">Style:</span>
+                                <Select value={selectedStyle} onValueChange={setSelectedStyle}>
+                                    <SelectTrigger className="w-[140px] h-8 bg-background border-input focus:ring-0 focus:ring-offset-0">
+                                        <SelectValue placeholder="Select style" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {PRESET_STYLES.map(style => (
+                                            <SelectItem key={style} value={style} className="cursor-pointer font-medium">
+                                                {style.replace('-', ' ')}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setSeed(Math.random().toString())}
                                 title="Shuffle variations"
+                                className="group"
                             >
-                                <RefreshCw className="h-4 w-4" />
+                                <RefreshCw className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                             </Button>
                         </div>
 
-                        <div className="grid grid-cols-4 gap-4 max-h-[300px] overflow-y-auto p-1">
+                        <div className="grid grid-cols-4 gap-4 max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
                             {presets.map((url, i) => (
                                 <button
                                     key={i}
-                                    className="relative aspect-square rounded-full overflow-hidden border-2 border-transparent hover:border-primary focus:border-primary transition-all p-1 hover:bg-accent"
+                                    className="relative aspect-square rounded-full overflow-hidden border-2 border-transparent hover:border-primary focus:border-primary transition-all p-1 hover:bg-accent group"
                                     onClick={() => handlePresetSelect(url)}
                                     disabled={isUploading}
                                 >
                                     <img
                                         src={url}
                                         alt={`Avatar option ${i}`}
-                                        className="w-full h-full rounded-full"
+                                        className="w-full h-full rounded-full group-hover:scale-110 transition-transform duration-300"
                                         loading="lazy"
                                     />
                                     {isUploading && (
@@ -201,7 +212,7 @@ export const AvatarSelector = ({ currentAvatarUrl, userId, onAvatarUpdate, child
                                         accept="image/*"
                                         onChange={handleFileUpload}
                                         disabled={isUploading}
-                                        className="cursor-pointer"
+                                        className="cursor-pointer file:text-foreground"
                                     />
                                     {isUploading && (
                                         <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-md border border-primary">

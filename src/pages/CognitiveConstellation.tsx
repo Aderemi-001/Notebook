@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Sparkles, ZoomIn, ZoomOut, Brain } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { constellationService } from '@/services/constellationService';
+import { globalSearch } from '@/services/searchService';
 
 // --- Types ---
 
@@ -28,6 +29,7 @@ interface ConceptLink {
 
 const CognitiveConstellation: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Graph State
   const [nodes, setNodes] = useState<ConceptNode[]>([]);
@@ -46,6 +48,7 @@ const CognitiveConstellation: React.FC = () => {
   const animationRef = useRef<number>();
   const draggingNode = useRef<string | null>(null);
   const lastPointer = useRef<{ x: number; y: number } | null>(null);
+  const touchState = useRef<{ dist: number; midX: number; midY: number } | null>(null);
 
   // --- Data Fetching ---
 
@@ -253,11 +256,50 @@ const CognitiveConstellation: React.FC = () => {
     lastPointer.current = null;
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
+  const handleWheel = React.useCallback((e: WheelEvent) => {
+    e.preventDefault(); // Prevent browser zoom
     const scaleChange = -e.deltaY * 0.001;
     const newScale = Math.min(Math.max(0.2, transform.k + scaleChange), 5);
     setTransform(t => ({ ...t, k: newScale }));
+  }, [transform.k]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+      const midX = (touch1.clientX + touch2.clientX) / 2;
+      const midY = (touch1.clientY + touch2.clientY) / 2;
+      touchState.current = { dist, midX, midY };
+    }
   };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && touchState.current) {
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const newDist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+      const scale = newDist / touchState.current.dist;
+      const newScale = Math.min(Math.max(0.2, transform.k * scale), 5);
+      setTransform(t => ({ ...t, k: newScale }));
+      touchState.current.dist = newDist;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchState.current = null;
+  };
+
+  // Attach non-passive wheel listener to prevent browser zoom
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    svg.addEventListener('wheel', handleWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
 
   // --- Render ---
 
@@ -271,17 +313,11 @@ const CognitiveConstellation: React.FC = () => {
   }
 
   return (
-    <div className="relative w-full h-[calc(100vh-64px)] overflow-hidden bg-slate-950 text-white flex flex-col">
+    <div className="w-full h-screen bg-slate-950 text-white flex flex-col">
 
-      {/* Background Gradients */}
-      <div className="absolute inset-0 pointer-events-none opacity-20">
-        <div className="absolute top-[-20%] left-[-20%] w-[50%] h-[50%] bg-indigo-600 rounded-full blur-[150px]" />
-        <div className="absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] bg-purple-600 rounded-full blur-[150px]" />
-      </div>
-
-      {/* Header Overlay */}
-      <div className="absolute top-0 left-0 right-0 p-6 z-10 flex flex-col md:flex-row justify-between items-start md:items-center pointer-events-none">
-        <div className="pointer-events-auto">
+      {/* Header - Outside graph */}
+      <div className="flex-shrink-0 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10">
+        <div>
           <Button variant="ghost" className="text-slate-400 hover:text-white mb-2 pl-0" asChild>
             <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
           </Button>
@@ -295,7 +331,7 @@ const CognitiveConstellation: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex gap-2 pointer-events-auto mt-4 md:mt-0">
+        <div className="flex gap-2">
           {nodes.length === 0 && !generating && (
             <div className="absolute top-24 left-6 animate-bounce">
               <p className="text-yellow-400 text-sm font-bold">Start here! ➔</p>
@@ -321,161 +357,198 @@ const CognitiveConstellation: React.FC = () => {
         </div>
       </div>
 
-      {/* Empty State */}
-      {nodes.length === 0 && !generating && !loading && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-          <div className="text-center p-8 max-w-lg bg-black/40 backdrop-blur-md rounded-3xl border border-white/10">
-            <Sparkles className="h-16 w-16 text-slate-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Your Universe is Empty</h2>
-            <p className="text-slate-400 mb-6">
-              Nova hasn't mapped your study sets yet. Click the <span className="text-indigo-400 font-bold">AI Map Knowledge</span> button to analyze your cards and build your constellation.
-            </p>
-          </div>
+      {/* Graph Container */}
+      <div className="relative flex-1 overflow-hidden">
+
+        {/* Background Gradients */}
+        <div className="absolute inset-0 pointer-events-none opacity-20">
+          <div className="absolute top-[-20%] left-[-20%] w-[50%] h-[50%] bg-indigo-600 rounded-full blur-[150px]" />
+          <div className="absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] bg-purple-600 rounded-full blur-[150px]" />
         </div>
-      )}
 
-      {/* Canvas */}
-      <svg
-        ref={svgRef}
-        className="w-full h-full cursor-grab active:cursor-grabbing"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-        onWheel={handleWheel}
-      >
-        <defs>
-          <radialGradient id="star-glow">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="40%" stopColor="#6366f1" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}>
-          {/* Center visual guide (optional) -> We center at 50% width/height of standard view */}
-          {/* Links */}
-          {links.map((link, i) => {
-            const s = nodes.find(n => n.id === link.source);
-            const t = nodes.find(n => n.id === link.target);
-            if (!s || !t) return null;
-            return (
-              <line
-                key={i}
-                x1={s.x} y1={s.y} x2={t.x} y2={t.y}
-                stroke="rgba(99, 102, 241, 0.2)"
-                strokeWidth={link.strength ? link.strength * 4 : 1}
-                className="transition-all duration-300"
-              />
-            );
-          })}
-
-          {/* Nodes */}
-          {nodes.map(node => (
-            <g
-              key={node.id}
-              transform={`translate(${node.x},${node.y})`}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                draggingNode.current = node.id;
-                setSelectedNode(node);
-              }}
-              onMouseEnter={() => setHoveredNode(node)}
-              onMouseLeave={() => setHoveredNode(null)}
-              className="cursor-pointer group"
-            >
-              {/* Glow */}
-              <circle r={node.mass * 8} fill="url(#star-glow)" opacity="0.1" className="group-hover:opacity-0.3 transition-opacity" />
-
-              {/* Core */}
-              <circle
-                r={node.mass * 2 + 2}
-                fill={selectedNode?.id === node.id ? "#fcd34d" : "#c7d2fe"}
-                className="transition-colors duration-300 shadow-lg shadow-white/50"
-              />
-
-              {/* Label */}
-              {(hoveredNode?.id === node.id || selectedNode?.id === node.id || node.mass > 5) && (
-                <text
-                  y={-10 - node.mass * 2}
-                  textAnchor="middle"
-                  fill="white"
-                  fontSize="12"
-                  fontWeight="bold"
-                  className="pointer-events-none drop-shadow-md select-none bg-black/50"
-                >
-                  {node.name}
-                </text>
-              )}
-            </g>
-          ))}
-        </g>
-      </svg>
-
-      {/* Selected Node Panel */}
-      {/* Selected Node Panel */}
-      <AnimatePresence>
-        {selectedNode && (
-          <motion.div
-            initial={{ x: 400, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 400, opacity: 0 }}
-            className="absolute top-0 right-0 h-full w-full sm:w-96 bg-black/80 backdrop-blur-xl border-l border-white/10 p-6 shadow-2xl z-20 overflow-y-auto"
-          >
-            <div className="flex justify-between items-start mb-6">
-              <div className="p-3 bg-indigo-500/20 rounded-xl">
-                <Brain className="h-8 w-8 text-indigo-400" />
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setSelectedNode(null)} className="text-slate-400 hover:text-white">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
+        {/* Empty State */}
+        {nodes.length === 0 && !generating && !loading && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+            <div className="text-center p-8 max-w-lg bg-black/40 backdrop-blur-md rounded-3xl border border-white/10">
+              <Sparkles className="h-16 w-16 text-slate-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Your Universe is Empty</h2>
+              <p className="text-slate-400 mb-6">
+                Nova hasn't mapped your study sets yet. Click the <span className="text-indigo-400 font-bold">AI Map Knowledge</span> button to analyze your cards and build your constellation.
+              </p>
             </div>
+          </div>
+        )}
 
-            <h2 className="text-3xl font-bold text-white mb-2">{selectedNode.name}</h2>
-            <p className="text-indigo-300 text-sm font-medium mb-6 uppercase tracking-wider">Concept Node</p>
+        {/* Canvas */}
+        <svg
+          ref={svgRef}
+          className="w-full h-full cursor-grab active:cursor-grabbing"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ touchAction: 'none' }}
+        >
+          <defs>
+            <radialGradient id="star-glow">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+              <stop offset="40%" stopColor="#6366f1" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}>
+            {/* Center visual guide (optional) -> We center at 50% width/height of standard view */}
+            {/* Links */}
+            {links.map((link, i) => {
+              const s = nodes.find(n => n.id === link.source);
+              const t = nodes.find(n => n.id === link.target);
+              if (!s || !t) return null;
+              return (
+                <line
+                  key={i}
+                  x1={s.x} y1={s.y} x2={t.x} y2={t.y}
+                  stroke="rgba(99, 102, 241, 0.2)"
+                  strokeWidth={link.strength ? link.strength * 4 : 1}
+                  className="transition-all duration-300"
+                />
+              );
+            })}
 
-            <div className="space-y-6">
-              <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">Definition</h3>
-                <p className="text-slate-100 leading-relaxed">
-                  {selectedNode.description || "No description available."}
-                </p>
-              </div>
+            {/* Nodes */}
+            {nodes.map(node => (
+              <g
+                key={node.id}
+                transform={`translate(${node.x},${node.y})`}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  draggingNode.current = node.id;
+                  setSelectedNode(node);
+                }}
+                onMouseEnter={() => setHoveredNode(node)}
+                onMouseLeave={() => setHoveredNode(null)}
+                className="cursor-pointer group"
+              >
+                {/* Glow */}
+                <circle r={node.mass * 8} fill="url(#star-glow)" opacity="0.1" className="group-hover:opacity-0.3 transition-opacity" />
 
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-yellow-500" /> Connected Concepts
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {links
-                    .filter(l => l.source === selectedNode.id || l.target === selectedNode.id)
-                    .map(l => {
-                      const otherId = l.source === selectedNode.id ? l.target : l.source;
-                      const otherNode = nodes.find(n => n.id === otherId);
-                      return otherNode ? (
-                        <Button
-                          key={otherId}
-                          variant="secondary"
-                          size="sm"
-                          className="bg-indigo-900/40 text-indigo-100 hover:bg-indigo-900/60 border border-indigo-500/30"
-                          onClick={() => setSelectedNode(otherNode)}
-                        >
-                          {otherNode.name}
-                        </Button>
-                      ) : null;
-                    })
-                  }
+                {/* Core */}
+                <circle
+                  r={node.mass * 2 + 2}
+                  fill={selectedNode?.id === node.id ? "#fcd34d" : "#c7d2fe"}
+                  className="transition-colors duration-300 shadow-lg shadow-white/50"
+                />
+
+                {/* Label */}
+                {(hoveredNode?.id === node.id || selectedNode?.id === node.id || node.mass > 5) && (
+                  <text
+                    y={-10 - node.mass * 2}
+                    textAnchor="middle"
+                    fill="white"
+                    fontSize="12"
+                    fontWeight="bold"
+                    className="pointer-events-none drop-shadow-md select-none bg-black/50"
+                  >
+                    {node.name}
+                  </text>
+                )}
+              </g>
+            ))}
+          </g>
+        </svg>
+
+        {/* Selected Node Panel */}
+        {/* Selected Node Panel */}
+        <AnimatePresence>
+          {selectedNode && (
+            <motion.div
+              initial={{ x: 400, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 400, opacity: 0 }}
+              className="absolute top-0 right-0 h-full w-full sm:w-96 bg-black/80 backdrop-blur-xl border-l border-white/10 p-6 shadow-2xl z-20 overflow-y-auto"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-3 bg-indigo-500/20 rounded-xl">
+                  <Brain className="h-8 w-8 text-indigo-400" />
                 </div>
-              </div>
-
-              <div className="pt-6 border-t border-white/10">
-                <Button className="w-full bg-white text-black hover:bg-indigo-50" asChild>
-                  <Link to={`/search?q=${selectedNode.name}`}>Find Cards for "{selectedNode.name}"</Link>
+                <Button variant="ghost" size="icon" onClick={() => setSelectedNode(null)} className="text-slate-400 hover:text-white">
+                  <ArrowLeft className="h-5 w-5" />
                 </Button>
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+              <h2 className="text-3xl font-bold text-white mb-2">{selectedNode.name}</h2>
+              <p className="text-indigo-300 text-sm font-medium mb-6 uppercase tracking-wider">Concept Node</p>
+
+              <div className="space-y-6">
+                <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                  <h3 className="text-sm font-semibold text-slate-300 mb-2">Definition</h3>
+                  <p className="text-slate-100 leading-relaxed">
+                    {selectedNode.description || "No description available."}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-yellow-500" /> Connected Concepts
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {links
+                      .filter(l => l.source === selectedNode.id || l.target === selectedNode.id)
+                      .map(l => {
+                        const otherId = l.source === selectedNode.id ? l.target : l.source;
+                        const otherNode = nodes.find(n => n.id === otherId);
+                        return otherNode ? (
+                          <Button
+                            key={otherId}
+                            variant="secondary"
+                            size="sm"
+                            className="bg-indigo-900/40 text-indigo-100 hover:bg-indigo-900/60 border border-indigo-500/30"
+                            onClick={() => setSelectedNode(otherNode)}
+                          >
+                            {otherNode.name}
+                          </Button>
+                        ) : null;
+                      })
+                    }
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-white/10">
+                  <Button
+                    className="w-full bg-white text-black hover:bg-indigo-50"
+                    onClick={async () => {
+                      try {
+                        const results = await globalSearch(selectedNode.name);
+                        const cardResult = results.find(r => r.type === 'card');
+                        if (cardResult) {
+                          navigate(cardResult.url);
+                        } else {
+                          toast({
+                            title: "No Cards Found",
+                            description: `No flashcards contain "${selectedNode.name}"`
+                          });
+                        }
+                      } catch (error) {
+                        toast({
+                          title: "Search Failed",
+                          description: "Could not search for cards",
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                  >
+                    Find Cards for "{selectedNode.name}"
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+      </div>
+      {/* End Graph Container */}
 
     </div>
   );

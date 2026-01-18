@@ -14,10 +14,10 @@ import StudySetFormFields from "@/components/StudySetFormFields";
 import FlashcardEditor from "@/components/FlashcardEditor";
 import { useStudySetGroups } from "@/hooks/use-study-set-groups";
 import { useFileImport } from "@/hooks/use-file-import";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PremiumGate } from "@/components/PremiumGate";
 import { studySetService } from "@/services/studySetService";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -35,8 +35,9 @@ const CreateSet = () => {
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const { file, setFile, sourceTextContent, generateCardsAndConcepts, currentUser, isLoadingUser, progressState, progressMessage } = useFileImport();
+  const { file, setFile, sourceTextContent, setSourceTextContent, generateCardsAndConcepts, currentUser, isLoadingUser, progressState, progressMessage } = useFileImport();
   const { data: userGroups, isLoading: isLoadingGroups } = useStudySetGroups();
+  const { isPremium } = useSubscription();
 
   const [showSuccessToastAfterRender, setShowSuccessToastAfterRender] = useState(false);
   const [generatedCardConceptLinks, setGeneratedCardConceptLinks] = useState<{ card_term: string; concept_name: string }[]>([]);
@@ -111,7 +112,7 @@ const CreateSet = () => {
         generatedCardConceptLinks
       );
 
-      dismissToast(toastId);
+      dismissToast(); // Dismiss all toasts to be safe
       showSuccess("Set created successfully!");
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
       queryClient.invalidateQueries({ queryKey: ['studySetsInGroup'] });
@@ -163,7 +164,9 @@ const CreateSet = () => {
       return;
     }
 
+    console.log('DEBUG: CLICK generate. File:', file?.name, 'User:', currentUser?.id);
     const result = await generateCardsAndConcepts();
+    console.log('DEBUG: Generator Result:', result);
 
     if (result && result.cards.length > 0) {
       // Filter out cards with empty terms or definitions
@@ -178,11 +181,19 @@ const CreateSet = () => {
         })));
         setGeneratedCardConceptLinks(result.card_concept_links || []);
         setShowSuccessToastAfterRender(true);
+
+        // Show upgrade prompt for free users
+        if (!isPremium && validCards.length >= 10) {
+          setTimeout(() => {
+            showError("Free tier: 10 cards generated. Upgrade to Pro for up to 50 cards per generation!");
+          }, 1500);
+        }
       } else {
         showError("The AI generated cards, but they all had empty fields. Please try again or add cards manually.");
         form.setValue('cards', [{ term: "", definition: "" }]);
       }
-    } else {
+    } else if (result && result.cards.length === 0) {
+      // Only show this error if we got a result but no cards (AI processing issue)
       if (progressState !== 'error') {
         const currentCards = form.getValues('cards');
         if (currentCards.length === 0 || (currentCards.length === 1 && !currentCards[0].term)) {
@@ -191,6 +202,7 @@ const CreateSet = () => {
         showError("The AI couldn't find any terms and definitions in the file.");
       }
     }
+    // If result is null, the hook already showed the appropriate error (limit, auth, etc.)
   };
 
   const getProgressValue = () => {
@@ -249,82 +261,94 @@ const CreateSet = () => {
       )}
 
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-10 animate-fade-in">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold">Create a new study set</h1>
-          <Button asChild variant="outline">
-            <Link to="/">Back to My Sets</Link>
-          </Button>
-        </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4 border-b pb-6">
+              <h1 className="text-2xl sm:text-3xl font-bold">Create a new study set</h1>
+              <div className="flex items-center gap-3">
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/sets" className="flex items-center">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                  </Link>
+                </Button>
+                <Button type="submit" disabled={isLoadingUser || !currentUser} className="shadow-premium">
+                  {isLoadingUser ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : !currentUser ? (
+                    "Sign In"
+                  ) : (
+                    "Create Set"
+                  )}
+                </Button>
+              </div>
+            </div>
             <StudySetFormFields form={form} userGroups={userGroups} isLoadingGroups={isLoadingGroups} />
 
-            <PremiumGate feature="AI File Import">
-              <Card className="glass-card shadow-premium rounded-[2.5rem] border-white/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3">
-                    <Sparkles className="h-5 w-5 text-purple-500" />
-                    <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent font-bold">
-                      Import from file with Nova
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Input
-                        type="file"
-                        accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf,.pptx,.docx,image/*"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          setFile(e.target.files ? e.target.files[0] : null);
-                          setGeneratedCardConceptLinks([]);
-                        }}
-                        className="w-full bg-background border-dashed border-2 hover:border-primary/50 transition-colors"
-                      />
-                      <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-2 px-1">
-                        Supported: PDF, PPTX (Slides), DOCX, Images (OCR), MD, TXT, CSV, JSON, Code
-                      </p>
-                    </div>
-
-                    {progressState !== 'idle' && (
-                      <div className="space-y-2 animate-fade-in relative overflow-hidden rounded-full h-2 bg-secondary">
-                        {/* Indeterminate Scanning Bar for AI feel */}
-                        <div
-                          className={cn(
-                            "absolute top-0 bottom-0 w-1/3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full",
-                            (progressState === 'extracting' || progressState === 'processing') ? "animate-indeterminate-progress" : "",
-                            progressState === 'complete' ? "w-full transition-all duration-500" : "",
-                            progressState === 'error' ? "bg-red-500 w-full" : ""
-                          )}
-                          style={progressState === 'complete' ? { width: '100%' } : {}}
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground pt-3 px-1">
-                          <span className="animate-pulse">{progressMessage}</span>
-                          <span>{getProgressValue()}%</span>
-                        </div>
-                      </div>
-                    )}
-
-                    <Button
-                      type="button"
-                      onClick={handleGenerateCards}
-                      disabled={!file || isLoadingUser || progressState === 'extracting' || progressState === 'processing' || !currentUser}
-                      className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-all duration-300 shadow-md"
-                    >
-                      {progressState === 'extracting' || progressState === 'processing' ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="mr-2 h-4 w-4" /> Generate Flashcards with Nova
-                        </>
-                      )}
-                    </Button>
+            <Card className="glass-card shadow-premium rounded-[2.5rem] border-white/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <Sparkles className="h-5 w-5 text-purple-500" />
+                  <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent font-bold">
+                    Import from file with Nova
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Input
+                      type="file"
+                      accept=".txt,.csv,.md,.json,.xml,.html,.js,.ts,.css,.pdf,.pptx,.docx,image/*"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setFile(e.target.files ? e.target.files[0] : null);
+                        setSourceTextContent(null); // Clear previous text to force re-extraction
+                        setGeneratedCardConceptLinks([]);
+                      }}
+                      className="w-full bg-background border-dashed border-2 hover:border-primary/50 transition-colors"
+                    />
+                    <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-2 px-1">
+                      Supported: PDF, PPTX (Slides), DOCX, Images (OCR), MD, TXT, CSV, JSON, Code
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            </PremiumGate>
+
+                  {progressState !== 'idle' && (
+                    <div className="space-y-2 animate-fade-in relative overflow-hidden rounded-full h-2 bg-secondary">
+                      {/* Indeterminate Scanning Bar for AI feel */}
+                      <div
+                        className={cn(
+                          "absolute top-0 bottom-0 w-1/3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full",
+                          (progressState === 'extracting' || progressState === 'processing') ? "animate-indeterminate-progress" : "",
+                          progressState === 'complete' ? "w-full transition-all duration-500" : "",
+                          progressState === 'error' ? "bg-red-500 w-full" : ""
+                        )}
+                        style={progressState === 'complete' ? { width: '100%' } : {}}
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground pt-3 px-1">
+                        <span className="animate-pulse">{progressMessage}</span>
+                        <span>{getProgressValue()}%</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    type="button"
+                    onClick={handleGenerateCards}
+                    disabled={!file || isLoadingUser || progressState === 'extracting' || progressState === 'processing' || !currentUser}
+                    className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-all duration-300 shadow-md"
+                  >
+                    {progressState === 'extracting' || progressState === 'processing' ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" /> Generate Flashcards with Nova
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
             <FlashcardEditor form={form} />
 

@@ -1,0 +1,29 @@
+.flip-clock {
+  --fcc-flip-duration: 0.6s;
+  --fcc-spacing: 10px;
+  --fcc-digit-block-width: 72px;
+  --fcc-digit-block-height: 96px;
+  --fcc-digit-block-radius: 12px;
+  --fcc-digit-block-spacing: 6px;
+
+  --fcc-digit-font-size: 48px;
+  --fcc-digit-color: #f5f5f5;
+
+  --fcc-label-font-size: 12px;
+  --fcc-label-color: rgba(255, 255, 255, 0.6);
+
+  --fcc-background: #1a1a1a;
+  --fcc-divider-color: rgba(255, 255, 255, 0.08);
+  --fcc-divider-height: 1px;
+
+  --fcc-separator-size: 8px;
+  --fcc-separator-color: rgba(255, 255, 255, 0.7);
+}
+
+/* Adjustments for component integration */
+.pomo-display {
+    padding: 0; /* Remove padding as the clock has its own spacing */
+    background: transparent; /* Remove background as cards have their own */
+}
+
+

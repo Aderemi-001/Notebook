@@ -51,8 +51,8 @@ const StudySetLinkedNotes: React.FC<StudySetLinkedNotesProps> = ({ linkedNotes, 
             Synthesis is key to mastery. Link a note to this set to bridge your study materials.
           </p>
           <Button asChild className="rounded-2xl px-8 py-6 shadow-premium hover:shadow-premium-hover font-bold">
-            <Link to="/create-note" className="flex items-center">
-              <Plus className="mr-2 h-5 w-5" /> Initialize New Note
+            <Link to="/notebook" className="flex items-center">
+              <Plus className="mr-2 h-5 w-5" /> Open Notebook
             </Link>
           </Button>
         </div>

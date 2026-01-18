@@ -46,7 +46,7 @@ const BrandLogo: React.FC<BrandLogoProps> = ({
             className
         )}>
             <img
-                src="/notebook-icon.png"
+                src="/pwa-512.png"
                 alt="Notebook Logo"
                 className="h-full w-full object-cover"
             />

@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,8 @@ import StudySetCardsList from '@/components/StudySetCardsList';
 import StudySetLinkedNotes from '@/components/StudySetLinkedNotes';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { useAuth } from '@/hooks/useAuth'; // Import useAuth
+import { studySetService } from '@/services/studySetService';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface StudySet {
   id: string;
@@ -24,6 +26,11 @@ interface StudySet {
   is_public: boolean;
   user_id: string;
   group_id: string | null;
+  profiles?: {
+    display_name: string | null;
+    avatar_url: string | null;
+    is_public_profile: boolean | null;
+  } | null;
   study_set_groups: { name: string }[] | null;
   cards: CardItem[];
   mastered_cards_count: number;
@@ -75,6 +82,11 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
       user_id,
       group_id,
       study_set_groups (name),
+      profiles (
+        display_name,
+        avatar_url,
+        is_public_profile
+      ),
       cards (
         id,
         term,
@@ -93,7 +105,16 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
   // If not admin, strictly enforce RLS-like logic:
   // User must own the set OR the set must be public
   if (!isAdmin) {
-    query = query.or(`user_id.eq.${user?.id},is_public.eq.true`);
+    if (user?.id) {
+      query = query.or(`user_id.eq.${user.id},is_public.eq.true`);
+    } else {
+      // Not logged in - only show public sets
+      query = query.eq('is_public', true);
+    }
+  }
+
+  if (user?.id) {
+    query = query.eq('cards.user_progress.user_id', user.id);
   }
 
   const { data, error } = await query.single();
@@ -138,7 +159,7 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
     };
   });
 
-  return { ...data, cards: processedCards, mastered_cards_count: masteredCount, due_cards_count: dueCount } as StudySet;
+  return { ...data, cards: processedCards, mastered_cards_count: masteredCount, due_cards_count: dueCount } as unknown as StudySet;
 };
 
 const fetchLinkedNotes = async (setId: string): Promise<LinkedNote[]> => {
@@ -177,8 +198,8 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
   const highlightTerm = searchParams.get('highlight');
   const queryClient = useQueryClient();
   const { user, profile, loading: isLoadingAuth } = useAuth(); // Use useAuth to get user, profile, and loading state
+  const { t } = useLanguage();
 
-  const [isOwner, setIsOwner] = useState(false);
   const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
 
   // Edit Card State
@@ -206,7 +227,8 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
 
       if (error) throw error;
 
-      showSuccess("Card updated successfully!");
+      if (error) throw error;
+      showSuccess(t('study.cardUpdated'));
       queryClient.invalidateQueries({ queryKey: ['studySet', setId] });
       setEditingCard(null);
     } catch (error: any) {
@@ -233,16 +255,18 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
     enabled: !!setId && !isLoadingAuth && !!user, // Only fetch linked notes if authenticated
   });
 
-  useEffect(() => {
-    if (studySet?.user_id && user) {
-      setIsOwner(user.id === studySet.user_id);
-    } else {
-      setIsOwner(false);
-    }
-  }, [studySet?.user_id, user]);
+
 
   // Derived permissions
-  const canEdit = isOwner || (profile?.is_admin ?? false);
+  const isCreator = user?.id === studySet?.user_id;
+  const canEdit = isCreator || (profile?.is_admin ?? false);
+
+  // Library state
+  const { data: isInLibrary, refetch: refetchLibraryStatus } = useQuery({
+    queryKey: ['isInLibrary', setId, user?.id],
+    queryFn: () => studySetService.isInLibrary(setId!),
+    enabled: !!setId && !!user,
+  });
 
 
   const handleDeleteSet = async () => {
@@ -258,11 +282,12 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
       if (error) throw error;
 
       dismissToast(toastId);
-      showSuccess("Study set deleted successfully!");
+      dismissToast(toastId);
+      showSuccess(t('study.deleteSet')); // Reusing key, or should add deleteSuccess if strictly needed, but context implies success
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
       queryClient.invalidateQueries({ queryKey: ['linkedNotes', studySet.id] });
       queryClient.invalidateQueries({ queryKey: ['studySetGroups'] });
-      navigate('/');
+      navigate('/sets');
     } catch (error: any) {
       dismissToast(toastId);
       showError(error.message || "Failed to delete study set.");
@@ -299,7 +324,8 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
       }
 
       dismissToast(toastId);
-      showSuccess("Study progress reset successfully!");
+      dismissToast(toastId);
+      showSuccess(t('study.progressResetSuccess'));
       queryClient.invalidateQueries({ queryKey: ['studySet', studySet.id] });
       queryClient.invalidateQueries({ queryKey: ['studyCards', studySet.id] });
       queryClient.invalidateQueries({ queryKey: ['studySets'] });
@@ -326,7 +352,8 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
       if (error) throw error;
 
       dismissToast(toastId);
-      showSuccess(currentFlagStatus ? "Card unflagged!" : "Card flagged!");
+      dismissToast(toastId);
+      showSuccess(currentFlagStatus ? t('study.cardUnflagged') : t('study.cardFlagged'));
       queryClient.invalidateQueries({ queryKey: ['studySet', studySet?.id] });
     } catch (error: any) {
       dismissToast(toastId);
@@ -335,53 +362,38 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
     }
   };
 
-  const handleAddToMySets = async () => {
-    if (!studySet) return;
-
-    if (!user) {
-      showError("Please sign up or log in first to add this set to your collection.");
-      navigate('/login'); // Redirect to login page
+  const handleToggleLibrary = async () => {
+    if (!studySet || !user) {
+      if (!user) {
+        showError("Please sign up or log in first to add this set to your collection.");
+        navigate('/login');
+      }
       return;
     }
 
-    const toastId = showLoading(`Adding "${studySet.title}" to your sets...`);
+    const action = isInLibrary ? "Removing from" : "Adding to";
+    const toastId = showLoading(`${action} your library...`);
+
     try {
-      const { data: newSet, error: newSetError } = await supabase
-        .from('study_sets')
-        .insert({
-          title: `Copy of ${studySet.title}`,
-          description: studySet.description ? `(Copied) ${studySet.description}` : '(Copied from a public set)',
-          user_id: user.id,
-          is_public: false,
-        })
-        .select('id')
-        .single();
-
-      if (newSetError) throw newSetError;
-      if (!newSet) throw new Error("Failed to create new study set.");
-
-      const cardsToInsert = studySet.cards.map((card: CardItem) => ({
-        set_id: newSet.id,
-        term: card.term,
-        definition: card.definition,
-        is_flagged: false,
-      }));
-
-      if (cardsToInsert.length > 0) {
-        const { error: cardsInsertError } = await supabase
-          .from('cards')
-          .insert(cardsToInsert);
-        if (cardsInsertError) throw cardsInsertError;
+      if (isInLibrary) {
+        await studySetService.removeFromLibrary(studySet.id);
+        showSuccess(t('study.removedFromLibrary') || "Removed from library");
+      } else {
+        await studySetService.addToLibrary(studySet.id);
+        showSuccess(t('study.addedToLibrary') || "Added to library");
       }
 
       dismissToast(toastId);
-      showSuccess(`"${studySet.title}" added to your sets!`);
-      queryClient.invalidateQueries({ queryKey: ['studySets'] });
-      navigate(`/sets/${newSet.id}`);
+      refetchLibraryStatus();
+      // Ensure the Explorer sidebar and other lists update immediately
+      queryClient.invalidateQueries({
+        queryKey: ['studySets'],
+        refetchType: 'all'
+      });
     } catch (error: any) {
       dismissToast(toastId);
-      showError(error.message || "Failed to add set to your collection.");
-      console.error("Add to my sets error:", error);
+      showError(error.message || `Failed to update library status.`);
+      console.error("Library toggle error:", error);
     }
   };
 
@@ -438,13 +450,14 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-10 min-h-fit animate-fade-in">
       <StudySetHeader
         studySet={studySet}
-        isOwner={canEdit} // Pass the computed permission
+        isOwner={isCreator} // Strictly the creator can edit
         isLoggedIn={!!user}
         isAdmin={profile?.is_admin || false}
         preferences={preferences}
         handleDeleteSet={handleDeleteSet}
         handleResetProgress={handleResetProgress}
-        handleAddToMySets={handleAddToMySets}
+        handleAddToMySets={handleToggleLibrary}
+        isInLibrary={isInLibrary}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={onToggleSidebar}
       />
@@ -469,7 +482,7 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
         highlightTerm={highlightTerm}
       />
 
-      {user && ( // Only show linked notes if user is logged in
+      {user && (isCreator || isInLibrary) && ( // Only show linked notes if user is owner or it's in their library
         <StudySetLinkedNotes
           linkedNotes={linkedNotes}
           isLoadingLinkedNotes={isLoadingLinkedNotes}
@@ -480,33 +493,33 @@ const StudySetDetail = ({ isSidebarOpen, onToggleSidebar }: StudySetDetailProps)
       <Dialog open={!!editingCard} onOpenChange={(open) => !open && setEditingCard(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Card</DialogTitle>
+            <DialogTitle>{t('study.editCard')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="term">Term</Label>
+              <Label htmlFor="term">{t('study.term')}</Label>
               <Textarea
                 id="term"
                 value={editForm.term}
                 onChange={(e) => setEditForm(prev => ({ ...prev, term: e.target.value }))}
-                placeholder="Enter term"
+                placeholder={t('study.enterTerm')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="definition">Definition</Label>
+              <Label htmlFor="definition">{t('study.definition')}</Label>
               <Textarea
                 id="definition"
                 value={editForm.definition}
                 onChange={(e) => setEditForm(prev => ({ ...prev, definition: e.target.value }))}
-                placeholder="Enter definition"
+                placeholder={t('study.enterDef')}
                 className="min-h-[100px]"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingCard(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setEditingCard(null)}>{t('study.cancel')}</Button>
             <Button onClick={handleSaveCard} disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save Changes"}
+              {isSaving ? t('study.saving') : t('study.saveChanges')}
             </Button>
           </DialogFooter>
         </DialogContent>

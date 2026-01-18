@@ -3,9 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { studySetService } from "@/services/studySetService";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Target, Flame, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+
 
 interface DashboardStatsProps {
     className?: string;
@@ -14,6 +18,7 @@ interface DashboardStatsProps {
 const DashboardStats: React.FC<DashboardStatsProps> = ({ className }) => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { preferences } = useUserPreferences();
 
     // Fetch all stats in parallel
     const { data: stats, isLoading } = useQuery({
@@ -21,11 +26,9 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ className }) => {
         queryFn: async () => {
             if (!user) return null;
 
-            // Total Sets
-            const { count: totalSets } = await supabase
-                .from('study_sets')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', user.id);
+            // Total Sets (Owned + Library)
+            const sets = await studySetService.getMyStudySets();
+            const totalSets = sets.length;
 
             // Cards Studied Today
             const today = new Date().toISOString().split('T')[0];
@@ -93,7 +96,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ className }) => {
             icon: Target,
             label: "Studied Today",
             value: stats?.cardsToday || 0,
-            suffix: " cards",
+            suffix: ` / ${preferences?.daily_cards_goal || 20}`,
             color: "text-emerald-600 dark:text-emerald-400",
             bgColor: "bg-emerald-50 dark:bg-emerald-500/10",
             borderColor: "border-emerald-100 dark:border-emerald-500/20"
@@ -122,24 +125,31 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ className }) => {
     return (
         <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 ${className}`}>
             {statCards.map((stat, index) => (
-                <button
+                <motion.button
                     key={index}
+                    whileHover={{ scale: 1.02, translateY: -5 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                     onClick={() => {
                         if (stat.label === "Study Sets") navigate('/sets');
                         else if (stat.label === "Studied Today") navigate('/daily-review');
                         else navigate('/dashboard'); // Mastery Rate & Day Streak
                     }}
                     className={cn(
-                        "premium-card p-6 flex items-center justify-between group overflow-hidden relative text-left w-full transition-all active:scale-[0.98] hover:shadow-lg",
+                        "premium-card p-6 flex items-center justify-between group overflow-hidden relative text-left w-full transition-shadow hover:shadow-xl",
                         stat.borderColor,
                         stat.animate
                     )}
                 >
                     {/* Background Glow */}
-                    <div className={cn(
-                        "absolute -right-4 -top-4 w-24 h-24 rounded-full blur-3xl opacity-20 transition-opacity group-hover:opacity-40",
-                        stat.bgColor
-                    )} />
+                    <motion.div
+                        initial={{ opacity: 0.2 }}
+                        whileHover={{ opacity: 0.4, scale: 1.2 }}
+                        className={cn(
+                            "absolute -right-4 -top-4 w-24 h-24 rounded-full blur-3xl transition-opacity",
+                            stat.bgColor
+                        )}
+                    />
 
                     <div className="relative z-10">
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
@@ -157,7 +167,8 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ className }) => {
                     )}>
                         <stat.icon className={cn("h-6 w-6", stat.color)} />
                     </div>
-                </button>
+                </motion.button>
+
             ))}
         </div>
     );

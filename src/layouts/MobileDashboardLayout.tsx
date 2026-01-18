@@ -24,21 +24,22 @@ interface MobileDashboardLayoutProps {
     user: any;
     profile: any;
     broadcast: any;
-    setBroadcast: (b: any) => void;
     isBroadcastOpen: boolean;
     setIsBroadcastOpen: (o: boolean) => void;
     navItems: any[];
     bottomNavItems: any[];
     handleLogout: () => void;
     handleAuthCheck: (e: React.MouseEvent, path: string) => void;
+    onDismissBroadcast: () => void;
 }
 
 const MobileDashboardLayout: React.FC<MobileDashboardLayoutProps> = ({
-    children, user, profile, broadcast, setBroadcast,
+    children, user, profile, broadcast,
     isBroadcastOpen, setIsBroadcastOpen, navItems, bottomNavItems,
-    handleLogout, handleAuthCheck
+    handleLogout, handleAuthCheck, onDismissBroadcast
 }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const { t } = useLanguage();
@@ -82,7 +83,10 @@ const MobileDashboardLayout: React.FC<MobileDashboardLayoutProps> = ({
                     </Button>
                 ) : (
                     <div className="flex items-center gap-2">
-                        <NotificationsSheet />
+                        <NotificationsSheet
+                            open={isNotificationOpen}
+                            onOpenChange={setIsNotificationOpen}
+                        />
                         <Button variant="ghost" size="icon" className="rounded-full overflow-hidden border border-border/40" asChild>
                             <Link to="/profile">
                                 <img src={profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`} alt="Profile" className="w-full h-full object-cover" />
@@ -105,11 +109,7 @@ const MobileDashboardLayout: React.FC<MobileDashboardLayoutProps> = ({
                         variant="ghost"
                         size="icon"
                         className="h-5 w-5 text-white hover:bg-white/20 shrink-0"
-                        onClick={() => {
-                            const dismissKey = `dismissed_broadcast_${broadcast.message.substring(0, 20)}`;
-                            localStorage.setItem(dismissKey, 'true');
-                            setBroadcast(null);
-                        }}
+                        onClick={onDismissBroadcast}
                     >
                         <X className="h-3 w-3" />
                     </Button>
@@ -240,12 +240,7 @@ const MobileDashboardLayout: React.FC<MobileDashboardLayoutProps> = ({
                     </DialogHeader>
                     <div className="flex justify-end pt-4">
                         <Button
-                            onClick={() => {
-                                const dismissKey = `dismissed_broadcast_${broadcast?.message.substring(0, 20)}`;
-                                localStorage.setItem(dismissKey, 'true');
-                                setIsBroadcastOpen(false);
-                                setBroadcast(null);
-                            }}
+                            onClick={onDismissBroadcast}
                             className="rounded-xl px-8 font-bold"
                         >
                             {t('common.dismiss')}

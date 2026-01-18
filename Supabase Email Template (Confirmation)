@@ -131,8 +131,7 @@
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-spacing:0;border-collapse:collapse;">
                 <tr>
                   <td style="padding:20px;margin:0;text-align:center;">
-                    <img src="https://juosdmecldzlvrinnzwf.supabase.co/storage/v1/object/public/assets/my-notebook-logo.png" alt="My Notebook Logo" style="max-width:80px;height:auto;display:inline-block;" />
-                    <h1 style="font-family:inherit;font-size:28px;margin-top:10px;margin-bottom:0;color:#333333;">Welcome to My Notebook!</h1>
+                    <h1 style="font-family:inherit;font-size:28px;margin-top:10px;margin-bottom:0;color:#333333;">Welcome to Notebook!</h1>
                   </td>
                 </tr>
                 <tr>
@@ -141,9 +140,10 @@
                     <div class="button-container" style="padding-top:10px;padding-bottom:10px;text-align:center;">
                       <a href="{{ .ConfirmationURL }}" class="button" style="display:inline-block;background-color:#2563eb;color:#ffffff;padding:10px 20px;text-decoration:none;border-radius:5px;font-weight:bold;">Confirm Your Email</a>
                     </div>
-                    <p style="margin:0;padding:0;">If you did not sign up for My Notebook, please ignore this email.</p>
+                    <p style="margin:0;padding:0;">If you did not sign up for Notebook, please ignore this email.</p>
+                    <p style="margin:0;padding:0;margin-top:20px;">Need help? Get in touch with our support team at <a href="mailto:my.notebook.by.remi@gmail.com">my.notebook.by.remi@gmail.com</a></p>
                     <p style="margin:0;padding:0;margin-top:20px;">Best regards,</p>
-                    <p style="margin:0;padding:0;">The My Notebook Team</p>
+                    <p style="margin:0;padding:0;">Notebook</p>
                   </td>
                 </tr>
               </table>

@@ -2,12 +2,12 @@ import * as React from 'react';
 
 import { Button } from "@/components/ui/button";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Flag, FlagOff, Sparkles, Zap, GraduationCap, Pencil, PlayCircle } from 'lucide-react';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Flag, FlagOff, Sparkles, Zap, GraduationCap, Pencil, PlayCircle, MoreVertical } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { isPast, isValid } from 'date-fns';
 
@@ -110,71 +110,49 @@ const StudySetCardsList: React.FC<StudySetCardsListProps> = ({ cards, handleTogg
                 <div className="p-6 pt-8 pb-4">
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <h3 className={cn(
-                      "text-xl font-black tracking-tight leading-tight",
+                      "text-xl font-black tracking-tight leading-tight flex-1 break-words pr-2",
                       isHighlighted ? "text-primary" : "text-foreground"
                     )}>
                       {card.term}
                     </h3>
 
-                    <div className="flex gap-1">
-                      {onStudyCard && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onStudyCard(card.id);
-                          }}
-                          className="h-10 w-10 rounded-xl text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-600 transition-all shrink-0"
-                          title="Revise this card"
-                        >
-                          <PlayCircle className="h-5 w-5" />
-                        </Button>
-                      )}
+                    <div className="shrink-0 -mr-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:bg-muted">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          {onStudyCard && (
+                            <DropdownMenuItem onClick={() => onStudyCard(card.id)}>
+                              <PlayCircle className="mr-2 h-4 w-4" />
+                              <span>Quick Revise</span>
+                            </DropdownMenuItem>
+                          )}
 
-                      {onEditCard && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onEditCard(card);
-                          }}
-                          className="h-10 w-10 rounded-xl text-muted-foreground hover:bg-secondary hover:text-primary transition-all shrink-0"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      )}
+                          {onEditCard && (
+                            <DropdownMenuItem onClick={() => onEditCard(card)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              <span>Edit Card</span>
+                            </DropdownMenuItem>
+                          )}
 
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e: React.MouseEvent) => {
-                                e.preventDefault();
-                                handleToggleFlag(card.id, card.is_flagged || false);
-                              }}
-                              className={cn(
-                                "h-10 w-10 rounded-xl transition-all active:scale-90 shrink-0",
-                                card.is_flagged ? "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20" : "text-muted-foreground hover:bg-secondary"
-                              )}
-                            >
-                              {card.is_flagged ? (
-                                <Flag className="h-5 w-5 fill-current" />
-                              ) : (
-                                <FlagOff className="h-5 w-5" />
-                              )}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="rounded-lg font-bold py-2">
-                            {card.is_flagged ? "Remove Priority" : "Mark as Priority"}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                          <DropdownMenuItem onClick={() => handleToggleFlag(card.id, card.is_flagged || false)}>
+                            {card.is_flagged ? (
+                              <>
+                                <FlagOff className="mr-2 h-4 w-4 text-yellow-600" />
+                                <span>Remove Priority</span>
+                              </>
+                            ) : (
+                              <>
+                                <Flag className="mr-2 h-4 w-4" />
+                                <span>Mark Priority</span>
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
 

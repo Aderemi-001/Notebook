@@ -90,7 +90,7 @@ export const StudySetSelector: React.FC<StudySetSelectorProps> = ({
             {view === 'list' ? (
                 <Command className="bg-transparent">
                     <CommandInput placeholder="Search study sets..." className="h-11 border-b" />
-                    <CommandList className="max-h-[300px] md:max-h-[400px] overflow-y-auto custom-scrollbar p-2 space-y-1">
+                    <CommandList className="max-h-[300px] md:max-h-[400px] overflow-y-auto custom-scrollbar p-2 pb-10 space-y-1">
                         <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
                             <div className="flex flex-col items-center gap-2">
                                 <p>No exact match found.</p>

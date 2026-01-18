@@ -57,19 +57,15 @@ const fetchCollaborationInvitations = async (): Promise<CollaborationInvitation[
   // Transform data to match interface (Supabase returns single objects for FK relations)
   // Handle potential SelectQueryError for profile relations
   return (data || []).map(item => {
-    const inviterProfile = (item.inviter_profile && typeof item.inviter_profile === 'object' && !('code' in item.inviter_profile))
-      ? item.inviter_profile as { id: string; display_name: string | null }
-      : null;
-    const inviteeProfile = (item.invitee_profile && typeof item.invitee_profile === 'object' && !('code' in item.invitee_profile))
-      ? item.invitee_profile as { id: string; display_name: string | null }
-      : null;
-    
+    const inviterProfile = (item as any).inviter_profile;
+    const inviteeProfile = (item as any).invitee_profile;
+
     return {
       ...item,
       study_sets: item.study_sets || null,
       inviter_profile: inviterProfile,
       invitee_profile: inviteeProfile,
-    } as CollaborationInvitation;
+    } as unknown as CollaborationInvitation;
   });
 };
 
@@ -95,19 +91,15 @@ const updateInvitationStatus = async ({ id, status }: { id: string; status: 'acc
 
   if (error) throw error;
   // Transform to match interface (handle potential SelectQueryError for profile relations)
-  const inviterProfile = (data.inviter_profile && typeof data.inviter_profile === 'object' && !('code' in data.inviter_profile))
-    ? data.inviter_profile as { id: string; display_name: string | null }
-    : null;
-  const inviteeProfile = (data.invitee_profile && typeof data.invitee_profile === 'object' && !('code' in data.invitee_profile))
-    ? data.invitee_profile as { id: string; display_name: string | null }
-    : null;
-  
+  const inviterProfile = (data as any).inviter_profile;
+  const inviteeProfile = (data as any).invitee_profile;
+
   return {
     ...data,
     study_sets: data.study_sets || null,
     inviter_profile: inviterProfile,
     invitee_profile: inviteeProfile,
-  } as CollaborationInvitation;
+  } as unknown as CollaborationInvitation;
 };
 
 const deleteInvitation = async (id: string) => {

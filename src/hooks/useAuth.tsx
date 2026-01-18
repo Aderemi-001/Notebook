@@ -120,7 +120,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     fetchSessionAndProfile();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, _session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth event:", event, session?.user?.email);
+
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log("Password recovery event detected, redirecting...");
+        window.location.href = '/reset-password';
+        return;
+      }
+
+      // Handle Initial Email Confirmation
+      // When a user clicks 'Verify' in their email, they land with an access token
+      // If we are on the root or dashboard but came from a confirmation link
+      const hash = window.location.hash;
+      if (event === 'SIGNED_IN' && hash.includes('type=signup')) {
+        console.log("Email confirmation detected via hash, redirecting...");
+        window.location.href = '/confirm-email';
+        return;
+      }
+
       fetchSessionAndProfile();
     });
 

@@ -1,0 +1,189 @@
+.pomo-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #000000;
+  color: #f5f5f5;
+  overflow: hidden;
+  position: relative;
+  transition: background 0.5s ease, color 0.3s ease;
+}
+
+/* --- THEMES --- */
+/* Midnight (Default) */
+.pomo-root.theme-midnight {
+  background: #000000;
+  color: #f5f5f5;
+  --fcc-digit-block-bg: #1a1a1a;
+  --fcc-digit-color: #ffffff;
+  --fcc-label-color: #888888;
+}
+
+/* Sunset */
+.pomo-root.theme-sunset {
+  background: linear-gradient(135deg, #2b102f 0%, #201a33 100%);
+  color: #ffecd2;
+  --fcc-digit-block-bg: rgba(255, 255, 255, 0.1);
+  --fcc-digit-color: #ffecd2;
+}
+
+/* Forest */
+.pomo-root.theme-forest {
+  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+  color: #d4fc79;
+  --fcc-digit-block-bg: rgba(0, 50, 20, 0.3);
+  --fcc-digit-color: #d4fc79;
+}
+
+/* Ocean */
+.pomo-root.theme-ocean {
+  background: linear-gradient(180deg, #1A2980 0%, #26D0CE 100%);
+  color: #e0faff;
+  --fcc-digit-block-bg: rgba(255,255,255, 0.15);
+  --fcc-digit-color: #ffffff;
+}
+
+/* Windowed Mode: Rounded floating card with "equal padding" (margins) */
+.pomo-root.pomo-windowed {
+  width: calc(100% - 3rem); /* Margin on sides */
+  height: calc(100vh - 140px); /* Approx offset for header + bottom margin */
+  margin: 1.5rem auto; /* Center it */
+  border-radius: 32px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Fullscreen Mode: Full bleed, no radius */
+.pomo-root.pomo-fullscreen {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for modern browsers */
+  border-radius: 0;
+  margin: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+/* Container for the clock that will be scaled */
+.pomo-clock-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+  flex: 1; /* Take up available space */
+  /* Will be scaled via inline style in JS */
+}
+
+.pomo-label {
+  /* position: absolute; removed to prevent overlap issues */
+  /* top: 15%; */
+  margin-top: 5vh;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2rem;
+  opacity: 0.9;
+  z-index: 10;
+  transition: color 0.5s ease;
+}
+
+.pomo-controls-container {
+  /* position: absolute; removed */
+  /* bottom: 10%; */
+  margin-bottom: 8vh;
+  margin-top: 2rem;
+  display: flex;
+  gap: 1.5rem;
+  z-index: 20;
+  z-index: 20;
+  transition: opacity 0.3s ease;
+}
+
+.pomo-controls {
+  display: flex;
+  gap: 3rem; /* Generous spacing between buttons */
+  align-items: center;
+}
+
+/* Hover effect: Fade out controls when not interacting (optional, can be added later via JS class) */
+.pomo-root:hover .pomo-controls-container {
+  opacity: 1;
+}
+
+.pomo-controls button {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 9999px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.pomo-controls button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.pomo-controls button:active {
+  transform: translateY(0);
+}
+
+/* Specific theme colors */
+.theme-focus .pomo-label { color: #ff6b6b; } /* Soft Red */
+.theme-break .pomo-label { color: #4ecdc4; } /* Soft Teal */
+
+/* Utility for PiP / Fullscreen toggles */
+.pomo-tools {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  display: flex;
+  gap: 1rem;
+  z-index: 30;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.icon-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile Portrait Adjustment */
+@media (max-width: 768px) {
+  .pomo-tools {
+    top: auto;
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+}
+
+/* --- Utility: Hide Number Spin Buttons --- */
+/* Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}

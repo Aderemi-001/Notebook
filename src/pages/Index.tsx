@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { PlusCircle, Search, Loader2, BookOpen, Users, Settings, Trash2, Edit, Eye, Share2, Copy, ArrowRight, ShieldCheck, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,6 +89,7 @@ const deleteStudySet = async (setId: string) => {
 };
 
 const Index: React.FC = () => {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const { user, profile, loading: isLoadingAuth } = useAuth(); // Get profile for admin check
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -218,12 +220,12 @@ const Index: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
           <BookOpen className="mr-3 h-7 w-7" />
-          My Study Sets
+          {t('library.mySets')}
         </h1>
         {user ? (
           <Button asChild>
             <Link to="/create">
-              <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
+              <PlusCircle className="mr-2 h-4 w-4" /> {t('library.createSet')}
             </Link>
           </Button>
         ) : (
@@ -235,18 +237,18 @@ const Index: React.FC = () => {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]" aria-describedby={undefined}>
               <DialogHeader>
-                <DialogTitle>Login Required</DialogTitle>
+                <DialogTitle>{t('library.loginRequired')}</DialogTitle>
                 <DialogDescription>
-                  You need to be logged in to create new study sets.
+                  {t('library.loginRequiredDesc')}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <p>Please log in or sign up to continue.</p>
+                <p>{t('library.loginOrSignup')}</p>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsLoginPromptOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setIsLoginPromptOpen(false)}>{t('library.cancel')}</Button>
                 <Button asChild>
-                  <Link to="/login" onClick={() => setIsLoginPromptOpen(false)}>Login / Sign Up</Link>
+                  <Link to="/login" onClick={() => setIsLoginPromptOpen(false)}>{t('library.loginBtn')}</Link>
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -258,7 +260,7 @@ const Index: React.FC = () => {
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground transition-colors group-focus-within:text-primary z-10" />
         <Input
           type="text"
-          placeholder="Search your study sets..."
+          placeholder={t('library.searchPlaceholder')}
           value={searchQuery}
           onChange={handleSearchChange}
           className="w-full pl-12 pr-4 py-7 rounded-[1.25rem] bg-white/80 dark:bg-white/5 border-input hover:border-primary/50 focus:border-primary focus:ring-primary/20 transition-all text-lg backdrop-blur-md shadow-sm"
@@ -302,23 +304,23 @@ const Index: React.FC = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Set Actions</DropdownMenuLabel>
+                      <DropdownMenuLabel>{t('library.setActions')}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
                         <Link to={`/sets/${set.id}/study`}>
-                          <Eye className="mr-2 h-4 w-4" /> Study
+                          <Eye className="mr-2 h-4 w-4" /> {t('library.study')}
                         </Link>
                       </DropdownMenuItem>
                       {(set.is_owner || profile?.is_admin) && ( // Allow edit/delete if owner OR admin
                         <>
                           <DropdownMenuItem onClick={() => handleEditClick(set)}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit Set
+                            <Edit className="mr-2 h-4 w-4" /> {t('library.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleShareClick(set.id)}>
-                            <Share2 className="mr-2 h-4 w-4" /> Share
+                            <Share2 className="mr-2 h-4 w-4" /> {t('library.share')}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDeleteClick(set.id)} className="text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            <Trash2 className="mr-2 h-4 w-4" /> {t('library.delete')}
                           </DropdownMenuItem>
                         </>
                       )}
@@ -329,20 +331,20 @@ const Index: React.FC = () => {
                 <div className="flex items-center text-sm text-muted-foreground">
                   {set.is_owner ? (
                     <span className="flex items-center">
-                      <Users className="mr-1 h-3 w-3" /> My Set
+                      <Users className="mr-1 h-3 w-3" /> {t('library.mySet')}
                     </span>
                   ) : (
                     <span className="flex items-center">
-                      <Users className="mr-1 h-3 w-3" /> By: {set.display_name || 'Anonymous'}
+                      <Users className="mr-1 h-3 w-3" /> {t('library.by')}: {set.display_name || 'Anonymous'}
                     </span>
                   )}
                   {set.is_public ? (
                     <Badge variant="secondary" className="ml-2 flex items-center gap-1">
-                      <Globe className="h-3 w-3" /> Public
+                      <Globe className="h-3 w-3" /> {t('library.public')}
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="ml-2 flex items-center gap-1">
-                      <ShieldCheck className="h-3 w-3" /> Private
+                      <ShieldCheck className="h-3 w-3" /> {t('library.private')}
                     </Badge>
                   )}
                 </div>
@@ -352,11 +354,11 @@ const Index: React.FC = () => {
               </CardContent>
               <CardFooter className="flex justify-between items-center">
                 <div className="text-sm text-muted-foreground">
-                  {set.cards_count} {set.cards_count === 1 ? 'card' : 'cards'}
+                  {set.cards_count} {t('library.cards')}
                 </div>
                 <Button asChild className="w-full bg-secondary/50 text-secondary-foreground hover:bg-secondary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-none rounded-xl h-10 px-3">
                   <Link to={`/sets/${set.id}/study`} className="flex items-center justify-center gap-2">
-                    <span className="text-sm font-bold truncate">Study Now</span>
+                    <span className="text-sm font-bold truncate">{t('library.studyNow')}</span>
                     <ArrowRight className="h-4 w-4 opacity-50 group-hover:translate-x-1 transition-transform shrink-0" />
                   </Link>
                 </Button>
@@ -366,21 +368,21 @@ const Index: React.FC = () => {
         </div>
       ) : (
         <div className="text-center py-10 border-2 border-dashed rounded-lg">
-          <h2 className="text-xl font-semibold mb-2">No Study Sets Found</h2>
+          <h2 className="text-xl font-semibold mb-2">{t('library.noSetsTitle')}</h2>
           <p className="text-muted-foreground mb-4">
-            {user ? "Start by creating your first study set!" : "Log in to create and manage your study sets."}
+            {user ? t('library.noSetsDesc') : t('library.loginRequiredDesc')}
           </p>
           {user && (
             <Button asChild>
               <Link to="/create">
-                <PlusCircle className="mr-2 h-4 w-4" /> Create New Set
+                <PlusCircle className="mr-2 h-4 w-4" /> {t('library.createSet')}
               </Link>
             </Button>
           )}
           {!user && (
             <Button asChild>
               <Link to="/login">
-                Login / Sign Up
+                {t('library.loginBtn')}
               </Link>
             </Button>
           )}
@@ -391,15 +393,15 @@ const Index: React.FC = () => {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent aria-describedby={undefined}>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('library.deleteConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete this study set and all associated cards.
+              {t('library.deleteConfirmDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>{t('library.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDelete} disabled={deleteMutation.isPending} className="bg-red-600 hover:bg-red-700">
-              {deleteMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Delete
+              {deleteMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} {t('library.deleteBtn')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -409,15 +411,15 @@ const Index: React.FC = () => {
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
         <DialogContent className="sm:max-w-[425px]" aria-describedby={undefined}>
           <DialogHeader>
-            <DialogTitle>Share Study Set</DialogTitle>
+            <DialogTitle>{t('library.shareTitle')}</DialogTitle>
             <DialogDescription>
-              Copy the link below to share this study set.
+              {t('library.shareDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center space-x-2">
             <div className="grid flex-1 gap-2">
               <Label htmlFor="share-link" className="sr-only">
-                Share link
+                {t('library.share')}
               </Label>
               <Input
                 id="share-link"
@@ -426,12 +428,12 @@ const Index: React.FC = () => {
               />
             </div>
             <Button type="submit" onClick={handleCopyLink} className="px-3">
-              <span className="sr-only">Copy link</span>
+              <span className="sr-only">{t('library.copy')}</span>
               <Copy className="h-4 w-4" />
             </Button>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsShareDialogOpen(false)}>Close</Button>
+            <Button variant="outline" onClick={() => setIsShareDialogOpen(false)}>{t('library.close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -440,15 +442,15 @@ const Index: React.FC = () => {
       <Dialog open={isEditSetDialogOpen} onOpenChange={setIsEditSetDialogOpen}>
         <DialogContent className="sm:max-w-[425px]" aria-describedby={undefined}>
           <DialogHeader>
-            <DialogTitle>Edit Study Set</DialogTitle>
+            <DialogTitle>{t('library.editTitle')}</DialogTitle>
             <DialogDescription>
-              Make changes to your study set here. Click save when you're done.
+              {t('library.editDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-title" className="text-right">
-                Title
+                {t('library.title')}
               </Label>
               <Input
                 id="edit-title"
@@ -459,7 +461,7 @@ const Index: React.FC = () => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-description" className="text-right">
-                Description
+                {t('library.description')}
               </Label>
               <Textarea
                 id="edit-description"
@@ -470,7 +472,7 @@ const Index: React.FC = () => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-public" className="text-right">
-                Public
+                {t('library.isPublic')}
               </Label>
               <Switch
                 id="edit-public"
@@ -481,9 +483,9 @@ const Index: React.FC = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditSetDialogOpen(false)} disabled={updateSetMutation.isPending}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsEditSetDialogOpen(false)} disabled={updateSetMutation.isPending}>{t('library.cancel')}</Button>
             <Button type="submit" onClick={handleUpdateSet} disabled={updateSetMutation.isPending}>
-              {updateSetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Save changes
+              {updateSetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} {t('library.saveChanges')}
             </Button>
           </DialogFooter>
         </DialogContent>

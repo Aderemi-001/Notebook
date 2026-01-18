@@ -38,7 +38,7 @@ const ExplorePublicSets: React.FC = () => {
     return (
       <div className="container mx-auto py-10 animate-fade-in">
         <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
-          <Globe className="h-7 w-7" /> Explore Public Study Sets
+          <Globe className="h-7 w-7" /> Public Study Sets
         </h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
@@ -73,7 +73,7 @@ const ExplorePublicSets: React.FC = () => {
   return (
     <div className="w-full px-4 md:px-8 py-10 animate-fade-in">
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
-        <Globe className="h-7 w-7" /> Explore Public Study Sets
+        <Globe className="h-7 w-7" /> Public Study Sets
       </h1>
 
       {publicSets && publicSets.length === 0 ? (

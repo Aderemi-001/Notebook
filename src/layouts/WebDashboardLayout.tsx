@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -9,7 +8,10 @@ import {
     ShieldAlert,
     Sparkles,
     Megaphone as AnnouncementIcon,
-    X
+    X,
+    Menu, // Import Menu icon
+    NotebookPen,
+    Library
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -24,30 +26,35 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'; // Import Sheet Components
 import { useLanguage } from '@/contexts/LanguageContext';
+
 
 interface WebDashboardLayoutProps {
     children: React.ReactNode;
     user: any;
     profile: any;
     broadcast: any;
-    setBroadcast: (b: any) => void;
     isBroadcastOpen: boolean;
     setIsBroadcastOpen: (o: boolean) => void;
     navItems: any[];
     bottomNavItems: any[];
     handleLogout: () => void;
     handleAuthCheck: (e: React.MouseEvent, path: string) => void;
+    onDismissBroadcast: () => void;
 }
 
 const WebDashboardLayout: React.FC<WebDashboardLayoutProps> = ({
-    children, user, profile, broadcast, setBroadcast,
+    children, user, profile, broadcast,
     isBroadcastOpen, setIsBroadcastOpen, navItems, bottomNavItems,
-    handleLogout, handleAuthCheck
+    handleLogout, handleAuthCheck, onDismissBroadcast
 }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { t } = useLanguage();
+
+    // State for the "More" menu sheet (same as mobile)
+    const [menuOpen, setMenuOpen] = useState(false);
 
     // Helper to translate nav items dynamically
     const translateLabel = (label: string) => {
@@ -67,190 +74,220 @@ const WebDashboardLayout: React.FC<WebDashboardLayoutProps> = ({
         return key ? t(key) : label;
     };
 
-
-    const NavItem = ({ item }: { item: any }) => {
-        const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
-
-        return (
-            <Link
-                to={item.path}
-                className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group relative overflow-hidden",
-                    isActive
-                        ? "bg-primary/10 text-primary font-bold shadow-[inset_0_0_20px_rgba(79,70,229,0.05)]"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground hover:translate-x-1"
-                )}
-                onClick={(e) => handleAuthCheck(e, item.path)}
-            >
-                {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full shadow-glow" />
-                )}
-                <item.icon className={cn("h-5 w-5 transition-transform duration-300 group-hover:scale-110", isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary")} />
-                <span className="relative z-10">{translateLabel(item.label)}</span>
-            </Link>
-        );
-    };
-
     const mainRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
-        // Scroll main content area to top on route change
-        if (mainRef.current) {
-            mainRef.current.scrollTo(0, 0);
-        }
         window.scrollTo(0, 0);
     }, [location.pathname]);
 
     return (
-        <div className="min-h-screen bg-background flex selection:bg-primary/20 selection:text-primary">
-            {/* Desktop Sidebar */}
-            <aside className="hidden md:flex flex-col w-72 shrink-0 border-r bg-card/40 backdrop-blur-xl sticky top-0 h-screen p-6 overflow-y-auto custom-scrollbar transition-all duration-500">
-                <div className="mb-10">
-                    <Link to="/" className="flex flex-wrap items-center gap-3 font-heading font-black text-2xl px-2 text-primary hover:opacity-80 transition-all active:scale-95">
-                        <BrandLogo size="md" rounded="2xl" shadow />
-                        <span className="tracking-tighter">Notebook</span>
-                        {profile?.is_admin && <AdminBadge className="ml-1 shrink-0 bg-indigo-500 text-white border-0" />}
-                    </Link>
-                </div>
+        <div className="min-h-screen bg-background flex flex-col selection:bg-primary/20 selection:text-primary pb-24">
+            {/* Desktop Header (Unified with Mobile Style) */}
+            <header className="flex items-center justify-between px-6 py-4 border-b bg-background/60 backdrop-blur-xl sticky top-0 z-[40]">
+                <Link to="/" className="flex items-center gap-3 active:scale-95 transition-transform">
+                    <BrandLogo size="md" rounded="2xl" shadow />
+                    <span className="font-heading font-black text-2xl tracking-tighter">Notebook</span>
+                    {profile?.is_admin && <AdminBadge className="ml-1 shrink-0 bg-indigo-500 text-white border-0" />}
+                </Link>
 
-                <div className="relative mb-10 group">
-                    <div className="flex justify-end mb-2">
-                        <span className="bg-nova-gradient text-white text-[9px] px-2.5 py-1 rounded-full font-black shadow-glow animate-nova-gradient tracking-widest uppercase border border-white/20">
-                            {t('sidebar.supernova')}
-                        </span>
-                    </div>
-                    <Button asChild className="w-full shadow-premium hover:shadow-premium-hover rounded-[1.25rem] py-8 text-lg font-black tracking-tight transition-all active:scale-95 group overflow-hidden bg-primary hover:bg-primary/90 active:bg-primary border-0 select-none touch-none" size="lg">
-                        <Link to="/create" onClick={(e) => handleAuthCheck(e, '/create')} className="focus:outline-none">
-                            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <Plus className="mr-3 h-6 w-6 transition-transform group-hover:rotate-180 duration-500" />
-                            {t('sidebar.createSet')}
-                        </Link>
-                    </Button>
-                </div>
-
-                <div className="flex-col flex gap-1.5 hover-layer">
-                    <p className="text-[10px] font-black text-muted-foreground px-4 mb-3 uppercase tracking-[0.2em] opacity-60">{t('sidebar.learningContext')}</p>
-                    {navItems.map(item => <NavItem key={item.path} item={item} />)}
-                </div>
-
-                <div className="flex-grow min-h-[4rem]" />
-
-                <div className="flex flex-col gap-1.5 border-t border-border/40 pt-8 mt-8">
-                    {profile?.is_admin && (
-                        <div className="mb-4 pb-4 border-b border-border/40">
-                            <p className="text-[10px] font-black text-indigo-500 px-4 mb-3 uppercase tracking-[0.2em]">{t('sidebar.management')}</p>
-                            <Link
-                                to="/admin"
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 relative group overflow-hidden",
-                                    location.pathname.startsWith('/admin')
-                                        ? "bg-indigo-500/10 text-indigo-600 font-bold shadow-[inset_0_0_20px_rgba(79,70,229,0.05)]"
-                                        : "text-muted-foreground hover:bg-secondary hover:text-indigo-600 hover:translate-x-1"
-                                )}
-                            >
-                                {location.pathname.startsWith('/admin') && (
-                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-500 rounded-r-full shadow-glow" />
-                                )}
-                                <LayoutDashboard className="h-5 w-5 transition-transform group-hover:scale-110" />
-                                <span>{t('sidebar.admin')}</span>
-                            </Link>
-                        </div>
-                    )}
-                    <div className="px-4 mb-4">
-                        <div className="flex items-center justify-between p-3 rounded-2xl bg-card/50 border border-border/40">
-                            <span className="text-sm font-bold text-muted-foreground">Inbox</span>
+                <div className="flex items-center gap-4">
+                    {!user ? (
+                        <Button asChild variant="ghost" className="text-primary font-bold hover:bg-primary/10 rounded-xl">
+                            <Link to="/login">{t('sidebar.login')}</Link>
+                        </Button>
+                    ) : (
+                        <>
                             <NotificationsSheet />
-                        </div>
-                    </div>
-                    <p className="text-[10px] font-black text-muted-foreground px-4 mb-3 uppercase tracking-[0.2em] opacity-60">{t('sidebar.preferences')}</p>
-                    {bottomNavItems.map(item => <NavItem key={item.path} item={item} />)}
+                            <Link to="/profile">
+                                <div className="h-10 w-10 rounded-full overflow-hidden border border-border/40 hover:ring-2 ring-primary/20 transition-all cursor-pointer">
+                                    <img src={profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`} alt="Profile" className="w-full h-full object-cover" />
+                                </div>
+                            </Link>
+                        </>
+                    )}
+                </div>
+            </header>
 
+            {/* Broadcast Banner */}
+            {broadcast && !broadcast.isPopup && (
+                <div className={`relative z-[60] px-6 py-3 flex items-center justify-between text-sm font-bold animate-in slide-in-from-top duration-500 shadow-lg mx-6 mt-4 rounded-xl
+                    ${broadcast.type === 'alert' ? 'bg-red-600 text-white' :
+                        broadcast.type === 'warning' ? 'bg-amber-500 text-white' :
+                            'bg-indigo-600 text-white'}`}>
+                    <div className="flex-1 text-center font-black uppercase tracking-widest">
+                        {broadcast.message}
+                    </div>
                     <Button
                         variant="ghost"
-                        className={cn(
-                            "w-full justify-start mt-4 rounded-2xl h-12 font-bold px-4 transition-all duration-300",
-                            user ? "text-muted-foreground hover:text-red-500 hover:bg-red-500/10" : "text-primary hover:text-primary/90 hover:bg-primary/10"
-                        )}
-                        onClick={user ? handleLogout : () => navigate('/login')}
+                        size="icon"
+                        className="h-6 w-6 text-white hover:bg-white/20 shrink-0 transition-transform active:scale-90"
+                        onClick={onDismissBroadcast}
                     >
-                        {user ? (
-                            <>
-                                <LogOut className="mr-3 h-5 w-5 opacity-60 group-hover:opacity-100" /> {t('sidebar.logout')}
-                            </>
-                        ) : (
-                            <>
-                                <LogIn className="mr-3 h-5 w-5 opacity-60 group-hover:opacity-100" /> {t('sidebar.login')}
-                            </>
-                        )}
+                        <X className="h-4 w-4" />
                     </Button>
                 </div>
+            )}
 
-
-                {/* Footer Attribution - Supernova Style */}
-                <div className="mt-10 p-5 glass-card relative group">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-nova-gradient opacity-40" />
-                    <p className="text-[9px] text-muted-foreground uppercase tracking-[0.25em] font-black mb-4 flex items-center gap-2">
-                        <Sparkles className="h-3 w-3 text-indigo-500" /> {t('sidebar.aiStatus')}
-                    </p>
-                    <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-foreground/70">{t('sidebar.neuralEngine')}</span>
-                            <div className="flex gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-glow" />
-                                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-glow" />
-                                <div className="w-1.5 h-1.5 rounded-full bg-pink-500 shadow-glow" />
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-foreground/70">{t('sidebar.syncLatency')}</span>
-                            <span className="text-[10px] font-black text-emerald-500">12ms</span>
-                        </div>
-                    </div>
-                </div>
-            </aside>
-
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0">
-                {/* Broadcast Banner (Desktop Wide) */}
-                {broadcast && !broadcast.isPopup && (
-                    <div className={`relative z-[60] px-6 py-3 flex items-center justify-between text-sm font-bold animate-in slide-in-from-top duration-500 shadow-lg
-                        ${broadcast.type === 'alert' ? 'bg-red-600 text-white' :
-                            broadcast.type === 'warning' ? 'bg-amber-500 text-white' :
-                                'bg-indigo-600 text-white'}`}>
-                        <div className="flex-1 text-center font-black uppercase tracking-widest">
-                            {broadcast.message}
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-white hover:bg-white/20 shrink-0 transition-transform active:scale-90"
-                            onClick={() => {
-                                const dismissKey = `dismissed_broadcast_${broadcast.message.substring(0, 20)}`;
-                                localStorage.setItem(dismissKey, 'true');
-                                setBroadcast(null);
-                            }}
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </div>
-                )}
-
-                <main ref={mainRef} className="flex-grow flex flex-col overflow-y-auto animate-fade-in bg-[radial-gradient(ellipse_at_top_right,rgba(79,70,229,0.03),transparent_50%)]">
-                    <div className="flex-grow w-full min-h-screen">
+            {/* Main Content Area - No persistent Sidebar */}
+            <main ref={mainRef} className="flex-grow flex flex-col p-6 overflow-x-hidden animate-fade-in bg-[radial-gradient(ellipse_at_top,rgba(79,70,229,0.05),transparent_60%)]">
+                <div className="max-w-7xl mx-auto w-full flex-grow flex flex-col">
+                    <div className="flex-grow min-h-screen">
                         {children}
                     </div>
-                    <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full mt-auto">
-                        <Footer className="mt-4 border-t-0 bg-transparent px-0" />
+                    {/* Hide Footer on immersive pages like Daily Review */}
+                    {!location.pathname.includes('/daily-review') && (
+                        <Footer className="mt-auto border-t-0 bg-transparent px-0 pt-12" />
+                    )}
+                </div>
+            </main>
+
+            {/* Floating Bottom Nav (Visible on Desktop via override) */}
+            {/* The MobileBottomNav usually has 'md:hidden'. We need to override it or use a copy. 
+                I'll wrap it in a div that forces visibility or ask the component to not hide.
+                Wait, `MobileBottomNav` has `md:hidden` hardcoded.
+                I will create an inline Nav here that looks exactly like it but without `md:hidden`.
+            */}
+            <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[100] animate-in slide-in-from-bottom duration-500">
+                <div className="glass-card rounded-[2.5rem] border-primary/20 shadow-2xl flex items-center justify-between px-3 py-2.5 bg-background/60 backdrop-blur-2xl transition-all hover:scale-[1.02]">
+                    {/* Left Tabs */}
+                    <div className="flex items-center justify-around flex-1">
+                        <Link to="/" onClick={(e) => handleAuthCheck(e, '/')} className={cn("flex flex-col items-center justify-center p-2 rounded-2xl transition-all relative group", location.pathname === '/' ? "text-primary scale-110" : "text-muted-foreground hover:text-foreground")}>
+                            {location.pathname === '/' && <div className="absolute -top-1 w-1 h-1 bg-primary rounded-full shadow-glow" />}
+                            <LayoutDashboard className={cn("h-5 w-5", location.pathname === '/' && "stroke-[2.5px]")} />
+                            <span className="text-[10px] font-bold mt-1">Home</span>
+                        </Link>
+                        <Link to="/notebook" onClick={(e) => handleAuthCheck(e, '/notebook')} className={cn("flex flex-col items-center justify-center p-2 rounded-2xl transition-all relative group", location.pathname.startsWith('/notebook') ? "text-primary scale-110" : "text-muted-foreground hover:text-foreground")}>
+                            {location.pathname.startsWith('/notebook') && <div className="absolute -top-1 w-1 h-1 bg-primary rounded-full shadow-glow" />}
+                            <NotebookPen className={cn("h-5 w-5", location.pathname.startsWith('/notebook') && "stroke-[2.5px]")} />
+                            <span className="text-[10px] font-bold mt-1">Notes</span>
+                        </Link>
                     </div>
-                </main>
-            </div>
+
+                    {/* Center Action */}
+                    <div className="relative mx-2">
+                        <Link to="/create" onClick={(e) => handleAuthCheck(e, '/create')}>
+                            <Button size="icon" className="h-14 w-14 rounded-full bg-primary shadow-glow hover:scale-110 transition-all border-4 border-background">
+                                <Plus className="h-7 w-7 text-white" />
+                            </Button>
+                        </Link>
+                    </div>
+
+                    {/* Right Tabs */}
+                    <div className="flex items-center justify-around flex-1">
+                        <Link to="/sets" onClick={(e) => handleAuthCheck(e, '/sets')} className={cn("flex flex-col items-center justify-center p-2 rounded-2xl transition-all relative group", location.pathname.startsWith('/sets') ? "text-primary scale-110" : "text-muted-foreground hover:text-foreground")}>
+                            {location.pathname.startsWith('/sets') && <div className="absolute -top-1 w-1 h-1 bg-primary rounded-full shadow-glow" />}
+                            <Library className={cn("h-5 w-5", location.pathname.startsWith('/sets') && "stroke-[2.5px]")} />
+                            <span className="text-[10px] font-bold mt-1">Sets</span>
+                        </Link>
+
+                        <button onClick={() => setMenuOpen(true)} className="flex flex-col items-center justify-center p-2 rounded-2xl text-muted-foreground hover:text-foreground transition-all">
+                            <Menu className="h-5 w-5" />
+                            <span className="text-[10px] font-bold mt-1">More</span>
+                        </button>
+                    </div>
+                </div>
+            </nav>
 
 
+            {/* Menu Drawer (Sheet) - Optimized for Web */}
+            {/* Menu Drawer (Sheet) - Optimized for Web */}
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+                <SheetContent side="bottom" className="h-[85vh] md:h-auto md:mx-auto md:mb-12 md:rounded-[3rem] overflow-hidden rounded-t-[3rem] border-primary/20 bg-background/80 backdrop-blur-3xl z-[150] shadow-2xl p-0 md:max-w-5xl">
+                    <div className="h-full md:h-auto md:max-h-[80vh] w-full overflow-y-auto custom-scrollbar">
+                        <SheetHeader className="pb-8 md:pb-12 pt-8 px-6 md:px-12">
+                            <div className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-6 md:hidden" />
+                            <SheetTitle className="text-3xl md:text-5xl font-black tracking-tighter text-center bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/50">Nova Hub</SheetTitle>
+                            <SheetDescription className="sr-only">Main navigation menu</SheetDescription>
+                        </SheetHeader>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 p-4 md:p-12 pb-32 md:pb-12 max-w-6xl mx-auto">
+                            {navItems.map((item) => (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={(e) => {
+                                        handleAuthCheck(e, item.path);
+                                        setMenuOpen(false);
+                                    }}
+                                    className={cn(
+                                        "flex flex-col items-center justify-center p-6 md:p-8 rounded-3xl transition-all border border-border/40 bg-card/40 hover:bg-card/80 hover:scale-[1.02] group",
+                                        location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path))
+                                            ? 'bg-primary/10 text-primary border-primary/30 font-bold shadow-xl shadow-primary/10'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    )}
+                                >
+                                    <div className={cn("p-4 rounded-2xl bg-background/50 mb-4 transition-colors group-hover:bg-background/80", (location.pathname === item.path) && "bg-primary/20")}>
+                                        <item.icon className={cn("h-6 w-6 md:h-8 md:w-8", (location.pathname === item.path) ? "text-primary" : "opacity-70 group-hover:opacity-100 group-hover:text-primary")} />
+                                    </div>
+                                    <span className="text-sm md:text-lg text-center font-bold tracking-tight">{translateLabel(item.label)}</span>
+                                </Link>
+                            ))}
+
+                            {/* Admin Link */}
+                            {profile?.is_admin && (
+                                <Link
+                                    to="/admin"
+                                    onClick={(e) => {
+                                        handleAuthCheck(e, '/admin');
+                                        setMenuOpen(false);
+                                    }}
+                                    className={cn(
+                                        "md:col-span-2 flex flex-col md:flex-row items-center justify-center md:justify-start gap-4 p-6 rounded-3xl transition-all border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 group",
+                                        location.pathname.startsWith('/admin')
+                                            ? 'text-indigo-600 font-bold border-indigo-500/40 shadow-lg shadow-indigo-500/10'
+                                            : 'text-indigo-600/80'
+                                    )}
+                                >
+                                    <div className="p-3 rounded-2xl bg-indigo-500/10 group-hover:bg-indigo-500/20 transition-colors">
+                                        <ShieldAlert className="h-6 w-6 md:h-8 md:w-8 text-indigo-500" />
+                                    </div>
+                                    <div>
+                                        <span className="text-base md:text-lg font-bold block">Control Center</span>
+                                        <span className="text-xs md:text-sm opacity-70 hidden md:block">Manage users, broadcasts, and system health</span>
+                                    </div>
+                                </Link>
+                            )}
+
+                            <div className="col-span-2 md:col-span-4 border-t border-border/40 mt-6 pt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {bottomNavItems.map((item) => (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        onClick={(e) => {
+                                            handleAuthCheck(e, item.path);
+                                            setMenuOpen(false);
+                                        }}
+                                        className={cn(
+                                            "flex items-center justify-center gap-3 p-4 rounded-2xl transition-all border border-border/20 hover:bg-muted/50",
+                                            location.pathname === item.path
+                                                ? 'bg-primary/5 text-primary font-bold'
+                                                : 'text-muted-foreground'
+                                        )}
+                                    >
+                                        <item.icon className="h-5 w-5" />
+                                        <span className="text-sm font-bold">{translateLabel(item.label)}</span>
+                                    </Link>
+                                ))}
+                                <Button
+                                    variant="ghost"
+                                    className="col-span-2 md:col-span-1 justify-center md:justify-start h-14 rounded-2xl text-red-500 hover:bg-red-500/10 hover:text-red-600 font-black"
+                                    onClick={() => {
+                                        setMenuOpen(false);
+                                        user ? handleLogout() : navigate('/login');
+                                    }}
+                                >
+                                    {user ? <LogOut className="mr-3 h-5 w-5" /> : <LogIn className="mr-3 h-5 w-5" />}
+                                    {user ? t('sidebar.logout') : t('sidebar.login')}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
 
             {/* Broadcast Pop-up Modal */}
             <Dialog open={isBroadcastOpen} onOpenChange={setIsBroadcastOpen}>
                 <DialogContent className="sm:max-w-md rounded-[2rem] border-primary/20 shadow-2xl overflow-hidden glass-card">
-                    <div className="absolute top-0 right-0 -mr-10 -mt-10 h-32 w-32 rounded-full bg-primary/10 blur-3xl" />
                     <DialogHeader>
                         <DialogTitle className={cn(
                             "flex items-center gap-3 text-xl font-black",
@@ -271,12 +308,7 @@ const WebDashboardLayout: React.FC<WebDashboardLayoutProps> = ({
                     </DialogHeader>
                     <div className="flex justify-end pt-4">
                         <Button
-                            onClick={() => {
-                                const dismissKey = `dismissed_broadcast_${broadcast?.message.substring(0, 20)}`;
-                                localStorage.setItem(dismissKey, 'true');
-                                setIsBroadcastOpen(false);
-                                setBroadcast(null);
-                            }}
+                            onClick={onDismissBroadcast}
                             className="rounded-xl px-8 font-bold"
                         >
                             {t('common.dismiss')}

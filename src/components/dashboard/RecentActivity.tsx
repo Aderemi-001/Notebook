@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, FileText, ArrowRight } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { safeFormatDistanceToNow } from "@/utils/dateUtils";
 
 interface ActivityItem {
     id: string;
@@ -88,7 +88,7 @@ const RecentActivity: React.FC = () => {
                                     <div className="min-w-0">
                                         <p className="font-medium text-sm truncate">{item.title}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
+                                            {safeFormatDistanceToNow(item.updated_at)}
                                         </p>
                                     </div>
                                 </div>

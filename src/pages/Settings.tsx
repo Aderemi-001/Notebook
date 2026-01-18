@@ -15,6 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess, showLoading, dismissToast } from '@/utils/toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubscription } from '@/hooks/useSubscription';
 import {
   Select,
   SelectContent,
@@ -26,6 +27,7 @@ import {
 const Settings: React.FC = () => {
   const { preferences, isLoading, isError, error, updatePreferences } = useUserPreferences();
   const { t, setLanguage } = useLanguage();
+  const { isPremium } = useSubscription();
 
   // Initialize local state with fetched preferences or defaults
   const [defaultFlashcardSide, setDefaultFlashcardSide] = React.useState<'term' | 'definition'>('term');
@@ -256,7 +258,7 @@ const Settings: React.FC = () => {
             <Label htmlFor="font-size-preference">{t('settings.appearance.fontSize')}</Label>
             <Select onValueChange={handleFontSizePreferenceChange} value={fontSizePreference}>
               <SelectTrigger id="font-size-preference" className="w-full">
-                <SelectValue placeholder="Select font size" />
+                <SelectValue placeholder={t('settings.appearance.selectFontSize')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="small">{t('settings.appearance.sizes.small')}</SelectItem>
@@ -274,7 +276,7 @@ const Settings: React.FC = () => {
             </Label>
             <Select onValueChange={handleLanguageChange} value={preferredLanguage}>
               <SelectTrigger id="preferred-language" className="w-full">
-                <SelectValue placeholder="Select language" />
+                <SelectValue placeholder={t('settings.appearance.selectLanguage')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="en">English (US)</SelectItem>
@@ -322,7 +324,7 @@ const Settings: React.FC = () => {
               min="1"
               value={defaultStudySessionCardsCount}
               onChange={handleDefaultStudySessionCardsCountChange}
-              placeholder="e.g., 20"
+              placeholder={t('settings.study.cardsPlaceholder')}
             />
             <CardDescription className="mt-2">
               {t('settings.study.cardsPerSessionDesc')}
@@ -332,7 +334,7 @@ const Settings: React.FC = () => {
             <Label htmlFor="default-card-sort-order">{t('settings.study.sortOrder')}</Label>
             <Select onValueChange={handleDefaultCardSortOrderChange} value={defaultCardSortOrder}>
               <SelectTrigger id="default-card-sort-order" className="w-full">
-                <SelectValue placeholder="Select sorting order" />
+                <SelectValue placeholder={t('settings.study.selectSort')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="next_review_at_asc">{t('settings.study.sortOptions.nextReview')}</SelectItem>
@@ -384,12 +386,20 @@ const Settings: React.FC = () => {
             <div className="space-y-0.5">
               <Label className="text-base flex items-center gap-2">
                 <Headphones className="h-4 w-4" /> {t('settings.feedback.tts')}
+                {!isPremium && <Lock className="h-3 w-3 text-amber-500" />}
               </Label>
               <CardDescription>{t('settings.feedback.ttsDesc')}</CardDescription>
             </div>
             <Switch
               checked={enableTTS}
-              onCheckedChange={handleTTSChange}
+              onCheckedChange={(checked) => {
+                if (!isPremium) {
+                  showError("TTS Auto-Play is a Pro feature. Upgrade to unlock!");
+                  return;
+                }
+                handleTTSChange(checked);
+              }}
+              disabled={!isPremium}
             />
           </div>
 
@@ -422,7 +432,7 @@ const Settings: React.FC = () => {
               min="1"
               value={defaultNumExamQuestions}
               onChange={handleNumQuestionsChange}
-              placeholder="e.g., 10"
+              placeholder={t('settings.exam.questionsPlaceholder')}
             />
           </div>
           <div>
@@ -471,7 +481,7 @@ const Settings: React.FC = () => {
               min="1"
               value={dailyCardsGoal}
               onChange={handleDailyCardsGoalChange}
-              placeholder="e.g., 20"
+              placeholder={t('settings.goals.cardsPlaceholder')}
             />
           </div>
         </CardContent>
