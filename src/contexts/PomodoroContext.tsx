@@ -179,7 +179,7 @@ const PomodoroContext = createContext<PomodoroContextType | undefined>(undefined
 
 export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // --- State ---
-    const [targetTime, setTargetTime] = useState<number>(new Date().getTime() + DEFAULT_WORK * 60 * 1000);
+    const [targetTime, setTargetTime] = useState<number>(Date.now() + DEFAULT_WORK * 60 * 1000);
     const [isRunning, setIsRunning] = useState(false);
     const [isBreak, setIsBreak] = useState(false);
 
@@ -218,8 +218,9 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
                 // Initial Logic
                 remainingTimeRef.current = loadedWork * 60 * 1000;
-                setTargetTime(new Date().getTime() + loadedWork * 60 * 1000);
+                setTargetTime(Date.now() + remainingTimeRef.current);
                 setIsBreak(false);
+                setIsRunning(false); // Ensure it's not running on load
             } catch (e) {
                 console.error("Failed to load prefs", e);
             }
@@ -300,7 +301,10 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const handleComplete = () => {
-        // Note: isRunning might be false if worker ticks late, but logic should handle it
+        // Prevent completion logic if the timer wasn't actually running
+        // This stops "auto-start" from a background visual completion
+        if (!isRunning) return;
+
         setIsRunning(false);
         const nextIsBreak = !isBreak;
 
