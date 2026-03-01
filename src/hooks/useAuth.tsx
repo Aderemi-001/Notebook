@@ -124,8 +124,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("Auth event:", event, session?.user?.email);
 
       if (event === 'PASSWORD_RECOVERY') {
-        console.log("Password recovery event detected, redirecting...");
-        window.location.href = '/reset-password';
+        console.log("Password recovery event detected, checking current path...");
+        // Only redirect if we're not already on the reset-password page
+        // to avoid stripping the hash/search params during the redirect
+        if (!window.location.pathname.startsWith('/reset-password')) {
+          console.log("Not on reset-password page, redirecting...");
+          window.location.href = '/reset-password' + window.location.hash + window.location.search;
+        } else {
+          console.log("Already on reset-password page, skipping manual redirect.");
+        }
+        // Still fetch profile to ensure useAuth consumers have the data
+        fetchSessionAndProfile();
         return;
       }
 

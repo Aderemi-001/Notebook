@@ -255,13 +255,15 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const startTimer = () => {
         if (!isRunning) {
-            unlockAudioContext(); // Explicitly unlock on user gesture
+            unlockAudioContext();
             if (soundEnabled) playNotification('start');
-            setTargetTime(new Date().getTime() + remainingTimeRef.current);
+
+            // Set dynamic targetTime ONLY when starting/resuming
+            const newTarget = Date.now() + remainingTimeRef.current;
+            setTargetTime(newTarget);
             setIsRunning(true);
-            // Request wake lock to prevent screen from sleeping
+
             requestWakeLock();
-            // Update badge to show timer is active
             updateBadge(1);
         }
     };
@@ -269,9 +271,18 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const pauseTimer = () => {
         if (isRunning) {
             if (soundEnabled) playNotification('pause');
-            const now = new Date().getTime();
+
+            // Calculate and freeze remaining time
+            const now = Date.now();
             remainingTimeRef.current = Math.max(0, targetTime - now);
             setIsRunning(false);
+
+            // Update title to show it's paused
+            const minutes = Math.floor((remainingTimeRef.current / 1000) / 60);
+            const seconds = Math.floor((remainingTimeRef.current / 1000) % 60);
+            const mm = String(minutes).padStart(2, '0');
+            const ss = String(seconds).padStart(2, '0');
+            document.title = `Paused ${mm}:${ss} - Notebook`;
         }
     };
 
@@ -281,15 +292,15 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsBreak(false);
         const resetMins = workTime;
         remainingTimeRef.current = resetMins * 60 * 1000;
-        setTargetTime(new Date().getTime() + resetMins * 60 * 1000);
-        // Release wake lock and clear badge on reset
+        setTargetTime(Date.now() + remainingTimeRef.current);
+
+        document.title = 'Notebook';
         releaseWakeLock();
         clearBadge();
     };
 
     const handleComplete = () => {
-        if (!isRunning) return;
-
+        // Note: isRunning might be false if worker ticks late, but logic should handle it
         setIsRunning(false);
         const nextIsBreak = !isBreak;
 
@@ -299,27 +310,24 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         setIsBreak(nextIsBreak);
         const nextDuration = nextIsBreak ? breakTime : workTime;
-        remainingTimeRef.current = nextDuration * 60 * 1000;
+        const nextRemaining = nextDuration * 60 * 1000;
+        remainingTimeRef.current = nextRemaining;
 
-        // Audio notification
         if (soundEnabled) playNotification('complete');
-
-        // Vibration
         vibrateDevice([200, 100, 200, 100, 200]);
 
-        // Web Push Notification
         const notificationTitle = nextIsBreak ? "🎉 Focus Complete!" : "⏰ Break Over!";
         const notificationBody = nextIsBreak
             ? `Great work! Take a ${breakTime} minute break.`
             : "Time to get back to focus.";
         showTimerNotification(notificationTitle, notificationBody);
 
-        // Clear PWA badge
         clearBadge();
-
         showToast(nextIsBreak ? "🎉 Focus Session Complete!" : "⏰ Break is Over! Back to work.");
 
-        setTargetTime(new Date().getTime() + nextDuration * 60 * 1000);
+        // Automatically start the next session
+        const nextTarget = Date.now() + nextRemaining;
+        setTargetTime(nextTarget);
         setIsRunning(true);
     };
 
@@ -329,7 +337,14 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsBreak(nextIsBreak);
         const nextDuration = nextIsBreak ? breakTime : workTime;
         remainingTimeRef.current = nextDuration * 60 * 1000;
-        setTargetTime(new Date().getTime() + nextDuration * 60 * 1000);
+        setTargetTime(Date.now() + remainingTimeRef.current);
+
+        // Update title immediately on toggle
+        const minutes = Math.floor(nextDuration);
+        const seconds = 0;
+        const mm = String(minutes).padStart(2, '0');
+        const ss = String(seconds).padStart(2, '0');
+        document.title = `${mm}:${ss} - ${nextIsBreak ? 'Break' : 'Focus'}`;
     };
 
     const updateWorkTime = (val: number) => {
@@ -337,7 +352,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setWorkTime(v);
         if (!isBreak && !isRunning) {
             remainingTimeRef.current = v * 60 * 1000;
-            setTargetTime(new Date().getTime() + v * 60 * 1000);
+            setTargetTime(Date.now() + v * 60 * 1000);
         }
     };
 
@@ -346,7 +361,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setBreakTime(v);
         if (isBreak && !isRunning) {
             remainingTimeRef.current = v * 60 * 1000;
-            setTargetTime(new Date().getTime() + v * 60 * 1000);
+            setTargetTime(Date.now() + v * 60 * 1000);
         }
     };
 
@@ -354,16 +369,14 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const { user } = useAuth();
     useEffect(() => {
         if (!user) {
-            // User logged out: kill the timer
             setIsRunning(false);
             setIsBreak(false);
-            document.title = 'Notebook'; // Reset title
-            workerRef.current?.postMessage('stop'); // Ensure worker stops immediately
+            document.title = 'Notebook';
+            workerRef.current?.postMessage('stop');
         }
     }, [user]);
 
     // --- Worker Logic ---
-    // Initialize Worker
     useEffect(() => {
         const blob = new Blob([timerWorkerScript], { type: 'application/javascript' });
         workerRef.current = new Worker(URL.createObjectURL(blob));
@@ -378,13 +391,12 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // Main Timer Effect (Worker-driven)
     useEffect(() => {
-        let intervalId: NodeJS.Timeout;
-
         const handleTick = () => {
-            const now = new Date().getTime();
+            if (!isRunning) return;
+
+            const now = Date.now();
             const diff = targetTime - now;
 
-            // Play Ticking Sound
             if (soundEnabled && tickingEnabled) {
                 playNotification('tick');
             }
@@ -397,7 +409,6 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 const label = isBreak ? 'Break Time' : 'Deep Focus';
                 document.title = `${mm}:${ss} - ${label}`;
 
-                // iOS Live Activity / Media Session Support
                 if ('mediaSession' in navigator) {
                     try {
                         navigator.mediaSession.metadata = new MediaMetadata({
@@ -408,43 +419,28 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                                 { src: '/favicon.ico', sizes: '96x96', type: 'image/x-icon' },
                             ]
                         });
-                    } catch (e) {
-                        // ignore
-                    }
+                    } catch (e) { }
                 }
             } else {
-                // Timer Complete!
-                // Prevent multiple calls if worker ticks fast
-                if (isRunning) {
-                    handleCompleteRef.current();
-                }
+                handleCompleteRef.current();
             }
         };
 
-        if (!isRunning) {
-            // Paused: Update targetTime periodically to keep it "frozen" relative to now
-            intervalId = setInterval(() => {
-                setTargetTime(new Date().getTime() + remainingTimeRef.current);
-            }, 50);
-
-            // Stop worker ticking
-            workerRef.current?.postMessage('stop');
-        } else {
-            // Running: Start worker
+        if (isRunning) {
             workerRef.current?.postMessage('start');
-            // Check existence because strict null checks might complain
             if (workerRef.current) {
                 workerRef.current.onmessage = (e) => {
                     if (e.data === 'tick') handleTick();
                 };
             }
+        } else {
+            workerRef.current?.postMessage('stop');
         }
 
         return () => {
-            clearInterval(intervalId);
             workerRef.current?.postMessage('stop');
         };
-    }, [isRunning, targetTime, isBreak, soundEnabled, tickingEnabled, workTime, breakTime]);
+    }, [isRunning, targetTime, soundEnabled, tickingEnabled, isBreak]);
 
     return (
         <PomodoroContext.Provider value={{

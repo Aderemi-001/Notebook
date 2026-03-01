@@ -159,7 +159,20 @@ const fetchStudySetDetails = async (setId: string): Promise<StudySet> => {
     };
   });
 
-  return { ...data, cards: processedCards, mastered_cards_count: masteredCount, due_cards_count: dueCount } as unknown as StudySet;
+  const rawProfile = (data as any).profiles;
+  const profile = Array.isArray(rawProfile) ? rawProfile[0] : rawProfile;
+
+  const rawGroups = (data as any).study_set_groups;
+  const group = Array.isArray(rawGroups) ? rawGroups[0] : rawGroups;
+
+  return {
+    ...data,
+    profiles: profile || null,
+    study_set_groups: group ? [group] : null, // Interface expects array for groups
+    cards: processedCards,
+    mastered_cards_count: masteredCount,
+    due_cards_count: dueCount
+  } as unknown as StudySet;
 };
 
 const fetchLinkedNotes = async (setId: string): Promise<LinkedNote[]> => {

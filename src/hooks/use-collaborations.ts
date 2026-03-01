@@ -57,14 +57,21 @@ const fetchCollaborationInvitations = async (): Promise<CollaborationInvitation[
   // Transform data to match interface (Supabase returns single objects for FK relations)
   // Handle potential SelectQueryError for profile relations
   return (data || []).map(item => {
-    const inviterProfile = (item as any).inviter_profile;
-    const inviteeProfile = (item as any).invitee_profile;
+    // Supabase sometimes returns joins as arrays even for single relations
+    const rawInviter = (item as any).inviter_profile;
+    const inviterProfile = Array.isArray(rawInviter) ? rawInviter[0] : rawInviter;
+
+    const rawInvitee = (item as any).invitee_profile;
+    const inviteeProfile = Array.isArray(rawInvitee) ? rawInvitee[0] : rawInvitee;
+
+    const rawStudySet = (item as any).study_sets;
+    const studySet = Array.isArray(rawStudySet) ? rawStudySet[0] : rawStudySet;
 
     return {
       ...item,
-      study_sets: item.study_sets || null,
-      inviter_profile: inviterProfile,
-      invitee_profile: inviteeProfile,
+      study_sets: studySet || null,
+      inviter_profile: inviterProfile || null,
+      invitee_profile: inviteeProfile || null,
     } as unknown as CollaborationInvitation;
   });
 };
@@ -91,14 +98,20 @@ const updateInvitationStatus = async ({ id, status }: { id: string; status: 'acc
 
   if (error) throw error;
   // Transform to match interface (handle potential SelectQueryError for profile relations)
-  const inviterProfile = (data as any).inviter_profile;
-  const inviteeProfile = (data as any).invitee_profile;
+  const rawInviter = (data as any).inviter_profile;
+  const inviterProfile = Array.isArray(rawInviter) ? rawInviter[0] : rawInviter;
+
+  const rawInvitee = (data as any).invitee_profile;
+  const inviteeProfile = Array.isArray(rawInvitee) ? rawInvitee[0] : rawInvitee;
+
+  const rawStudySet = (data as any).study_sets;
+  const studySet = Array.isArray(rawStudySet) ? rawStudySet[0] : rawStudySet;
 
   return {
     ...data,
-    study_sets: data.study_sets || null,
-    inviter_profile: inviterProfile,
-    invitee_profile: inviteeProfile,
+    study_sets: studySet || null,
+    inviter_profile: inviterProfile || null,
+    invitee_profile: inviteeProfile || null,
   } as unknown as CollaborationInvitation;
 };
 

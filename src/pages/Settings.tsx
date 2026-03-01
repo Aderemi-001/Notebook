@@ -195,12 +195,15 @@ const Settings: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !user.email) throw new Error("No user email found");
 
+      const confirmReset = window.confirm(`Send a password reset link to ${user.email}?`);
+      if (!confirmReset) return;
+
       const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
-      showSuccess("Password reset email sent!");
+      showSuccess(`Password reset email sent to ${user.email}!`);
     } catch (err: any) {
       showError(`Error: ${err.message}`);
     }

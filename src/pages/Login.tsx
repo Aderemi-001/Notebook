@@ -34,8 +34,10 @@ const Login = () => {
   });
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
-      if (session) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
+      // If a session exists, redirect to dashboard UNLESS we are in a password recovery flow.
+      // The PasswordReset page needs to handle the recovery session itself.
+      if (session && event !== 'PASSWORD_RECOVERY') {
         navigate('/');
       }
     });
@@ -106,6 +108,10 @@ const Login = () => {
       return;
     }
 
+    // Modern styled confirmation
+    const confirmReset = window.confirm(`Send a password reset link to ${email}?`);
+    if (!confirmReset) return;
+
     const toastId = showLoading('Sending password reset email...');
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -114,7 +120,7 @@ const Login = () => {
       if (error) {
         throw new Error(error.message);
       }
-      showSuccess('Password reset email sent! Check your inbox.', toastId);
+      showSuccess(`Password reset email sent to ${email}! Check your inbox.`, toastId);
     } catch (error: any) {
       showError(error.message || 'Failed to send reset email.', toastId);
       console.error('Password reset error:', error);

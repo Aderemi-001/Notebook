@@ -43,51 +43,70 @@ const PasswordReset: React.FC = () => {
     },
   });
 
+  const [resetEmail, setResetEmail] = useState<string | null>(null);
+
   useEffect(() => {
     if (isLoadingAuth) return;
 
     const handleRecovery = async () => {
-      const hash = window.location.hash.substring(1);
-      const hashParams = new URLSearchParams(hash);
+      // Remove unused hash variable
+      const hashParams = new URL(window.location.href.replace('#', '?')).searchParams;
 
-      const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
-      const type = hashParams.get('type') || searchParams.get('type');
+      // Specifically look for recovery type tokens in hash or search
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      const type = hashParams.get('type');
 
-      // If we're already logged in via a recovery flow (thanks to global listener)
-      // we can proceed directly to the reset form.
-      if (authUser) {
-        setStatus('ready_to_reset');
-        setMessage(t('auth.resetReady'));
-        return;
-      }
+      console.log("Recovery Debug:", { type, hasAccess: !!accessToken, hasAuthUser: !!authUser });
 
+      // If we have recovery tokens, we MUST set the session first 
+      // even if another user is already logged in (it will overwrite them).
       if (type === 'recovery' && accessToken && refreshToken) {
         try {
-          const { error } = await supabase.auth.setSession({
+          setMessage('Synchronizing security session...');
+          const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
 
           if (error) {
             setStatus('error');
-            setMessage(`Failed to process password reset link: ${error.message}`);
+            setMessage(`Failed to validate security link: ${error.message}`);
             return;
           }
-          setStatus('ready_to_reset');
-          setMessage(t('auth.resetReady'));
+
+          if (data.user) {
+            setResetEmail(data.user.email || null);
+            setStatus('ready_to_reset');
+            setMessage(t('auth.resetReady'));
+          } else {
+            throw new Error("No user found in recovery session.");
+          }
+          return;
         } catch (err: any) {
           setStatus('error');
-          setMessage(`An unexpected error occurred: ${err.message}`);
+          setMessage(`An unexpected security error occurred: ${err.message}`);
+          return;
         }
-      } else {
+      }
+
+      // Fallback: If no tokens but we already have a session (e.g. redirected from useAuth)
+      if (authUser) {
+        setResetEmail(authUser.email || null);
+        setStatus('ready_to_reset');
+        setMessage(t('auth.resetReady'));
+        return;
+      }
+
+      // If no tokens and no user, it's an invalid direct access
+      if (status !== 'ready_to_reset') {
         setStatus('error');
         setMessage('Invalid or expired password reset link. Please request a new one from the login page.');
       }
     };
 
     handleRecovery();
-  }, [navigate, searchParams, authUser, isLoadingAuth]);
+  }, [navigate, searchParams, authUser, isLoadingAuth, t]);
 
   const handlePasswordReset = async (values: PasswordResetFormValues) => {
     setIsUpdatingPassword(true);
@@ -99,7 +118,11 @@ const PasswordReset: React.FC = () => {
       if (error) throw new Error(error.message);
 
       showSuccess('Your password has been reset successfully! Redirecting to login...');
-      setTimeout(() => navigate('/login'), 3000);
+
+      // Force sign out to ensure they log in fresh
+      await supabase.auth.signOut();
+
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err: any) {
       showError(err.message || 'Failed to reset password.');
     } finally {
@@ -188,6 +211,11 @@ const PasswordReset: React.FC = () => {
 
                 <CardDescription className="text-base text-muted-foreground max-w-sm mx-auto leading-relaxed">
                   {message}
+                  {resetEmail && (
+                    <div className="mt-2 font-semibold text-primary/80 bg-primary/5 py-1 px-3 rounded-full border border-primary/10 inline-block">
+                      {resetEmail}
+                    </div>
+                  )}
                 </CardDescription>
               </CardHeader>
 

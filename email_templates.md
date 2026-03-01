@@ -32,8 +32,8 @@ Please copy and paste the following HTML into your **Supabase Dashboard** under:
       <p>&copy; 2026 Notebook &bull; Nova V2</p>
       <p style="margin-bottom: 15px;">The smarter way to manage your knowledge.</p>
       <p>
-        <a href="https://notebook-remi.vercel.app/privacy">Privacy Policy</a> &bull; 
-        <a href="https://notebook-remi.vercel.app/terms">Terms of Service</a>
+        <a href="https://www.notebookremi.app/privacy">Privacy Policy</a> &bull; 
+        <a href="https://www.notebookremi.app/terms">Terms of Service</a>
       </p>
     </div>
   </div>
@@ -71,8 +71,8 @@ Please copy and paste the following HTML into your **Supabase Dashboard** under:
       <p>&copy; 2026 Notebook &bull; Nova V2</p>
       <p style="margin-bottom: 15px;">The smarter way to manage your knowledge.</p>
       <p>
-        <a href="https://notebook-remi.vercel.app/privacy">Privacy Policy</a> &bull; 
-        <a href="https://notebook-remi.vercel.app/terms">Terms of Service</a>
+        <a href="https://www.notebookremi.app/privacy">Privacy Policy</a> &bull; 
+        <a href="https://www.notebookremi.app/terms">Terms of Service</a>
       </p>
     </div>
   </div>
@@ -109,8 +109,8 @@ Please copy and paste the following HTML into your **Supabase Dashboard** under:
       <p>&copy; 2026 Notebook &bull; Nova V2</p>
       <p style="margin-bottom: 15px;">The smarter way to manage your knowledge.</p>
       <p>
-        <a href="https://notebook-remi.vercel.app/privacy">Privacy Policy</a> &bull; 
-        <a href="https://notebook-remi.vercel.app/terms">Terms of Service</a>
+        <a href="https://www.notebookremi.app/privacy">Privacy Policy</a> &bull; 
+        <a href="https://www.notebookremi.app/terms">Terms of Service</a>
       </p>
     </div>
   </div>

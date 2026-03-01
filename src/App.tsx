@@ -192,7 +192,6 @@ const App: React.FC = () => {
                       <Route path="/quiz/:examId" element={<TakeExam />} />
 
                       {/* Essay Practice */}
-                      <Route path="/essays" element={<EssayIndex />} />
                       <Route path="/essay-practice/:questionId" element={<EssayPractice />} />
                     </Route>
 
