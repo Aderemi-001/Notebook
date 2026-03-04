@@ -339,9 +339,26 @@ export const DemoController: React.FC = () => {
     // Render a small overlay to show demo mode is active
     if (!isDemoActive) return null;
 
+    const exitDemo = () => {
+        setIsDemoActive(false);
+        // Remove demo param from URL without refreshing
+        const url = new URL(window.location.href);
+        url.searchParams.delete('demo');
+        window.history.replaceState({}, '', url.toString());
+    };
+
     return (
-        <div className="fixed bottom-4 right-4 z-[9999] bg-black/80 text-white px-3 py-1 rounded-full text-xs font-mono pointer-events-none">
-            🔴 DEMO MODE: Step {stepIndex + 1}/{demoSteps.length}
+        <div className="fixed bottom-4 right-4 z-[9999] bg-black/80 text-white px-4 py-2 rounded-full text-xs font-mono flex items-center gap-3 border border-white/20 shadow-2xl backdrop-blur-md">
+            <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span>DEMO: Step {stepIndex + 1}/{demoSteps.length}</span>
+            </div>
+            <button
+                onClick={exitDemo}
+                className="bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded border border-white/10 transition-colors uppercase tracking-tighter font-bold"
+            >
+                Exit
+            </button>
         </div>
     );
 };

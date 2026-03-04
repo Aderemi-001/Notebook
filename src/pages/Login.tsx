@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Link } from 'react-router-dom';
@@ -12,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { showError, showSuccess, showLoading } from '@/utils/toast';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
 import BrandLogo from '@/components/BrandLogo';
 
 const authSchema = z.object({
@@ -23,6 +25,8 @@ const authSchema = z.object({
 const Login = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true); // State to toggle between login and signup
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const { t } = useLanguage();
 
   const form = useForm<z.infer<typeof authSchema>>({
@@ -37,7 +41,12 @@ const Login = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
       // If a session exists, redirect to dashboard UNLESS we are in a password recovery flow.
       // The PasswordReset page needs to handle the recovery session itself.
-      if (session && event !== 'PASSWORD_RECOVERY') {
+      // Also check URL for recovery tokens to be extra safe.
+      const isRecovery = event === 'PASSWORD_RECOVERY' ||
+        window.location.hash.includes('type=recovery') ||
+        window.location.search.includes('type=recovery');
+
+      if (session && !isRecovery) {
         navigate('/');
       }
     });
@@ -54,7 +63,7 @@ const Login = () => {
 
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
-          email: values.email,
+          email: values.email.trim(),
           password: values.password,
         });
         if (error) {
@@ -69,7 +78,7 @@ const Login = () => {
         showSuccess('Signed in successfully!', toastId);
       } else {
         const { data, error } = await supabase.auth.signUp({
-          email: values.email,
+          email: values.email.trim(),
           password: values.password,
           options: {
             data: {
@@ -101,20 +110,22 @@ const Login = () => {
     }
   };
 
-  const handleForgotPassword = async () => {
+  const handleForgotPassword = () => {
     const email = form.getValues('email');
     if (!email) {
-      showError('Please enter your email address to reset your password.');
+      showError('Please enter your email first.');
       return;
     }
+    setResetEmail(email);
+    setIsResetConfirmOpen(true);
+  };
 
-    // Modern styled confirmation
-    const confirmReset = window.confirm(`Send a password reset link to ${email}?`);
-    if (!confirmReset) return;
-
+  const confirmForgotPassword = async () => {
+    setIsResetConfirmOpen(false);
+    const email = resetEmail;
     const toastId = showLoading('Sending password reset email...');
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) {
@@ -215,7 +226,7 @@ const Login = () => {
                     <FormItem>
                       <FormLabel>{t('auth.password')}</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} className="h-11" />
+                        <PasswordInput placeholder="••••••••" {...field} className="h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -341,7 +352,7 @@ const Login = () => {
                     <FormItem>
                       <FormLabel>{t('auth.password')}</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} className="h-11" />
+                        <PasswordInput placeholder="••••••••" {...field} className="h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -418,6 +429,15 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={isResetConfirmOpen}
+        onOpenChange={setIsResetConfirmOpen}
+        onConfirm={confirmForgotPassword}
+        title="Reset Password"
+        description={`We'll send a security link to ${resetEmail}. Proceed?`}
+        confirmText="Send Link"
+      />
     </>
   );
 };

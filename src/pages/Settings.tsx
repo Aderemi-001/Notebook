@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import ConfirmationDialog from '@/components/ConfirmationDialog';
 
 const Settings: React.FC = () => {
   const { preferences, isLoading, isError, error, updatePreferences } = useUserPreferences();
@@ -44,6 +45,7 @@ const Settings: React.FC = () => {
   const [enableTTS, setEnableTTS] = React.useState<boolean>(false); // New state
   const [enableAnimations, setEnableAnimations] = React.useState<boolean>(true); // New state
   const [preferredLanguage, setPreferredLanguage] = React.useState<string>('en'); // New state
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = React.useState(false);
 
   useEffect(() => {
     if (preferences) {
@@ -191,12 +193,13 @@ const Settings: React.FC = () => {
   };
 
   const handlePasswordReset = async () => {
+    setIsResetConfirmOpen(true);
+  };
+
+  const confirmResetPassword = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !user.email) throw new Error("No user email found");
-
-      const confirmReset = window.confirm(`Send a password reset link to ${user.email}?`);
-      if (!confirmReset) return;
 
       const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
         redirectTo: `${window.location.origin}/reset-password`,
@@ -206,6 +209,8 @@ const Settings: React.FC = () => {
       showSuccess(`Password reset email sent to ${user.email}!`);
     } catch (err: any) {
       showError(`Error: ${err.message}`);
+    } finally {
+      setIsResetConfirmOpen(false);
     }
   };
 
@@ -584,6 +589,16 @@ const Settings: React.FC = () => {
           </Button>
         </CardContent>
       </Card>
+
+      <ConfirmationDialog
+        isOpen={isResetConfirmOpen}
+        onOpenChange={setIsResetConfirmOpen}
+        onConfirm={confirmResetPassword}
+        title="Reset Password"
+        description="We'll send a password reset link to your registered email address. Would you like to proceed?"
+        confirmText="Send Link"
+        variant="info"
+      />
     </div>
   );
 };

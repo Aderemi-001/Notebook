@@ -258,6 +258,7 @@ const PomodoroTimer: React.FC = () => {
             >
                 <FlipClockCountdown
                     to={isRunning ? targetTime : Date.now() + remainingTimeRef.current}
+                    key={isRunning ? 'running' : 'paused-' + remainingTimeRef.current}
                     className="flip-clock"
                     showLabels={false}
                     showSeparators={true}
