@@ -1,7 +1,7 @@
-
 import crypto from 'crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { makeNetlifyHandler } from './_netlify-compat';
 
 const PASSPHRASE = process.env.PAYFAST_PASSPHRASE;
 // Support Vercel integration and custom environment variable formats
@@ -17,7 +17,7 @@ const getSupabaseAdmin = () => {
     return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function payfastItnHandler(req: VercelRequest, res: VercelResponse) {
     try {
         console.log('[PayFast ITN] Received notification');
 
@@ -274,3 +274,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         res.status(500).json({ error: error.message || 'Internal Server Error' });
     }
 }
+
+export const handler = makeNetlifyHandler(payfastItnHandler);

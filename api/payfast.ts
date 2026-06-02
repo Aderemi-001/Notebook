@@ -1,9 +1,10 @@
 import crypto from 'crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { makeNetlifyHandler } from './_netlify-compat';
 
 const PASSPHRASE = process.env.PAYFAST_PASSPHRASE;
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default function payfastHandler(req: VercelRequest, res: VercelResponse) {
     console.log('[PayFast API] Handler started');
     console.log('[PayFast API] Method:', req.method);
     console.log('[PayFast API] Origin:', req.headers.origin);
@@ -134,3 +135,5 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
         });
     }
 }
+
+export const handler = makeNetlifyHandler(payfastHandler);

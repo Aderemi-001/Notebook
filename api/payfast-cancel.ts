@@ -1,7 +1,7 @@
-
 import crypto from 'crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { makeNetlifyHandler } from './_netlify-compat';
 
 // Environment Variables
 const PASSPHRASE = process.env.PAYFAST_PASSPHRASE;
@@ -20,7 +20,7 @@ const BASE_API_URL = IS_SANDBOX
     // Actually, usually it's `https://api.payfast.co.za` and testing depends on Merchant ID `10000100`.
     : 'https://api.payfast.co.za/subscriptions';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function payfastCancelHandler(req: VercelRequest, res: VercelResponse) {
     // Set CORS headers for all requests
     const origin = req.headers.origin || '*';
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -190,3 +190,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ error: error.message });
     }
 }
+
+export const handler = makeNetlifyHandler(payfastCancelHandler);
