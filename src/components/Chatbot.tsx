@@ -199,12 +199,8 @@ const Chatbot: React.FC = () => {
 
       // 3. Handle Action Redirects
       if (response.action === 'navigate' && response.actionTarget) {
-        // Dispatch animation event for DashboardLayout
+        // Dispatch animation event for DashboardLayout, then navigate
         window.dispatchEvent(new CustomEvent('novaRedirect'));
-
-        // Wait for animation to cover screen before navigating (1.2s)
-        await new Promise(resolve => setTimeout(resolve, 1200));
-
         navigate(response.actionTarget);
         if (window.innerWidth < 768) {
           setIsOpen(false); // Close on mobile after nav
@@ -233,9 +229,6 @@ const Chatbot: React.FC = () => {
           textToSend = `I looked through your notes for "${response.actionTarget}" but didn't find exact matches. Should we create a new set?`;
         }
       }
-
-      // Simulate small "human" delay for processing time
-      await new Promise(r => setTimeout(r, 600));
 
       // 5. Construct Final Message
       const botResponse: ChatMessage = {
@@ -295,14 +288,23 @@ const Chatbot: React.FC = () => {
     }
   };
 
-  const handleFeedback = (messageId: number, feedback: 'up' | 'down') => {
+  const handleFeedback = async (messageId: number, feedback: 'up' | 'down') => {
+    // Optimistically update UI
     setMessages((prevMessages) =>
       prevMessages.map((msg) =>
         msg.id === messageId ? { ...msg, feedbackGiven: feedback } : msg
       )
     );
-    // Simulate feedback submission
-    console.log(`Feedback for message ${messageId}: ${feedback}`);
+    // Persist feedback to DB
+    if (user) {
+      const { supabase: sb } = await import('@/integrations/supabase/client');
+      await sb.from('nova_feedback').insert({
+        user_id: user.id,
+        message_id: String(messageId),
+        feedback,
+        created_at: new Date().toISOString(),
+      });
+    }
   };
 
   const suggestedQuestions = getDynamicSuggestions(location.pathname);

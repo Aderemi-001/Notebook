@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { shuffleArray } from '@/utils/shuffle';
 import {
   ArrowLeft,
   RotateCcw,
@@ -62,7 +63,6 @@ const fetchDailyReviewCards = async (hideMastered: boolean, sortOrder: string, s
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("User not authenticated.");
 
-  console.log("DEBUG: Calling get_daily_review_cards with p_set_ids:", selectedSetIds);
   const { data, error } = await supabase
     .rpc('get_daily_review_cards', {
       p_user_id: user.id,
@@ -70,7 +70,6 @@ const fetchDailyReviewCards = async (hideMastered: boolean, sortOrder: string, s
     });
 
   if (error) {
-    console.error("DEBUG: RPC get_daily_review_cards Error:", error);
     throw error;
   }
 
@@ -96,7 +95,7 @@ const fetchDailyReviewCards = async (hideMastered: boolean, sortOrder: string, s
 
     // Shuffle each set's individual cards if random order
     if (sortOrder === 'random') {
-      cardsBySet.forEach(cards => cards.sort(() => Math.random() - 0.5));
+      cardsBySet.forEach((cards, key) => cardsBySet.set(key, shuffleArray(cards)));
     }
 
     const mixedCards: CardItem[] = [];
@@ -120,7 +119,7 @@ const fetchDailyReviewCards = async (hideMastered: boolean, sortOrder: string, s
     if (sortOrder === 'alphabetical_term_asc') {
       allCards.sort((a, b) => a.term.localeCompare(b.term));
     } else if (sortOrder === 'random') {
-      allCards.sort(() => Math.random() - 0.5);
+      allCards = shuffleArray(allCards);
     }
   }
 
@@ -577,12 +576,9 @@ export default function DailyReviewSession() {
         activeLimit
       );
 
-      console.log('DEBUG: Fetched Review Cards:', fetchedCards);
-
       setTotalCardsAvailable(fetchedCards.length);
 
       if (fetchedCards.length > activeLimit) {
-        console.log(`DEBUG: Applying limit (${activeLimit} cards)`);
         setCards(fetchedCards.slice(0, activeLimit));
         if (!isPremium && fetchedCards.length > 10) {
           setShowLimitDialog(true);

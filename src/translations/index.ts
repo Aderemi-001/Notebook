@@ -331,7 +331,9 @@ export const translations = {
             timerSettings: "Timer Settings",
             upgradeForMore: "Upgrade for more",
             soundEffects: "Sound Effects",
-            tickingSound: "Ticking Sound"
+            tickingSound: "Ticking Sound",
+            autoStart: "Auto-Start Next Session",
+            changesAutoSave: "Changes auto-save"
         },
         time: {
             days: "Days",
@@ -672,7 +674,9 @@ export const translations = {
             timerSettings: "Ajustes del Temporizador",
             upgradeForMore: "Mejora para más",
             soundEffects: "Efectos de Sonido",
-            tickingSound: "Sonido de Tic-Tac"
+            tickingSound: "Sonido de Tic-Tac",
+            autoStart: "Iniciar automáticamente la siguiente sesión",
+            changesAutoSave: "Los cambios se guardan automáticamente"
         },
         time: {
             days: "Días",
@@ -1012,7 +1016,9 @@ export const translations = {
             timerSettings: "Paramètres du Minuteur",
             upgradeForMore: "Mettre à niveau pour plus",
             soundEffects: "Effets Sonores",
-            tickingSound: "Son de Tic-Tac"
+            tickingSound: "Son de Tic-Tac",
+            autoStart: "Démarrage automatique de la session suivante",
+            changesAutoSave: "Enregistrement automatique des modifications"
         },
         time: {
             days: "Jours",
@@ -1353,7 +1359,9 @@ export const translations = {
             timerSettings: "Timer-Einstellungen",
             upgradeForMore: "Upgrade für mehr",
             soundEffects: "Soundeffekte",
-            tickingSound: "Tickendes Geräusch"
+            tickingSound: "Tickendes Geräusch",
+            autoStart: "Nächste Sitzung automatisch starten",
+            changesAutoSave: "Änderungen werden automatisch gespeichert"
         },
         time: {
             days: "Tage",

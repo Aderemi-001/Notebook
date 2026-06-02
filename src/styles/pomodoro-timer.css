@@ -100,7 +100,6 @@
   display: flex;
   gap: 1.5rem;
   z-index: 20;
-  z-index: 20;
   transition: opacity 0.3s ease;
 }
 

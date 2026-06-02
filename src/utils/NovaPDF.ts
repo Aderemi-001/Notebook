@@ -20,14 +20,11 @@ export class NovaPDF {
 
         // Load PDF into a PDFDocumentProxy using unpdf's getDocumentProxy
         const pdf = await getDocumentProxy(pdfData);
-        console.log(`DEBUG: PDF Loaded. Pages: ${pdf.numPages}`);
 
         // Extract text with mergePages option (pass the proxy directly)
         const { text: fullText } = await unpdfExtractText(pdf, { mergePages: true });
 
         const extractedText = fullText.trim();
-
-        console.log(`DEBUG: Extraction successful. Content length: ${extractedText.length}`);
 
         // If no meaningful text was extracted, try OCR
         if (extractedText.length < 50) {

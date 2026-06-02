@@ -5,6 +5,7 @@ import FlippableCard from "@/components/FlippableCard";
 import { ArrowLeft, Volume2, Lock, Sparkles } from 'lucide-react';
 import { speak } from '@/utils/audio';
 import { supabase } from '@/integrations/supabase/client';
+import { shuffleArray } from '@/utils/shuffle';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showSuccess, showError } from '@/utils/toast';
@@ -156,7 +157,7 @@ const fetchCardsForStudySet = async (setId: string, hideMastered: boolean, sortO
   if (sortOrder === 'alphabetical_term_asc') {
     processedCards.sort((a: CardItem, b: CardItem) => a.term.localeCompare(b.term));
   } else if (sortOrder === 'random') {
-    processedCards.sort(() => Math.random() - 0.5);
+    return shuffleArray(processedCards).slice(0, cardsCountGoal);
   } else if (sortOrder === 'created_at_asc') {
     processedCards.sort((a: CardItem, b: CardItem) => new Date(a.created_at!).getTime() - new Date(b.created_at!).getTime());
   } else {

@@ -12,9 +12,6 @@ interface FlippableCardProps {
 
 const FlippableCard = React.forwardRef<HTMLDivElement, FlippableCardProps>(
   ({ frontContent, backContent, isFlipped, onClick, className }, ref) => {
-    React.useEffect(() => {
-      console.log('[DEBUG:FlippableCard] Mounted/Updated. isFlipped:', isFlipped);
-    }, [isFlipped]);
 
     return (
       <div

@@ -9,9 +9,12 @@ import {
     requestWakeLock,
     releaseWakeLock
 } from '@/utils/notifications';
+import { supabase } from '@/integrations/supabase/client';
+import { toast as sonnerToast } from "sonner";
 
 const DEFAULT_WORK = 25;
 const DEFAULT_BREAK = 5;
+const DEFAULT_LONG_BREAK = 15;
 
 // --- Sound Logic ---
 // Helper to unlock audio on iOS/Safari
@@ -125,28 +128,27 @@ const playNotification = (type: 'start' | 'pause' | 'reset' | 'complete' | 'tick
     }
 };
 
-interface Toast {
-    msg: string;
-    type: 'success' | 'info';
-}
-
 interface PomodoroContextType {
     targetTime: number;
     isRunning: boolean;
     isBreak: boolean;
+    isLongBreak: boolean;
     workTime: number;
     breakTime: number;
+    longBreakTime: number;
     soundEnabled: boolean;
     tickingEnabled: boolean;
+    autoStart: boolean;
     theme: string;
     focusTask: string;
     completedSessions: number;
-    toast: Toast | null;
 
     setWorkTime: (n: number) => void;
     setBreakTime: (n: number) => void;
+    setLongBreakTime: (n: number) => void;
     setSoundEnabled: (b: boolean) => void;
     setTickingEnabled: (b: boolean) => void;
+    setAutoStart: (b: boolean) => void;
     setTheme: (s: string) => void;
     setFocusTask: (s: string) => void;
     setCompletedSessions: (n: number | ((prev: number) => number)) => void;
@@ -158,6 +160,7 @@ interface PomodoroContextType {
     toggleMode: () => void;
     updateWorkTime: (val: number) => void;
     updateBreakTime: (val: number) => void;
+    updateLongBreakTime: (val: number) => void;
 
     remainingTimeRef: React.MutableRefObject<number>;
 }
@@ -178,10 +181,13 @@ const timerWorkerScript = `
 const PomodoroContext = createContext<PomodoroContextType | undefined>(undefined);
 
 export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { user } = useAuth();
+
     // --- State ---
     const [targetTime, setTargetTime] = useState<number>(Date.now() + DEFAULT_WORK * 60 * 1000);
     const [isRunning, setIsRunning] = useState(false);
     const [isBreak, setIsBreak] = useState(false);
+    const [isLongBreak, setIsLongBreak] = useState(false);
 
     // Pro Features State
     const [focusTask, setFocusTask] = useState('');
@@ -190,13 +196,11 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Settings State
     const [workTime, setWorkTime] = useState(DEFAULT_WORK);
     const [breakTime, setBreakTime] = useState(DEFAULT_BREAK);
+    const [longBreakTime, setLongBreakTime] = useState(DEFAULT_LONG_BREAK);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [tickingEnabled, setTickingEnabled] = useState(false);
+    const [autoStart, setAutoStart] = useState(false);
     const [theme, setTheme] = useState('midnight');
-
-    // Toast State
-    const [toast, setToast] = useState<Toast | null>(null);
-    const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const remainingTimeRef = useRef<number>(DEFAULT_WORK * 60 * 1000);
     const workerRef = useRef<Worker | null>(null);
@@ -224,8 +228,10 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 loadedWork = parsed.workTime || DEFAULT_WORK;
                 setWorkTime(loadedWork);
                 setBreakTime(parsed.breakTime || DEFAULT_BREAK);
+                setLongBreakTime(parsed.longBreakTime || DEFAULT_LONG_BREAK);
                 setSoundEnabled(parsed.soundEnabled ?? true);
                 setTickingEnabled(parsed.tickingEnabled ?? false);
+                setAutoStart(parsed.autoStart ?? false);
                 setTheme(parsed.theme || 'midnight');
                 setFocusTask(parsed.focusTask || '');
                 setCompletedSessions(parsed.completedSessions || 0);
@@ -238,6 +244,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         remainingTimeRef.current = loadedWork * 60 * 1000;
         setTargetTime(Date.now() + remainingTimeRef.current);
         setIsBreak(false);
+        setIsLongBreak(false);
         setIsRunning(false);
 
         if ("Notification" in window && Notification.permission !== "granted") {
@@ -250,23 +257,20 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         localStorage.setItem('pomodoro_preferences', JSON.stringify({
             workTime,
             breakTime,
+            longBreakTime,
             soundEnabled,
             tickingEnabled,
+            autoStart,
             theme,
             focusTask,
             completedSessions
         }));
-    }, [workTime, breakTime, soundEnabled, tickingEnabled, theme, focusTask, completedSessions]);
+    }, [workTime, breakTime, longBreakTime, soundEnabled, tickingEnabled, autoStart, theme, focusTask, completedSessions]);
 
 
 
 
     // --- Actions ---
-    const showToast = (msg: string, type: 'success' | 'info' = 'success') => {
-        if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-        setToast({ msg, type });
-        toastTimeoutRef.current = setTimeout(() => setToast(null), 3000);
-    };
 
     const startTimer = useCallback(() => {
         if (!isRunning) {
@@ -302,6 +306,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (soundEnabled) playNotification('reset');
         setIsRunning(false);
         setIsBreak(false);
+        setIsLongBreak(false);
         const resetMins = workTime;
         remainingTimeRef.current = resetMins * 60 * 1000;
         setTargetTime(Date.now() + remainingTimeRef.current);
@@ -311,37 +316,70 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         clearBadge();
     }, [soundEnabled, workTime]);
 
-    const handleComplete = useCallback(() => {
+    const handleComplete = useCallback(async () => {
         if (!isRunning) return;
 
         setIsRunning(false);
-        const nextIsBreak = !isBreak;
+        let nextIsBreak = !isBreak;
+        let nextIsLongBreak = false;
+        let sessionToLogType = isBreak ? (isLongBreak ? 'long_break' : 'short_break') : 'focus';
+        let sessionDuration = isBreak ? (isLongBreak ? longBreakTime : breakTime) : workTime;
+
+        let nextCompletedSessions = completedSessions;
 
         if (!isBreak) {
-            setCompletedSessions(prev => prev + 1);
+            nextCompletedSessions = completedSessions + 1;
+            setCompletedSessions(nextCompletedSessions);
+            // Every 4th focus session completed leads to a long break
+            if (nextCompletedSessions % 4 === 0) {
+                nextIsLongBreak = true;
+            }
         }
 
         setIsBreak(nextIsBreak);
-        const nextDuration = nextIsBreak ? breakTime : workTime;
+        setIsLongBreak(nextIsLongBreak);
+
+        const nextDuration = nextIsBreak ? (nextIsLongBreak ? longBreakTime : breakTime) : workTime;
         const nextRemaining = nextDuration * 60 * 1000;
         remainingTimeRef.current = nextRemaining;
 
         if (soundEnabled) playNotification('complete');
         vibrateDevice([200, 100, 200, 100, 200]);
 
-        const notificationTitle = nextIsBreak ? "🎉 Focus Complete!" : "⏰ Break Over!";
+        const notificationTitle = nextIsBreak ? (nextIsLongBreak ? "🎉 Long Break Time!" : "🎉 Focus Complete!") : "⏰ Break Over!";
         const notificationBody = nextIsBreak
-            ? `Great work! Take a ${breakTime} minute break.`
+            ? `Great work! Take a ${nextDuration} minute break.`
             : "Time to get back to focus.";
         showTimerNotification(notificationTitle, notificationBody);
 
         clearBadge();
-        showToast(nextIsBreak ? "🎉 Focus Session Complete!" : "⏰ Break is Over! Back to work.");
+        sonnerToast(nextIsBreak ? (nextIsLongBreak ? "🎉 Long Break! You earned it." : "🎉 Focus Session Complete!") : "⏰ Break is Over! Back to work.");
 
         const nextTarget = Date.now() + nextRemaining;
         setTargetTime(nextTarget);
-        setIsRunning(true);
-    }, [isRunning, isBreak, breakTime, workTime, soundEnabled]);
+
+        if (autoStart) {
+            setIsRunning(true);
+            updateBadge(1);
+        }
+
+        // Log session to Supabase in background
+        if (user) {
+            try {
+                const { error } = await supabase.from('focus_sessions').insert({
+                    user_id: user.id,
+                    session_type: sessionToLogType,
+                    duration_minutes: sessionDuration,
+                });
+                if (error) {
+                    console.error("Failed to log focus session", error);
+                }
+            } catch (err) {
+                console.error("Failed to log focus session", err);
+            }
+        }
+
+    }, [isRunning, isBreak, isLongBreak, breakTime, workTime, longBreakTime, soundEnabled, completedSessions, autoStart, user]);
 
     const toggleMode = useCallback(() => {
         setIsRunning(false);
@@ -357,7 +395,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, [isBreak, breakTime, workTime]);
 
     const updateWorkTime = useCallback((val: number) => {
-        const v = Math.max(0.01, Math.min(60, val));
+        const v = Math.max(1, Math.min(60, val));
         setWorkTime(v);
         if (!isBreak && !isRunning) {
             remainingTimeRef.current = v * 60 * 1000;
@@ -368,18 +406,27 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const updateBreakTime = useCallback((val: number) => {
         const v = Math.max(1, Math.min(60, val));
         setBreakTime(v);
-        if (isBreak && !isRunning) {
+        if (isBreak && !isLongBreak && !isRunning) {
             remainingTimeRef.current = v * 60 * 1000;
             setTargetTime(Date.now() + v * 60 * 1000);
         }
-    }, [isBreak, isRunning]);
+    }, [isBreak, isLongBreak, isRunning]);
+
+    const updateLongBreakTime = useCallback((val: number) => {
+        const v = Math.max(1, Math.min(60, val));
+        setLongBreakTime(v);
+        if (isBreak && isLongBreak && !isRunning) {
+            remainingTimeRef.current = v * 60 * 1000;
+            setTargetTime(Date.now() + v * 60 * 1000);
+        }
+    }, [isBreak, isLongBreak, isRunning]);
 
     // --- Auth State Sync ---
-    const { user } = useAuth();
     useEffect(() => {
         if (!user) {
             setIsRunning(false);
             setIsBreak(false);
+            setIsLongBreak(false);
             document.title = 'Notebook';
             workerRef.current?.postMessage('stop');
         }
@@ -435,7 +482,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             } else if (diff <= 0) {
                 // If the diff is <= 0 and we are RUNNING, complete.
                 // If we paused exactly at 0, this prevents a double-trigger.
-                handleComplete();
+                handleCompleteRef.current();
             }
         };
 
@@ -455,9 +502,9 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     return (
         <PomodoroContext.Provider value={{
-            targetTime, isRunning, isBreak, workTime, breakTime, soundEnabled, tickingEnabled, theme, focusTask, completedSessions, toast,
-            setWorkTime, setBreakTime, setSoundEnabled, setTickingEnabled, setTheme, setFocusTask, setCompletedSessions,
-            startTimer, pauseTimer, resetTimer, handleComplete, toggleMode, updateWorkTime, updateBreakTime,
+            targetTime, isRunning, isBreak, isLongBreak, workTime, breakTime, longBreakTime, soundEnabled, tickingEnabled, autoStart, theme, focusTask, completedSessions,
+            setWorkTime, setBreakTime, setLongBreakTime, setSoundEnabled, setTickingEnabled, setAutoStart, setTheme, setFocusTask, setCompletedSessions,
+            startTimer, pauseTimer, resetTimer, handleComplete, toggleMode, updateWorkTime, updateBreakTime, updateLongBreakTime,
             remainingTimeRef
         }}>
             {children}

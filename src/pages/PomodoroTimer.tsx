@@ -16,6 +16,7 @@ const DurationInput: React.FC<{
     onChange: (val: number) => void;
     label: string;
 }> = ({ value, onChange, label }) => {
+    const { t } = useLanguage();
     const [localValue, setLocalValue] = useState(value.toString());
 
     useEffect(() => {
@@ -62,7 +63,7 @@ const DurationInput: React.FC<{
                     +
                 </button>
             </div>
-            <span className="text-[9px] text-gray-600 mt-0.5">{label === 'Focus' || label === 'Break' ? (label === 'Focus' ? 'minutes' : 'minutes') : 'minutes'}</span> {/* Simplified: label is localized in parent, unit can be too if needed */}
+            <span className="text-[9px] text-gray-600 mt-0.5">{t('time.minutes').toLowerCase()}</span>
         </div>
     );
 };
@@ -78,10 +79,10 @@ const PomodoroTimer: React.FC = () => {
 
     // Context Hooks
     const {
-        targetTime, isRunning, isBreak,
-        workTime, breakTime, soundEnabled, tickingEnabled, theme, focusTask, completedSessions,
-        setSoundEnabled, setTickingEnabled, setTheme, setFocusTask,
-        startTimer, pauseTimer, resetTimer, handleComplete, toggleMode, updateWorkTime, updateBreakTime,
+        targetTime, isRunning, isBreak, isLongBreak,
+        workTime, breakTime, longBreakTime, soundEnabled, tickingEnabled, autoStart, theme, focusTask, completedSessions,
+        setSoundEnabled, setTickingEnabled, setAutoStart, setTheme, setFocusTask,
+        startTimer, pauseTimer, resetTimer, toggleMode, updateWorkTime, updateBreakTime, updateLongBreakTime,
         remainingTimeRef
     } = usePomodoro();
 
@@ -140,12 +141,6 @@ const PomodoroTimer: React.FC = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const handleTick = () => {
-        // We let the context handle the title update and tick logic, 
-        // but FlipClock needs a tick handler to potentially sync? 
-        // We might just update the ref here for redundancy or remove logic.
-        // Let's keep it minimal.
-    };
 
     const toggleFullscreen = async () => {
         const elem = rootRef.current as any;
@@ -224,7 +219,7 @@ const PomodoroTimer: React.FC = () => {
                     onClick={toggleMode}
                     title="Click to switch mode"
                 >
-                    {isBreak ? t('study.shortBreak') : t('study.focusTime')}
+                    {isBreak ? (isLongBreak ? 'Long Break' : t('study.shortBreak')) : t('study.focusTime')}
                 </div>
 
                 {/* Minimalist Focus Task Subtitle */}
@@ -257,15 +252,14 @@ const PomodoroTimer: React.FC = () => {
                 style={{ transform: `scale(${scale})` }}
             >
                 <FlipClockCountdown
-                    to={isRunning ? targetTime : Date.now() + remainingTimeRef.current}
+                    to={isRunning ? targetTime : remainingTimeRef.current}
+                    now={isRunning ? undefined : () => 0}
                     key={isRunning ? 'running' : 'paused-' + remainingTimeRef.current}
                     className="flip-clock"
                     showLabels={false}
                     showSeparators={true}
                     labels={[t('time.days') || 'Days', t('time.hours') || 'Hours', t('time.minutes') || 'Minutes', t('time.seconds') || 'Seconds']}
                     duration={0.6}
-                    onComplete={handleComplete}
-                    onTick={handleTick}
                     renderMap={[false, false, true, true]}
                 />
             </div>
@@ -287,12 +281,17 @@ const PomodoroTimer: React.FC = () => {
                 <div className="pomo-sessions flex items-center gap-2 opacity-80" title="Sessions Completed">
                     <span className="text-xs font-mono uppercase tracking-widest text-white/50">{t('study.sessions') || 'Sessions'}</span>
                     <div className="flex gap-1">
-                        {Array.from({ length: Math.min(completedSessions + 1, 8) }).map((_, i) => (
-                            <div
-                                key={i}
-                                className={`w-2 h-2 rounded-full ${i < completedSessions ? 'bg-white' : 'bg-white/20'}`}
-                            />
-                        ))}
+                        {Array.from({ length: Math.min(completedSessions + 1, 8) }).map((_, i) => {
+                            const isLongBreakMilestone = (i + 1) % 4 === 0;
+                            return (
+                                <div
+                                    key={i}
+                                    className={`w-2 h-2 rounded-full ${i < completedSessions 
+                                        ? (isLongBreakMilestone ? 'bg-purple-400' : 'bg-white') 
+                                        : 'bg-white/20'}`}
+                                />
+                            );
+                        })}
                         {completedSessions >= 8 && <span className="text-xs text-white/50 ml-1">+{completedSessions - 8}</span>}
                     </div>
                 </div>
@@ -349,14 +348,28 @@ const PomodoroTimer: React.FC = () => {
                                     onChange={updateWorkTime}
                                 />
                                 <DurationInput
-                                    label={t('study.break') || "Break"}
+                                    label={t('study.break') || "Short Break"}
                                     value={breakTime}
                                     onChange={updateBreakTime}
                                 />
+                                <DurationInput
+                                    label={"Long Break"}
+                                    value={longBreakTime}
+                                    onChange={updateLongBreakTime}
+                                />
                             </div>
 
-                            {/* Sound Toggle */}
+                            {/* Options Toggle */}
                             <div className="flex flex-col gap-3 mt-3 border-t border-white/10 pt-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-gray-400">{t('study.autoStart')}</span>
+                                    <button
+                                        onClick={() => setAutoStart(!autoStart)}
+                                        className={`w-10 h-5 rounded-full relative transition-colors ${autoStart ? 'bg-purple-500' : 'bg-gray-700'}`}
+                                    >
+                                        <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-transform ${autoStart ? 'left-6' : 'left-1'}`} />
+                                    </button>
+                                </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs text-gray-400">{t('study.soundEffects') || 'Sound Effects'}</span>
                                     <button
@@ -393,7 +406,7 @@ const PomodoroTimer: React.FC = () => {
                         </div>
 
                         <div className="mt-4 pt-3 border-t border-white/10 text-center">
-                            <p className="text-[10px] text-gray-600">Changes auto-save</p>
+                            <p className="text-[10px] text-gray-600">{t('study.changesAutoSave')}</p>
                         </div>
                     </div>
                 </div>

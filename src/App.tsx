@@ -102,15 +102,29 @@ const GlobalSettings: React.FC = () => {
   return null;
 };
 
-import { DemoController } from "@/components/demo/DemoController";
+const DemoController = React.lazy(() =>
+  import("@/components/demo/DemoController").then(m => ({ default: m.DemoController }))
+);
 
 const App: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    // Simulate initial load / branding splash
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
+    // Hide splash as soon as Supabase resolves the initial session
+    import('@/integrations/supabase/client').then(({ supabase }) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'INITIAL_SESSION') {
+          setLoading(false);
+          subscription.unsubscribe();
+        }
+      });
+      // Safety fallback: if INITIAL_SESSION never fires (e.g., offline), cap at 800ms
+      const fallback = setTimeout(() => setLoading(false), 800);
+      return () => {
+        clearTimeout(fallback);
+        subscription.unsubscribe();
+      };
+    });
   }, []);
 
   if (loading) return <LoadingScreen />;
@@ -124,7 +138,9 @@ const App: React.FC = () => {
             <PomodoroProvider>
               <SubscriptionProvider>
                 <ReloadPrompt />
-                <DemoController />
+                <React.Suspense fallback={null}>
+                  <DemoController />
+                </React.Suspense>
                 <AnimatePresence mode="wait">
                   <Routes>
                     {/* Standalone Route for Login (No Public Header) */}

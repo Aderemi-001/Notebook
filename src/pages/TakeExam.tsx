@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { shuffleArray } from '@/utils/shuffle';
 
 interface QuizQuestion {
   id: string;
@@ -80,18 +81,16 @@ const TakeExam: React.FC = () => {
 
       // Shuffle and pick based on preferences (default 10)
       const numQuestions = preferences?.default_num_exam_questions || 10;
-      const shuffled = [...cards].sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, Math.min(numQuestions, shuffled.length));
+      const selected = shuffleArray(cards).slice(0, Math.min(numQuestions, cards.length));
 
       const quizQuestions: QuizQuestion[] = selected.map(card => {
         // Generate distractors from other cards
         const otherCards = cards.filter(c => c.id !== card.id);
-        const distractors = otherCards
-          .sort(() => 0.5 - Math.random())
+        const distractors = shuffleArray(otherCards)
           .slice(0, 3)
-          .map(c => c.definition); // using 'definition' as answer/option
+          .map(c => c.definition);
 
-        const options = [...distractors, card.definition].sort(() => 0.5 - Math.random());
+        const options = shuffleArray([...distractors, card.definition]);
 
         return {
           id: card.id,

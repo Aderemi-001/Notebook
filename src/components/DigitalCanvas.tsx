@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { Stroke, Drawing, BgStyle, Point } from '@/types/canvas';
 import { smoothPoints, compressDrawing, getPointerWorldPos, createDotsPattern } from '@/utils/canvasUtils';
 import { detectShape, ShapeKind } from '@/utils/shapeRecognition';
@@ -310,7 +311,7 @@ const DigitalCanvas: React.FC<DigitalCanvasProps> = ({
         setDrawing(prev => {
             const next = {
                 ...prev,
-                pages: [...prev.pages, { id: Math.random().toString(36).substr(2, 9), strokes: [] }],
+                pages: [...prev.pages, { id: uuidv4(), strokes: [] }],
                 currentPageIndex: prev.pages.length
             };
             pushToHistory(next);
