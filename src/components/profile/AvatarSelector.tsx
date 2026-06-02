@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
     Dialog,
     DialogContent,
@@ -45,7 +46,23 @@ const PRESET_STYLES = [
     'pixel-art'
 ];
 
+const STYLE_DISPLAY_NAMES = new Map<string, string>([
+    ['adventurer', 'Adventurer'],
+    ['avataaars', 'Avatars'],
+    ['big-ears', 'Big Ears'],
+    ['bottts', 'Robots'],
+    ['fun-emoji', 'Fun Emoji'],
+    ['lorelei', 'Lorelei'],
+    ['micah', 'Micah'],
+    ['miniavs', 'Mini Avatars'],
+    ['notionists', 'Notionists'],
+    ['open-peeps', 'Open Peeps'],
+    ['personas', 'Personas'],
+    ['pixel-art', 'Pixel Art']
+]);
+
 export const AvatarSelector = ({ currentAvatarUrl, userId, onAvatarUpdate, children }: AvatarSelectorProps) => {
+    const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [selectedStyle, setSelectedStyle] = useState('notionists');
@@ -66,11 +83,11 @@ export const AvatarSelector = ({ currentAvatarUrl, userId, onAvatarUpdate, child
 
             if (error) throw error;
 
-            showSuccess('Avatar updated!');
+            showSuccess(t('profile.avatar.updated'));
             onAvatarUpdate();
             setIsOpen(false);
         } catch (error: any) {
-            showError(error.message || 'Failed to update avatar');
+            showError(error.message || t('profile.avatar.errUpdate'));
         } finally {
             setIsUploading(false);
         }
@@ -82,12 +99,12 @@ export const AvatarSelector = ({ currentAvatarUrl, userId, onAvatarUpdate, child
             if (!file) return;
 
             if (!file.type.startsWith('image/')) {
-                showError('Please upload an image file');
+                showError(t('profile.avatar.errImageOnly'));
                 return;
             }
 
             if (file.size > 5 * 1024 * 1024) {
-                showError('Image must be less than 5MB');
+                showError(t('profile.avatar.errMaxSize'));
                 return;
             }
 
@@ -112,12 +129,12 @@ export const AvatarSelector = ({ currentAvatarUrl, userId, onAvatarUpdate, child
 
             if (updateError) throw updateError;
 
-            showSuccess('Avatar uploaded successfully!');
+            showSuccess(t('profile.avatar.uploadSuccess'));
             onAvatarUpdate();
             setIsOpen(false);
         } catch (error: any) {
             console.error('Upload error:', error);
-            showError(error.message || 'Failed to upload avatar. Ensure you have an "avatars" bucket.');
+            showError(error.message || t('profile.avatar.errUpload'));
         } finally {
             setIsUploading(false);
         }
@@ -126,26 +143,26 @@ export const AvatarSelector = ({ currentAvatarUrl, userId, onAvatarUpdate, child
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                {children || <Button variant="outline">Change Avatar</Button>}
+                {children || <Button variant="outline">{t('profile.avatar.change')}</Button>}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Customize Your Avatar</DialogTitle>
+                    <DialogTitle>{t('profile.avatar.title')}</DialogTitle>
                     <DialogDescription>
-                        Choose a preset or upload your own photo.
+                        {t('profile.avatar.chooseOrUpload')}
                     </DialogDescription>
                 </DialogHeader>
 
                 <Tabs defaultValue="presets" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="presets">Presets</TabsTrigger>
-                        <TabsTrigger value="upload">Upload Custom</TabsTrigger>
+                        <TabsTrigger value="presets">{t('profile.avatar.presets')}</TabsTrigger>
+                        <TabsTrigger value="upload">{t('profile.avatar.upload')}</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="presets" className="space-y-4 py-4">
                         <div className="flex justify-between items-center px-1">
                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground font-medium">Style:</span>
+                                <span className="text-sm text-muted-foreground font-medium">{t('profile.avatar.style')}</span>
                                 <Select value={selectedStyle} onValueChange={setSelectedStyle}>
                                     <SelectTrigger className="w-[140px] h-8 bg-background border-input focus:ring-0 focus:ring-offset-0">
                                         <SelectValue placeholder="Select style" />
@@ -153,7 +170,7 @@ export const AvatarSelector = ({ currentAvatarUrl, userId, onAvatarUpdate, child
                                     <SelectContent>
                                         {PRESET_STYLES.map(style => (
                                             <SelectItem key={style} value={style} className="cursor-pointer font-medium">
-                                                {style.replace('-', ' ')}
+                                                {STYLE_DISPLAY_NAMES.get(style) || style}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -203,7 +220,7 @@ export const AvatarSelector = ({ currentAvatarUrl, userId, onAvatarUpdate, child
 
                             <div className="w-full max-w-xs space-y-2">
                                 <Label htmlFor="avatar-upload" className="text-center block">
-                                    Upload new image
+                                    {t('profile.avatar.uploadNew')}
                                 </Label>
                                 <div className="relative">
                                     <Input
@@ -216,12 +233,12 @@ export const AvatarSelector = ({ currentAvatarUrl, userId, onAvatarUpdate, child
                                     />
                                     {isUploading && (
                                         <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-md border border-primary">
-                                            <Loader2 className="h-4 w-4 animate-spin mr-2" /> Uploading...
+                                            <Loader2 className="h-4 w-4 animate-spin mr-2" /> {t('profile.avatar.uploading')}
                                         </div>
                                     )}
                                 </div>
                                 <p className="text-xs text-center text-muted-foreground">
-                                    Max size 5MB. Formats: JPG, PNG, GIF, WebP.
+                                    {t('profile.avatar.maxSize')}
                                 </p>
                             </div>
                         </div>

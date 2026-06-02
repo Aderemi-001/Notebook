@@ -146,7 +146,7 @@ const fetchUserProfile = async (): Promise<UserProfile | null> => {
   const [subRes, setsData, masteredRes] = await Promise.all([
     supabase.from('subscriptions').select('status').eq('user_id', user.id).maybeSingle(),
     studySetService.getMyStudySets(),
-    supabase.from('user_progress').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'mastered')
+    supabase.from('user_progress').select('*', { count: 'exact', head: true }).eq('user_id', user.id).or('status.eq.mastered,repetition_level.gte.4')
   ]);
 
   if (!profile) return null;
@@ -370,7 +370,7 @@ const Profile = () => {
                             value={field.value || ''}
                           />
                         </FormControl>
-                        <FormDescription>Max 200 characters.</FormDescription>
+                        <FormDescription>{t('profile.bioLimit')}</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
