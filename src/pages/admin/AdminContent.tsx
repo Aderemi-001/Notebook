@@ -43,6 +43,7 @@ interface StudySetResult {
     creator_name: string | null;
     creator_email: string | null;
     card_count: number;
+    flagged_term?: string;
 }
 
 export const AdminContent = () => {
@@ -97,9 +98,10 @@ export const AdminContent = () => {
                 description: item.context, // Use context as description for violations
                 is_public: false, // Assume false or mixed for list view
                 created_at: item.created_at,
-                creator_name: 'FLAGGED',
+                creator_name: item.creator_name || 'FLAGGED',
                 creator_email: item.creator_email,
-                card_count: 0 // Not returned by violation scan
+                card_count: 0, // Not returned by violation scan
+                flagged_term: item.flagged_term
             }));
 
             setResults(mappedResults);
@@ -197,7 +199,14 @@ export const AdminContent = () => {
                                 <TableRow key={set.id}>
                                     <TableCell>
                                         <div className="flex flex-col">
-                                            <span className="font-medium line-clamp-1">{set.title}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium line-clamp-1">{set.title}</span>
+                                                {showViolations && set.flagged_term && (
+                                                    <Badge variant="destructive" className="text-[9px] uppercase tracking-wider py-0 px-1.5 h-4 select-none">
+                                                        {set.flagged_term}
+                                                    </Badge>
+                                                )}
+                                            </div>
                                             <span className="text-xs text-muted-foreground line-clamp-1">{set.description || 'No description'}</span>
                                         </div>
                                     </TableCell>

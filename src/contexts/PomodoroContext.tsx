@@ -294,8 +294,9 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             remainingTimeRef.current = Math.max(0, targetTime - now);
             setIsRunning(false);
 
-            const minutes = Math.floor((remainingTimeRef.current / 1000) / 60);
-            const seconds = Math.floor((remainingTimeRef.current / 1000) % 60);
+            const totalSeconds = Math.round(remainingTimeRef.current / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
             const mm = String(minutes).padStart(2, '0');
             const ss = String(seconds).padStart(2, '0');
             document.title = `Paused ${mm}:${ss} - Notebook`;
@@ -462,8 +463,9 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             }
 
             if (diff > 0) {
-                const minutes = Math.floor((diff / 1000) / 60);
-                const seconds = Math.floor((diff / 1000) % 60);
+                const totalSeconds = Math.round(diff / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
                 const mm = String(minutes).padStart(2, '0');
                 const ss = String(seconds).padStart(2, '0');
                 const label = isBreakRef.current ? 'Break' : 'Focus';
@@ -499,6 +501,32 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             worker.postMessage('stop');
         };
     }, [isRunning, handleComplete]);
+
+    // Sync title immediately on tab focus/visibility change to prevent display lag
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && isRunningRef.current) {
+                const now = Date.now();
+                const diff = targetTimeRef.current - now;
+                if (diff > 0) {
+                    const totalSeconds = Math.round(diff / 1000);
+                    const minutes = Math.floor(totalSeconds / 60);
+                    const seconds = totalSeconds % 60;
+                    const mm = String(minutes).padStart(2, '0');
+                    const ss = String(seconds).padStart(2, '0');
+                    const label = isBreakRef.current ? 'Break' : 'Focus';
+                    document.title = `${mm}:${ss} - ${label}`;
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleVisibilityChange);
+        };
+    }, []);
 
     return (
         <PomodoroContext.Provider value={{

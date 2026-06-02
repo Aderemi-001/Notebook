@@ -46,11 +46,13 @@ end;
 $$;
 
 -- 2. "Flagged Terms" Auto-Scanner
+drop function if exists public.admin_scan_violations();
 create or replace function public.admin_scan_violations()
 returns table (
     set_id uuid,
     title text,
     creator_email text,
+    creator_name text,
     flagged_term text,
     context text,
     created_at timestamptz
@@ -59,10 +61,7 @@ language plpgsql
 security definer
 as $$
 declare
-    -- Define bad words logic here (or use a table in future)
-    -- For now, hardcoded list of "sketchy" terms often used in abuse
     bad_terms text[] := array['cheat', 'hack', 'dump', 'answers', 'exam', 'discord']; 
-    term text;
 begin
     -- Admin Check
     if not exists (select 1 from public.profiles where id = auth.uid() and is_admin = true) then
@@ -75,15 +74,33 @@ begin
         s.id as set_id,
         s.title,
         u.email::text as creator_email,
-        'suspicious_keyword' as flagged_term,
+        p.display_name as creator_name,
+        -- Find the first matched term
+        coalesce(
+            (select t from unnest(bad_terms) t where s.title ~* t limit 1),
+            (select t from unnest(bad_terms) t where s.description ~* t limit 1),
+            'suspicious'
+        )::text as flagged_term,
+        -- Context explaining exactly what was matched
         case 
-            when s.title ilike '%cheat%' then 'In Title: ...' || s.title
-            when s.description ilike '%cheat%' then 'In Desc: ...' || substring(s.description from 1 for 50)
-            else 'Matched keyword scan'
-        end as context,
+            when s.title ~* 'cheat' then 'Flagged: "cheat" in Title'
+            when s.title ~* 'hack' then 'Flagged: "hack" in Title'
+            when s.title ~* 'dump' then 'Flagged: "dump" in Title'
+            when s.title ~* 'answers' then 'Flagged: "answers" in Title'
+            when s.title ~* 'exam' then 'Flagged: "exam" in Title'
+            when s.title ~* 'discord' then 'Flagged: "discord" in Title'
+            when s.description ~* 'cheat' then 'Flagged: "cheat" in Description'
+            when s.description ~* 'hack' then 'Flagged: "hack" in Description'
+            when s.description ~* 'dump' then 'Flagged: "dump" in Description'
+            when s.description ~* 'answers' then 'Flagged: "answers" in Description'
+            when s.description ~* 'exam' then 'Flagged: "exam" in Description'
+            when s.description ~* 'discord' then 'Flagged: "discord" in Description'
+            else 'Flagged Content Found'
+        end::text as context,
         s.created_at
     from public.study_sets s
     join auth.users u on s.user_id = u.id
+    join public.profiles p on s.user_id = p.id
     where 
         s.title ~* 'cheat|hack|dump|exam|discord'
         or s.description ~* 'cheat|hack|dump|exam|discord'
